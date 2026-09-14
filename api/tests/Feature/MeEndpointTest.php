@@ -5,24 +5,13 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\School;
 use App\Models\User;
-use Firebase\JWT\JWT;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\InteractsWithSupabaseAuth;
 use Tests\TestCase;
 
 class MeEndpointTest extends TestCase
 {
-    use RefreshDatabase;
-
-    private function tokenFor(string $supabaseUserId, string $email): string
-    {
-        config(['services.supabase.jwt_secret' => 'a-test-secret-that-is-long-enough-for-hs256']);
-
-        return JWT::encode([
-            'sub' => $supabaseUserId,
-            'email' => $email,
-            'exp' => now()->addHour()->timestamp,
-        ], config('services.supabase.jwt_secret'), 'HS256');
-    }
+    use InteractsWithSupabaseAuth, RefreshDatabase;
 
     public function test_it_reports_no_school_for_a_supabase_login_with_no_local_account(): void
     {

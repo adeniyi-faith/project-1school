@@ -104,12 +104,6 @@
   outline: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  .field input {
-    background: oklch(28% 0.02 40);
-  }
-}
-
 .field input:focus {
   box-shadow: 0 0 0 2px var(--accent-soft);
 }

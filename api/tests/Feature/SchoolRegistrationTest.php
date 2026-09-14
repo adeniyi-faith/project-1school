@@ -3,24 +3,13 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
-use Firebase\JWT\JWT;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\InteractsWithSupabaseAuth;
 use Tests\TestCase;
 
 class SchoolRegistrationTest extends TestCase
 {
-    use RefreshDatabase;
-
-    private function tokenFor(string $supabaseUserId, string $email): string
-    {
-        config(['services.supabase.jwt_secret' => 'a-test-secret-that-is-long-enough-for-hs256']);
-
-        return JWT::encode([
-            'sub' => $supabaseUserId,
-            'email' => $email,
-            'exp' => now()->addHour()->timestamp,
-        ], config('services.supabase.jwt_secret'), 'HS256');
-    }
+    use InteractsWithSupabaseAuth, RefreshDatabase;
 
     public function test_it_registers_a_school_and_makes_the_caller_its_admin(): void
     {
