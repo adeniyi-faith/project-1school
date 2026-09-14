@@ -4,11 +4,6 @@ import { apiGet, apiPost, ApiError } from "../lib/api";
 import { supabase } from "../lib/supabaseClient";
 import "./AuthScreen.css";
 
-type HealthResponse = {
-  status: string;
-  service: string;
-};
-
 type SchoolInfo = { code: string; name: string };
 
 type MeResponse = {
@@ -36,11 +31,9 @@ function takePendingRegistration(): PendingRegistration | null {
 }
 
 export function AuthScreen() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [healthError, setHealthError] = useState<string | null>(null);
-
   const [session, setSession] = useState<Session | null>(null);
   const [me, setMe] = useState<MeResponse | null>(null);
+  const [checkingMe, setCheckingMe] = useState(false);
   const [mode, setMode] = useState<"sign-in" | "register">("register");
 
   const [email, setEmail] = useState("");
@@ -50,12 +43,6 @@ export function AuthScreen() {
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmEmailNotice, setConfirmEmailNotice] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    apiGet<HealthResponse>("/health")
-      .then(setHealth)
-      .catch((err: Error) => setHealthError(err.message));
-  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -81,16 +68,20 @@ export function AuthScreen() {
         return;
       }
 
+      setCheckingMe(true);
       try {
         setMe(await apiGet<MeResponse>("/me"));
       } catch (err) {
         setFormError(err instanceof ApiError ? err.message : "Couldn't reach the API.");
+      } finally {
+        setCheckingMe(false);
       }
     })();
   }, [session]);
 
   async function registerSchool(schoolNameValue: string, adminNameValue: string) {
     setFormError(null);
+    setSubmitting(true);
     try {
       const result = await apiPost<{ school: SchoolInfo; user: { role: string } }>("/schools", {
         school_name: schoolNameValue,
@@ -103,7 +94,14 @@ export function AuthScreen() {
       }));
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "Something went wrong.");
+    } finally {
+      setSubmitting(false);
     }
+  }
+
+  async function handleFinishRegistering(e: React.FormEvent) {
+    e.preventDefault();
+    await registerSchool(schoolName, adminName);
   }
 
   async function handleRegister(e: React.FormEvent) {
@@ -141,28 +139,12 @@ export function AuthScreen() {
     await supabase.auth.signOut();
   }
 
-  const apiStatus = healthError ? "error" : health ? "ok" : "pending";
-
   return (
     <main className="page">
       <div className="page-blob" />
       <div className="content">
         <div className="brand">SchoolRuns</div>
         <div className="tagline">Run your school's day-to-day, all in one place.</div>
-
-        <div className="card">
-          <div className="card-title">API CONNECTION</div>
-          <div className="status">
-            <span className={`status-dot ${apiStatus}`} />
-            {healthError && <span>Can&apos;t reach the API</span>}
-            {!healthError && !health && <span>Checking...</span>}
-            {health && (
-              <span>
-                {health.status} ({health.service})
-              </span>
-            )}
-          </div>
-        </div>
 
         {session && me?.school && (
           <div className="card">
@@ -173,16 +155,39 @@ export function AuthScreen() {
           </div>
         )}
 
-        {session && !me?.school && (
+        {session && !me?.school && !checkingMe && (
           <div className="card">
-            <div className="card-title">SIGNED IN</div>
-            <div className="signed-in-row">
+            <div className="card-title">FINISH SETTING UP YOUR SCHOOL</div>
+            <div className="signed-in-row" style={{ marginBottom: 16 }}>
               <span className="signed-in-email">{session.user.email}</span>
               <button type="button" className="btn btn-secondary" onClick={handleSignOut}>
                 Sign out
               </button>
             </div>
-            {formError && <p className="error-text">{formError}</p>}
+            <form onSubmit={handleFinishRegistering}>
+              <div className="field">
+                <input
+                  type="text"
+                  placeholder="School name"
+                  value={schoolName}
+                  onChange={(e) => setSchoolName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="field">
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  value={adminName}
+                  onChange={(e) => setAdminName(e.target.value)}
+                  required
+                />
+              </div>
+              <button type="submit" className="btn" disabled={submitting}>
+                Register school
+              </button>
+              {formError && <p className="error-text">{formError}</p>}
+            </form>
           </div>
         )}
 
