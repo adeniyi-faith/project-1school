@@ -6,32 +6,57 @@
   justify-content: center;
   padding: 24px;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-blob {
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  opacity: 0.6;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 400px;
 }
 
 .brand {
+  font-family: var(--heading);
   font-size: 28px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
+  font-weight: 700;
   color: var(--text-h);
-  margin-bottom: 32px;
+  margin-bottom: 4px;
+}
+
+.tagline {
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 24px;
 }
 
 .card {
   width: 100%;
-  max-width: 380px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 16px;
+  background: var(--surface);
+  border-radius: 24px;
   box-shadow: var(--shadow);
-  padding: 28px;
+  padding: 26px;
   margin-bottom: 20px;
 }
 
 .card-title {
   font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   color: var(--text);
   margin-bottom: 16px;
 }
@@ -44,22 +69,22 @@
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .status-dot.ok {
-  background: #22c55e;
+  background: var(--accent);
 }
 
 .status-dot.error {
-  background: #ef4444;
+  background: var(--coral);
 }
 
 .status-dot.pending {
-  background: #a1a1aa;
+  background: oklch(70% 0.01 60);
 }
 
 .field {
@@ -69,30 +94,36 @@
 .field input {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 12px;
+  padding: 13px 16px;
   font-size: 15px;
   font-family: inherit;
   color: var(--text-h);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: oklch(97% 0.015 80);
+  border: none;
+  border-radius: 14px;
   outline: none;
 }
 
+@media (prefers-color-scheme: dark) {
+  .field input {
+    background: oklch(28% 0.02 40);
+  }
+}
+
 .field input:focus {
-  border-color: var(--accent-border);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .btn {
   width: 100%;
-  padding: 10px 12px;
+  padding: 13px;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 800;
   font-family: inherit;
-  color: #fff;
+  color: var(--accent-contrast);
   background: var(--accent);
   border: none;
-  border-radius: 8px;
+  border-radius: 14px;
   cursor: pointer;
 }
 
@@ -106,45 +137,48 @@
 }
 
 .btn-secondary {
+  width: auto;
   background: transparent;
   color: var(--text);
   border: 1px solid var(--border);
+  font-weight: 700;
 }
 
 .error-text {
-  color: #ef4444;
+  color: var(--coral);
   font-size: 14px;
   margin-top: 8px;
 }
 
 .success-text {
-  color: #16a34a;
+  color: var(--accent);
   font-size: 15px;
   line-height: 1.5;
+  font-weight: 600;
 }
 
 .tabs {
   display: flex;
   gap: 4px;
   margin-bottom: 20px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
 }
 
 .tab {
   flex: 1;
   padding: 8px 4px 12px;
   font-size: 14px;
+  font-weight: 700;
   font-family: inherit;
   color: var(--text);
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   cursor: pointer;
 }
 
 .tab.active {
   color: var(--text-h);
-  font-weight: 600;
   border-bottom-color: var(--accent);
 }
 
@@ -157,7 +191,15 @@
 
 .signed-in-email {
   font-size: 15px;
+  font-weight: 600;
   color: var(--text-h);
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.school-id-badge {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 800;
+  color: var(--accent);
 }
