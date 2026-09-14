@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { apiGet, apiPost, ApiError } from "../lib/api";
 import { supabase } from "../lib/supabaseClient";
+import { Logo } from "../components/Logo";
 import "./AuthScreen.css";
 
 type SchoolInfo = { code: string; name: string };
@@ -139,31 +140,47 @@ export function AuthScreen() {
     await supabase.auth.signOut();
   }
 
-  return (
-    <main className="page">
-      <div className="page-blob" />
-      <div className="content">
-        <div className="brand">SchoolRuns</div>
-        <div className="tagline">Run your school's day-to-day, all in one place.</div>
-
-        {session && me?.school && (
-          <div className="card">
-            <div className="card-title">YOUR SCHOOL</div>
-            <p className="success-text">
-              {me.school.name} — School ID <span className="school-id-badge">{me.school.code}</span>
-            </p>
-          </div>
-        )}
-
-        {session && !me?.school && !checkingMe && (
-          <div className="card">
-            <div className="card-title">FINISH SETTING UP YOUR SCHOOL</div>
-            <div className="signed-in-row" style={{ marginBottom: 16 }}>
+  // Signed in with a school already set up.
+  if (session && me?.school) {
+    return (
+      <main className="page">
+        <div className="auth-wrap" style={{ maxWidth: 420 }}>
+          <div className="auth-form-side" style={{ flex: "none", width: "100%" }}>
+            <div style={{ marginBottom: 24 }}>
+              <Logo />
+            </div>
+            <div className="signed-in-row">
               <span className="signed-in-email">{session.user.email}</span>
-              <button type="button" className="btn btn-secondary" onClick={handleSignOut}>
+              <button type="button" className="btn-secondary" onClick={handleSignOut}>
                 Sign out
               </button>
             </div>
+            <div className="success-card">
+              {me.school.name} is live — School ID <span className="school-id-badge">{me.school.code}</span>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Signed in but no school yet — either registering for the first
+  // time failed partway, or this account genuinely has none.
+  if (session && !me?.school && !checkingMe) {
+    return (
+      <main className="page">
+        <div className="auth-wrap" style={{ maxWidth: 420 }}>
+          <div className="auth-form-side" style={{ flex: "none", width: "100%" }}>
+            <div style={{ marginBottom: 24 }}>
+              <Logo />
+            </div>
+            <div className="signed-in-row">
+              <span className="signed-in-email">{session.user.email}</span>
+              <button type="button" className="btn-secondary" onClick={handleSignOut}>
+                Sign out
+              </button>
+            </div>
+            <div className="auth-title">Finish setting up your school</div>
             <form onSubmit={handleFinishRegistering}>
               <div className="field">
                 <input
@@ -183,39 +200,100 @@ export function AuthScreen() {
                   required
                 />
               </div>
-              <button type="submit" className="btn" disabled={submitting}>
+              <button type="submit" className="btn-primary" disabled={submitting}>
                 Register school
               </button>
               {formError && <p className="error-text">{formError}</p>}
             </form>
           </div>
-        )}
+        </div>
+      </main>
+    );
+  }
 
-        {!session && (
-          <div className="card">
-            <div className="tabs">
-              <button
-                type="button"
-                className={mode === "register" ? "tab active" : "tab"}
-                onClick={() => setMode("register")}
-              >
-                Register a school
-              </button>
-              <button
-                type="button"
-                className={mode === "sign-in" ? "tab active" : "tab"}
-                onClick={() => setMode("sign-in")}
-              >
-                Sign in
-              </button>
+  return (
+    <main className="page">
+      <div className="auth-wrap">
+        <div className="auth-brand">
+          <Logo onDark />
+          <div className="auth-headline">
+            <h2>
+              {mode === "register" ? (
+                <>
+                  Set up your school
+                  <br />
+                  in under 15 minutes.
+                </>
+              ) : (
+                <>
+                  Run your entire school
+                  <br />
+                  from one dashboard.
+                </>
+              )}
+            </h2>
+            <p>
+              {mode === "register"
+                ? "Add your school, invite staff, and start managing everything in one place."
+                : "Records, roles, and your school's day-to-day, all kept in sync."}
+            </p>
+            <div className="auth-feats">
+              <div>
+                <svg className="icon">
+                  <use href="#i-check-circle" />
+                </svg>
+                A school-wide dashboard for admins
+              </div>
+              <div>
+                <svg className="icon">
+                  <use href="#i-check-circle" />
+                </svg>
+                Separate roles for teachers, parents &amp; students
+              </div>
+              <div>
+                <svg className="icon">
+                  <use href="#i-check-circle" />
+                </svg>
+                Your own School ID from day one
+              </div>
             </div>
+          </div>
+          <div />
+        </div>
 
-            {confirmEmailNotice ? (
-              <p className="success-text">
-                Check your email for a confirmation link. Once confirmed, come back and sign in to
-                finish setting up your school.
-              </p>
-            ) : (
+        <div className="auth-form-side">
+          <div className="tabs">
+            <button
+              type="button"
+              className={mode === "register" ? "tab active" : "tab"}
+              onClick={() => setMode("register")}
+            >
+              Sign up
+            </button>
+            <button
+              type="button"
+              className={mode === "sign-in" ? "tab active" : "tab"}
+              onClick={() => setMode("sign-in")}
+            >
+              Log in
+            </button>
+          </div>
+
+          {confirmEmailNotice ? (
+            <div className="success-card">
+              Check your email for a confirmation link. Once confirmed, come back and log in to
+              finish setting up your school.
+            </div>
+          ) : (
+            <>
+              <div className="auth-title">
+                {mode === "register" ? "Create your school's account" : "Welcome back"}
+              </div>
+              <div className="auth-sub">
+                {mode === "register"
+                  ? "Get your school running on SchoolRuns."
+                  : "Log in to manage your school today."}
+              </div>
               <form onSubmit={mode === "register" ? handleRegister : handleSignIn}>
                 {mode === "register" && (
                   <>
@@ -239,16 +317,22 @@ export function AuthScreen() {
                     </div>
                   </>
                 )}
-                <div className="field">
+                <div className="field field-wrap">
+                  <svg className="icon">
+                    <use href="#i-mail" />
+                  </svg>
                   <input
                     type="email"
-                    placeholder="Email"
+                    placeholder="Work email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
-                <div className="field">
+                <div className="field field-wrap">
+                  <svg className="icon">
+                    <use href="#i-lock" />
+                  </svg>
                   <input
                     type="password"
                     placeholder="Password"
@@ -257,14 +341,14 @@ export function AuthScreen() {
                     required
                   />
                 </div>
-                <button type="submit" className="btn" disabled={submitting}>
-                  {mode === "register" ? "Register school" : "Sign in"}
+                <button type="submit" className="btn-primary" disabled={submitting}>
+                  {mode === "register" ? "Create account" : "Log in"}
                 </button>
                 {formError && <p className="error-text">{formError}</p>}
               </form>
-            )}
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </main>
   );

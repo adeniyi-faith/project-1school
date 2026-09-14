@@ -1,153 +1,238 @@
 .page {
   min-height: 100svh;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 24px;
   box-sizing: border-box;
+}
+
+.auth-wrap {
+  display: flex;
+  width: 100%;
+  max-width: 920px;
+  min-height: 580px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.auth-brand {
+  flex: 1;
+  background: var(--navy);
+  color: #fff;
+  padding: 44px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   position: relative;
   overflow: hidden;
 }
 
-.page-blob {
+.auth-brand::before {
+  content: '';
   position: absolute;
-  top: -80px;
-  right: -80px;
   width: 260px;
   height: 260px;
   border-radius: 50%;
-  background: var(--accent-soft);
-  opacity: 0.6;
-  z-index: 0;
-  pointer-events: none;
+  background: radial-gradient(circle, rgba(31, 184, 113, 0.32), transparent 70%);
+  top: -80px;
+  right: -80px;
 }
 
-.content {
+.auth-brand::after {
+  content: '';
+  position: absolute;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 107, 74, 0.26), transparent 70%);
+  bottom: -60px;
+  left: -50px;
+}
+
+.auth-headline {
   position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 400px;
 }
 
-.brand {
-  font-family: var(--heading);
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-h);
-  margin-bottom: 4px;
+.auth-headline h2 {
+  font-size: 25px;
+  line-height: 1.32;
+  color: #fff;
+  margin: 20px 0 12px;
 }
 
-.tagline {
-  font-size: 14px;
-  color: var(--text);
+.auth-headline p {
+  font-size: 13.5px;
+  color: #b7bbc9;
+  line-height: 1.65;
+  max-width: 300px;
+}
+
+.auth-feats {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin-top: 20px;
+}
+
+.auth-feats div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: #dadce6;
+  font-weight: 600;
+}
+
+.auth-feats .icon {
+  color: var(--mint);
+  width: 16px;
+  height: 16px;
+}
+
+.auth-form-side {
+  flex: 1;
+  background: var(--card);
+  padding: 44px 42px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.tabs {
+  display: flex;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 4px;
   margin-bottom: 24px;
+  max-width: 280px;
 }
 
-.card {
-  width: 100%;
-  background: var(--surface);
-  border-radius: 24px;
-  box-shadow: var(--shadow);
-  padding: 26px;
-  margin-bottom: 20px;
-}
-
-.card-title {
+.tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 9px;
+  border-radius: 9px;
   font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: var(--text);
-  margin-bottom: 16px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.tab.active {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.auth-title {
+  font-size: 21px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  font-family: var(--heading);
+}
+
+.auth-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 22px;
 }
 
 .field {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .field input {
   width: 100%;
   box-sizing: border-box;
-  padding: 13px 16px;
-  font-size: 15px;
+  padding: 11px 13px 11px 40px;
+  font-size: 13.5px;
   font-family: inherit;
-  color: var(--text-h);
-  background: oklch(97% 0.015 80);
-  border: none;
-  border-radius: 14px;
+  color: var(--ink);
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
   outline: none;
 }
 
-.field input:focus {
-  box-shadow: 0 0 0 2px var(--accent-soft);
+.field-wrap {
+  position: relative;
 }
 
-.btn {
+.field-wrap .icon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  width: 16px;
+  height: 16px;
+}
+
+.field-wrap input {
+  padding-left: 38px;
+}
+
+.field input:focus {
+  border-color: var(--mint);
+  box-shadow: 0 0 0 3px var(--mint-tint);
+}
+
+.btn-primary {
   width: 100%;
   padding: 13px;
-  font-size: 15px;
-  font-weight: 800;
-  font-family: inherit;
-  color: var(--accent-contrast);
-  background: var(--accent);
   border: none;
-  border-radius: 14px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--mint), var(--mint-dark));
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
   cursor: pointer;
+  box-shadow: 0 8px 18px rgba(31, 184, 113, 0.28);
+  font-family: inherit;
+  margin-top: 4px;
 }
 
-.btn:hover {
-  opacity: 0.9;
-}
-
-.btn:disabled {
+.btn-primary:disabled {
   opacity: 0.6;
   cursor: default;
 }
 
 .btn-secondary {
-  width: auto;
   background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border);
+  color: var(--muted);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
   font-weight: 700;
+  font-size: 13px;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .error-text {
-  color: var(--coral);
-  font-size: 14px;
-  margin-top: 8px;
+  color: var(--coral-dark);
+  font-size: 13px;
+  margin-top: 10px;
 }
 
-.success-text {
-  color: var(--accent);
-  font-size: 15px;
-  line-height: 1.5;
+.success-card {
+  background: var(--mint-tint);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 13.5px;
+  color: var(--mint-dark);
   font-weight: 600;
+  line-height: 1.5;
 }
 
-.tabs {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid var(--border);
-}
-
-.tab {
-  flex: 1;
-  padding: 8px 4px 12px;
-  font-size: 14px;
+.school-id-badge {
+  font-family: var(--heading);
   font-weight: 700;
-  font-family: inherit;
-  color: var(--text);
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  cursor: pointer;
-}
-
-.tab.active {
-  color: var(--text-h);
-  border-bottom-color: var(--accent);
 }
 
 .signed-in-row {
@@ -155,19 +240,27 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin-bottom: 16px;
 }
 
 .signed-in-email {
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: var(--text-h);
+  color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.school-id-badge {
-  display: inline-flex;
-  align-items: center;
-  font-weight: 800;
-  color: var(--accent);
+@media (max-width: 820px) {
+  .auth-wrap {
+    flex-direction: column;
+  }
+
+  .auth-brand {
+    padding: 32px 28px;
+  }
+
+  .auth-form-side {
+    padding: 32px 28px;
+  }
 }

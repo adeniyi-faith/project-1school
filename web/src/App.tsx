@@ -1,7 +1,13 @@
 import { AuthScreen } from "./pages/AuthScreen";
+import { IconSprite } from "./components/IconSprite";
 
 function App() {
-  return <AuthScreen />;
+  return (
+    <>
+      <IconSprite />
+      <AuthScreen />
+    </>
+  );
 }
 
 export default App;
