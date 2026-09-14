@@ -60,6 +60,22 @@ return [
             'report' => false,
         ],
 
+        // Supabase Storage speaks the same S3 protocol as Amazon S3, so
+        // Laravel's existing "s3" driver works against it — just with a
+        // different endpoint. Files uploaded here (school logos, documents,
+        // photos) go to Supabase, not to this server's own disk.
+        'supabase' => [
+            'driver' => 's3',
+            'key' => env('SUPABASE_STORAGE_ACCESS_KEY_ID'),
+            'secret' => env('SUPABASE_STORAGE_SECRET_ACCESS_KEY'),
+            'region' => env('SUPABASE_STORAGE_REGION', 'us-east-1'),
+            'bucket' => env('SUPABASE_STORAGE_BUCKET'),
+            'endpoint' => env('SUPABASE_URL') ? env('SUPABASE_URL').'/storage/v1/s3' : null,
+            'use_path_style_endpoint' => true,
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*
