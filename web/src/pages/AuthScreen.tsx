@@ -9,15 +9,17 @@ type HealthResponse = {
   service: string;
 };
 
-type SchoolResponse = {
-  school: { code: string; name: string };
-  user: { name: string; email: string; role: string };
+type SchoolInfo = { code: string; name: string };
+
+type MeResponse = {
+  supabase_user_email: string | null;
+  role: string | null;
+  school: SchoolInfo | null;
 };
 
-// The Supabase sign-up/sign-in details plus, for registration, the
-// school and admin name that couldn't be saved yet because Supabase
-// hadn't confirmed the email. Kept just long enough to finish
-// registering once the person comes back and signs in.
+// The school and admin name a person typed at sign-up, kept just long
+// enough to finish registering once they've confirmed their email and
+// come back to sign in.
 const PENDING_REGISTRATION_KEY = "schoolruns_pending_registration";
 
 type PendingRegistration = { schoolName: string; adminName: string };
@@ -38,6 +40,7 @@ export function AuthScreen() {
   const [healthError, setHealthError] = useState<string | null>(null);
 
   const [session, setSession] = useState<Session | null>(null);
+  const [me, setMe] = useState<MeResponse | null>(null);
   const [mode, setMode] = useState<"sign-in" | "register">("register");
 
   const [email, setEmail] = useState("");
@@ -47,8 +50,6 @@ export function AuthScreen() {
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmEmailNotice, setConfirmEmailNotice] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  const [school, setSchool] = useState<SchoolResponse["school"] | null>(null);
 
   useEffect(() => {
     apiGet<HealthResponse>("/health")
@@ -64,23 +65,42 @@ export function AuthScreen() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // Once signed in, finish registering the school if we were waiting on
-  // an email confirmation to get here.
+  // Whenever we're signed in, ask the API what it knows about this
+  // account: a school already registered, or none yet. If a
+  // registration was left pending an email confirmation, finish it now.
   useEffect(() => {
-    if (!session) return;
-    const pending = takePendingRegistration();
-    if (!pending) return;
-    registerSchool(pending.schoolName, pending.adminName);
+    if (!session) {
+      setMe(null);
+      return;
+    }
+
+    (async () => {
+      const pending = takePendingRegistration();
+      if (pending) {
+        await registerSchool(pending.schoolName, pending.adminName);
+        return;
+      }
+
+      try {
+        setMe(await apiGet<MeResponse>("/me"));
+      } catch (err) {
+        setFormError(err instanceof ApiError ? err.message : "Couldn't reach the API.");
+      }
+    })();
   }, [session]);
 
   async function registerSchool(schoolNameValue: string, adminNameValue: string) {
     setFormError(null);
     try {
-      const result = await apiPost<SchoolResponse>("/schools", {
+      const result = await apiPost<{ school: SchoolInfo; user: { role: string } }>("/schools", {
         school_name: schoolNameValue,
         admin_name: adminNameValue,
       });
-      setSchool(result.school);
+      setMe((prev) => ({
+        supabase_user_email: prev?.supabase_user_email ?? null,
+        role: result.user.role,
+        school: result.school,
+      }));
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "Something went wrong.");
     }
@@ -117,7 +137,7 @@ export function AuthScreen() {
   }
 
   async function handleSignOut() {
-    setSchool(null);
+    setMe(null);
     await supabase.auth.signOut();
   }
 
@@ -125,117 +145,122 @@ export function AuthScreen() {
 
   return (
     <main className="page">
-      <div className="brand">SchoolRuns</div>
+      <div className="page-blob" />
+      <div className="content">
+        <div className="brand">SchoolRuns</div>
+        <div className="tagline">Run your school's day-to-day, all in one place.</div>
 
-      <div className="card">
-        <div className="card-title">API connection</div>
-        <div className="status">
-          <span className={`status-dot ${apiStatus}`} />
-          {healthError && <span>Can&apos;t reach the API</span>}
-          {!healthError && !health && <span>Checking...</span>}
-          {health && (
-            <span>
-              {health.status} ({health.service})
-            </span>
-          )}
-        </div>
-      </div>
-
-      {session && school && (
         <div className="card">
-          <div className="card-title">School registered</div>
-          <p className="success-text">
-            {school.name} is now live with School ID <strong>{school.code}</strong>.
-          </p>
-        </div>
-      )}
-
-      {session && !school && (
-        <div className="card">
-          <div className="card-title">Signed in</div>
-          <div className="signed-in-row">
-            <span className="signed-in-email">{session.user.email}</span>
-            <button type="button" className="btn btn-secondary" onClick={handleSignOut}>
-              Sign out
-            </button>
+          <div className="card-title">API CONNECTION</div>
+          <div className="status">
+            <span className={`status-dot ${apiStatus}`} />
+            {healthError && <span>Can&apos;t reach the API</span>}
+            {!healthError && !health && <span>Checking...</span>}
+            {health && (
+              <span>
+                {health.status} ({health.service})
+              </span>
+            )}
           </div>
         </div>
-      )}
 
-      {!session && (
-        <div className="card">
-          <div className="tabs">
-            <button
-              type="button"
-              className={mode === "register" ? "tab active" : "tab"}
-              onClick={() => setMode("register")}
-            >
-              Register a school
-            </button>
-            <button
-              type="button"
-              className={mode === "sign-in" ? "tab active" : "tab"}
-              onClick={() => setMode("sign-in")}
-            >
-              Sign in
-            </button>
-          </div>
-
-          {confirmEmailNotice ? (
+        {session && me?.school && (
+          <div className="card">
+            <div className="card-title">YOUR SCHOOL</div>
             <p className="success-text">
-              Check your email for a confirmation link. Once confirmed, come back and sign in to
-              finish setting up your school.
+              {me.school.name} — School ID <span className="school-id-badge">{me.school.code}</span>
             </p>
-          ) : (
-            <form onSubmit={mode === "register" ? handleRegister : handleSignIn}>
-              {mode === "register" && (
-                <>
-                  <div className="field">
-                    <input
-                      type="text"
-                      placeholder="School name"
-                      value={schoolName}
-                      onChange={(e) => setSchoolName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="field">
-                    <input
-                      type="text"
-                      placeholder="Your name"
-                      value={adminName}
-                      onChange={(e) => setAdminName(e.target.value)}
-                      required
-                    />
-                  </div>
-                </>
-              )}
-              <div className="field">
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="field">
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <button type="submit" className="btn" disabled={submitting}>
-                {mode === "register" ? "Register school" : "Sign in"}
+          </div>
+        )}
+
+        {session && !me?.school && (
+          <div className="card">
+            <div className="card-title">SIGNED IN</div>
+            <div className="signed-in-row">
+              <span className="signed-in-email">{session.user.email}</span>
+              <button type="button" className="btn btn-secondary" onClick={handleSignOut}>
+                Sign out
               </button>
-              {formError && <p className="error-text">{formError}</p>}
-            </form>
-          )}
-        </div>
-      )}
+            </div>
+            {formError && <p className="error-text">{formError}</p>}
+          </div>
+        )}
+
+        {!session && (
+          <div className="card">
+            <div className="tabs">
+              <button
+                type="button"
+                className={mode === "register" ? "tab active" : "tab"}
+                onClick={() => setMode("register")}
+              >
+                Register a school
+              </button>
+              <button
+                type="button"
+                className={mode === "sign-in" ? "tab active" : "tab"}
+                onClick={() => setMode("sign-in")}
+              >
+                Sign in
+              </button>
+            </div>
+
+            {confirmEmailNotice ? (
+              <p className="success-text">
+                Check your email for a confirmation link. Once confirmed, come back and sign in to
+                finish setting up your school.
+              </p>
+            ) : (
+              <form onSubmit={mode === "register" ? handleRegister : handleSignIn}>
+                {mode === "register" && (
+                  <>
+                    <div className="field">
+                      <input
+                        type="text"
+                        placeholder="School name"
+                        value={schoolName}
+                        onChange={(e) => setSchoolName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="field">
+                      <input
+                        type="text"
+                        placeholder="Your name"
+                        value={adminName}
+                        onChange={(e) => setAdminName(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </>
+                )}
+                <div className="field">
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn" disabled={submitting}>
+                  {mode === "register" ? "Register school" : "Sign in"}
+                </button>
+                {formError && <p className="error-text">{formError}</p>}
+              </form>
+            )}
+          </div>
+        )}
+      </div>
     </main>
   );
 }
