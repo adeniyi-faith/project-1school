@@ -14,27 +14,15 @@
   --sans: 'Nunito Sans', system-ui, sans-serif;
 
   font: 16px/145% var(--sans);
-  color-scheme: light dark;
+  /* This design is deliberately light/warm only — it doesn't switch
+     with the device's dark mode setting. */
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: oklch(18% 0.02 40);
-    --surface: oklch(24% 0.02 40);
-    --text: oklch(78% 0.02 60);
-    --text-h: oklch(92% 0.02 60);
-    --border: oklch(32% 0.02 40);
-    --accent: oklch(70% 0.15 145);
-    --accent-soft: oklch(30% 0.08 145);
-    --coral: oklch(65% 0.15 30);
-    --shadow: 0 10px 30px oklch(0% 0 0 / 0.35);
-  }
 }
 
 * {
