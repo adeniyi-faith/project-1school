@@ -14,14 +14,48 @@ async function authHeaders(): Promise<HeadersInit> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+// Laravel's validation errors (422) come back as { message, errors: { field: [msgs] } }.
+export class ApiError extends Error {
+  status: number;
+  errors?: Record<string, string[]>;
+
+  constructor(message: string, status: number, errors?: Record<string, string[]>) {
+    super(message);
+    this.status = status;
+    this.errors = errors;
+  }
+}
+
+async function handleResponse<T>(response: Response): Promise<T> {
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new ApiError(
+      body?.message ?? `API request failed: ${response.status}`,
+      response.status,
+      body?.errors,
+    );
+  }
+
+  return body as T;
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     headers: { Accept: "application/json", ...(await authHeaders()) },
   });
+  return handleResponse<T>(response);
+}
 
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json() as Promise<T>;
+export async function apiPost<T>(path: string, data: unknown): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(await authHeaders()),
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<T>(response);
 }

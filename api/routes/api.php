@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SchoolRegistrationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -23,3 +24,9 @@ Route::get('/me', function (Request $request) {
         'supabase_user_email' => $request->attributes->get('supabase_user_email'),
     ]);
 })->middleware('supabase.auth');
+
+// A school signs up here: the frontend must already have a Supabase
+// login for the person registering, since that's who becomes the
+// School Admin.
+Route::post('/schools', [SchoolRegistrationController::class, 'store'])
+    ->middleware('supabase.auth');
