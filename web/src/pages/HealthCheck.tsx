@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { apiGet } from "../lib/api";
 import { supabase } from "../lib/supabaseClient";
+import "./HealthCheck.css";
 
 type HealthResponse = {
   status: string;
@@ -63,26 +64,31 @@ export function HealthCheck() {
     await supabase.auth.signOut();
   }
 
+  const apiStatus = healthError ? "error" : health ? "ok" : "pending";
+
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: 480 }}>
-      <h1>SchoolRuns</h1>
+    <main className="page">
+      <div className="brand">SchoolRuns</div>
 
-      <section>
-        <h2>1. Web app ↔ Laravel API</h2>
-        {healthError && <p style={{ color: "crimson" }}>API error: {healthError}</p>}
-        {!healthError && !health && <p>Checking API connection...</p>}
-        {health && (
-          <p style={{ color: "green" }}>
-            API says: {health.status} ({health.service})
-          </p>
-        )}
-      </section>
+      <div className="card">
+        <div className="card-title">API connection</div>
+        <div className="status">
+          <span className={`status-dot ${apiStatus}`} />
+          {healthError && <span>Can&apos;t reach the API</span>}
+          {!healthError && !health && <span>Checking...</span>}
+          {health && (
+            <span>
+              {health.status} ({health.service})
+            </span>
+          )}
+        </div>
+      </div>
 
-      <section>
-        <h2>2. Supabase login</h2>
+      <div className="card">
+        <div className="card-title">Sign in</div>
         {!session && (
           <form onSubmit={handleSignIn}>
-            <div>
+            <div className="field">
               <input
                 type="email"
                 placeholder="Email"
@@ -90,7 +96,7 @@ export function HealthCheck() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div>
+            <div className="field">
               <input
                 type="password"
                 placeholder="Password"
@@ -98,31 +104,32 @@ export function HealthCheck() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <button type="submit">Sign in</button>
-            {authError && <p style={{ color: "crimson" }}>{authError}</p>}
+            <button type="submit" className="btn">
+              Sign in
+            </button>
+            {authError && <p className="error-text">{authError}</p>}
           </form>
         )}
         {session && (
-          <div>
-            <p style={{ color: "green" }}>Signed in as {session.user.email}</p>
-            <button type="button" onClick={handleSignOut}>
+          <div className="signed-in-row">
+            <span className="signed-in-email">{session.user.email}</span>
+            <button type="button" className="btn btn-secondary" onClick={handleSignOut}>
               Sign out
             </button>
           </div>
         )}
-      </section>
+      </div>
 
       {session && (
-        <section>
-          <h2>3. Laravel checking the Supabase login</h2>
-          {meError && <p style={{ color: "crimson" }}>API error: {meError}</p>}
-          {!meError && !me && <p>Checking with the API...</p>}
-          {me && (
-            <p style={{ color: "green" }}>
-              Laravel sees you as: {me.supabase_user_email} ({me.supabase_user_id})
-            </p>
-          )}
-        </section>
+        <div className="card">
+          <div className="card-title">API sees you as</div>
+          <div className="status">
+            <span className={`status-dot ${meError ? "error" : me ? "ok" : "pending"}`} />
+            {meError && <span>Can&apos;t verify with the API</span>}
+            {!meError && !me && <span>Checking...</span>}
+            {me && <span>{me.supabase_user_email}</span>}
+          </div>
+        </div>
       )}
     </main>
   );
