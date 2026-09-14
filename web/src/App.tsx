@@ -1,7 +1,7 @@
-import { HealthCheck } from "./pages/HealthCheck";
+import { AuthScreen } from "./pages/AuthScreen";
 
 function App() {
-  return <HealthCheck />;
+  return <AuthScreen />;
 }
 
 export default App;
