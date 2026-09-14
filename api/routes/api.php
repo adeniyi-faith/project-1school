@@ -14,3 +14,12 @@ Route::get('/health', function () {
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+// Proves the frontend's Supabase login and Laravel's token check are
+// wired together correctly: it echoes back who Supabase says is asking.
+Route::get('/me', function (Request $request) {
+    return response()->json([
+        'supabase_user_id' => $request->attributes->get('supabase_user_id'),
+        'supabase_user_email' => $request->attributes->get('supabase_user_email'),
+    ]);
+})->middleware('supabase.auth');
