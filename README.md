@@ -62,28 +62,31 @@ project:
 
 ## Deploying
 
-- **The app**: set up to deploy on [Vercel](https://vercel.com) using a
-  community PHP runtime (`vercel-php`) so Laravel can run as a Vercel
-  serverless function — see `vercel.json`. This is a different setup
-  from a typical Laravel host, so a few things work differently:
-  - There's no long-running process, so background jobs run immediately
-    within the same request instead of waiting in a queue
-    (`QUEUE_CONNECTION=sync`).
-  - Nothing saved to local disk survives between requests, so uploaded
-    files must go to Supabase Storage, not this server's own disk
-    (`FILESYSTEM_DISK=supabase`).
-  - Logins and cached data are kept in the database (Supabase Postgres)
-    rather than in local files, since that's the only storage that's
-    actually shared between requests.
-  - Set the same environment variables from your `.env` in the Vercel
-    project's settings.
-  - This path is less battle-tested than a normal PHP host (e.g.
-    [Laravel Cloud](https://cloud.laravel.com)) — if anything doesn't
-    behave as expected after deploying, that's the first thing to check.
+- **The app**: deploys on [Railway](https://railway.app), which runs it
+  as a normal, always-on server (not a serverless function), so it
+  behaves like it would on any regular host. `railway.json` tells
+  Railway how to build it (`composer install` + `npm run build`), and
+  `Procfile` tells it how to start it:
+  - `web` runs pending database migrations, then starts the app.
+  - `worker` (optional, enable it as a second Railway service if you
+    want it) processes queued background jobs — e-mail/SMS blasts,
+    report generation, and the like — instead of running them inline.
+    If you enable it, switch `QUEUE_CONNECTION` to `database` in your
+    environment variables so jobs actually wait in the queue for it.
+  - **Important**: if your Railway project still has its root directory
+    set to `api/` from before this app was swapped in, change it to the
+    repository root in Railway's project settings — that folder no
+    longer exists.
+  - Set the same environment variables from your `.env` in Railway's
+    project settings, plus `APP_ENV=production`, `APP_DEBUG=false`, and
+    `APP_URL` set to the app's real Railway/custom domain.
+  - Uploaded files still go to Supabase Storage rather than this
+    server's own disk, since a redeploy replaces the container (and
+    its disk) from scratch.
 - **Documentation site** (`docs/`): a separate [VitePress](https://vitepress.dev)
-  site with its own build step. Deploy it as its own Vercel project with
-  its root directory set to `docs/`, rather than through the root
-  `vercel.json` (which now points at the app itself).
+  site with its own build step, deployed on [Vercel](https://vercel.com)
+  — see `vercel.json`. Set the Vercel project's root directory to the
+  repository root (it `cd`s into `docs/` itself during the build).
 
 ## What's built so far
 
