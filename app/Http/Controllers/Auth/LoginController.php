@@ -7,7 +7,10 @@ use App\Models\User;
 use App\Services\SupabaseAuthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,7 +18,7 @@ use Inertia\Response;
 class LoginController extends Controller
 {
     /**
-     * Demo accounts shown only on .test domains or xgenious.com
+     * Demo accounts, shown only when SHOW_DEMO_ACCOUNTS=true
      */
     private array $demoAccounts = [
         [
@@ -64,8 +67,7 @@ class LoginController extends Controller
 
     public function create(Request $request): Response
     {
-        $host = $request->getHost();
-        $showDemo = str_ends_with($host, '.test') || str_contains($host, 'xgenious.com');
+        $showDemo = (bool) config('app.show_demo_accounts');
 
         return Inertia::render('Auth/Login', [
             'showDemo' => $showDemo,
@@ -80,12 +82,26 @@ class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        // Block password guessing: 5 wrong tries per email + IP, then wait.
+        $throttleKey = Str::transliterate(Str::lower($credentials['email']).'|'.$request->ip());
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            event(new Lockout($request));
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            throw ValidationException::withMessages([
+                'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
+            ]);
+        }
+
         // Supabase checks the password. Laravel never sees or stores it;
         // it only decides, once Supabase confirms who's signing in,
         // whether that person has an account here and what they can do.
         $supabaseUser = $supabaseAuth->signIn($credentials['email'], $credentials['password']);
 
         if (! $supabaseUser) {
+            RateLimiter::hit($throttleKey, 60);
+
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
@@ -94,6 +110,8 @@ class LoginController extends Controller
         $user = User::where('email', $credentials['email'])->first();
 
         if (! $user) {
+            RateLimiter::hit($throttleKey, 60);
+
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
@@ -102,6 +120,8 @@ class LoginController extends Controller
         if ($user->supabase_id !== $supabaseUser['id']) {
             $user->supabase_id = $supabaseUser['id'];
         }
+
+        RateLimiter::clear($throttleKey);
 
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();

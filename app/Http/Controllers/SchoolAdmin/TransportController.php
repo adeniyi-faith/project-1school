@@ -194,10 +194,20 @@ class TransportController extends Controller
         return back()->with('success', 'Student removed from route.');
     }
 
-    // ── GPS Tracking Webhook (stub) ───────────────────────────────
+    // ── GPS Tracking Webhook ──────────────────────────────────────
+    // Called by the vehicle's GPS device, not by a logged-in person, so it
+    // proves who it is with the vehicle's secret token (Authorization: Bearer ...).
 
     public function trackingWebhook(Request $request, Vehicle $vehicle)
     {
+        $token = (string) $request->bearerToken();
+
+        abort_unless(
+            $vehicle->tracking_token && $token !== '' && hash_equals($vehicle->tracking_token, $token),
+            401,
+            'Invalid tracking token.'
+        );
+
         $data = $request->validate([
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
