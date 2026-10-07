@@ -100,13 +100,14 @@ class RolePermissionSeeder extends Seeder
             'timetable.view',
             'exams.view', 'marks.view', 'results.view', 'results.publish', 'results.lock', 'reportcard.generate',
             'fees.view', 'fees.reports',
-            'leave.view', 'leave.approve',
+            'leave.view', 'leave.apply', 'leave.approve',
             'homework.view', 'lessons.view', 'lessons.approve', 'syllabus.view',
             'announcements.view', 'announcements.create', 'messages.view', 'messages.send',
             'reports.view', 'reports.export',
         ],
 
         'teacher' => [
+            'leave.view', 'leave.apply',
             'students.view',
             'attendance.view', 'attendance.mark',
             'timetable.view',
@@ -119,6 +120,7 @@ class RolePermissionSeeder extends Seeder
         ],
 
         'accountant' => [
+            'leave.view', 'leave.apply',
             'students.view',
             'fees.view', 'fees.collect', 'fees.structure', 'fees.reports', 'fees.waiver', 'fees.online',
             'expenses.view', 'expenses.create',
@@ -127,27 +129,32 @@ class RolePermissionSeeder extends Seeder
         ],
 
         'librarian' => [
+            'leave.view', 'leave.apply',
             'students.view', 'staff.view',
             'library.view', 'library.manage', 'library.issue', 'library.report',
             'reports.view',
         ],
 
         'receptionist' => [
+            'leave.view', 'leave.apply',
             'students.view', 'students.create',
             'announcements.view',
             'messages.view', 'messages.send',
         ],
 
         'driver' => [
+            'leave.view', 'leave.apply',
             'transport.view', 'transport.attendance',
         ],
 
         'warden' => [
+            'leave.view', 'leave.apply',
             'students.view',
             'hostel.view', 'hostel.attendance',
         ],
 
         'store-manager' => [
+            'leave.view', 'leave.apply',
             'inventory.view', 'inventory.manage', 'inventory.issue',
         ],
 
