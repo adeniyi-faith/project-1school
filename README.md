@@ -1,73 +1,95 @@
 # SchoolRuns
 
-SchoolRuns is a multi-school platform: schools sign up, run their day-to-day
-operations, and manage their own branding and public website. It's being
-built as a website first, with a mobile app planned for later using the
-same backend.
+SchoolRuns is a school management system: one Laravel application that
+renders its own React (TypeScript) pages using [Inertia.js](https://inertiajs.com/),
+so there's a single codebase instead of a separate backend and frontend.
+It covers admissions, students, staff, attendance, timetables, exams,
+fees, the library, transport, hostels, homework, communication, and
+reporting, with separate views for Super Admin, School Admin, Teacher,
+Accountant, Student, and Parent accounts.
 
-## How the project is organised
-
-This repository holds two separate applications that talk to each other
-over the network, plus room to grow:
-
-- **`api/`** — the Laravel backend. This is where all the important rules
-  live: what a "school" is, who can log in, what a Teacher is allowed to
-  do versus a Parent, and so on. It exposes this as a set of web
-  addresses (an "API") that return data as JSON rather than full web
-  pages. Any app — this website today, a mobile app tomorrow — asks the
-  API for data and follows the same rules.
-- **`web/`** — the React + TypeScript website people actually see and use
-  in a browser. It is deliberately "dumb" about business rules: it asks
-  the API for data, and displays it. This keeps the rules in one place
-  (the API) instead of being duplicated and risking going out of sync.
-
-Splitting things this way now means a future mobile app can be added as
-its own folder later, reusing the same `api/` backend without any of its
-rules needing to be rewritten.
+**Supabase** checks logins: when someone signs in, Laravel sends their
+email and password to Supabase, and Supabase confirms whether that
+password is correct. Laravel never stores or checks the password itself
+— it only decides, once Supabase confirms who is signing in, what that
+person is allowed to do (which school they belong to, whether they're a
+Teacher or a Parent, and so on), using the person's existing account
+here. **Supabase's database (Postgres) is also this app's own database**,
+and **Supabase Storage** holds uploaded files (documents, photos, school
+logos).
 
 ## Running it locally
 
-**Backend (Laravel API):**
-
 ```bash
-cd api
 composer install
-cp .env.example .env   # if you don't already have one
-php artisan key:generate
-php artisan migrate
-php artisan serve --port=8000
-```
-
-**Frontend (React web app):**
-
-```bash
-cd web
 npm install
-cp .env.example .env.local   # if you don't already have one
-npm run dev
+
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+
+npm run build
+php artisan serve
 ```
 
-The frontend reads the API's address from an environment variable
-(`VITE_API_URL` in `web/.env.local`) instead of having it typed directly
-into the code. The backend reads which website(s) are allowed to call it
-from another environment variable (`FRONTEND_URLS` in `api/.env`). This
-means moving from your laptop to a real server later is just a matter of
-changing these settings, not changing code.
+The app reads its Supabase project's details, and which database to use,
+from environment variables in `.env` instead of having them typed
+directly into the code.
+
+### Connecting a real Supabase project
+
+Until you create one, the app runs against placeholder values (the
+sign-in form will show, but signing in won't work). To connect a real
+project:
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. In its dashboard, go to **Settings → API** and copy the Project URL,
+   anon key, and service role key into `.env` (`SUPABASE_URL`,
+   `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`).
+3. For the database, go to **Settings → Database**, copy the connection
+   details into `.env` (`DB_CONNECTION=pgsql`, `DB_HOST`, `DB_PORT`,
+   `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`), then run
+   `php artisan migrate`.
+4. For file storage, create a bucket under **Storage**, then copy its
+   S3-compatible access keys (**Storage → Connect**) into `.env`
+   (`SUPABASE_STORAGE_*` variables), and set `FILESYSTEM_DISK=supabase`.
+5. **Important**: signing in only works for people who already have an
+   account in *this app's* database (school admins create Staff,
+   Student, and Guardian accounts, which is where roles and school
+   membership come from). Creating someone in Supabase's own user list
+   doesn't by itself give them access — a matching account (same email)
+   also needs to exist here, and vice versa.
+
+## Deploying
+
+- **The app**: deploys on [Railway](https://railway.app), which runs it
+  as a normal, always-on server (not a serverless function), so it
+  behaves like it would on any regular host. `railway.json` tells
+  Railway how to build it (`composer install` + `npm run build`), and
+  `Procfile` tells it how to start it:
+  - `web` runs pending database migrations, then starts the app.
+  - `worker` (optional, enable it as a second Railway service if you
+    want it) processes queued background jobs — e-mail/SMS blasts,
+    report generation, and the like — instead of running them inline.
+    If you enable it, switch `QUEUE_CONNECTION` to `database` in your
+    environment variables so jobs actually wait in the queue for it.
+  - **Important**: if your Railway project still has its root directory
+    set to `api/` from before this app was swapped in, change it to the
+    repository root in Railway's project settings — that folder no
+    longer exists.
+  - Set the same environment variables from your `.env` in Railway's
+    project settings, plus `APP_ENV=production`, `APP_DEBUG=false`, and
+    `APP_URL` set to the app's real Railway/custom domain.
+  - Uploaded files still go to Supabase Storage rather than this
+    server's own disk, since a redeploy replaces the container (and
+    its disk) from scratch.
+- **Documentation site** (`docs/`): a separate [VitePress](https://vitepress.dev)
+  site with its own build step, deployed on [Vercel](https://vercel.com)
+  — see `vercel.json`. Set the Vercel project's root directory to the
+  repository root (it `cd`s into `docs/` itself during the build).
 
 ## What's built so far
 
-- A working Laravel API with a `/api/health` endpoint.
-- A working React + TypeScript website that calls that endpoint and shows
-  the result — proof the two sides can talk to each other correctly.
-- CORS (the browser security rule that controls which websites are
-  allowed to call an API) is configured through environment variables
-  rather than hardcoded.
-- [Laravel Sanctum](https://laravel.com/docs/sanctum) is installed for
-  future login/authentication — not wired up to real user accounts yet.
-
-## What's coming next
-
-This is intentionally a small first step. Upcoming work will add: school
-registration, user accounts and roles (School Admin, Teacher,
-Parent/Guardian, Student), and the multi-school data model where each
-school's data is kept separate.
+See `requirements/00-overview.md` and the module files under
+`requirements/modules/` for the full feature list, and `docs/` for
+day-to-day usage guides for each role.
