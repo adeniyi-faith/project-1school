@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Traits\BelongsToSchool;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class StudentDocument extends Model
 {
@@ -19,7 +18,8 @@ class StudentDocument extends Model
 
     public function getFileUrlAttribute(): string
     {
-        return Storage::url($this->file_path);
+        // Private files are only served through a download route that checks who is asking
+        return route('school.students.documents.download', $this->id);
     }
 
     public function student(): BelongsTo
