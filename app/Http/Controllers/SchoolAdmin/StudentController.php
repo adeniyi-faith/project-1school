@@ -209,6 +209,11 @@ class StudentController extends Controller
 
     public function deleteDocument(StudentDocument $document): RedirectResponse
     {
+        abort_unless(
+            auth()->user()->hasRole('super-admin') || $document->school_id === auth()->user()->school_id,
+            403
+        );
+
         Storage::disk('private')->delete($document->file_path);
         $document->delete();
 
