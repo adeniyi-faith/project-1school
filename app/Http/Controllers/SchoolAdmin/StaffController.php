@@ -169,6 +169,12 @@ class StaffController extends Controller
 
     public function deleteDocument(StaffDocument $document): RedirectResponse
     {
+        // Never let one school delete another school's document
+        abort_unless(
+            auth()->user()->hasRole('super-admin') || $document->school_id === auth()->user()->school_id,
+            403
+        );
+
         Storage::disk('private')->delete($document->file_path);
         $document->delete();
 

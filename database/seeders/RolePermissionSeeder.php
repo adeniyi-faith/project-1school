@@ -80,7 +80,7 @@ class RolePermissionSeeder extends Seeder
         'super-admin' => '*',
 
         'school-admin' => [
-            'academic-years.*', 'users.view', 'users.create', 'users.edit',
+            'academic-years.*', 'users.view', 'users.create', 'users.edit', 'users.delete',
             'students.*', 'staff.*',
             'attendance.*', 'timetable.*',
             'exams.*', 'marks.*', 'results.*', 'reportcard.*',

@@ -301,12 +301,12 @@ Route::middleware('auth')->group(function () {
             Route::post('settings/integrations/sms/test',       [IntegrationController::class, 'testSms'])->name('settings.integrations.sms.test');
 
             // School User / Admin Management
-            Route::get('settings/admins',                       [SchoolUserController::class, 'index'])->name('settings.admins');
-            Route::post('settings/admins',                      [SchoolUserController::class, 'store'])->name('settings.admins.store');
-            Route::put('settings/admins/{user}',                [SchoolUserController::class, 'update'])->name('settings.admins.update');
-            Route::delete('settings/admins/{user}',             [SchoolUserController::class, 'destroy'])->name('settings.admins.destroy');
-            Route::patch('settings/admins/{user}/suspend',      [SchoolUserController::class, 'suspend'])->name('settings.admins.suspend');
-            Route::patch('settings/admins/{user}/activate',     [SchoolUserController::class, 'activate'])->name('settings.admins.activate');
+            Route::get('settings/admins',                       [SchoolUserController::class, 'index'])->middleware('permission:users.view')->name('settings.admins');
+            Route::post('settings/admins',                      [SchoolUserController::class, 'store'])->middleware('permission:users.create')->name('settings.admins.store');
+            Route::put('settings/admins/{user}',                [SchoolUserController::class, 'update'])->middleware('permission:users.edit')->name('settings.admins.update');
+            Route::delete('settings/admins/{user}',             [SchoolUserController::class, 'destroy'])->middleware('permission:users.delete')->name('settings.admins.destroy');
+            Route::patch('settings/admins/{user}/suspend',      [SchoolUserController::class, 'suspend'])->middleware('permission:users.edit')->name('settings.admins.suspend');
+            Route::patch('settings/admins/{user}/activate',     [SchoolUserController::class, 'activate'])->middleware('permission:users.edit')->name('settings.admins.activate');
 
             // Admission Inquiries
             Route::get('admissions/inquiries',                          [AdmissionInquiryController::class, 'index'])->name('admissions.inquiries');

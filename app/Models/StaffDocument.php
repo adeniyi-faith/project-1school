@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToSchool;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
 class StaffDocument extends Model
 {
+    use BelongsToSchool;
+
     protected $fillable = [
         'school_id', 'staff_id', 'title', 'file_path', 'file_type', 'file_size',
     ];
