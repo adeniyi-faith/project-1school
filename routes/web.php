@@ -102,6 +102,7 @@ Route::middleware('auth')->group(function () {
             Route::resource('students', StudentController::class);
             Route::post('students/{student}/documents',        [StudentController::class, 'uploadDocument'])->name('students.documents.upload');
             Route::delete('students/documents/{document}',     [StudentController::class, 'deleteDocument'])->name('students.documents.delete');
+            Route::get('students/documents/{document}/download', [StudentController::class, 'downloadDocument'])->middleware('permission:students.view')->name('students.documents.download');
 
             // Exams
             Route::get('exams',                              [ExamController::class, 'index'])->name('exams.index');
@@ -326,6 +327,7 @@ Route::middleware('auth')->group(function () {
             Route::resource('staff',        StaffController::class);
             Route::post('staff/{staff}/documents',         [StaffController::class, 'uploadDocument'])->name('staff.documents.upload');
             Route::delete('staff/documents/{document}',    [StaffController::class, 'deleteDocument'])->name('staff.documents.delete');
+            Route::get('staff/documents/{document}/download', [StaffController::class, 'downloadDocument'])->middleware('permission:staff.view')->name('staff.documents.download');
         });
 
     /*
@@ -412,6 +414,11 @@ Route::middleware('auth')->group(function () {
             Route::patch('users/{user}/reset-password',  [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
         });
 });
+
+// Vehicle GPS devices post their position here. No login: each vehicle has its own secret token.
+Route::post('/webhooks/vehicles/{vehicle}/location', [TransportController::class, 'trackingWebhook'])
+    ->middleware('throttle:120,1')
+    ->name('webhooks.vehicle-location');
 
 // Public admission form (no auth)
 Route::get('/apply/{school}',  [PublicAdmissionController::class, 'show'])->name('public.admission.show');

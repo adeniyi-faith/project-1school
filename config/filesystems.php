@@ -60,6 +60,32 @@ return [
             'report' => false,
         ],
 
+        // Private files (staff and student documents). Never reachable by a
+        // public web address; they are only handed out by a download route
+        // that checks who is asking. When a Supabase bucket is configured the
+        // files go there (under "private/") so a redeploy doesn't wipe them.
+        'private' => env('SUPABASE_STORAGE_BUCKET')
+            ? [
+                'driver' => 's3',
+                'key' => env('SUPABASE_STORAGE_ACCESS_KEY_ID'),
+                'secret' => env('SUPABASE_STORAGE_SECRET_ACCESS_KEY'),
+                'region' => env('SUPABASE_STORAGE_REGION', 'us-east-1'),
+                'bucket' => env('SUPABASE_STORAGE_BUCKET'),
+                'endpoint' => env('SUPABASE_URL') ? env('SUPABASE_URL').'/storage/v1/s3' : null,
+                'use_path_style_endpoint' => true,
+                'root' => 'private',
+                'visibility' => 'private',
+                'throw' => false,
+                'report' => false,
+            ]
+            : [
+                'driver' => 'local',
+                'root' => storage_path('app/private/documents'),
+                'visibility' => 'private',
+                'throw' => false,
+                'report' => false,
+            ],
+
         // Supabase Storage speaks the same S3 protocol as Amazon S3, so
         // Laravel's existing "s3" driver works against it, just with a
         // different endpoint. This is the default disk on Vercel, where
