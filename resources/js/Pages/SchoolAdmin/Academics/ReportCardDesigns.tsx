@@ -135,7 +135,7 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
     // Preview what is on screen now, even before saving. Pictures picked but not saved show too.
     const [trialLogo, setTrialLogo] = useState<File | null>(null);
     const [previewError, setPreviewError] = useState<string | null>(null);
-    async function preview(type: 'term' | 'session') {
+    function preview(type: 'term' | 'session') {
         const body = new FormData();
         appendDeep(body, 'type', type);
         (['template', 'primary_color', 'accent_color', 'font_size', 'paper', 'term_title', 'session_title', 'footer_note', 'options', 'remove_stamp'] as const).forEach(k => appendDeep(body, k, data[k] ?? ''));
@@ -145,7 +145,7 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
             (['id', 'label', 'name', 'has_comment', 'remove_signature'] as const).forEach(k => appendDeep(body, `signers[${i}][${k}]`, s[k]));
             if (s.signature) body.append(`signers[${i}][signature]`, s.signature);
         });
-        setPreviewError(await openTryOut(`${base}/try`, body));
+        setPreviewError(openTryOut(`${base}/try`, body));
     }
 
 
@@ -177,12 +177,7 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
 
     return (
         <form onSubmit={save} className="space-y-6">
-            <Panel title="Look" action={
-                <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => preview('term')}><Eye className="size-4" /> Preview term card</Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => preview('session')}><Eye className="size-4" /> Preview full year</Button>
-                </div>
-            }>
+            <Panel title="Look">
                 <div className="space-y-5">
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
@@ -344,14 +339,16 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
                 </div>
             </Panel>
 
-            {canEdit && (
-                <div className="flex flex-wrap justify-between gap-2">
-                    {!design.is_default ? (
-                        <Button type="button" variant="ghost" className="text-red-600" onClick={() => setConfirmDelete(true)}><Trash2 className="size-4" /> Delete design</Button>
-                    ) : <span />}
-                    <Button type="submit" disabled={form.processing} className="bg-indigo-600 text-white hover:bg-indigo-700">Save design</Button>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                {canEdit && !design.is_default ? (
+                    <Button type="button" variant="ghost" className="text-red-600" onClick={() => setConfirmDelete(true)}><Trash2 className="size-4" /> Delete design</Button>
+                ) : <span />}
+                <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="outline" onClick={() => preview('term')}><Eye className="size-4" /> Preview term card</Button>
+                    <Button type="button" variant="outline" onClick={() => preview('session')}><Eye className="size-4" /> Preview full year</Button>
+                    {canEdit && <Button type="submit" disabled={form.processing} className="bg-indigo-600 text-white hover:bg-indigo-700">Save design</Button>}
                 </div>
-            )}
+            </div>
 
             <Panel title="Classes using this design" description={design.is_default ? 'Classes not ticked here, and not given another design, also use this one because it is the default.' : 'Classes not ticked use the default design.'}>
                 <div className="flex flex-wrap gap-3">

@@ -53,8 +53,8 @@ class SettingsController extends Controller
         $school = School::findOrFail($sid);
 
         $request->validate([
-            'logo'        => 'nullable|image|max:2048',
-            'favicon'     => 'nullable|image|max:512',
+            'logo'        => 'nullable|image|max:10240',
+            'favicon'     => 'nullable|image|max:2048',
             'tagline'     => 'nullable|string|max:200',
             'footer_text' => 'nullable|string|max:500',
             'primary_color' => 'nullable|string|max:20',
@@ -64,14 +64,14 @@ class SettingsController extends Controller
             if ($school->logo) {
                 Storage::disk('public')->delete($school->logo);
             }
-            $path = $request->file('logo')->store("schools/{$sid}", 'public');
+            $path = \App\Support\ImageShrinker::store($request->file('logo'), "schools/{$sid}", 'public', 600);
             $school->update(['logo' => $path]);
         }
 
         if ($request->hasFile('favicon')) {
             $old = SchoolSetting::get($sid, 'favicon');
             if ($old) Storage::disk('public')->delete($old);
-            $path = $request->file('favicon')->store("schools/{$sid}", 'public');
+            $path = \App\Support\ImageShrinker::store($request->file('favicon'), "schools/{$sid}", 'public', 128);
             SchoolSetting::set($sid, 'favicon', $path, 'branding');
         }
 

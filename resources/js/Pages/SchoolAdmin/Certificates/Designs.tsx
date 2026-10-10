@@ -88,10 +88,10 @@ function Editor({ template, standard, borders, blanks, schoolColors, canEdit }: 
     const [trial, setTrial] = useState<{ school_logo: File | null; signature: File | null; stamp: File | null }>({ school_logo: null, signature: null, stamp: null });
     const [previewError, setPreviewError] = useState<string | null>(null);
 
-    async function preview() {
+    function preview() {
         const body = new FormData();
         Object.entries({ ...form.data, ...trial }).forEach(([k, v]) => appendDeep(body, k, v ?? ''));
-        setPreviewError(await openTryOut(`/school/certificates/designs/${template.type}/try`, body));
+        setPreviewError(openTryOut(`/school/certificates/designs/${template.type}/try`, body));
     }
     const primary = form.data.primary_color ?? schoolColors.primary;
     const accent = form.data.accent_color ?? schoolColors.accent;
