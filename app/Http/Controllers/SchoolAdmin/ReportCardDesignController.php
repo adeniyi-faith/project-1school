@@ -208,6 +208,26 @@ class ReportCardDesignController extends Controller
     {
         $type = $request->input('type') === 'session' ? 'session' : 'term';
 
+        // Show the choices on screen even if they are not saved yet (nothing is written)
+        $draft = json_decode((string) $request->query('draft', ''), true);
+        if (is_array($draft)) {
+            $v = validator($draft, [
+                'template' => ['nullable', Rule::in(ReportCardDesign::TEMPLATES)],
+                'primary_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'accent_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'font_size' => ['nullable', Rule::in(ReportCardDesign::FONT_SIZES)],
+                'paper' => ['nullable', Rule::in(ReportCardDesign::PAPERS)],
+                'term_title' => 'nullable|string|max:80',
+                'session_title' => 'nullable|string|max:80',
+                'footer_note' => 'nullable|string|max:300',
+                'options' => 'nullable|array',
+                'options.*' => 'boolean',
+            ]);
+            if (! $v->fails()) {
+                $design->fill(array_filter($v->validated(), fn ($x) => $x !== null));
+            }
+        }
+
         return ReportCardController::pdfResponse("report-cards.{$type}", $cards->sampleCards($design, $type), "Preview {$design->name}");
     }
 

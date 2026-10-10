@@ -131,6 +131,11 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
     const base = `/school/academics/report-card-designs/${design.id}`;
     const [classIds, setClassIds] = useState<number[]>(classes.filter(c => c.report_card_design_id === design.id).map(c => c.id));
     const [confirmDelete, setConfirmDelete] = useState(false);
+    // Preview what is on screen now, even before saving
+    const draft = encodeURIComponent(JSON.stringify({
+        template: data.template, primary_color: data.primary_color, accent_color: data.accent_color, font_size: data.font_size, paper: data.paper,
+        term_title: data.term_title, session_title: data.session_title, footer_note: data.footer_note, options: data.options,
+    }));
 
     // After a save, the page data changes; start the form again from what was saved
     useEffect(() => { form.setDefaults(toForm(design)); form.reset(); }, [design]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -162,8 +167,8 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
         <form onSubmit={save} className="space-y-6">
             <Panel title="Look" action={
                 <div className="flex flex-wrap gap-2">
-                    <a href={`${base}/preview?view=html`} target="_blank" rel="noopener"><Button type="button" variant="outline" size="sm"><Eye className="size-4" /> Preview term card</Button></a>
-                    <a href={`${base}/preview?type=session&view=html`} target="_blank" rel="noopener"><Button type="button" variant="outline" size="sm"><Eye className="size-4" /> Preview full year</Button></a>
+                    <a href={`${base}/preview?view=html&draft=${draft}`} target="_blank" rel="noopener"><Button type="button" variant="outline" size="sm"><Eye className="size-4" /> Preview term card</Button></a>
+                    <a href={`${base}/preview?type=session&view=html&draft=${draft}`} target="_blank" rel="noopener"><Button type="button" variant="outline" size="sm"><Eye className="size-4" /> Preview full year</Button></a>
                 </div>
             }>
                 <div className="space-y-5">
