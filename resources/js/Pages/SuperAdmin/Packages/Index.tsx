@@ -155,7 +155,7 @@ export default function PackagesIndex({ packages, availableModules }: Props) {
                                 <Input type="number" step="0.01" value={form.data.price_yearly} onChange={e => form.setData('price_yearly', e.target.value)} />
                             </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <Label>Max Students</Label>
                                 <Input type="number" value={form.data.max_students} onChange={e => form.setData('max_students', e.target.value)} placeholder="0 = unlimited" />
