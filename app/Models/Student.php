@@ -58,6 +58,12 @@ class Student extends Model
         return $this->hasMany(StudentDocument::class);
     }
 
+    /** End-of-year moves (promoted, repeated, graduated), oldest first */
+    public function promotions(): HasMany
+    {
+        return $this->hasMany(StudentPromotion::class)->orderBy('id');
+    }
+
     protected static function booted(): void
     {
         parent::booted();
