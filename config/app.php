@@ -26,7 +26,7 @@ return [
 
     // Public read-only demo: visitors click "Try the demo" and look around
     // as a demo school's admin, without an account. Nothing can be changed.
-    'demo_enabled' => (bool) env('DEMO_ENABLED', false),
+    'demo_enabled' => (bool) env('DEMO_ENABLED', true),
     'demo_email' => env('DEMO_EMAIL', 'demo@schoolruns.demo'),
 
     /*

@@ -45,8 +45,15 @@ jobs:
             export PATH="$HOME/bin:$PATH"
             cd /home2/rainofbl/public_html/school.criticalinfo.com.ng
             git pull origin main
-            /opt/cpanel/ea-php82/root/usr/bin/php -d allow_url_fopen=1 -d memory_limit=-1 $HOME/bin/composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
-            /opt/cpanel/ea-php82/root/usr/bin/php artisan storage:link 2>/dev/null || true
-            /opt/cpanel/ea-php82/root/usr/bin/php artisan config:cache
-            /opt/cpanel/ea-php82/root/usr/bin/php artisan route:cache
-            /opt/cpanel/ea-php82/root/usr/bin/php artisan view:cache
+            PHP=/opt/cpanel/ea-php84/root/usr/bin/php
+            $PHP -d allow_url_fopen=1 -d memory_limit=-1 $HOME/bin/composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+            $PHP artisan storage:link 2>/dev/null || true
+            $PHP artisan config:clear
+            # Update the database tables, then make sure the roles and permissions exist
+            $PHP artisan migrate --force
+            $PHP artisan db:seed --class=RolePermissionSeeder --force
+            # Fill the public demo school with sample data, once, when DEMO_ENABLED=true
+            $PHP artisan demo:fill
+            $PHP artisan config:cache
+            $PHP artisan route:cache
+            $PHP artisan view:cache
