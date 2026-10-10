@@ -71,7 +71,7 @@ export default function SchoolsIndex() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                 {[
                     { label: 'Total Schools',    value: stats.total,     color: 'text-slate-700 dark:text-slate-200' },
                     { label: 'Active',           value: stats.active,    color: 'text-emerald-600 dark:text-emerald-400' },

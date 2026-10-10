@@ -547,13 +547,13 @@ function NotificationTemplatesTab({ settings }: { settings: Record<string, strin
             </CardHeader>
             <CardContent>
                 {flash?.success && <SuccessBanner message={flash.success} />}
-                <div className="flex gap-6 mt-2">
+                <div className="mt-2 flex flex-col gap-4 md:flex-row md:gap-6">
                     {/* Template list */}
-                    <ul className="w-48 shrink-0 space-y-0.5">
+                    <ul className="scroll-quiet flex gap-1 overflow-x-auto pb-1 md:block md:w-48 md:shrink-0 md:space-y-0.5 md:overflow-visible md:pb-0">
                         {TEMPLATES.map(t => (
-                            <li key={t.key}>
+                            <li key={t.key} className="shrink-0 md:shrink">
                                 <button onClick={() => switchTemplate(t.key)} type="button"
-                                    className={cn('w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
+                                    className={cn('whitespace-nowrap md:w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
                                         activeTemplate === t.key
                                             ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 font-medium'
                                             : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
@@ -688,15 +688,15 @@ export default function SuperAdminSettings({ settings, logoUrl, faviconUrl }: Pr
                     <p className="text-sm text-slate-500 mt-0.5">Configure global platform behaviour and integrations</p>
                 </div>
 
-                <div className="flex gap-6">
-                    {/* Tab sidebar */}
-                    <nav className="w-52 shrink-0">
-                        <ul className="space-y-0.5">
+                <div className="flex flex-col gap-4 md:flex-row md:gap-6">
+                    {/* Tab sidebar (a scrolling strip on phones) */}
+                    <nav className="md:w-52 md:shrink-0">
+                        <ul className="scroll-quiet flex gap-1 overflow-x-auto pb-1 md:block md:space-y-0.5 md:overflow-visible md:pb-0">
                             {TABS.map(t => (
-                                <li key={t.id}>
+                                <li key={t.id} className="shrink-0 md:shrink">
                                     <button onClick={() => setActiveTab(t.id)}
                                         className={cn(
-                                            'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left',
+                                            'whitespace-nowrap md:w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left',
                                             activeTab === t.id
                                                 ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300'
                                                 : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'

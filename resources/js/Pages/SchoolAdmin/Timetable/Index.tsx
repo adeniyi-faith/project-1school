@@ -212,7 +212,7 @@ export default function TimetableIndex({ classes, sections, subjects, teachers, 
                         {/* Desktop grid */}
                         <Panel flush className="hidden overflow-hidden md:block" bodyClassName="pt-0">
                             <div className="overflow-x-auto scroll-quiet">
-                                <table className="w-full min-w-[720px] border-collapse">
+                                <table data-no-stack className="w-full min-w-[720px] border-collapse">
                                     <thead>
                                         <tr>
                                             <th className="w-28 border-b border-slate-200 bg-slate-50/70 px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.03]">Time</th>
