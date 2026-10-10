@@ -1,8 +1,8 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { GraduationCap, Banknote, Bell, TrendingUp, Users, User, CheckCircle, AlertTriangle } from 'lucide-react';
+import { EmptyState, PageHeader, Panel, PersonAvatar, Pill } from '@/components/app/kit';
+import { naira } from '@/lib/format';
+import { Bell, Users } from 'lucide-react';
 
 interface Guardian { id: number; name: string; phone: string; email: string | null; }
 interface ChildAttendance { total: number; present: number; absent: number; percentage: number; }
@@ -24,102 +24,95 @@ interface Props {
 }
 
 function AttendanceBar({ pct, label }: { pct: number; label: string }) {
+    const tone = pct >= 75 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-500';
     return (
         <div>
-            <div className="flex items-center justify-between text-xs mb-1">
+            <div className="mb-1.5 flex items-center justify-between text-xs">
                 <span className="text-slate-500">{label}</span>
-                <span className={cn('font-semibold', pct >= 75 ? 'text-green-600' : pct >= 50 ? 'text-amber-600' : 'text-red-600')}>{pct}%</span>
+                <span className="font-semibold tabular-nums text-slate-900 dark:text-white">{pct}%</span>
             </div>
-            <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div className={cn('h-full rounded-full transition-all', pct >= 75 ? 'bg-green-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-500')}
-                    style={{ width: `${pct}%` }} />
+            <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+                <div className={cn('h-full rounded-full', tone)} style={{ width: `${Math.min(100, pct)}%` }} />
             </div>
+        </div>
+    );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+        <div className="border-t border-slate-100 pt-4 dark:border-white/[0.06]">
+            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">{title}</p>
+            {children}
         </div>
     );
 }
 
 function ChildCard({ child }: { child: Child }) {
     return (
-        <Card>
-            <CardContent className="p-5 space-y-4">
-                {/* Child header */}
+        <Panel>
+            <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center overflow-hidden shrink-0">
-                        {child.photo_url
-                            ? <img src={child.photo_url} alt={child.full_name} className="w-full h-full object-cover" />
-                            : <User className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-900 dark:text-white">{child.full_name}</p>
-                        <p className="text-xs text-slate-500">{child.class} — {child.section} · {child.admission_no}</p>
+                    <PersonAvatar name={child.full_name} src={child.photo_url} className="size-12" />
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-slate-900 dark:text-white">{child.full_name}</p>
+                        <p className="truncate text-xs text-slate-500">{[child.class, child.section].filter(Boolean).join(' · ')} · {child.admission_no}</p>
                     </div>
                 </div>
 
-                {/* Attendance */}
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 space-y-2">
-                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Attendance (This Month)</p>
-                    <AttendanceBar pct={child.attendance.percentage} label={`${child.attendance.present}/${child.attendance.total} days present`} />
-                    <div className="flex gap-3 text-xs text-slate-500">
-                        <span className="text-green-600 font-medium">{child.attendance.present} present</span>
-                        <span className="text-red-500 font-medium">{child.attendance.absent} absent</span>
-                    </div>
-                </div>
+                <Section title="Attendance this month">
+                    <AttendanceBar pct={child.attendance.percentage} label={`${child.attendance.present} of ${child.attendance.total} days present`} />
+                    {child.attendance.absent > 0 && <p className="mt-2 text-xs text-red-700 dark:text-red-400">{child.attendance.absent} absent</p>}
+                </Section>
 
-                {/* Fees */}
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
-                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">Fee Status</p>
-                    <div className="flex items-center justify-between">
+                <Section title="Fees">
+                    <div className="flex items-end justify-between">
                         <div>
-                            <p className="text-xs text-slate-500">Total Paid</p>
-                            <p className="font-semibold text-green-600">₦{child.fees.total_paid.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500">Paid</p>
+                            <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-white">{naira(child.fees.total_paid)}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-slate-500">Balance Due</p>
-                            <p className={cn('font-semibold', child.fees.balance > 0 ? 'text-red-600' : 'text-green-600')}>
-                                {child.fees.balance > 0 ? `₦${child.fees.balance.toLocaleString()}` : 'Clear'}
-                            </p>
+                            <p className="text-xs text-slate-500">Balance</p>
+                            {child.fees.balance > 0
+                                ? <p className="text-lg font-semibold tabular-nums text-red-700 dark:text-red-400">{naira(child.fees.balance)}</p>
+                                : <Pill tone="good">Cleared</Pill>}
                         </div>
                     </div>
                     {child.fees.recent.length > 0 && (
-                        <div className="mt-2 space-y-1">
+                        <ul className="mt-3 space-y-2">
                             {child.fees.recent.map((f, i) => (
-                                <div key={i} className="flex items-center justify-between text-xs">
-                                    <span className="text-slate-500">{f.month}</span>
-                                    <Badge variant={f.status === 'paid' ? 'default' : 'secondary'} className="text-[10px] h-4 px-1.5">{f.status}</Badge>
-                                </div>
+                                <li key={i} className="flex items-center justify-between text-sm">
+                                    <span className="text-slate-600 dark:text-slate-300">{f.month}</span>
+                                    <Pill tone={f.status === 'paid' ? 'good' : 'warn'}>{f.status}</Pill>
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                     )}
-                </div>
+                </Section>
 
-                {/* Recent Marks */}
                 {child.marks.length > 0 && (
-                    <div>
-                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">Recent Results</p>
-                        <div className="space-y-1.5">
+                    <Section title="Recent results">
+                        <ul className="space-y-2.5">
                             {child.marks.slice(0, 4).map((m, i) => (
-                                <div key={i} className="flex items-center justify-between text-xs">
+                                <li key={i} className="flex items-center justify-between gap-3 text-sm">
                                     <div className="min-w-0">
-                                        <span className="text-slate-700 dark:text-slate-300 font-medium truncate block">{m.subject}</span>
-                                        <span className="text-slate-400">{m.exam}</span>
+                                        <p className="truncate font-medium text-slate-800 dark:text-slate-200">{m.subject}</p>
+                                        <p className="truncate text-xs text-slate-500">{m.exam}</p>
                                     </div>
-                                    <div className="flex items-center gap-2 shrink-0 ml-2">
-                                        {m.absent ? (
-                                            <span className="text-red-500">Absent</span>
-                                        ) : (
-                                            <>
-                                                <span className="text-slate-600 dark:text-slate-300">{m.marks ?? '—'}</span>
-                                                {m.grade && <span className="font-bold text-indigo-600 dark:text-indigo-400">{m.grade}</span>}
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
+                                    {m.absent ? (
+                                        <Pill tone="bad">Absent</Pill>
+                                    ) : (
+                                        <div className="flex shrink-0 items-center gap-2">
+                                            <span className="tabular-nums text-slate-600 dark:text-slate-300">{m.marks ?? '—'}</span>
+                                            {m.grade && <span className="flex size-7 items-center justify-center rounded-md bg-indigo-50 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">{m.grade}</span>}
+                                        </div>
+                                    )}
+                                </li>
                             ))}
-                        </div>
-                    </div>
+                        </ul>
+                    </Section>
                 )}
-            </CardContent>
-        </Card>
+            </div>
+        </Panel>
     );
 }
 
@@ -127,84 +120,52 @@ export default function ParentDashboard({ linked, guardian, children, announceme
     if (!linked || !guardian) {
         return (
             <AppLayout title="Parent Dashboard">
-                <div className="flex flex-col items-center justify-center py-24 text-center">
-                    <Users className="w-16 h-16 text-slate-300 mb-4" />
-                    <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300">Account not linked</h2>
-                    <p className="text-slate-500 mt-2 max-w-sm">Your account hasn't been linked to a guardian record yet. Please contact the school administrator.</p>
-                </div>
+                <Panel>
+                    <EmptyState icon={Users} title="Account not linked" text="Your account hasn't been linked to a guardian record yet. Please contact the school office." />
+                </Panel>
             </AppLayout>
         );
     }
 
     const totalDue = children.reduce((sum, c) => sum + c.fees.balance, 0);
-    const allPresent = children.every(c => c.attendance.percentage >= 75);
 
     return (
-        <AppLayout title="Parent Dashboard">
+        <AppLayout breadcrumbs={[{ label: 'Home' }]}>
             <div className="space-y-6">
+                <PageHeader
+                    title={`Welcome, ${guardian.name.split(' ')[0]}`}
+                    description={`${children.length} ${children.length === 1 ? 'child' : 'children'} enrolled${guardian.phone ? ` · ${guardian.phone}` : ''}`}
+                />
 
-                {/* Header */}
-                <div className="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 p-6 text-white flex items-center justify-between">
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5 dark:border-white/[0.08] dark:bg-slate-900">
                     <div>
-                        <h1 className="text-xl font-bold">Welcome, {guardian.name}</h1>
-                        <p className="text-white/70 text-sm mt-0.5">
-                            {children.length} {children.length === 1 ? 'child' : 'children'} enrolled
-                            {guardian.phone && ` · ${guardian.phone}`}
+                        <p className="text-[13px] text-slate-500">{totalDue > 0 ? 'Total fees due' : 'Fees'}</p>
+                        <p className={cn('mt-1 text-2xl font-semibold tabular-nums tracking-[-0.03em]', totalDue > 0 ? 'text-red-700 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400')}>
+                            {totalDue > 0 ? naira(totalDue) : 'All clear'}
                         </p>
                     </div>
-                    <div className="text-right">
-                        {totalDue > 0 ? (
-                            <div className="flex items-center gap-2 bg-white/20 rounded-lg px-3 py-2">
-                                <AlertTriangle className="w-4 h-4" />
-                                <div>
-                                    <p className="text-xs text-white/80">Total Due</p>
-                                    <p className="font-bold">₦{totalDue.toLocaleString()}</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-2 bg-white/20 rounded-lg px-3 py-2">
-                                <CheckCircle className="w-4 h-4" />
-                                <p className="text-sm font-medium">All fees clear</p>
-                            </div>
-                        )}
-                    </div>
+                    {totalDue > 0 && <Pill tone="warn">Payment needed</Pill>}
                 </div>
 
-                {/* Children Cards */}
-                <div>
-                    <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-3">
-                        My Children ({children.length})
-                    </h2>
-                    <div className={cn('grid gap-6', children.length === 1 ? 'grid-cols-1 max-w-lg' : 'grid-cols-1 md:grid-cols-2')}>
-                        {children.map(child => <ChildCard key={child.id} child={child} />)}
-                    </div>
+                <div className={cn('grid gap-6', children.length === 1 ? 'max-w-lg grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
+                    {children.map(child => <ChildCard key={child.id} child={child} />)}
                 </div>
 
-                {/* Announcements */}
                 {announcements.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                <Bell className="w-4 h-4 text-violet-500" /> School Announcements
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {announcements.map(a => (
-                                    <li key={a.id} className="py-3 first:pt-0 last:pb-0">
-                                        <div className="flex items-start gap-2">
-                                            {a.pinned && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium shrink-0 mt-0.5">Pinned</span>}
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{a.title}</p>
-                                                <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{a.body}</p>
-                                                {a.date && <p className="text-[11px] text-slate-400 mt-1">{a.date}</p>}
-                                            </div>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </CardContent>
-                    </Card>
+                    <Panel title="School announcements" action={<Bell className="size-4 text-slate-400" />} flush>
+                        <ul className="divide-y divide-slate-100 dark:divide-white/[0.06]">
+                            {announcements.map(a => (
+                                <li key={a.id} className="px-5 py-3.5">
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{a.title}</p>
+                                        {a.pinned && <Pill tone="info">Pinned</Pill>}
+                                    </div>
+                                    <p className="mt-0.5 line-clamp-2 text-sm text-slate-500">{a.body}</p>
+                                    {a.date && <p className="mt-1 text-xs text-slate-400">{a.date}</p>}
+                                </li>
+                            ))}
+                        </ul>
+                    </Panel>
                 )}
             </div>
         </AppLayout>

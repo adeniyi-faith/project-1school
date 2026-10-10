@@ -4,10 +4,11 @@ import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Search, User, Banknote } from 'lucide-react';
+import { EmptyState, PageHeader, Panel, PersonAvatar, Pill } from '@/components/app/kit';
+import { naira } from '@/lib/format';
+import { cn } from '@/lib/utils';
+import { ArrowLeft, Search, User } from 'lucide-react';
 import type { SchoolClass, PageProps } from '@/Types';
 
 interface Student {
@@ -66,166 +67,143 @@ export default function CollectFee({ student, structures, classes }: Props) {
         post('/school/fees/payments');
     }
 
+    const netDue = (Number(data.amount_due) || 0) + (Number(data.fine) || 0) - (Number(data.discount) || 0);
+    const err = (m?: string) => m && <p className="text-xs text-red-600">{m}</p>;
+    const fieldInput = 'h-10';
+
     return (
-        <AppLayout title="Collect Fee">
-            <div className="max-w-2xl mx-auto space-y-6">
-                <div className="flex items-center gap-3">
-                    <Link href="/school/fees/payments" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white">
-                        <ArrowLeft className="w-4 h-4" /> Payments
-                    </Link>
-                    <span className="text-slate-300 dark:text-slate-700">|</span>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Collect Fee</h1>
-                </div>
+        <AppLayout breadcrumbs={[{ label: 'Fees' }, { label: 'Payments', href: '/school/fees/payments' }, { label: 'Collect fee' }]}>
+            <div className="mx-auto max-w-5xl space-y-6 pb-24 md:pb-0">
+                <PageHeader
+                    title="Collect fee"
+                    description="Find the student, choose the fee, and record what was paid."
+                    actions={
+                        <Link href="/school/fees/payments" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+                            <ArrowLeft className="size-4" /> Payments
+                        </Link>
+                    }
+                />
 
                 {flash?.success && (
-                    <div className="rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">{flash.success}</div>
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">{flash.success}</div>
                 )}
 
-                {/* Student Search */}
-                <Card className="border-slate-200 dark:border-slate-800">
-                    <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Search className="w-4 h-4" /> Find Student</CardTitle></CardHeader>
-                    <CardContent>
-                        <div className="flex gap-2">
+                <Panel title="Find student" description="Search with the student's ID.">
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                             <Input
-                                placeholder="Student ID (e.g. STU-2026-0001)"
+                                placeholder="e.g. STU-2026-0001"
                                 value={searchId}
                                 onChange={e => setSearchId(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && searchStudent()}
-                                className="flex-1"
+                                className="h-10 pl-9"
                             />
-                            <Button type="button" onClick={searchStudent} variant="outline" className="inline-flex items-center gap-2">
-                                <Search className="w-4 h-4" /> Search
-                            </Button>
                         </div>
-                    </CardContent>
-                </Card>
+                        <Button type="button" onClick={searchStudent} variant="outline" className="h-10 px-4">Search</Button>
+                    </div>
+                </Panel>
 
-                {/* Student Info */}
-                {student && (
-                    <Card className="border-indigo-200 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950/20">
-                        <CardContent className="p-4 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
-                                {student.first_name[0]}{student.last_name?.[0] ?? ''}
-                            </div>
-                            <div>
-                                <p className="font-semibold text-slate-900 dark:text-white">{student.first_name} {student.last_name}</p>
-                                <p className="text-sm text-slate-500">ID: {student.admission_no} · {student.school_class?.name}</p>
-                            </div>
-                            <Badge className="ml-auto bg-indigo-100 text-indigo-700 border-0">Found</Badge>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Payment Form */}
-                {student && (
-                    <Card className="border-slate-200 dark:border-slate-800">
-                        <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Banknote className="w-4 h-4" /> Payment Details</CardTitle></CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleSubmit} className="space-y-4">
+                {!student ? (
+                    <Panel><EmptyState icon={User} title="No student selected" text="Search for a student by their ID to start collecting a fee." /></Panel>
+                ) : (
+                    <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[1fr_20rem] lg:items-start">
+                        <Panel title="Payment details">
+                            <div className="space-y-5">
                                 <div className="space-y-1.5">
-                                    <Label>Fee Structure <span className="text-red-500">*</span></Label>
+                                    <Label>Fee <span className="text-red-500">*</span></Label>
                                     <Select value={data.fee_structure_id} onValueChange={onStructureChange}>
-                                        <SelectTrigger><SelectValue placeholder="Select fee type" /></SelectTrigger>
+                                        <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Select fee type" /></SelectTrigger>
                                         <SelectContent>
-                                            {structures.map(s => (
-                                                <SelectItem key={s.id} value={String(s.id)}>
-                                                    {s.fee_category?.name} — ₦{Number(s.amount).toLocaleString()} ({s.frequency}) · {s.academic_year}
+                                            {structures.map(st => (
+                                                <SelectItem key={st.id} value={String(st.id)}>
+                                                    {st.fee_category?.name} · {naira(Number(st.amount))} ({st.frequency}) · {st.academic_year}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    {errors.fee_structure_id && <p className="text-xs text-red-500">{errors.fee_structure_id}</p>}
+                                    {err(errors.fee_structure_id)}
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid gap-4 sm:grid-cols-2">
                                     <div className="space-y-1.5">
-                                        <Label>Amount Due (₦) <span className="text-red-500">*</span></Label>
-                                        <Input type="number" min="0" step="0.01" value={data.amount_due} onChange={e => setData('amount_due', e.target.value)} />
-                                        {errors.amount_due && <p className="text-xs text-red-500">{errors.amount_due}</p>}
+                                        <Label>Amount due (₦) <span className="text-red-500">*</span></Label>
+                                        <Input className={cn(fieldInput, 'tabular-nums')} type="number" inputMode="decimal" min="0" step="0.01" value={data.amount_due} onChange={e => setData('amount_due', e.target.value)} />
+                                        {err(errors.amount_due)}
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label>Month/Year (for monthly)</Label>
-                                        <Input type="month" value={data.month_year} onChange={e => setData('month_year', e.target.value)} />
+                                        <Label>Month (for monthly fees)</Label>
+                                        <Input className={fieldInput} type="month" value={data.month_year} onChange={e => setData('month_year', e.target.value)} />
                                     </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
                                         <Label>Discount (₦)</Label>
-                                        <Input type="number" min="0" step="0.01" value={data.discount} onChange={e => setData('discount', e.target.value)} />
+                                        <Input className={cn(fieldInput, 'tabular-nums')} type="number" inputMode="decimal" min="0" step="0.01" value={data.discount} onChange={e => setData('discount', e.target.value)} />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label>Fine (₦)</Label>
-                                        <Input type="number" min="0" step="0.01" value={data.fine} onChange={e => setData('fine', e.target.value)} />
+                                        <Label>Late fine (₦)</Label>
+                                        <Input className={cn(fieldInput, 'tabular-nums')} type="number" inputMode="decimal" min="0" step="0.01" value={data.fine} onChange={e => setData('fine', e.target.value)} />
                                     </div>
                                 </div>
 
-                                {/* Net Due Summary */}
-                                <div className="rounded-lg bg-slate-50 dark:bg-slate-900 px-4 py-3 flex items-center justify-between">
-                                    <div className="text-sm text-slate-500">Net Due</div>
-                                    <div className="font-bold text-lg text-slate-900 dark:text-white">
-                                        ₦{(Number(data.amount_due || 0) + Number(data.fine || 0) - Number(data.discount || 0)).toLocaleString()}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1.5">
-                                        <Label>Amount Paid (₦) <span className="text-red-500">*</span></Label>
-                                        <Input type="number" min="0" step="0.01" value={data.amount_paid} onChange={e => setData('amount_paid', e.target.value)} />
-                                        {errors.amount_paid && <p className="text-xs text-red-500">{errors.amount_paid}</p>}
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label>Balance</Label>
-                                        <div className={`h-10 rounded-md border px-3 flex items-center font-semibold ${balance > 0 ? 'text-red-600 border-red-200 bg-red-50 dark:bg-red-950/20' : 'text-green-600 border-green-200 bg-green-50 dark:bg-green-950/20'}`}>
-                                            {balance > 0 ? `₦${balance.toLocaleString()}` : 'Fully Paid'}
+                                <div className="border-t border-slate-100 pt-5 dark:border-white/[0.06]">
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-1.5">
+                                            <Label>Amount paid (₦) <span className="text-red-500">*</span></Label>
+                                            <Input className={cn(fieldInput, 'text-base font-medium tabular-nums')} type="number" inputMode="decimal" min="0" step="0.01" value={data.amount_paid} onChange={e => setData('amount_paid', e.target.value)} />
+                                            {err(errors.amount_paid)}
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label>Payment method <span className="text-red-500">*</span></Label>
+                                            <Select value={data.method} onValueChange={v => setData('method', v)}>
+                                                <SelectTrigger className="h-10 w-full"><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="cash">Cash</SelectItem>
+                                                    <SelectItem value="bank_transfer">Bank transfer</SelectItem>
+                                                    <SelectItem value="pos">POS</SelectItem>
+                                                    <SelectItem value="card">Card</SelectItem>
+                                                    <SelectItem value="online">Online (Paystack, Flutterwave)</SelectItem>
+                                                    <SelectItem value="ussd">USSD</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label>Payment date <span className="text-red-500">*</span></Label>
+                                            <Input className={fieldInput} type="date" value={data.payment_date} onChange={e => setData('payment_date', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label>Note</Label>
+                                            <Input className={fieldInput} value={data.note} onChange={e => setData('note', e.target.value)} placeholder="Optional" />
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </Panel>
 
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1.5">
-                                        <Label>Payment Date <span className="text-red-500">*</span></Label>
-                                        <Input type="date" value={data.payment_date} onChange={e => setData('payment_date', e.target.value)} />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label>Payment Method <span className="text-red-500">*</span></Label>
-                                        <Select value={data.method} onValueChange={v => setData('method', v)}>
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="cash">Cash</SelectItem>
-                                                <SelectItem value="bank_transfer">Bank transfer</SelectItem>
-                                                <SelectItem value="pos">POS</SelectItem>
-                                                <SelectItem value="card">Card</SelectItem>
-                                                <SelectItem value="online">Online (Paystack, Flutterwave)</SelectItem>
-                                                <SelectItem value="ussd">USSD</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                        <div className="space-y-4 lg:sticky lg:top-20">
+                            <Panel>
+                                <div className="flex items-center gap-3">
+                                    <PersonAvatar name={`${student.first_name} ${student.last_name ?? ''}`} className="size-11" />
+                                    <div className="min-w-0">
+                                        <p className="truncate font-medium text-slate-900 dark:text-white">{student.first_name} {student.last_name}</p>
+                                        <p className="truncate text-xs text-slate-500">{student.admission_no}{student.school_class?.name ? ` · ${student.school_class.name}` : ''}</p>
                                     </div>
                                 </div>
-
-                                <div className="space-y-1.5">
-                                    <Label>Note</Label>
-                                    <Input value={data.note} onChange={e => setData('note', e.target.value)} placeholder="Optional note" />
-                                </div>
-
-                                <div className="flex justify-end gap-3 pt-2">
-                                    <Link href="/school/fees/payments">
-                                        <Button type="button" variant="ghost">Cancel</Button>
-                                    </Link>
-                                    <Button type="submit" disabled={processing} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                        {processing ? 'Processing...' : 'Record Payment'}
-                                    </Button>
-                                </div>
-                            </form>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {!student && (
-                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-20 text-center">
-                        <User className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                        <p className="text-slate-400">Search for a student by their ID to collect fees.</p>
-                    </div>
+                                <dl className="mt-5 space-y-3 border-t border-slate-100 pt-4 text-sm dark:border-white/[0.06]">
+                                    <div className="flex justify-between"><dt className="text-slate-500">Net due</dt><dd className="font-medium tabular-nums text-slate-900 dark:text-white">{naira(netDue)}</dd></div>
+                                    <div className="flex justify-between"><dt className="text-slate-500">Paying now</dt><dd className="font-medium tabular-nums text-slate-900 dark:text-white">{naira(Number(data.amount_paid) || 0)}</dd></div>
+                                    <div className="flex items-center justify-between border-t border-slate-100 pt-3 dark:border-white/[0.06]">
+                                        <dt className="text-slate-500">Balance</dt>
+                                        <dd>{netDue <= 0 ? <span className="text-slate-400">—</span> : balance > 0 ? <span className="text-base font-semibold tabular-nums text-red-700 dark:text-red-400">{naira(balance)}</span> : <Pill tone="good">Fully paid</Pill>}</dd>
+                                    </div>
+                                </dl>
+                            </Panel>
+                            <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 flex gap-2 border-t border-slate-200 bg-white/95 p-3 backdrop-blur lg:static lg:border-0 lg:bg-transparent lg:p-0 dark:border-white/10 dark:bg-slate-950/95">
+                                <Button type="submit" disabled={processing} className="h-11 flex-1 lg:h-10">
+                                    {processing ? 'Recording…' : 'Record payment'}
+                                </Button>
+                            </div>
+                        </div>
+                    </form>
                 )}
             </div>
         </AppLayout>
