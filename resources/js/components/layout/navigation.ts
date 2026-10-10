@@ -6,7 +6,7 @@ import {
     Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff,
     Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell,
     PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug,
-    CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History,
+    CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -87,6 +87,8 @@ export const navGroups: NavGroup[] = [
             { label: 'Lesson Plans',  href: '/school/homework/lesson-plans',   icon: ClipboardList, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Syllabus',      href: '/school/homework/syllabi',        icon: BookOpen,      roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Online Classes',href: '/school/homework/online-classes', icon: Video,         roles: ['super-admin','school-admin','principal','teacher'] },
+            { label: 'CBT Tests',     href: '/school/cbt/tests',               icon: MonitorCheck,  roles: ['super-admin','school-admin','principal','teacher'] },
+            { label: 'Question Banks',href: '/school/cbt/banks',               icon: Library,       roles: ['super-admin','school-admin','principal','teacher'] },
         ],
     },
     {
@@ -96,6 +98,7 @@ export const navGroups: NavGroup[] = [
             { label: 'My Attendance', href: '/school/student/attendance',  icon: ClipboardList,  roles: ['student'] },
             { label: 'My Results',    href: '/school/student/results',     icon: BarChart3,      roles: ['student'] },
             { label: 'My Homework',   href: '/school/student/homework',    icon: NotebookPen,    roles: ['student'] },
+            { label: 'My Tests',      href: '/school/student/cbt',         icon: MonitorCheck,   roles: ['student'] },
         ],
     },
     {

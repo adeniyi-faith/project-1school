@@ -40,6 +40,9 @@ class RolePermissionSeeder extends Seeder
         'results.view', 'results.publish', 'results.lock',
         'reportcard.generate',
 
+        // Computer-based tests: view tests and results; manage question banks and tests
+        'cbt.view', 'cbt.manage',
+
         // Fees
         'fees.view', 'fees.collect', 'fees.structure', 'fees.reports', 'fees.waiver',
         'fees.online', 'expenses.view', 'expenses.create',
@@ -86,7 +89,7 @@ class RolePermissionSeeder extends Seeder
             'academic-years.*', 'users.view', 'users.create', 'users.edit', 'users.delete',
             'students.*', 'admissions.*', 'staff.*',
             'attendance.*', 'timetable.*',
-            'exams.*', 'marks.*', 'results.*', 'reportcard.*',
+            'exams.*', 'marks.*', 'results.*', 'reportcard.*', 'cbt.*',
             'fees.*', 'expenses.*',
             'payroll.*', 'payslip.*', 'leave.*', 'staff.performance',
             'library.*', 'transport.*', 'hostel.*', 'inventory.*',
@@ -101,7 +104,7 @@ class RolePermissionSeeder extends Seeder
             'staff.view',
             'attendance.view', 'attendance.report', 'attendance.export',
             'timetable.view',
-            'exams.view', 'marks.view', 'results.view', 'results.publish', 'results.lock', 'reportcard.generate',
+            'exams.view', 'marks.view', 'results.view', 'results.publish', 'results.lock', 'reportcard.generate', 'cbt.view',
             'fees.view', 'fees.reports',
             'leave.view', 'leave.apply', 'leave.approve',
             'homework.view', 'lessons.view', 'lessons.approve', 'syllabus.view',
@@ -115,7 +118,7 @@ class RolePermissionSeeder extends Seeder
             'attendance.view', 'attendance.mark',
             'timetable.view',
             'exams.view', 'marks.view', 'marks.entry',
-            'results.view', 'reportcard.generate',
+            'results.view', 'reportcard.generate', 'cbt.view', 'cbt.manage',
             'homework.view', 'homework.create', 'homework.grade',
             'lessons.view', 'lessons.create', 'syllabus.view',
             'announcements.view', 'messages.view', 'messages.send',
