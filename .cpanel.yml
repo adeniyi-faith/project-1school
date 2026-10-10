@@ -3,3 +3,6 @@ deployment:
   tasks:
     - export DEPLOYPATH=/home2/rainofbl/public_html/school.criticalinfo.com.ng/
     - /bin/cp -R * $DEPLOYPATH
+    # `*` skips hidden files, so copy the root .htaccess explicitly. It keeps the
+    # app's files private by sending every request into public/.
+    - /bin/cp .htaccess $DEPLOYPATH
