@@ -2,9 +2,11 @@ import AppLayout from '@/Layouts/AppLayout';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3 } from 'lucide-react';
+import { TermReportCard } from '@/components/results/TermReportCard';
+import type { TermReport } from '@/Types';
 
 interface MarkRow { exam: string | null; type: string | null; subject: string | null; marks: number | null; total: number | null; grade: string | null; absent: boolean; }
-interface Child { id: number; full_name: string; class: string | null; marks: MarkRow[]; }
+interface Child { id: number; full_name: string; class: string | null; marks: MarkRow[]; reports: TermReport[]; }
 interface Props { linked: boolean; guardian: { name: string } | null; children: Child[]; }
 
 function gradeColor(g: string | null) {
@@ -32,6 +34,11 @@ export default function ParentResults({ linked, children }: Props) {
                 {children.map(child => (
                     <div key={child.id}>
                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">{child.full_name} — {child.class}</p>
+                        {child.reports.length > 0 && (
+                            <div className="mb-4 space-y-4">
+                                {child.reports.map(r => <TermReportCard key={r.id} report={r} />)}
+                            </div>
+                        )}
                         <Card>
                             <CardContent className="p-0">
                                 {child.marks.length === 0 ? (

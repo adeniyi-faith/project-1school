@@ -40,6 +40,12 @@ class DemoSchoolSeederTest extends TestCase
         $this->assertGreaterThan(500, DB::table('timetables')->where('school_id', $school->id)->count());
         $this->assertGreaterThan(40, DB::table('staff')->where('school_id', $school->id)->count());
 
+        // last session's Third Term results are published with positions; this term is still in draft
+        $this->assertSame(16, DB::table('result_sheets')->where('school_id', $school->id)->where('status', 'locked')->count());
+        $this->assertSame(16, DB::table('result_sheets')->where('school_id', $school->id)->where('status', 'draft')->count());
+        $this->assertGreaterThan(300, DB::table('term_result_summaries')->where('school_id', $school->id)->whereNotNull('position')->count());
+        $this->assertGreaterThan(1000, DB::table('behaviour_ratings')->where('school_id', $school->id)->count());
+
         // some of the names are really Nigerian, from several parts of the country
         $surnames = DB::table('students')->where('school_id', $school->id)->pluck('last_name')->unique()->all();
         $this->assertGreaterThan(60, count($surnames));

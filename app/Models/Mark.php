@@ -53,6 +53,12 @@ class Mark extends Model
         return (float) $this->marks_obtained >= (float) $this->subject->pass_marks;
     }
 
+    /** Marks parents and students may see: only from exams the school has published or completed. */
+    public function scopeVisibleToFamilies($query)
+    {
+        return $query->whereHas('exam', fn ($q) => $q->whereIn('status', ['published', 'completed']));
+    }
+
     public function exam(): BelongsTo    { return $this->belongsTo(Exam::class); }
     public function student(): BelongsTo { return $this->belongsTo(Student::class); }
     public function subject(): BelongsTo { return $this->belongsTo(Subject::class); }

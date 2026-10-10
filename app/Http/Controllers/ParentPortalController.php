@@ -8,6 +8,7 @@ use App\Models\FeePayment;
 use App\Models\Guardian;
 use App\Models\Mark;
 use App\Models\Student;
+use App\Services\TermResultService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -59,6 +60,7 @@ class ParentPortalController extends Controller
             /* Recent marks */
             $marks = Mark::where('school_id', $student->school_id)
                 ->where('student_id', $student->id)
+                ->visibleToFamilies()
                 ->with(['exam:id,name', 'subject:id,name,full_marks,pass_marks'])
                 ->orderByDesc('created_at')
                 ->limit(5)
@@ -202,6 +204,7 @@ class ParentPortalController extends Controller
         $children = $guardian->students->map(function (Student $student) {
             $marks = \App\Models\Mark::where('school_id', $student->school_id)
                 ->where('student_id', $student->id)
+                ->visibleToFamilies()
                 ->with(['exam:id,name,type', 'subject:id,name'])
                 ->orderByDesc('created_at')
                 ->get()
@@ -219,6 +222,7 @@ class ParentPortalController extends Controller
                 'full_name' => $student->full_name,
                 'class'     => $student->schoolClass?->name,
                 'marks'     => $marks,
+                'reports'   => app(TermResultService::class)->familyReports($student),
             ];
         });
 
