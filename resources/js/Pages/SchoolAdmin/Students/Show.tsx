@@ -10,9 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import type { PageProps, Student } from '@/Types';
+import type { ClassHistoryLine, PageProps, Student } from '@/Types';
 
-interface Props extends PageProps { student: Student }
+interface Props extends PageProps { student: Student; classHistory: ClassHistoryLine[] }
+
+const MOVE_LABELS: Record<ClassHistoryLine['outcome'], string> = { promoted: 'Moved up', repeated: 'Repeated', graduated: 'Graduated' };
 
 const statusColors: Record<string, string> = {
     active:      'bg-emerald-100 text-emerald-700',
@@ -28,8 +30,8 @@ const docSchema = z.object({
 type DocForm = z.infer<typeof docSchema>;
 
 export default function ShowStudent() {
-    const { student } = usePage<Props>().props;
-    const [tab, setTab]       = useState<'personal' | 'guardian' | 'documents'>('personal');
+    const { student, classHistory } = usePage<Props>().props;
+    const [tab, setTab]       = useState<'personal' | 'guardian' | 'documents' | 'history'>('personal');
     const [docOpen, setDocOpen] = useState(false);
 
     const { register, handleSubmit, reset, formState: { errors, isSubmitting } } =
@@ -109,12 +111,12 @@ export default function ShowStudent() {
 
             {/* Tabs */}
             <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-800">
-                {(['personal', 'guardian', 'documents'] as const).map((t) => (
+                {(['personal', 'guardian', 'documents', 'history'] as const).map((t) => (
                     <button
                         key={t}
                         onClick={() => setTab(t)}
                         className={`px-4 py-2 text-sm font-medium capitalize border-b-2 transition-colors ${tab === t ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                    >{t}</button>
+                    >{t === 'history' ? 'Class history' : t}</button>
                 ))}
             </div>
 
@@ -201,6 +203,33 @@ export default function ShowStudent() {
                                     </div>
                                 ))}
                             </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Class history tab: end-of-year moves */}
+            {tab === 'history' && (
+                <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <CardHeader className="pb-3"><CardTitle className="text-sm">Class history</CardTitle></CardHeader>
+                    <CardContent>
+                        {!classHistory.length ? (
+                            <p className="text-sm text-slate-400">No end-of-year moves yet.</p>
+                        ) : (
+                            <ol className="space-y-3">
+                                {classHistory.map((h) => (
+                                    <li key={h.id} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
+                                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                            {h.year}: {MOVE_LABELS[h.outcome]}{' '}
+                                            {h.outcome === 'promoted' ? `from ${h.from} to ${h.to}${h.to_section ? ` (${h.to_section})` : ''}` : h.outcome === 'repeated' ? h.from : `from ${h.from}`}
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                            {h.year_average !== null ? `Year average ${h.year_average.toFixed(1)}% · ` : ''}{h.by ? `by ${h.by} · ` : ''}{h.at}
+                                        </p>
+                                        {h.reason && <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{h.reason}</p>}
+                                    </li>
+                                ))}
+                            </ol>
                         )}
                     </CardContent>
                 </Card>
