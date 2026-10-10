@@ -42,11 +42,13 @@ use App\Http\Controllers\SchoolAdmin\AdmissionInquiryController;
 use App\Http\Controllers\SchoolAdmin\AdmissionPipelineController;
 use App\Http\Controllers\SchoolAdmin\PromotionController;
 use App\Http\Controllers\SchoolAdmin\BroadsheetController;
+use App\Http\Controllers\SchoolAdmin\CertificateController;
 use App\Http\Controllers\SchoolAdmin\CommentBankController;
 use App\Http\Controllers\SchoolAdmin\ReportCardController;
 use App\Http\Controllers\SchoolAdmin\ReportCardExportController;
 use App\Http\Controllers\ReportCardPortalController;
 use App\Http\Controllers\SchoolAdmin\ReportCardDesignController;
+use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\StudentPhotoController;
 use App\Http\Controllers\SchoolAdmin\VisitorLogController;
 use App\Http\Controllers\PublicAdmissionController;
@@ -130,6 +132,12 @@ Route::middleware('auth')->group(function () {
             Route::resource('students', StudentController::class)->only(['create', 'store'])->middleware('permission:students.create');
             Route::resource('students', StudentController::class)->only(['index', 'show'])->middleware('permission:students.view');
             Route::resource('students', StudentController::class)->only(['edit', 'update'])->middleware('permission:students.edit');
+            // Testimonials and transfer certificates
+            Route::get('certificates',                         [CertificateController::class, 'index'])->middleware('permission:students.view')->name('certificates.index');
+            Route::get('certificates/{certificate}/pdf',       [CertificateController::class, 'pdf'])->middleware('permission:students.view')->name('certificates.pdf');
+            Route::post('certificates/{certificate}/revoke',   [CertificateController::class, 'revoke'])->middleware('permission:students.certificates')->name('certificates.revoke');
+            Route::get('students/{student}/certificates/new',  [CertificateController::class, 'create'])->middleware('permission:students.certificates')->name('certificates.create');
+            Route::post('students/{student}/certificates',     [CertificateController::class, 'store'])->middleware('permission:students.certificates')->name('certificates.store');
             Route::resource('students', StudentController::class)->only(['destroy'])->middleware('permission:students.delete');
             Route::post('students/{student}/documents',        [StudentController::class, 'uploadDocument'])->middleware('permission:students.edit')->name('students.documents.upload');
             Route::delete('students/documents/{document}',     [StudentController::class, 'deleteDocument'])->middleware('permission:students.edit')->name('students.documents.delete');
@@ -543,5 +551,7 @@ Route::post('/webhooks/vehicles/{vehicle}/location', [TransportController::class
     ->name('webhooks.vehicle-location');
 
 // Public admission form (no auth)
+// Anyone can check that a testimonial or transfer certificate is genuine, using the code printed on it
+Route::get('/verify/{code}', [CertificateVerifyController::class, 'show'])->where('code', '[A-Za-z0-9]{6,16}')->middleware('throttle:30,1')->name('certificates.verify');
 Route::get('/apply/{school}',  [PublicAdmissionController::class, 'show'])->name('public.admission.show');
 Route::post('/apply/{school}', [PublicAdmissionController::class, 'submit'])->name('public.admission.submit');
