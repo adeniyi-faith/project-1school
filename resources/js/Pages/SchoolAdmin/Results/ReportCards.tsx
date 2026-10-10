@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { EmptyState, PageHeader, Panel } from '@/components/app/kit';
 import { ordinal } from '@/lib/format';
-import { ArrowLeft, Download, FileText, Palette } from 'lucide-react';
-import type { ReportCardStudent } from '@/Types';
+import { ArrowLeft, Download, FileText, MessageSquareQuote, Palette, Wand2 } from 'lucide-react';
+import { fittingComments, renderComment } from '@/lib/commentBank';
+import type { CommentBankEntry, ReportCardStudent } from '@/Types';
 
-interface Signer { id: number; label: string; can_write: boolean }
+interface Signer { id: number; label: string; writer_permission: string; can_write: boolean }
 
 interface Props {
     sheet: { id: number; status: string; term: string; class_name: string | null };
@@ -16,11 +17,12 @@ interface Props {
     signers: Signer[];
     students: ReportCardStudent[];
     canDesign: boolean;
+    bank: CommentBankEntry[];
 }
 
 const linkClass = 'inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200';
 
-export default function ReportCards({ sheet, design, signers, students, canDesign }: Props) {
+export default function ReportCards({ sheet, design, signers, students, canDesign, bank }: Props) {
     const base = `/school/results/${sheet.id}`;
     const released = sheet.status === 'published' || sheet.status === 'locked';
     // signer id → student id → comment
@@ -28,6 +30,23 @@ export default function ReportCards({ sheet, design, signers, students, canDesig
         signers.map(sg => [sg.id, Object.fromEntries(students.map(s => [s.id, s.remarks[sg.id] ?? '']))]),
     ));
     const [saving, setSaving] = useState<number | null>(null);
+    const writable = signers.filter(s => s.can_write);
+
+    // Typed but not saved yet: the server can't see these, so filling from the bank waits for a save
+    const dirty = (signerId: number) => students.some(s => (comments[signerId]?.[s.id] ?? '') !== (s.remarks[signerId] ?? ''));
+
+    function fill(signer: Signer, overwrite: boolean) {
+        if (overwrite && !window.confirm(`Replace every ${signer.label}'s comment in this class with one from the comment bank?`)) return;
+        setSaving(signer.id);
+        router.post(`${base}/comments/fill`, { signer_id: signer.id, overwrite }, {
+            preserveScroll: true,
+            onSuccess: page => {
+                const fresh = (page.props as unknown as Props).students;
+                setComments(c => ({ ...c, [signer.id]: Object.fromEntries(fresh.map(s => [s.id, s.remarks[signer.id] ?? ''])) }));
+            },
+            onFinish: () => setSaving(null),
+        });
+    }
 
     function edit(signerId: number, studentId: number, text: string) {
         setComments(c => ({ ...c, [signerId]: { ...c[signerId], [studentId]: text } }));
@@ -52,7 +71,6 @@ export default function ReportCards({ sheet, design, signers, students, canDesig
             )}
         </div>
     );
-    const writable = signers.filter(s => s.can_write);
 
     return (
         <AppLayout breadcrumbs={[{ label: 'Academic' }, { label: 'Term results', href: '/school/results' }, { label: sheet.class_name ?? 'Class', href: base }, { label: 'Report cards' }]}>
@@ -64,6 +82,36 @@ export default function ReportCards({ sheet, design, signers, students, canDesig
                 />
                 {/* The header hides its buttons on phones, so they are repeated here */}
                 <div className="md:hidden">{headerActions}</div>
+
+                {writable.length > 0 && students.length > 0 && sheet.status !== 'locked' && (
+                    <Panel>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="max-w-xl">
+                                <p className="font-medium text-slate-900 dark:text-white">Fill comments from the comment bank</p>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Each student gets a saved comment that fits their average. Only empty boxes are filled, and you can change any comment afterwards.{' '}
+                                    <Link href="/school/results/comment-bank" className="inline-flex items-center gap-1 text-indigo-600 hover:underline dark:text-indigo-400"><MessageSquareQuote className="size-3.5" /> Open the comment bank</Link>
+                                </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {writable.map(sg => (
+                                    <div key={sg.id} className="flex flex-col items-end gap-1">
+                                        <Button variant="outline" disabled={saving !== null || dirty(sg.id) || !bank.some(c => c.writer_permission === sg.writer_permission)} onClick={() => fill(sg, false)}>
+                                            <Wand2 className="size-4" /> Fill {sg.label}'s comments
+                                        </Button>
+                                        {dirty(sg.id) ? (
+                                            <span className="text-xs text-amber-600">Save your typed comments first</span>
+                                        ) : !bank.some(c => c.writer_permission === sg.writer_permission) ? (
+                                            <span className="text-xs text-slate-500">No saved comments yet</span>
+                                        ) : (
+                                            <button type="button" className="text-xs text-slate-500 hover:underline" disabled={saving !== null} onClick={() => fill(sg, true)}>Replace all instead</button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </Panel>
+                )}
 
                 <p className="text-sm text-slate-500">
                     Printed with the <strong>{design.name}</strong> design.{' '}
@@ -100,7 +148,13 @@ export default function ReportCards({ sheet, design, signers, students, canDesig
                                                 <label key={sg.id} className="block">
                                                     <span className="mb-1 block text-xs font-medium text-slate-500">{sg.label}'s comment</span>
                                                     {sg.can_write ? (
-                                                        <Textarea rows={2} maxLength={600} value={comments[sg.id]?.[s.id] ?? ''} onChange={e => edit(sg.id, s.id, e.target.value)} />
+                                                        <>
+                                                            <Textarea rows={2} maxLength={600} value={comments[sg.id]?.[s.id] ?? ''} onChange={e => edit(sg.id, s.id, e.target.value)} />
+                                                            <SavedCommentPicker
+                                                                options={fittingComments(bank, sg.writer_permission, s.average)}
+                                                                onPick={text => edit(sg.id, s.id, renderComment(text, s))}
+                                                            />
+                                                        </>
                                                     ) : (
                                                         <p className="min-h-10 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:bg-white/[0.04] dark:text-slate-300">{comments[sg.id]?.[s.id] || '—'}</p>
                                                     )}
@@ -122,5 +176,24 @@ export default function ReportCards({ sheet, design, signers, students, canDesig
                 )}
             </div>
         </AppLayout>
+    );
+}
+
+/** A short list of saved comments that fit this student's average; picking one puts it in the box */
+function SavedCommentPicker({ options, onPick }: { options: CommentBankEntry[]; onPick: (text: string) => void }) {
+    if (options.length === 0) return null;
+    return (
+        <select
+            aria-label="Use a saved comment"
+            className="mt-1 h-8 w-full truncate rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300"
+            value=""
+            onChange={e => {
+                const picked = options.find(o => String(o.id) === e.target.value);
+                if (picked) onPick(picked.comment);
+            }}
+        >
+            <option value="">Use a saved comment ({options.length})</option>
+            {options.map(o => <option key={o.id} value={o.id}>{o.comment.length > 90 ? `${o.comment.slice(0, 90)}…` : o.comment}</option>)}
+        </select>
     );
 }

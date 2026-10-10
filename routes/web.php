@@ -41,6 +41,7 @@ use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardCo
 use App\Http\Controllers\SchoolAdmin\AdmissionInquiryController;
 use App\Http\Controllers\SchoolAdmin\AdmissionPipelineController;
 use App\Http\Controllers\SchoolAdmin\PromotionController;
+use App\Http\Controllers\SchoolAdmin\CommentBankController;
 use App\Http\Controllers\SchoolAdmin\ReportCardController;
 use App\Http\Controllers\ReportCardPortalController;
 use App\Http\Controllers\SchoolAdmin\ReportCardDesignController;
@@ -168,6 +169,7 @@ Route::middleware('auth')->group(function () {
 
             // Term results: part scores, behaviour ratings, positions and the approval steps
             Route::get('results',                              [ResultController::class, 'index'])->middleware('permission:results.view')->name('results.index');
+            Route::get('results/comment-bank',                   [CommentBankController::class, 'index'])->middleware('permission:results.view')->name('comment-bank.index');
             Route::get('results/{sheet}',                      [ResultController::class, 'show'])->middleware('permission:results.view')->name('results.show');
             Route::post('results/{sheet}/scores',              [ResultController::class, 'saveScores'])->middleware('permission:marks.entry')->name('results.scores');
             Route::post('results/{sheet}/ratings',             [ResultController::class, 'saveRatings'])->middleware('permission:marks.entry')->name('results.ratings');
@@ -187,6 +189,12 @@ Route::middleware('auth')->group(function () {
             Route::get('results/{sheet}/report-cards/session',   [ReportCardController::class, 'session'])->middleware('permission:reportcard.generate')->name('results.report-cards.session');
             // Who may write each comment is set on the signer (teachers or heads); the controller checks it
             Route::post('results/{sheet}/comments',              [ReportCardController::class, 'saveComments'])->middleware('permission:results.view')->name('results.comments');
+            Route::post('results/{sheet}/comments/fill',         [ReportCardController::class, 'fillComments'])->middleware('permission:results.view')->name('results.comments.fill');
+            Route::post('results/comment-bank',                  [CommentBankController::class, 'store'])->middleware('permission:results.view')->name('comment-bank.store');
+            Route::post('results/comment-bank/starters',         [CommentBankController::class, 'starters'])->middleware('permission:results.view')->name('comment-bank.starters');
+            Route::post('results/comment-bank/apply',            [CommentBankController::class, 'apply'])->middleware('permission:results.view')->name('comment-bank.apply');
+            Route::put('results/comment-bank/{entry}',           [CommentBankController::class, 'update'])->middleware('permission:results.view')->name('comment-bank.update');
+            Route::delete('results/comment-bank/{entry}',        [CommentBankController::class, 'destroy'])->middleware('permission:results.view')->name('comment-bank.destroy');
             Route::redirect('grade-scales', '/school/academics/assessment')->middleware('permission:exams.view')->name('grade-scales.index');
 
             // Timetable

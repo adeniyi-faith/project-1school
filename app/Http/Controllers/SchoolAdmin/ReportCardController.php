@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ReportCardCommentBank;
 use App\Models\ReportCardDesign;
 use App\Models\ReportCardRemark;
 use App\Models\ReportCardSigner;
 use App\Models\ResultSheet;
 use App\Models\TermResultSummary;
+use App\Services\ReportCardCommentService;
 use App\Services\ReportCardService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -46,22 +48,53 @@ class ReportCardController extends Controller
             'signers' => $signers->map(fn (ReportCardSigner $s) => [
                 'id' => $s->id,
                 'label' => $s->label,
+                'writer_permission' => $s->writer_permission,
                 'can_write' => $sheet->status !== 'locked' && $s->canWrite($user),
             ]),
-            'students' => TermResultSummary::where('result_sheet_id', $sheet->id)->with('student:id,first_name,last_name,admission_no')->get()
+            'students' => TermResultSummary::where('result_sheet_id', $sheet->id)->with('student:id,first_name,last_name,admission_no,gender')->get()
                 ->filter(fn ($s) => $s->student)
                 ->sortBy(fn ($s) => $s->student->full_name)
                 ->map(fn (TermResultSummary $s) => [
                     'id' => $s->student_id,
                     'name' => $s->student->full_name,
                     'admission_no' => $s->student->admission_no,
+                    'first_name' => $s->student->first_name,
+                    'gender' => $s->student->gender,
                     'average' => $s->average,
                     'position' => $s->position,
                     'class_size' => $s->class_size,
                     'remarks' => (object) ($remarks[$s->student_id] ?? collect())->pluck('comment', 'report_card_signer_id')->all(),
                 ])->values(),
             'canDesign' => $user->can('settings.edit'),
+            // Saved comments for the boxes this person may write, to pick from per student
+            'bank' => ReportCardCommentBank::whereIn('writer_permission', $signers->filter(fn ($s) => $s->canWrite($user))->pluck('writer_permission')->unique())
+                ->orderByDesc('min_average')->orderBy('id')->get(['id', 'writer_permission', 'min_average', 'max_average', 'comment']),
         ]);
+    }
+
+    /** Fill one signer's comments for the whole class from the comment bank (or one same comment) */
+    public function fillComments(Request $request, ResultSheet $sheet, ReportCardCommentService $comments): RedirectResponse
+    {
+        if ($sheet->status === 'locked') {
+            throw ValidationException::withMessages(['comments' => 'These results are locked, so comments can no longer be changed.']);
+        }
+
+        $data = $request->validate([
+            'signer_id' => 'required|integer',
+            'overwrite' => 'boolean',
+            'text' => 'nullable|string|max:600',
+        ]);
+
+        $design = ReportCardDesign::forClass($sheet->school_id, $sheet->class_id);
+        $signer = ReportCardSigner::where('report_card_design_id', $design->id)->findOrFail($data['signer_id']);
+        abort_unless($signer->canWrite($request->user()), 403);
+
+        $text = trim((string) ($data['text'] ?? ''));
+        $written = $comments->fill($sheet, $signer, $request->user(), $request->boolean('overwrite'), $text !== '' ? $text : null);
+
+        return $written
+            ? back()->with('success', "{$written} {$signer->label} ".str('comment')->plural($written).' filled in. Check them and change any you want.')
+            : back()->with('info', 'No comments were filled in. Every student may already have one, or no saved comment fits their averages. Add comments on the Comment Bank page.');
     }
 
     /** One signer's comments for the class. Who may write is set on the signer (teachers or heads). */
