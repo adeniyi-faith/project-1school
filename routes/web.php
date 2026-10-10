@@ -50,7 +50,7 @@ use App\Http\Controllers\SchoolAdmin\CbtTestController;
 use App\Http\Controllers\StudentCbtController;
 use App\Http\Controllers\CandidateCbtController;
 use App\Http\Controllers\ParentPaymentController;
-use App\Http\Controllers\PaystackWebhookController;
+use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SchoolAdmin\OnlinePaymentController;
 use App\Http\Controllers\CbtImageController;
 use App\Http\Controllers\SchoolAdmin\CommentBankController;
@@ -542,7 +542,8 @@ Route::middleware('auth')->group(function () {
         Route::get('report-cards/{student}/{sheet}/session', [ReportCardPortalController::class, 'parentSession'])->whereNumber(['student', 'sheet'])->name('report-cards.session');
         Route::get('fees',          [ParentPortalController::class, 'fees'])->name('fees');
         Route::post('fees/invoices/{invoice}/pay', [ParentPaymentController::class, 'pay'])->middleware('throttle:10,1')->name('fees.pay');
-        Route::get('fees/paystack/return',  [ParentPaymentController::class, 'returned'])->name('fees.paystack.return');
+        Route::get('fees/pay/{reference}/go',     [ParentPaymentController::class, 'go'])->name('fees.pay.go');
+        Route::get('fees/pay/{reference}/result', [ParentPaymentController::class, 'result'])->name('fees.pay.result');
         Route::get('announcements', [ParentPortalController::class, 'announcements'])->name('announcements');
     });
 
@@ -613,8 +614,13 @@ Route::post('/webhooks/vehicles/{vehicle}/location', [TransportController::class
     ->middleware('throttle:120,1')
     ->name('webhooks.vehicle-location');
 
-// Paystack tells the school about successful payments here. No login: each message is signed with the school's secret key.
-Route::post('/webhooks/paystack/{school}', PaystackWebhookController::class)->whereNumber('school')->middleware('throttle:120,1')->name('webhooks.paystack');
+// Online fee payments: providers tell the school about payments here (checked, then confirmed with the provider directly),
+// and send parents back here after paying, sometimes as a form post from their own site.
+Route::post('/webhooks/payments/{provider}/{school}', PaymentWebhookController::class)->whereAlpha('provider')->whereNumber('school')->middleware('throttle:120,1')->name('webhooks.payments');
+Route::match(['get', 'post'], '/payments/return/{reference}', [ParentPaymentController::class, 'returned'])->where('reference', '[A-Za-z0-9]{8,60}')->middleware('throttle:30,1')
+    // No session here: a form post from the provider's site carries no login, and starting a fresh session would sign the parent out
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class, \Illuminate\Session\Middleware\StartSession::class, \Illuminate\View\Middleware\ShareErrorsFromSession::class, \App\Http\Middleware\HandleInertiaRequests::class])
+    ->name('payments.return');
 
 // Entrance exams on the computer: applicants log in with the exam number and PIN on their slip (no account)
 Route::prefix('exam')->name('exam.')->controller(CandidateCbtController::class)->group(function () {
