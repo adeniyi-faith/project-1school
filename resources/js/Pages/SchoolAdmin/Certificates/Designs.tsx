@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader, Panel } from '@/components/app/kit';
 import { ArrowLeft, Eye, RotateCcw } from 'lucide-react';
-import { appendDeep, openTryOut } from '@/lib/preview';
+import { appendDeep, usePreview } from '@/lib/preview';
+import { PreviewOverlay } from '@/components/app/PreviewOverlay';
 
 type CertType = 'testimonial' | 'transfer';
 type Border = 'classic' | 'ornate' | 'modern' | 'simple';
@@ -86,12 +87,12 @@ function Editor({ template, standard, borders, blanks, schoolColors, canEdit }: 
     const bodyRef = useRef<HTMLTextAreaElement>(null);
     // Pictures to try on the preview only. They are never saved.
     const [trial, setTrial] = useState<{ school_logo: File | null; signature: File | null; stamp: File | null }>({ school_logo: null, signature: null, stamp: null });
-    const [previewError, setPreviewError] = useState<string | null>(null);
+    const tryOut = usePreview();
 
     function preview() {
         const body = new FormData();
         Object.entries({ ...form.data, ...trial }).forEach(([k, v]) => appendDeep(body, k, v ?? ''));
-        setPreviewError(openTryOut(`/school/certificates/designs/${template.type}/try`, body));
+        void tryOut.show(`/school/certificates/designs/${template.type}/try`, body, 'Preview: certificate');
     }
     const primary = form.data.primary_color ?? schoolColors.primary;
     const accent = form.data.accent_color ?? schoolColors.accent;
@@ -112,6 +113,7 @@ function Editor({ template, standard, borders, blanks, schoolColors, canEdit }: 
 
     return (
         <form onSubmit={save} className="space-y-6">
+            <PreviewOverlay state={tryOut.state} onClose={tryOut.close} />
             <Panel>
                 <p className="mb-3 font-medium text-slate-900 dark:text-white">Border</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -213,7 +215,6 @@ function Editor({ template, standard, borders, blanks, schoolColors, canEdit }: 
                 </div>
             </Panel>
 
-            {previewError && <p className="text-right text-sm text-red-500">{previewError}</p>}
             <div className="flex flex-wrap items-center justify-end gap-2">
                 <Button type="button" variant="outline" onClick={preview}><Eye className="size-4" /> Preview</Button>
                 {canEdit && <Button type="submit" disabled={form.processing || !form.isDirty} className="bg-indigo-600 text-white hover:bg-indigo-700">Save design</Button>}

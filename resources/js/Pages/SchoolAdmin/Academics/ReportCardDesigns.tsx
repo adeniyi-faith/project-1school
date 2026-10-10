@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader, Panel, Pill } from '@/components/app/kit';
 import { cn } from '@/lib/utils';
-import { appendDeep, openTryOut } from '@/lib/preview';
+import { appendDeep, usePreview } from '@/lib/preview';
+import { PreviewOverlay } from '@/components/app/PreviewOverlay';
 import { ArrowDown, ArrowUp, Eye, Plus, Trash2 } from 'lucide-react';
 import type { ReportCardDesignRow, ReportCardSignerRow } from '@/Types';
 
@@ -134,7 +135,7 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
     const [confirmDelete, setConfirmDelete] = useState(false);
     // Preview what is on screen now, even before saving. Pictures picked but not saved show too.
     const [trialLogo, setTrialLogo] = useState<File | null>(null);
-    const [previewError, setPreviewError] = useState<string | null>(null);
+    const tryOut = usePreview();
     function preview(type: 'term' | 'session') {
         const body = new FormData();
         appendDeep(body, 'type', type);
@@ -145,7 +146,7 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
             (['id', 'label', 'name', 'has_comment', 'remove_signature'] as const).forEach(k => appendDeep(body, `signers[${i}][${k}]`, s[k]));
             if (s.signature) body.append(`signers[${i}][signature]`, s.signature);
         });
-        setPreviewError(openTryOut(`${base}/try`, body));
+        void tryOut.show(`${base}/try`, body, type === 'session' ? 'Preview: full-year card' : 'Preview: term card');
     }
 
 
@@ -177,6 +178,7 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
 
     return (
         <form onSubmit={save} className="space-y-6">
+            <PreviewOverlay state={tryOut.state} onClose={tryOut.close} />
             <Panel title="Look">
                 <div className="space-y-5">
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -335,7 +337,6 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
                         <input type="file" accept="image/png,image/jpeg" className="text-xs" onChange={e => setTrialLogo(e.target.files?.[0] ?? null)} />
                     </div>
                     <p className="text-xs text-slate-500">The preview shows everything chosen on this page, including a stamp, signature or logo you have picked but not saved. Previewing never saves or uploads anything, so you can try pictures freely, even on the demo.</p>
-                    {previewError && <p className="text-sm text-red-500">{previewError}</p>}
                 </div>
             </Panel>
 
