@@ -73,23 +73,27 @@ export default function Invoices({ invoices, stats, classes, terms, structures, 
         form.post('/school/fees/invoices', { preserveScroll: true, onSuccess: () => { setIssueOpen(false); form.setData('fee_structure_ids', []); } });
     }
 
+    const headerActions = (
+        <div className="flex gap-2">
+            <Link href="/school/fees/scholarships"><Button variant="outline"><Gift className="size-4" /> Scholarships</Button></Link>
+            {can.issue && (
+                <Button onClick={() => { form.clearErrors(); setIssueOpen(true); }} className="bg-indigo-600 text-white hover:bg-indigo-700">
+                    <Plus className="size-4" /> Create invoices
+                </Button>
+            )}
+        </div>
+    );
+
     return (
         <AppLayout title="Invoices">
             <div className="space-y-6">
                 <PageHeader
                     title="Invoices"
                     description="Each invoice is one fee for one student for one term. Payments, fines and discounts are added as lines underneath it."
-                    actions={
-                        <div className="flex gap-2">
-                            <Link href="/school/fees/scholarships"><Button variant="outline"><Gift className="size-4" /> Scholarships</Button></Link>
-                            {can.issue && (
-                                <Button onClick={() => { form.clearErrors(); setIssueOpen(true); }} className="bg-indigo-600 text-white hover:bg-indigo-700">
-                                    <Plus className="size-4" /> Create invoices
-                                </Button>
-                            )}
-                        </div>
-                    }
+                    actions={headerActions}
                 />
+                {/* The header hides its buttons on phones, so they are repeated here */}
+                <div className="md:hidden">{headerActions}</div>
 
                 <StatStrip items={[
                     { label: 'Still owed', value: naira(stats.outstanding), tone: stats.outstanding > 0 ? 'bad' : 'default' },

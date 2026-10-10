@@ -422,3 +422,21 @@ export interface ScholarshipAward {
     note: string | null;
     active: boolean;
 }
+
+// ───────────── Admissions ─────────────
+
+export type InquiryStatus = 'new' | 'follow_up' | 'accepted' | 'admitted' | 'dropped';
+export type AssessmentOutcome = 'pending' | 'passed' | 'failed' | 'absent';
+
+/** An entrance exam or interview for one applicant */
+export interface AdmissionAssessment {
+    id: number;
+    type: 'exam' | 'interview';
+    scheduled_at: string | null;
+    venue: string | null;
+    score: number | null;
+    max_score: number | null;
+    outcome: AssessmentOutcome;
+    remarks: string | null;
+    recorded_by: string | null;
+}

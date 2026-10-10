@@ -39,6 +39,7 @@ use App\Http\Controllers\SchoolAdmin\SettingsController as SchoolSettingsControl
 use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\SchoolAdmin\AdmissionInquiryController;
+use App\Http\Controllers\SchoolAdmin\AdmissionPipelineController;
 use App\Http\Controllers\SchoolAdmin\VisitorLogController;
 use App\Http\Controllers\PublicAdmissionController;
 use App\Http\Controllers\StudentPortalController;
@@ -373,6 +374,12 @@ Route::middleware('auth')->group(function () {
             Route::put('admissions/inquiries/{admissionInquiry}',       [AdmissionInquiryController::class, 'update'])->middleware('permission:students.create')->name('admissions.inquiries.update');
             Route::delete('admissions/inquiries/{admissionInquiry}',    [AdmissionInquiryController::class, 'destroy'])->middleware('permission:students.edit')->name('admissions.inquiries.destroy');
             Route::post('admissions/inquiries/{admissionInquiry}/followup', [AdmissionInquiryController::class, 'addFollowup'])->middleware('permission:students.create')->name('admissions.inquiries.followup');
+            Route::get('admissions/inquiries/{admissionInquiry}',       [AdmissionPipelineController::class, 'show'])->middleware('permission:students.view')->name('admissions.inquiries.show');
+            Route::post('admissions/inquiries/{admissionInquiry}/assessments', [AdmissionPipelineController::class, 'storeAssessment'])->middleware('permission:admissions.manage')->name('admissions.assessments.store');
+            Route::put('admissions/inquiries/{admissionInquiry}/assessments/{assessment}', [AdmissionPipelineController::class, 'updateAssessment'])->middleware('permission:admissions.manage')->name('admissions.assessments.update');
+            Route::delete('admissions/inquiries/{admissionInquiry}/assessments/{assessment}', [AdmissionPipelineController::class, 'destroyAssessment'])->middleware('permission:admissions.manage')->name('admissions.assessments.destroy');
+            Route::post('admissions/inquiries/{admissionInquiry}/decision', [AdmissionPipelineController::class, 'decide'])->middleware('permission:admissions.manage')->name('admissions.inquiries.decide');
+            Route::post('admissions/inquiries/{admissionInquiry}/enrol', [AdmissionPipelineController::class, 'enrol'])->middleware('permission:students.create')->name('admissions.inquiries.enrol');
 
             // Visitor Logs
             Route::get('admissions/visitors',                [VisitorLogController::class, 'index'])->middleware('permission:students.view')->name('admissions.visitors');
