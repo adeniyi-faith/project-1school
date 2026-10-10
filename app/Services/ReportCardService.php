@@ -6,7 +6,9 @@ use App\Models\AcademicYear;
 use App\Models\AssessmentScheme;
 use App\Models\Attendance;
 use App\Models\BehaviourRating;
-use App\Models\ReportCardComment;
+use App\Models\Invoice;
+use App\Models\ReportCardDesign;
+use App\Models\ReportCardRemark;
 use App\Models\ResultSheet;
 use App\Models\School;
 use App\Models\SchoolSetting;
@@ -18,8 +20,7 @@ use App\Models\Term;
 use App\Models\TermResult;
 use App\Models\TermResultSummary;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
-use Throwable;
+use App\Support\EmbeddedImage;
 
 /**
  * Gathers everything printed on a report card from the stored term results:
@@ -55,14 +56,16 @@ class ReportCardService
             ->groupBy(fn ($s) => $s->student_id.'-'.$s->subject_id);
         $ratings = BehaviourRating::where('result_sheet_id', $sheet->id)->whereIn('student_id', $ids)
             ->with(['behaviourTrait' => fn ($q) => $q->withTrashed()])->get()->groupBy('student_id');
-        $comments = ReportCardComment::where('result_sheet_id', $sheet->id)->whereIn('student_id', $ids)->get()->keyBy('student_id');
+        $remarks = ReportCardRemark::where('result_sheet_id', $sheet->id)->whereIn('student_id', $ids)->get()->groupBy('student_id');
         $attendance = $this->attendance($sheet->term, $ids->all());
         $columns = $this->columns($subjects);
         $grading = GradingService::forClass($sheet->school_id, $sheet->class_id);
-        $common = $this->common($sheet->school_id, $sheet, $grading);
+        $design = ReportCardDesign::forClass($sheet->school_id, $sheet->class_id);
+        $common = $this->common($sheet->school_id, $sheet, $grading, $design);
         $nextTerm = $this->nextTermStart($sheet->term);
+        $owed = $common['design']['show_fees_owed'] ? $this->feesOwed($ids->all()) : [];
 
-        return $summaries->map(function (TermResultSummary $summary) use ($sheet, $results, $subjects, $scores, $ratings, $comments, $attendance, $columns, $grading, $common, $nextTerm) {
+        return $summaries->map(function (TermResultSummary $summary) use ($sheet, $results, $subjects, $scores, $ratings, $remarks, $attendance, $columns, $grading, $common, $nextTerm, $owed) {
             $student = $summary->student;
             $rows = ($results[$student->id] ?? collect())
                 ->sortBy(fn ($r) => $subjects[$r->subject_id]?->name)
@@ -82,10 +85,8 @@ class ReportCardService
                         'lowest' => $r->subject_lowest,
                     ];
                 })->values()->all();
-            $comment = $comments[$student->id] ?? null;
-
             return $common + [
-                'student' => $this->studentInfo($student, $sheet->schoolClass?->name),
+                'student' => $this->studentInfo($student, $sheet->schoolClass?->name, $common['design']['show_photo']),
                 'columns' => $columns,
                 'rows' => $rows,
                 'summary' => [
@@ -103,9 +104,10 @@ class ReportCardService
                     ->map(fn ($group) => $group->map(fn ($r) => ['name' => $r->behaviourTrait?->name, 'rating' => $r->rating])->values()->all())
                     ->all(),
                 'attendance' => $attendance[$student->id] ?? null,
-                'teacher_comment' => $comment?->teacher_comment,
-                'principal_comment' => $comment?->principal_comment,
+                // signer id => comment
+                'remarks' => ($remarks[$student->id] ?? collect())->pluck('comment', 'report_card_signer_id')->all(),
                 'next_term_begins' => $nextTerm,
+                'fees_owed' => $owed[$student->id] ?? 0.0,
             ];
         })->all();
     }
@@ -146,7 +148,7 @@ class ReportCardService
 
         $class = $sheets->first()->schoolClass;
         $grading = GradingService::forClass($year->school_id, $classId);
-        $common = $this->common($year->school_id, $sheets->last(), $grading, $sheets);
+        $common = $this->common($year->school_id, $sheets->last(), $grading, ReportCardDesign::forClass($year->school_id, $classId), $sheets);
         $termNames = $sheets->map(fn ($s) => $terms->firstWhere('id', $s->term_id)?->name)->all();
 
         return $students->map(function (Student $student) use ($sheets, $summaries, $results, $subjects, $yearAverages, $classSize, $decisions, $class, $grading, $common, $termNames, $year) {
@@ -170,7 +172,7 @@ class ReportCardService
 
             return $common + [
                 'year' => $year->name,
-                'student' => $this->studentInfo($student, $class?->name),
+                'student' => $this->studentInfo($student, $class?->name, $common['design']['show_photo']),
                 'term_names' => $termNames,
                 'rows' => $rows,
                 'term_averages' => $termSummaries->map(fn ($s) => $s?->average)->all(),
@@ -192,28 +194,129 @@ class ReportCardService
     }
 
     /** School details, grade key and the "not yet published" flag shared by every card in a batch. */
-    private function common(int $schoolId, ResultSheet $sheet, GradingService $grading, ?Collection $sheets = null): array
+    private function common(int $schoolId, ResultSheet $sheet, GradingService $grading, ReportCardDesign $design, ?Collection $sheets = null): array
     {
-        $school = School::find($schoolId);
         $sheet->loadMissing('term.academicYear');
 
         return [
-            'school' => [
-                'name' => $school?->name,
-                'address' => collect([$school?->address, $school?->city, $school?->state])->filter()->implode(', '),
-                'phone' => $school?->phone,
-                'email' => $school?->email,
-                'motto' => SchoolSetting::get($schoolId, 'tagline'),
-                'logo' => $this->logo($school),
-            ],
+            'school' => $this->school($schoolId),
+            'design' => $this->design($design),
             'term' => $sheet->term?->name,
             'session' => $sheet->term?->academicYear?->name,
-            'grade_key' => $grading->scales()->map(fn ($s) => ['grade' => $s->grade, 'min' => (float) $s->min_marks, 'max' => (float) $s->max_marks, 'remarks' => $s->remarks])->values()->all(),
+            'grade_key' => $this->gradeKey($grading),
             'preview' => ($sheets ?? collect([$sheet]))->contains(fn ($s) => ! in_array($s->status, self::RELEASED, true)),
         ];
     }
 
-    private function studentInfo(Student $student, ?string $className): array
+    /**
+     * A made-up student's cards, printed with a design, so a school can see how the design
+     * looks before any results exist. Uses the school's own header, grade scale and signers.
+     */
+    public function sampleCards(ReportCardDesign $design, string $type = 'term'): array
+    {
+        $grading = new GradingService($design->school_id);
+        $common = [
+            'school' => $this->school($design->school_id),
+            'design' => $this->design($design),
+            'term' => 'First Term',
+            'session' => now()->year.'/'.(now()->year + 1),
+            'grade_key' => $this->gradeKey($grading),
+            'preview' => false,
+        ];
+        $student = ['name' => 'Adaeze Okafor (sample)', 'admission_no' => 'ADM-0000-0001', 'class' => 'JSS 2', 'section' => 'A', 'gender' => 'Female', 'age' => 12, 'photo' => null];
+        $subjects = ['English Language' => [16, 15, 48], 'Mathematics' => [18, 17, 52], 'Basic Science' => [14, 13, 41], 'Social Studies' => [17, 16, 45], 'Civic Education' => [12, 14, 38], 'Computer Studies' => [19, 18, 55]];
+
+        if ($type === 'session') {
+            $rows = [];
+            foreach ($subjects as $name => [$a, $b, $c]) {
+                $terms = [$a + $b + $c, min(100, $a + $b + $c + 4), min(100, $a + $b + $c - 3)];
+                $avg = round(array_sum($terms) / 3, 2);
+                $rows[] = ['subject' => $name, 'terms' => $terms, 'average' => $avg, 'grade' => $grading->calculate($avg, 100)['grade']];
+            }
+            $average = round(collect($rows)->avg('average'), 2);
+
+            return [$common + [
+                'year' => $common['session'], 'student' => $student, 'term_names' => ['First Term', 'Second Term', 'Third Term'],
+                'rows' => $rows, 'term_averages' => [74.5, 77.17, 72.17],
+                'term_positions' => [['position' => 4, 'class_size' => 32], ['position' => 3, 'class_size' => 32], ['position' => 5, 'class_size' => 31]],
+                'summary' => ['average' => $average, 'grade' => $grading->calculate($average, 100)['grade'], 'position' => 4, 'class_size' => 32],
+                'decision' => 'Promoted to JSS 3',
+            ]];
+        }
+
+        $rows = [];
+        foreach ($subjects as $name => [$a, $b, $c]) {
+            $total = $a + $b + $c;
+            $graded = $grading->calculate($total, 100);
+            $rows[] = ['subject' => $name, 'parts' => ['CA1' => $a, 'CA2' => $b, 'Exam' => $c], 'total' => $total, 'grade' => $graded['grade'],
+                'remarks' => $graded['remarks'], 'position' => ($total % 7) + 1, 'average' => $total - 9.5, 'highest' => min(100, $total + 8), 'lowest' => $total - 31];
+        }
+        $total = array_sum(array_column($rows, 'total'));
+        $average = round($total / count($rows), 2);
+        $traits = ['affective' => ['Punctuality', 'Neatness', 'Politeness', 'Honesty'], 'psychomotor' => ['Handwriting', 'Sports and games', 'Drawing and painting']];
+        $samples = ['A hardworking pupil who takes part well in class. Keep it up.', 'A good result. Aim higher in Civic Education next term.', 'Well done.', 'Keep it up.'];
+
+        return [$common + [
+            'student' => $student,
+            'columns' => [['name' => 'CA1', 'max' => 20], ['name' => 'CA2', 'max' => 20], ['name' => 'Exam', 'max' => 60]],
+            'rows' => $rows,
+            'summary' => ['subjects' => count($rows), 'total' => $total, 'average' => $average, 'grade' => $grading->calculate($average, 100)['grade'],
+                'position' => 4, 'class_size' => 32, 'class_average' => 63.4],
+            'ratings' => collect($traits)->map(fn ($names) => collect($names)->map(fn ($n, $i) => ['name' => $n, 'rating' => 5 - ($i % 3)])->all())->all(),
+            'attendance' => ['present' => 58, 'absent' => 2, 'marked' => 60],
+            'remarks' => collect($common['design']['signers'])->filter(fn ($s) => $s['has_comment'])->values()
+                ->mapWithKeys(fn ($s, $i) => [$s['id'] => $samples[$i] ?? 'Well done.'])->all(),
+            'next_term_begins' => now()->addMonths(3)->format('j F Y'),
+            'fees_owed' => 45000.0,
+        ]];
+    }
+
+    /** School name, contact lines, motto and logo for the card header */
+    public function school(int $schoolId): array
+    {
+        $school = School::find($schoolId);
+
+        return [
+            'name' => $school?->name,
+            'address' => collect([$school?->address, $school?->city, $school?->state])->filter()->implode(', '),
+            'phone' => $school?->phone,
+            'email' => $school?->email,
+            'motto' => SchoolSetting::get($schoolId, 'tagline'),
+            'logo' => EmbeddedImage::from($school?->logo, 'public'),
+        ];
+    }
+
+    /** Everything the PDF views need from a design: switches, colours, sizes, titles, signers and images */
+    public function design(ReportCardDesign $design): array
+    {
+        $design->loadMissing('signers');
+
+        return $design->settings() + [
+            'template' => in_array($design->template, ReportCardDesign::TEMPLATES, true) ? $design->template : 'classic',
+            'primary' => $design->primary_color ?: '#312e81',
+            'accent' => $design->accent_color ?: '#4f46e5',
+            'font_size' => ['small' => 9, 'normal' => 10, 'large' => 11][$design->font_size] ?? 10,
+            'paper' => $design->paper === 'letter' ? 'letter' : 'a4',
+            'term_title' => $design->term_title ?: 'Report Card',
+            'session_title' => $design->session_title ?: 'Full-Year Report Card',
+            'footer_note' => $design->footer_note,
+            'stamp' => EmbeddedImage::from($design->stamp_path),
+            'signers' => $design->signers->map(fn ($s) => [
+                'id' => $s->id,
+                'label' => $s->label,
+                'name' => $s->name,
+                'has_comment' => $s->has_comment,
+                'signature' => EmbeddedImage::from($s->signature_path),
+            ])->all(),
+        ];
+    }
+
+    public function gradeKey(GradingService $grading): array
+    {
+        return $grading->scales()->map(fn ($s) => ['grade' => $s->grade, 'min' => (float) $s->min_marks, 'max' => (float) $s->max_marks, 'remarks' => $s->remarks])->values()->all();
+    }
+
+    private function studentInfo(Student $student, ?string $className, bool $withPhoto = false): array
     {
         return [
             'name' => $student->full_name,
@@ -222,8 +325,16 @@ class ReportCardService
             'section' => $student->section?->name,
             'gender' => $student->gender ? ucfirst($student->gender) : null,
             'age' => $student->date_of_birth?->age,
-            'photo' => null,
+            'photo' => $withPhoto ? EmbeddedImage::from($student->photo) : null,
         ];
+    }
+
+    /** student_id => what is still owed on their open invoices */
+    private function feesOwed(array $studentIds): array
+    {
+        return Invoice::whereIn('student_id', $studentIds)->whereIn('status', ['unpaid', 'partial'])
+            ->groupBy('student_id')->selectRaw('student_id, SUM(balance) as owed')
+            ->pluck('owed', 'student_id')->map(fn ($v) => round((float) $v, 2))->all();
     }
 
     /** Score part headings (CA1, CA2, Exam ...) across the subjects on the card, in order. */
@@ -276,23 +387,5 @@ class ReportCardService
         }
 
         return $next?->start_date?->format('j F Y');
-    }
-
-    /** The school logo as an embedded image, so the PDF does not need to fetch anything */
-    private function logo(?School $school): ?string
-    {
-        if (! $school?->logo) {
-            return null;
-        }
-        try {
-            $disk = Storage::disk('public');
-            if (! $disk->exists($school->logo)) {
-                return null;
-            }
-
-            return 'data:'.($disk->mimeType($school->logo) ?: 'image/png').';base64,'.base64_encode($disk->get($school->logo));
-        } catch (Throwable) {
-            return null;
-        }
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ReportCardComment;
+use App\Models\ReportCardDesign;
+use App\Models\ReportCardRemark;
+use App\Models\ReportCardSigner;
 use App\Models\ResultSheet;
 use App\Models\TermResultSummary;
 use App\Services\ReportCardService;
@@ -17,9 +19,9 @@ use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Report cards for one class and term: the comments page, and the term and full-year PDFs
- * (one student, or the whole class in one file). Staff can print them at any step;
- * cards for results that are not published yet carry a "preview" mark.
+ * Report cards for one class and term: the comments page (one column per signer the class's
+ * design has: Class Teacher, Head Teacher ...), and the term and full-year PDFs (one student,
+ * or the whole class in one file). Cards for results that are not published yet say "Preview".
  */
 class ReportCardController extends Controller
 {
@@ -29,7 +31,9 @@ class ReportCardController extends Controller
     {
         $sheet->load(['term.academicYear:id,name', 'schoolClass:id,name']);
         $user = $request->user();
-        $comments = ReportCardComment::where('result_sheet_id', $sheet->id)->get()->keyBy('student_id');
+        $design = ReportCardDesign::forClass($sheet->school_id, $sheet->class_id)->load('signers');
+        $signers = $design->signers->where('has_comment', true)->values();
+        $remarks = ReportCardRemark::where('result_sheet_id', $sheet->id)->get()->groupBy('student_id');
 
         return Inertia::render('SchoolAdmin/Results/ReportCards', [
             'sheet' => [
@@ -38,6 +42,12 @@ class ReportCardController extends Controller
                 'term' => trim(($sheet->term?->academicYear?->name ?? '').' · '.$sheet->term?->name, ' ·'),
                 'class_name' => $sheet->schoolClass?->name,
             ],
+            'design' => ['id' => $design->id, 'name' => $design->name],
+            'signers' => $signers->map(fn (ReportCardSigner $s) => [
+                'id' => $s->id,
+                'label' => $s->label,
+                'can_write' => $sheet->status !== 'locked' && $s->canWrite($user),
+            ]),
             'students' => TermResultSummary::where('result_sheet_id', $sheet->id)->with('student:id,first_name,last_name,admission_no')->get()
                 ->filter(fn ($s) => $s->student)
                 ->sortBy(fn ($s) => $s->student->full_name)
@@ -48,26 +58,51 @@ class ReportCardController extends Controller
                     'average' => $s->average,
                     'position' => $s->position,
                     'class_size' => $s->class_size,
-                    'teacher_comment' => $comments[$s->student_id]?->teacher_comment ?? '',
-                    'principal_comment' => $comments[$s->student_id]?->principal_comment ?? '',
+                    'remarks' => (object) ($remarks[$s->student_id] ?? collect())->pluck('comment', 'report_card_signer_id')->all(),
                 ])->values(),
-            'can' => [
-                'teacher' => $sheet->status !== 'locked' && $user->can('marks.entry'),
-                'principal' => $sheet->status !== 'locked' && $user->can('results.publish'),
-            ],
+            'canDesign' => $user->can('settings.edit'),
         ]);
     }
 
-    /** The class teacher's comments (needs marks.entry) */
-    public function saveTeacherComments(Request $request, ResultSheet $sheet): RedirectResponse
+    /** One signer's comments for the class. Who may write is set on the signer (teachers or heads). */
+    public function saveComments(Request $request, ResultSheet $sheet): RedirectResponse
     {
-        return $this->saveComments($request, $sheet, 'teacher');
-    }
+        if ($sheet->status === 'locked') {
+            throw ValidationException::withMessages(['comments' => 'These results are locked, so comments can no longer be changed.']);
+        }
 
-    /** The principal's comments (needs results.publish) */
-    public function savePrincipalComments(Request $request, ResultSheet $sheet): RedirectResponse
-    {
-        return $this->saveComments($request, $sheet, 'principal');
+        $data = $request->validate([
+            'signer_id' => 'required|integer',
+            'comments' => 'present|array|max:500',
+            'comments.*.student_id' => 'required|integer',
+            'comments.*.comment' => 'nullable|string|max:600',
+        ]);
+
+        $design = ReportCardDesign::forClass($sheet->school_id, $sheet->class_id);
+        $signer = ReportCardSigner::where('report_card_design_id', $design->id)->findOrFail($data['signer_id']);
+        abort_unless($signer->canWrite($request->user()), 403);
+
+        $onSheet = TermResultSummary::where('result_sheet_id', $sheet->id)->pluck('student_id')->flip();
+        $existing = ReportCardRemark::where('result_sheet_id', $sheet->id)->where('report_card_signer_id', $signer->id)->get()->keyBy('student_id');
+
+        foreach ($data['comments'] as $row) {
+            if (! $onSheet->has($row['student_id'])) {
+                continue;
+            }
+            $text = trim((string) ($row['comment'] ?? ''));
+            $current = $existing[$row['student_id']] ?? null;
+
+            if ($text === '') {
+                $current?->delete();
+            } elseif (! $current || $current->comment !== $text) {
+                ReportCardRemark::updateOrCreate(
+                    ['result_sheet_id' => $sheet->id, 'student_id' => $row['student_id'], 'report_card_signer_id' => $signer->id],
+                    ['school_id' => $sheet->school_id, 'comment' => $text, 'written_by' => $request->user()->id],
+                );
+            }
+        }
+
+        return back()->with('success', "{$signer->label}'s comments saved.");
     }
 
     /** Term report card PDF: ?student=ID for one student, else the whole class */
@@ -97,46 +132,19 @@ class ReportCardController extends Controller
         return self::pdfResponse('report-cards.session', $cards, "Full year report {$name} {$sheet->term->academicYear->name}");
     }
 
-    private function saveComments(Request $request, ResultSheet $sheet, string $who): RedirectResponse
+    /** The PDF itself, on the paper size the design asks for */
+    public static function pdfBytes(string $view, array $cards): string
     {
-        if ($sheet->status === 'locked') {
-            throw ValidationException::withMessages(['comments' => 'These results are locked, so comments can no longer be changed.']);
-        }
-
-        $data = $request->validate([
-            'comments' => 'present|array|max:500',
-            'comments.*.student_id' => 'required|integer',
-            'comments.*.comment' => 'nullable|string|max:600',
-        ]);
-
-        $onSheet = TermResultSummary::where('result_sheet_id', $sheet->id)->pluck('student_id')->flip();
-        $column = "{$who}_comment";
-
-        foreach ($data['comments'] as $row) {
-            if (! $onSheet->has($row['student_id'])) {
-                continue;
-            }
-            $text = trim((string) ($row['comment'] ?? '')) ?: null;
-            $existing = ReportCardComment::where('result_sheet_id', $sheet->id)->where('student_id', $row['student_id'])->first();
-            if (! $existing && $text === null) {
-                continue;
-            }
-            if ($existing && $existing->{$column} === $text) {
-                continue;
-            }
-
-            ReportCardComment::updateOrCreate(
-                ['result_sheet_id' => $sheet->id, 'student_id' => $row['student_id']],
-                ['school_id' => $sheet->school_id, $column => $text, "{$who}_by" => $request->user()->id],
-            );
-        }
-
-        return back()->with('success', $who === 'teacher' ? "Class teacher's comments saved." : "Principal's comments saved.");
+        return Pdf::loadView($view, ['cards' => $cards])
+            ->setPaper($cards[0]['design']['paper'] ?? 'a4', 'portrait')
+            ->output();
     }
 
     public static function pdfResponse(string $view, array $cards, string $title): Response
     {
-        return Pdf::loadView($view, ['cards' => $cards])->setPaper('a4', 'portrait')
-            ->stream(Str::slug($title).'.pdf');
+        return response(self::pdfBytes($view, $cards), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.Str::slug($title).'.pdf"',
+        ]);
     }
 }

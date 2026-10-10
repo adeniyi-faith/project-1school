@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus, Search, Users, Eye, Pencil, Trash2, MoreHorizontal, ChevronRight } from 'lucide-react';
+import { Plus, Search, Users, Eye, Pencil, Trash2, MoreHorizontal, ChevronRight, ImageUp } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,19 @@ const classLabel = (s: Student) => `${s.school_class?.name ?? '—'}${s.section 
 export default function StudentsIndex() {
     const { students, filters, classes, sections, stats } = usePage<Props>().props;
     const [search, setSearch] = useState(filters.search ?? '');
+    const [photosOpen, setPhotosOpen] = useState(false);
+    const [photos, setPhotos] = useState<File[]>([]);
+    const [uploading, setUploading] = useState(false);
+
+    const uploadPhotos = () => {
+        setUploading(true);
+        router.post('/school/students/photos', { photos }, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => { setPhotosOpen(false); setPhotos([]); },
+            onFinish: () => setUploading(false),
+        });
+    };
 
     const applyFilter = (params: Record<string, string>) =>
         router.get('/school/students', { ...filters, ...params }, { preserveState: true, replace: true });
@@ -47,6 +61,15 @@ export default function StudentsIndex() {
         if (confirm(`Remove student "${s.full_name}"?`)) router.delete(`/school/students/${s.id}`);
     };
 
+    const headerActions = (
+        <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setPhotosOpen(true)}><ImageUp className="size-4" /> Upload photos</Button>
+            <Link href="/school/students/create" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 text-sm font-medium text-white shadow-xs outline-none transition-colors hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
+                <Plus className="size-4" /> Admit student
+            </Link>
+        </div>
+    );
+
     return (
         <AppLayout breadcrumbs={[{ label: 'Academic' }, { label: 'Students' }]}>
             <Head title="Students" />
@@ -55,12 +78,10 @@ export default function StudentsIndex() {
                 <PageHeader
                     title="Students"
                     description="Admissions and records for every student in your school."
-                    actions={
-                        <Link href="/school/students/create" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 text-sm font-medium text-white shadow-xs outline-none transition-colors hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
-                            <Plus className="size-4" /> Admit student
-                        </Link>
-                    }
+                    actions={headerActions}
                 />
+                {/* The header hides its buttons on phones, so they are repeated here */}
+                <div className="md:hidden">{headerActions}</div>
 
                 <StatStrip
                     items={[
@@ -193,6 +214,21 @@ export default function StudentsIndex() {
                     <Plus className="size-6" />
                 </Link>
             </div>
+            <Dialog open={photosOpen} onOpenChange={setPhotosOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader><DialogTitle>Upload student photos</DialogTitle></DialogHeader>
+                    <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                        <p>Choose up to 200 photos at once. Name each file after the student's admission number, for example <span className="font-mono">ADM-2026-0001.jpg</span>, and it goes to that student.</p>
+                        <p className="text-xs text-slate-500">JPG or PNG, up to 2 MB each. A new photo replaces the old one. Photos show on report cards when the design has "Student photo" switched on.</p>
+                        <input type="file" multiple accept="image/png,image/jpeg" onChange={e => setPhotos(Array.from(e.target.files ?? []))} className="text-sm" />
+                        {photos.length > 0 && <p className="text-xs">{photos.length} photo{photos.length === 1 ? '' : 's'} chosen.</p>}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setPhotosOpen(false)}>Cancel</Button>
+                        <Button onClick={uploadPhotos} disabled={uploading || photos.length === 0} className="bg-indigo-600 text-white hover:bg-indigo-700">Upload</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

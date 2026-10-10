@@ -8,7 +8,8 @@ use App\Models\Attendance;
 use App\Models\BehaviourRating;
 use App\Models\BehaviourTrait;
 use App\Models\Guardian;
-use App\Models\ReportCardComment;
+use App\Models\ReportCardDesign;
+use App\Models\ReportCardRemark;
 use App\Models\ResultSheet;
 use App\Models\School;
 use App\Models\SchoolClass;
@@ -94,7 +95,8 @@ class ReportCardTest extends SecurityTestCase
             Attendance::create(['school_id' => $this->school->id, 'date' => $date, 'attendable_type' => Student::class, 'attendable_id' => $this->ada->id, 'status' => $status]);
         }
         $this->sheets[1]->term->update(['start_date' => '2026-01-05']);
-        ReportCardComment::create(['school_id' => $this->school->id, 'result_sheet_id' => $sheet->id, 'student_id' => $this->ada->id, 'teacher_comment' => 'A hardworking pupil.']);
+        [$classTeacher] = $this->signers();
+        ReportCardRemark::create(['school_id' => $this->school->id, 'result_sheet_id' => $sheet->id, 'student_id' => $this->ada->id, 'report_card_signer_id' => $classTeacher->id, 'comment' => 'A hardworking pupil.']);
 
         $cards = app(ReportCardService::class)->termCards($sheet->fresh());
 
@@ -110,7 +112,8 @@ class ReportCardTest extends SecurityTestCase
         $this->assertSame([['name' => $trait->name, 'rating' => 5]], $ada['ratings']['affective']);
         // Late counts as present; the January day is outside the term
         $this->assertEquals(['present' => 2, 'absent' => 1, 'marked' => 3], $ada['attendance']);
-        $this->assertSame('A hardworking pupil.', $ada['teacher_comment']);
+        $this->assertSame([$classTeacher->id => 'A hardworking pupil.'], $ada['remarks']);
+        $this->assertSame(['Class Teacher', 'Principal'], array_column($ada['design']['signers'], 'label'));
         $this->assertSame('5 January 2026', $ada['next_term_begins']);
         $this->assertTrue($ada['preview'], 'draft results are marked as a preview');
         $this->assertNotEmpty($ada['grade_key']);
@@ -157,37 +160,50 @@ class ReportCardTest extends SecurityTestCase
         $this->get("/school/results/{$sheet->id}/report-cards", ['X-Inertia' => 'true'])
             ->assertOk()
             ->assertJsonCount(2, 'props.students')
-            ->assertJsonPath('props.can.teacher', true)
-            ->assertJsonPath('props.can.principal', true);
+            ->assertJsonPath('props.signers.0.label', 'Class Teacher')
+            ->assertJsonPath('props.signers.0.can_write', true)
+            ->assertJsonPath('props.signers.1.can_write', true);
     }
 
     public function test_teacher_and_principal_comments_are_saved_separately(): void
     {
         $sheet = $this->firstTerm();
+        [$classTeacher, $principalSigner] = $this->signers();
         $teacher = $this->makeUser($this->school, 'teacher');
         $principal = $this->makeUser($this->school, 'principal');
+        $url = "/school/results/{$sheet->id}/comments";
 
-        $this->actingAs($teacher)->post("/school/results/{$sheet->id}/comments/teacher", ['comments' => [
+        $this->actingAs($teacher)->post($url, ['signer_id' => $classTeacher->id, 'comments' => [
             ['student_id' => $this->ada->id, 'comment' => ' Excellent work. '],
             ['student_id' => $this->bayo->id, 'comment' => ''],
         ]])->assertSessionHasNoErrors();
         // A teacher cannot write the principal's comment, and a principal cannot write the teacher's
-        $this->actingAs($teacher)->post("/school/results/{$sheet->id}/comments/principal", ['comments' => []])->assertForbidden();
-        $this->actingAs($principal)->post("/school/results/{$sheet->id}/comments/teacher", ['comments' => []])->assertForbidden();
+        $this->actingAs($teacher)->post($url, ['signer_id' => $principalSigner->id, 'comments' => []])->assertForbidden();
+        $this->actingAs($principal)->post($url, ['signer_id' => $classTeacher->id, 'comments' => []])->assertForbidden();
 
-        $this->actingAs($principal)->post("/school/results/{$sheet->id}/comments/principal", ['comments' => [
+        $this->actingAs($principal)->post($url, ['signer_id' => $principalSigner->id, 'comments' => [
             ['student_id' => $this->ada->id, 'comment' => 'Keep it up.'],
         ]])->assertSessionHasNoErrors();
 
-        $comment = ReportCardComment::sole();
-        $this->assertSame(['Excellent work.', $teacher->id, 'Keep it up.', $principal->id],
-            [$comment->teacher_comment, $comment->teacher_by, $comment->principal_comment, $comment->principal_by]);
+        $remarks = ReportCardRemark::orderBy('id')->get();
+        $this->assertSame([['Excellent work.', $teacher->id], ['Keep it up.', $principal->id]],
+            $remarks->map(fn ($r) => [$r->comment, $r->written_by])->all());
+
+        // Clearing a comment removes it
+        $this->actingAs($teacher)->post($url, ['signer_id' => $classTeacher->id, 'comments' => [['student_id' => $this->ada->id, 'comment' => '']]]);
+        $this->assertSame(1, ReportCardRemark::count());
 
         // Locked results: comments can no longer change
         $sheet->forceFill(['status' => 'locked'])->save();
-        $this->post("/school/results/{$sheet->id}/comments/principal", ['comments' => [['student_id' => $this->ada->id, 'comment' => 'Changed']]])
+        $this->actingAs($principal)->post($url, ['signer_id' => $principalSigner->id, 'comments' => [['student_id' => $this->ada->id, 'comment' => 'Changed']]])
             ->assertSessionHasErrors('comments');
-        $this->assertSame('Keep it up.', $comment->fresh()->principal_comment);
+        $this->assertSame('Keep it up.', ReportCardRemark::sole()->comment);
+    }
+
+    /** The school's default Class Teacher and Principal signers */
+    private function signers(): array
+    {
+        return ReportCardDesign::forClass($this->school->id, $this->class->id)->signers()->get()->all();
     }
 
     public function test_families_only_download_their_own_published_cards(): void
@@ -236,6 +252,6 @@ class ReportCardTest extends SecurityTestCase
         $other = $this->makeUser($this->makeSchool('Other'), 'school-admin');
 
         $this->actingAs($other)->get("/school/results/{$sheet->id}/report-cards/term")->assertNotFound();
-        $this->actingAs($other)->post("/school/results/{$sheet->id}/comments/teacher", ['comments' => []])->assertNotFound();
+        $this->actingAs($other)->post("/school/results/{$sheet->id}/comments", ['signer_id' => 1, 'comments' => []])->assertNotFound();
     }
 }
