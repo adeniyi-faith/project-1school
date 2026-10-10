@@ -41,7 +41,7 @@ export default function Fees({ linked, student, summary, payments }: Props) {
                 </div>
 
                 {/* Summary */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <Card>
                         <CardContent className="p-4 text-center">
                             <p className="text-xs text-slate-500 mb-1">Total Due</p>

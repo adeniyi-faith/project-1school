@@ -122,7 +122,7 @@ export default function MarksEntry({ exam, subjects, students, existingMarks, se
                 ) : (
                     <Panel flush title="Mark sheet" description={`${filled} of ${total} entries filled`}>
                         <div className="overflow-x-auto scroll-quiet">
-                            <table className="w-full min-w-max border-collapse text-sm">
+                            <table data-no-stack className="w-full min-w-max border-collapse text-sm">
                                 <thead>
                                     <tr className="bg-slate-50/70 dark:bg-white/[0.03]">
                                         <th className="sticky left-0 z-10 min-w-[180px] border-y border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-white/[0.08] dark:bg-slate-900">Student</th>

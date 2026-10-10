@@ -84,7 +84,7 @@ export default function HostelIndex({ hostels, staffList, stats }: Props) {
                 )}
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-4 max-w-md">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-md">
                     {[
                         { label: 'Total Capacity', value: stats.total_capacity, color: 'text-indigo-600', icon: BedDouble },
                         { label: 'Occupied',       value: stats.occupied,        color: 'text-red-500',    icon: Users },

@@ -428,15 +428,15 @@ export default function SchoolSettingsIndex({ school, logoUrl, settings }: Props
                     <p className="text-sm text-slate-500 mt-0.5">Manage your school's configuration and preferences</p>
                 </div>
 
-                <div className="flex gap-6">
-                    {/* Tab sidebar */}
-                    <nav className="w-48 shrink-0">
-                        <ul className="space-y-0.5">
+                <div className="flex flex-col gap-4 md:flex-row md:gap-6">
+                    {/* Tab sidebar (a scrolling strip on phones) */}
+                    <nav className="md:w-48 md:shrink-0">
+                        <ul className="scroll-quiet -mx-1 flex gap-1 overflow-x-auto px-1 pb-1 md:mx-0 md:block md:space-y-0.5 md:overflow-visible md:p-0">
                             {TABS.map(t => (
-                                <li key={t.id}>
+                                <li key={t.id} className="shrink-0 md:shrink">
                                     <button onClick={() => setActiveTab(t.id)}
                                         className={cn(
-                                            'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left',
+                                            'whitespace-nowrap md:w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left',
                                             activeTab === t.id
                                                 ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300'
                                                 : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
