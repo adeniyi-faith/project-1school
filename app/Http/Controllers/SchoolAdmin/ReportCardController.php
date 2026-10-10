@@ -191,9 +191,17 @@ class ReportCardController extends Controller
     }
 
     /** The card as a page that fits the screen, with Download PDF and Print buttons on top */
-    public static function htmlResponse(string $view, array $cards, string $title): Response
+    public static function htmlResponse(string $view, array $cards, string $title, bool $download = true): Response
     {
-        $html = view($view, ['cards' => $cards])->render();
+        return self::screenPage(view($view, ['cards' => $cards])->render(), $title, $download, 794);
+    }
+
+    /**
+     * Puts an already built page into a screen wrapper: a top bar (Print, zoom, Download PDF) and a sheet
+     * that is scaled to fit the screen. $download is false for previews of unsaved choices (no PDF exists yet).
+     */
+    public static function screenPage(string $html, string $title, bool $download = true, int $width = 794): Response
+    {
         $pdfUrl = e(request()->fullUrlWithoutQuery('view'));
         $pageTitle = e($title);
 
@@ -203,14 +211,16 @@ class ReportCardController extends Controller
             .'.vbar{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;background:#1e293b;color:#fff;font:600 14px system-ui,sans-serif}'
             .'.vbar a,.vbar button{font:600 13px system-ui,sans-serif;color:#fff;background:#4f46e5;border:0;border-radius:8px;padding:9px 14px;text-decoration:none;cursor:pointer}'
             .'.vbar button{background:#475569}'
-            .'#sheet{width:794px;margin:12px auto;transform-origin:top left}'
+            .'.vbar>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.vbar>span:last-child{flex-shrink:0}'
+            .'@media(max-width:480px){.vbar{padding:8px}.vbar a,.vbar button{padding:9px 10px}}'
+            .'#sheet{width:'.$width.'px;margin:12px auto;transform-origin:top left}'
             .'#sheet .card{background:#fff;padding:30px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.18);page-break-after:auto!important}'
             .'@media print{html{background:#fff}.vbar{display:none}#sheet{width:auto;margin:0;zoom:1!important}#sheet .card{box-shadow:none;padding:0;margin:0;page-break-after:always!important}#sheet .card:last-child{page-break-after:auto!important}}'
             .'</style>';
 
-        $bar = '<div class="vbar"><span>'.$pageTitle.'</span><span style="display:flex;gap:8px"><button type="button" onclick="window.print()">Print</button><a href="'.$pdfUrl.'">Download PDF</a></span></div><div id="sheet">';
+        $bar = '<div class="vbar"><span>'.$pageTitle.'</span><span style="display:flex;gap:8px"><button type="button" onclick="zoomBy(-0.15)" aria-label="Smaller">&minus;</button><button type="button" onclick="zoomBy(0.15)" aria-label="Bigger">+</button><button type="button" onclick="window.print()">Print</button>'.($download ? '<a href="'.$pdfUrl.'">Download PDF</a>' : '').'</span></div><div id="sheet">';
 
-        $script = '</div><script>(function(){var s=document.getElementById("sheet");function fit(){var w=document.documentElement.clientWidth-16;s.style.zoom=Math.min(1,w/794)}fit();addEventListener("resize",fit)})();</script>';
+        $script = '</div><script>var W='.$width.',z=null,s=document.getElementById("sheet");function fit(){return Math.min(1,(document.documentElement.clientWidth-16)/W)}function zoomBy(d){z=Math.max(fit(),Math.min(2,(z||fit())+d));s.style.zoom=z}function apply(){s.style.zoom=z===null?fit():Math.max(fit(),z)}apply();addEventListener("resize",apply)</script>';
 
         $html = str_replace('<head>', '<head>'.$head, $html);
         $html = preg_replace('/<body[^>]*>/', '$0'.$bar, $html, 1);

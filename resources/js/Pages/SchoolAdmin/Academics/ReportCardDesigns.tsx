@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader, Panel, Pill } from '@/components/app/kit';
 import { cn } from '@/lib/utils';
+import { appendDeep, openTryOut } from '@/lib/preview';
 import { ArrowDown, ArrowUp, Eye, Plus, Trash2 } from 'lucide-react';
 import type { ReportCardDesignRow, ReportCardSignerRow } from '@/Types';
 
@@ -131,11 +132,22 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
     const base = `/school/academics/report-card-designs/${design.id}`;
     const [classIds, setClassIds] = useState<number[]>(classes.filter(c => c.report_card_design_id === design.id).map(c => c.id));
     const [confirmDelete, setConfirmDelete] = useState(false);
-    // Preview what is on screen now, even before saving
-    const draft = encodeURIComponent(JSON.stringify({
-        template: data.template, primary_color: data.primary_color, accent_color: data.accent_color, font_size: data.font_size, paper: data.paper,
-        term_title: data.term_title, session_title: data.session_title, footer_note: data.footer_note, options: data.options,
-    }));
+    // Preview what is on screen now, even before saving. Pictures picked but not saved show too.
+    const [trialLogo, setTrialLogo] = useState<File | null>(null);
+    const [previewError, setPreviewError] = useState<string | null>(null);
+    async function preview(type: 'term' | 'session') {
+        const body = new FormData();
+        appendDeep(body, 'type', type);
+        (['template', 'primary_color', 'accent_color', 'font_size', 'paper', 'term_title', 'session_title', 'footer_note', 'options', 'remove_stamp'] as const).forEach(k => appendDeep(body, k, data[k] ?? ''));
+        if (data.stamp) body.append('stamp', data.stamp);
+        if (trialLogo) body.append('school_logo', trialLogo);
+        data.signers.forEach((s, i) => {
+            (['id', 'label', 'name', 'has_comment', 'remove_signature'] as const).forEach(k => appendDeep(body, `signers[${i}][${k}]`, s[k]));
+            if (s.signature) body.append(`signers[${i}][signature]`, s.signature);
+        });
+        setPreviewError(await openTryOut(`${base}/try`, body));
+    }
+
 
     // After a save, the page data changes; start the form again from what was saved
     useEffect(() => { form.setDefaults(toForm(design)); form.reset(); }, [design]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -167,8 +179,8 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
         <form onSubmit={save} className="space-y-6">
             <Panel title="Look" action={
                 <div className="flex flex-wrap gap-2">
-                    <a href={`${base}/preview?view=html&draft=${draft}`} target="_blank" rel="noopener"><Button type="button" variant="outline" size="sm"><Eye className="size-4" /> Preview term card</Button></a>
-                    <a href={`${base}/preview?type=session&view=html&draft=${draft}`} target="_blank" rel="noopener"><Button type="button" variant="outline" size="sm"><Eye className="size-4" /> Preview full year</Button></a>
+                    <Button type="button" variant="outline" size="sm" onClick={() => preview('term')}><Eye className="size-4" /> Preview term card</Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => preview('session')}><Eye className="size-4" /> Preview full year</Button>
                 </div>
             }>
                 <div className="space-y-5">
@@ -322,6 +334,13 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
                         {design.has_stamp && !data.remove_stamp && !disabled && <Button type="button" variant="ghost" size="sm" onClick={() => setData(d => ({ ...d, remove_stamp: true, stamp: null }))}>Remove</Button>}
                         {err('stamp') && <p className="text-xs text-red-500">{err('stamp')}</p>}
                     </div>
+
+                    <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-sm dark:border-white/[0.06]">
+                        <span className="text-slate-500">Try another school logo:</span>
+                        <input type="file" accept="image/png,image/jpeg" className="text-xs" onChange={e => setTrialLogo(e.target.files?.[0] ?? null)} />
+                    </div>
+                    <p className="text-xs text-slate-500">The preview shows everything chosen on this page, including a stamp, signature or logo you have picked but not saved. Previewing never saves or uploads anything, so you can try pictures freely, even on the demo.</p>
+                    {previewError && <p className="text-sm text-red-500">{previewError}</p>}
                 </div>
             </Panel>
 

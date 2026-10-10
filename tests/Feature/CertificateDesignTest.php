@@ -102,6 +102,22 @@ class CertificateDesignTest extends SecurityTestCase
         $this->assertSame('modern', app(CertificateService::class)->pdfData($this->issue())['layout']['border']);
     }
 
+    public function test_try_it_shows_unsaved_choices_and_pictures_on_screen_without_saving(): void
+    {
+        $res = $this->post('/school/certificates/designs/transfer/try', [
+            'border' => 'ornate', 'title' => 'My Try Title', 'body' => 'This is {name}.',
+            'signature' => \Illuminate\Http\UploadedFile::fake()->image('sig.png', 30, 30),
+        ]);
+
+        $res->assertOk()->assertSee('My Try Title', false)->assertSee('data:image/png;base64', false);
+        $this->assertDatabaseMissing('certificate_templates', ['title' => 'My Try Title']);
+    }
+
+    public function test_try_it_refuses_unknown_blanks(): void
+    {
+        $this->postJson('/school/certificates/designs/transfer/try', ['body' => 'Hello {nonsense}.'])->assertStatus(422);
+    }
+
     public function test_the_preview_is_a_pdf(): void
     {
         foreach (CertificateTemplate::BORDERS as $border) {

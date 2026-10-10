@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader, Panel } from '@/components/app/kit';
 import { ArrowLeft, Eye, RotateCcw } from 'lucide-react';
+import { appendDeep, openTryOut } from '@/lib/preview';
 
 type CertType = 'testimonial' | 'transfer';
 type Border = 'classic' | 'ornate' | 'modern' | 'simple';
@@ -83,6 +84,15 @@ function Editor({ template, standard, borders, blanks, schoolColors, canEdit }: 
         show_watermark: template.show_watermark,
     });
     const bodyRef = useRef<HTMLTextAreaElement>(null);
+    // Pictures to try on the preview only. They are never saved.
+    const [trial, setTrial] = useState<{ school_logo: File | null; signature: File | null; stamp: File | null }>({ school_logo: null, signature: null, stamp: null });
+    const [previewError, setPreviewError] = useState<string | null>(null);
+
+    async function preview() {
+        const body = new FormData();
+        Object.entries({ ...form.data, ...trial }).forEach(([k, v]) => appendDeep(body, k, v ?? ''));
+        setPreviewError(await openTryOut(`/school/certificates/designs/${template.type}/try`, body));
+    }
     const primary = form.data.primary_color ?? schoolColors.primary;
     const accent = form.data.accent_color ?? schoolColors.accent;
     const disabled = !canEdit;
@@ -190,10 +200,22 @@ function Editor({ template, standard, borders, blanks, schoolColors, canEdit }: 
                 </div>
             </Panel>
 
+            <Panel>
+                <p className="font-medium text-slate-900 dark:text-white">Try a logo, signature or stamp</p>
+                <p className="mb-3 mt-1 text-xs text-slate-500">Pick a picture to see how it looks on the preview. Nothing is uploaded or saved, so you can try as many as you like, even on the demo.</p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                    {([['school_logo', 'School logo'], ['signature', 'Signature'], ['stamp', 'School stamp']] as const).map(([key, label]) => (
+                        <div key={key} className="space-y-1.5">
+                            <Label htmlFor={`try-${key}`}>{label}</Label>
+                            <input id={`try-${key}`} type="file" accept="image/png,image/jpeg" className="block w-full text-xs" onChange={e => setTrial(t => ({ ...t, [key]: e.target.files?.[0] ?? null }))} />
+                        </div>
+                    ))}
+                </div>
+            </Panel>
+
+            {previewError && <p className="text-right text-sm text-red-500">{previewError}</p>}
             <div className="flex flex-wrap items-center justify-end gap-2">
-                <a href={`/school/certificates/designs/${template.type}/preview?draft=${encodeURIComponent(JSON.stringify(form.data))}`} target="_blank" rel="noopener" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
-                    <Eye className="size-4" /> Preview
-                </a>
+                <Button type="button" variant="outline" onClick={preview}><Eye className="size-4" /> Preview</Button>
                 {canEdit && <Button type="submit" disabled={form.processing || !form.isDirty} className="bg-indigo-600 text-white hover:bg-indigo-700">Save design</Button>}
             </div>
         </form>

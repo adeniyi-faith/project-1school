@@ -7,6 +7,7 @@ use App\Models\CertificateTemplate;
 use App\Models\ReportCardDesign;
 use App\Models\StudentCertificate;
 use App\Services\CertificateService;
+use App\Support\EmbeddedImage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -70,28 +71,67 @@ class CertificateDesignController extends Controller
         abort_unless(isset(StudentCertificate::TYPES[$type]), 404);
         $template = CertificateTemplate::for((int) $request->user()->school_id, $type);
 
-        // Show the choices on screen even if they are not saved yet (nothing is written)
-        $draft = json_decode((string) $request->query('draft', ''), true);
-        if (is_array($draft)) {
-            $v = validator($draft, [
-                'border' => ['nullable', Rule::in(CertificateTemplate::BORDERS)],
-                'primary_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
-                'accent_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
-                'title' => 'nullable|string|max:80',
-                'body' => 'nullable|string|max:3000',
-                'closing' => 'nullable|string|max:300',
-                'show_details' => 'boolean',
-                'show_qr' => 'boolean',
-                'show_watermark' => 'boolean',
-            ]);
-            if (! $v->fails() && ! array_diff($this->blanksIn(($draft['body'] ?? '').' '.($draft['closing'] ?? '')), CertificateTemplate::BLANKS)) {
-                $template->fill(array_filter($v->validated(), fn ($x) => $x !== null));
-            }
-        }
-
         $bytes = Pdf::loadView('certificates.certificate', $this->certificates->pdfData($this->certificates->sample($template)))->setPaper('a4', 'portrait')->output();
 
         return response($bytes, 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="certificate-preview.pdf"']);
+    }
+
+    /**
+     * The sample certificate shown on screen with whatever is in the form right now, including a logo,
+     * stamp or signature picture just chosen. Nothing is saved or stored, so the demo school can use it too.
+     */
+    public function tryOut(Request $request, string $type): HttpResponse
+    {
+        abort_unless(isset(StudentCertificate::TYPES[$type]), 404);
+        $image = 'nullable|image|mimes:png,jpg,jpeg|max:2048';
+        $data = $request->validate([
+            'border' => ['nullable', Rule::in(CertificateTemplate::BORDERS)],
+            'primary_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'accent_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'title' => 'nullable|string|max:80',
+            'body' => 'nullable|string|max:3000',
+            'closing' => 'nullable|string|max:300',
+            'show_details' => 'boolean',
+            'show_qr' => 'boolean',
+            'show_watermark' => 'boolean',
+            'school_logo' => $image,
+            'stamp' => $image,
+            'signature' => $image,
+        ]);
+
+        $unknown = array_diff($this->blanksIn(($data['body'] ?? '').' '.($data['closing'] ?? '')), CertificateTemplate::BLANKS);
+        if ($unknown) {
+            return response()->json(['message' => 'These blanks are not known: '.implode(', ', $unknown), 'errors' => ['body' => ['These blanks are not known: '.implode(', ', $unknown).'. Use only the ones listed.']]], 422);
+        }
+
+        $template = CertificateTemplate::for((int) $request->user()->school_id, $type);
+        $template->fill(array_filter(collect($data)->only(['border', 'primary_color', 'accent_color', 'title', 'body', 'closing', 'show_details', 'show_qr', 'show_watermark'])->all(), fn ($v) => $v !== null));
+        // an empty colour box means "use the report card colour"
+        foreach (['primary_color', 'accent_color'] as $key) {
+            if ($request->exists($key) && ! $request->filled($key)) {
+                $template->{$key} = null;
+            }
+        }
+
+        $view = $this->certificates->pdfData($this->certificates->sample($template));
+        if ($logo = EmbeddedImage::fromUpload($request->file('school_logo'))) {
+            $view['school']['logo'] = $logo;
+        }
+        if ($stamp = EmbeddedImage::fromUpload($request->file('stamp'))) {
+            $view['stamp'] = $stamp;
+        }
+        if ($signature = EmbeddedImage::fromUpload($request->file('signature'))) {
+            $view['signer'] = $view['signer'] ?? ['label' => 'Principal', 'name' => null];
+            $view['signer']['signature'] = $signature;
+        }
+
+        // The PDF paints its borders on the page edge ("fixed"); on screen they belong to a sheet instead
+        $html = view('certificates.certificate', $view)->render();
+        $html = str_replace('</style>', '.page{position:relative;box-sizing:border-box;width:794px;min-height:1123px;padding:22px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18);overflow:hidden}.pg{position:relative;min-height:1079px}.pg .b,.pg .watermark,.pg .revoked,.pg .foot{position:absolute!important}.pg .foot{left:48px;right:48px}</style>', $html);
+        $html = preg_replace('/<body[^>]*>/', '$0<div class="page"><div class="pg">', $html, 1);
+        $html = str_replace('</body>', '</div></div></body>', $html);
+
+        return ReportCardController::screenPage($html, 'Preview '.StudentCertificate::TYPES[$type]['title'], false, 794);
     }
 
     private function blanksIn(string $text): array
