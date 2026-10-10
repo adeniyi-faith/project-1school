@@ -14,7 +14,7 @@ Teacher, Accountant, Librarian, Receptionist, Driver, Warden, Store Manager, Stu
 
 Long-term direction: a Nigerian-first "Education OS" (three terms, continuous assessment,
 WAEC-style report cards, Naira payments). The build checklist for that lives in the project's
-shared files; Phase 1 (safety fixes) is finished. Phase 2 is under way: terms, score/grade setup and stored term results are done; fees (invoices, ledger) come next.
+shared files; Phase 1 (safety fixes) is finished. Phase 2 is under way: terms, score/grade setup, stored term results, invoices, the payment ledger and scholarships are done; moving old fee payments into invoices comes next.
 
 ---
 
@@ -55,7 +55,7 @@ app/
   Models/            flat folder, ~60 models
   Scopes/SchoolScope.php      the "only my school" rule
   Traits/BelongsToSchool.php  adds that rule + fills school_id on create
-  Services/          GradingService, TermResultService (works out and stores term results), SupabaseAuthService
+  Services/          GradingService, TermResultService (works out and stores term results), FeeLedgerService (every change to what a student owes), SupabaseAuthService
   Support/SchoolDefaults.php  starting terms, score setup and grade scales for every school
   Jobs/              SendSmsBlast (stub: writes to the log), SendEmailBlast
 routes/web.php       ONE file for all routes (no api.php)
@@ -84,7 +84,7 @@ Everything below exists as working screens unless a caveat says otherwise.
 | Timetable | Built | |
 | Exams (single marks) | Built | The older per-exam marks screen still works (one number per student/subject/exam), graded with the class's scale. Parents and students only see marks from exams marked published or completed |
 | Term results | Built | `/school/results`: scores entered per score part (CA1, CA2, Exam ...) per class and term (`subject_scores`), stored in `term_results` / `term_result_summaries` with subject and class positions (ties share a place), averages, highest/lowest, and a version number. Worked out again on every save (`TermResultService`). Each class/term is a `result_sheet` with steps draft → submitted → approved → published → locked (`ResultSheet::ACTIONS`; submit needs `marks.entry`, approve/publish `results.publish`, lock `results.lock`). Scores only change in draft. Behaviour (affective) and skills (psychomotor) ratings 1–5. Portals show only published/locked results. No report card PDF yet (Phase 3) |
-| Fees | Built, limited | Staff type in payments by hand. No invoices, no ledger, no payment gateway |
+| Fees | Built | Two systems side by side for now. **New:** `/school/fees/invoices`: invoices (one per student, per fee structure, per period, made for a whole class at once) with a ledger underneath (`ledger_entries`: charge, fine, payment, discount, reversal). Ledger lines can never be edited or deleted (the model throws); a mistake is fixed by a reversal line. Balance and status are worked out from the ledger (`FeeLedgerService`). Overpaying is refused; an invoice can be cancelled only while nothing is paid. `/school/fees/scholarships`: named discounts (percent or fixed, all fees or one category), given to a student with the approver and reason recorded, applied to open and future invoices. Permissions: view `fees.view`, bill `fees.structure`, pay/fine `fees.collect`, reverse/cancel/scholarships `fees.waiver`. **Old:** `fee_payments` (Fee Payments, Collect, Receipt, Outstanding screens, and the student/parent portals) still works and is not linked to invoices yet. No payment gateway |
 | Library, Inventory/Assets, Transport, Hostel | Built | Transport has a GPS location webhook protected by a per-vehicle token (no screen shows the token yet) |
 | Homework, lesson plans, syllabus, online-class links | Built | |
 | Communication | Partly | Announcements, messages, email templates. **SMS is a stub** (logs only). No delivery log |
@@ -144,7 +144,7 @@ and the academic report. Run them before and after any change to routes, models 
 
 ## Known gaps (planned work)
 
-Phase 2 (rest): invoices, payment ledger, scholarships, data migration. Old per-exam marks are not copied into term results.
+Phase 2 (rest): move old `fee_payments` into invoices and the ledger (with a way back), point the portals and Collect screen at invoices, and grade/fee-balance tests. Old per-exam marks are not copied into term results.
 Phase 3: admission-to-enrolment, promotion, report cards, real SMS, payment gateway, CBT.
 Phase 4: queue for PDFs, Redis, safe ID generation (admission numbers and employee IDs are
 made by counting rows, which can collide), splitting the fat controllers into services.
