@@ -1,7 +1,7 @@
 @php $d = $card['design']; $s = $card['school']; @endphp
 @if($d['show_logo'] && $d['logo_watermark'] && $s['logo'])<img class="watermark" src="{{ $s['logo'] }}">@endif
 @if($card['preview'])<div class="preview">PREVIEW</div>@endif
-@if($d['template'] === 'modern')
+@if(in_array($d['template'], ['modern', 'elegant'], true))
 <table class="head center">
     @if($d['show_logo'] && $s['logo'])<tr><td><img class="logo" src="{{ $s['logo'] }}"></td></tr>@endif
     <tr><td>
@@ -13,7 +13,7 @@
 @else
 <table class="head">
     <tr>
-        @if($d['show_logo'] && $s['logo'])<td style="width:{{ $d['template'] === 'compact' ? 54 : 70 }}px"><img class="logo" src="{{ $s['logo'] }}"></td>@endif
+        @if($d['show_logo'] && $s['logo'])<td class="{{ $d['template'] === 'banner' ? 'logocell' : '' }}" style="width:{{ $d['template'] === 'compact' ? 54 : 70 }}px"><img class="logo" src="{{ $s['logo'] }}"></td>@endif
         <td>
             <p class="school">{{ $s['name'] }}</p>
             @if($d['show_motto'] && $s['motto'])<div><em>{{ $s['motto'] }}</em></div>@endif

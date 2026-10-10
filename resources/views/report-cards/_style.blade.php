@@ -4,34 +4,37 @@
     $t = $d['template'];
     $fs = $d['font_size'] - ($t === 'compact' ? 1 : 0);
     $pad = $t === 'compact' ? '2px 3px' : '3px 4px';
+    $font = $t === 'elegant' ? 'DejaVu Serif, serif' : 'DejaVu Sans, sans-serif';
 @endphp
 <style>
     @page { margin: {{ $t === 'compact' ? '20px 22px' : '28px 30px' }}; }
-    body { font-family: DejaVu Sans, sans-serif; font-size: {{ $fs }}px; color: #1f2937; }
-    .card { page-break-after: always; position: relative; }
+    body { font-family: {{ $font }}; font-size: {{ $fs }}px; color: #1f2937; }
+    .card { page-break-after: always; position: relative; @if($t === 'elegant') border: 3px double {{ $d['primary'] }}; padding: 12px 16px; @endif }
     .card:last-child { page-break-after: auto; }
     .muted { color: #6b7280; }
-    .head { width: 100%; border-collapse: collapse; margin-bottom: 8px; @if($t === 'modern') border-bottom: 1px solid {{ $d['accent'] }}; @else border-bottom: 2px solid {{ $d['primary'] }}; @endif padding-bottom: 6px; }
+    .head { width: 100%; border-collapse: collapse; margin-bottom: 8px; @if($t === 'modern') border-bottom: 1px solid {{ $d['accent'] }}; @elseif($t === 'elegant') border-bottom: 3px double {{ $d['primary'] }}; @elseif($t === 'banner') background: {{ $d['primary'] }}; border-bottom: 4px solid {{ $d['accent'] }}; @else border-bottom: 2px solid {{ $d['primary'] }}; @endif padding-bottom: 6px; }
+    @if($t === 'banner') .head td { padding: 6px 8px; color: #fff; } .head .muted { color: #e5e7eb; } .head td.logocell { background: #fff; padding: 3px; width: 62px; } @endif
     .head td { vertical-align: middle; }
     .head.center td { text-align: center; }
     .logo { width: {{ $t === 'compact' ? 48 : 62 }}px; height: {{ $t === 'compact' ? 48 : 62 }}px; }
-    .school { font-size: {{ $fs + ($t === 'compact' ? 5 : 8) }}px; font-weight: bold; color: {{ $d['primary'] }}; margin: 0; @if($t === 'modern') letter-spacing: 0.5px; @endif }
+    .school { font-size: {{ $fs + ($t === 'compact' ? 5 : 8) }}px; font-weight: bold; color: {{ $d['primary'] }}; margin: 0; @if($t === 'modern') letter-spacing: 0.5px; @endif @if($t === 'banner') color: #fff; @endif @if($t === 'elegant') letter-spacing: 1px; @endif }
     .title { text-align: center; font-size: {{ $fs + 2 }}px; font-weight: bold; letter-spacing: 1px; margin: 6px 0 8px; text-transform: uppercase;
-        @if($t === 'modern') color: #fff; background: {{ $d['primary'] }}; padding: 4px; border-radius: 4px; @else color: {{ $d['primary'] }}; @endif }
+        @if($t === 'modern') color: #fff; background: {{ $d['primary'] }}; padding: 4px; border-radius: 4px; @elseif($t === 'banner') color: #fff; background: {{ $d['accent'] }}; padding: 4px; @elseif($t === 'elegant') color: {{ $d['primary'] }}; letter-spacing: 3px; border-top: 1px solid {{ $d['primary'] }}; border-bottom: 1px solid {{ $d['primary'] }}; padding: 3px; @else color: {{ $d['primary'] }}; @endif }
     .note { text-align: center; color: #b91c1c; font-size: {{ $fs - 1 }}px; margin: -4px 0 8px; }
     table.grid { width: 100%; border-collapse: collapse; margin-bottom: {{ $t === 'compact' ? 5 : 8 }}px; }
     table.grid th { padding: {{ $pad }}; font-size: {{ $fs - 1 }}px; text-align: center;
-        @if($t === 'modern') background: #f3f4f6; color: {{ $d['primary'] }}; border-bottom: 2px solid {{ $d['accent'] }}; @else background: {{ $d['primary'] }}; color: #fff; @endif }
+        @if($t === 'modern') background: #f3f4f6; color: {{ $d['primary'] }}; border-bottom: 2px solid {{ $d['accent'] }}; @elseif($t === 'elegant') background: #faf7f0; color: {{ $d['primary'] }}; border-top: 2px solid {{ $d['primary'] }}; border-bottom: 2px solid {{ $d['primary'] }}; @elseif($t === 'banner') background: {{ $d['primary'] }}; color: #fff; border-bottom: 3px solid {{ $d['accent'] }}; @else background: {{ $d['primary'] }}; color: #fff; @endif }
     table.grid td { padding: {{ $pad }}; text-align: center;
-        @if($t === 'modern') border-bottom: 1px solid #e5e7eb; @else border: 1px solid #d1d5db; @endif }
+        @if($t === 'modern' || $t === 'banner') border-bottom: 1px solid #e5e7eb; @elseif($t === 'elegant') border-bottom: 1px solid #e5e7eb; @else border: 1px solid #d1d5db; @endif }
     @if($t === 'modern') table.grid tr:nth-child(even) td { background: #fafafa; } @endif
+    @if($t === 'banner') table.grid tr:nth-child(even) td { background: #f3f4f6; } @endif
     table.grid td.left, table.grid th.left { text-align: left; }
     table.info { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
     table.info td { padding: 2px 4px; vertical-align: top; }
     table.info td.k { color: #6b7280; width: 11%; white-space: nowrap; }
     table.info td.v { font-weight: bold; width: 20%; white-space: nowrap; }
     .photo { width: 72px; height: 84px; border: 1px solid #d1d5db; }
-    .box { border: 1px solid #d1d5db; padding: {{ $t === 'compact' ? '3px 5px' : '5px 7px' }}; margin-bottom: 6px; @if($t === 'modern') border-left: 3px solid {{ $d['accent'] }}; border-top: 0; border-right: 0; border-bottom: 0; background: #f9fafb; @endif }
+    .box { border: 1px solid #d1d5db; padding: {{ $t === 'compact' ? '3px 5px' : '5px 7px' }}; margin-bottom: 6px; @if($t === 'modern') border-left: 3px solid {{ $d['accent'] }}; border-top: 0; border-right: 0; border-bottom: 0; background: #f9fafb; @endif @if($t === 'banner') border-left: 5px solid {{ $d['accent'] }}; border-top: 0; border-right: 0; border-bottom: 0; background: #f3f4f6; @endif @if($t === 'elegant') border-top: 2px solid {{ $d['accent'] }}; @endif }
     .box h4 { margin: 0 0 3px; font-size: {{ $fs - 1 }}px; text-transform: uppercase; color: {{ $d['primary'] }}; }
     .cols { width: 100%; border-collapse: collapse; }
     .cols > tbody > tr > td { vertical-align: top; padding: 0 3px; }
