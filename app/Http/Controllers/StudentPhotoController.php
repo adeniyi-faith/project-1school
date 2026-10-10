@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 class StudentPhotoController extends Controller
 {
     /** Photos are JPG or PNG (what report card PDFs can print), up to 2 MB */
-    public const RULE = 'image|mimes:jpg,jpeg,png|max:2048';
+    public const RULE = 'image|mimes:jpg,jpeg,png|max:10240';
 
     public function show(Request $request, int $student): Response
     {
@@ -87,7 +87,7 @@ class StudentPhotoController extends Controller
     private static function replace(Student $student, $file): void
     {
         $old = $student->photo;
-        $path = $file->store("students/{$student->school_id}/photos", 'private');
+        $path = \App\Support\ImageShrinker::store($file, "students/{$student->school_id}/photos", 'private', 600);
         $student->update(['photo' => $path]);
         if ($old && $old !== $path) {
             Storage::disk('private')->delete($old);
