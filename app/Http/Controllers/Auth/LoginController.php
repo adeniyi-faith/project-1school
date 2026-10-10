@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Auth;
 
+use Illuminate\Support\Facades\Hash;
+
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\SupabaseAuthService;
@@ -75,7 +77,7 @@ class LoginController extends Controller
         ]);
     }
 
-    public function store(Request $request, SupabaseAuthService $supabaseAuth): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
@@ -94,31 +96,15 @@ class LoginController extends Controller
             ]);
         }
 
-        // Supabase checks the password. Laravel never sees or stores it;
-        // it only decides, once Supabase confirms who's signing in,
-        // whether that person has an account here and what they can do.
-        $supabaseUser = $supabaseAuth->signIn($credentials['email'], $credentials['password']);
-
-        if (! $supabaseUser) {
-            RateLimiter::hit($throttleKey, 60);
-
-            throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
-            ]);
-        }
-
+        // Native Database Authentication
         $user = User::where('email', $credentials['email'])->first();
 
-        if (! $user) {
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             RateLimiter::hit($throttleKey, 60);
 
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
-        }
-
-        if ($user->supabase_id !== $supabaseUser['id']) {
-            $user->supabase_id = $supabaseUser['id'];
         }
 
         RateLimiter::clear($throttleKey);
@@ -128,10 +114,12 @@ class LoginController extends Controller
 
         $user->update(['last_login_at' => now()]);
 
-        activity()
-            ->causedBy($user)
-            ->withProperties(['ip' => $request->ip(), 'user_agent' => $request->userAgent()])
-            ->log('User logged in');
+        if (function_exists('activity')) {
+            activity()
+                ->causedBy($user)
+                ->withProperties(['ip' => $request->ip(), 'user_agent' => $request->userAgent()])
+                ->log('User logged in');
+        }
 
         return redirect()->route('dashboard');
     }
