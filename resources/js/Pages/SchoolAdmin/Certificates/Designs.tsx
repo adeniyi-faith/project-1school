@@ -191,8 +191,8 @@ function Editor({ template, standard, borders, blanks, schoolColors, canEdit }: 
             </Panel>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
-                <a href={`/school/certificates/designs/${template.type}/preview`} target="_blank" rel="noopener" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
-                    <Eye className="size-4" /> Preview {form.isDirty ? '(save first to see changes)' : ''}
+                <a href={`/school/certificates/designs/${template.type}/preview?draft=${encodeURIComponent(JSON.stringify(form.data))}`} target="_blank" rel="noopener" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+                    <Eye className="size-4" /> Preview
                 </a>
                 {canEdit && <Button type="submit" disabled={form.processing || !form.isDirty} className="bg-indigo-600 text-white hover:bg-indigo-700">Save design</Button>}
             </div>

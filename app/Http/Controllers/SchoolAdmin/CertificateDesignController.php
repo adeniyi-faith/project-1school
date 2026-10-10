@@ -69,6 +69,26 @@ class CertificateDesignController extends Controller
     {
         abort_unless(isset(StudentCertificate::TYPES[$type]), 404);
         $template = CertificateTemplate::for((int) $request->user()->school_id, $type);
+
+        // Show the choices on screen even if they are not saved yet (nothing is written)
+        $draft = json_decode((string) $request->query('draft', ''), true);
+        if (is_array($draft)) {
+            $v = validator($draft, [
+                'border' => ['nullable', Rule::in(CertificateTemplate::BORDERS)],
+                'primary_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'accent_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'title' => 'nullable|string|max:80',
+                'body' => 'nullable|string|max:3000',
+                'closing' => 'nullable|string|max:300',
+                'show_details' => 'boolean',
+                'show_qr' => 'boolean',
+                'show_watermark' => 'boolean',
+            ]);
+            if (! $v->fails() && ! array_diff($this->blanksIn(($draft['body'] ?? '').' '.($draft['closing'] ?? '')), CertificateTemplate::BLANKS)) {
+                $template->fill(array_filter($v->validated(), fn ($x) => $x !== null));
+            }
+        }
+
         $bytes = Pdf::loadView('certificates.certificate', $this->certificates->pdfData($this->certificates->sample($template)))->setPaper('a4', 'portrait')->output();
 
         return response($bytes, 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="certificate-preview.pdf"']);
