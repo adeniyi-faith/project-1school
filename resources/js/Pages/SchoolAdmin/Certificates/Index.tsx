@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState, PageHeader, Panel } from '@/components/app/kit';
 import { CertificateList } from '@/components/certificates/CertificateList';
-import { Award, Search } from 'lucide-react';
+import { Award, Palette, Search } from 'lucide-react';
 import type { CertificateRow } from '@/Types';
 
 interface Props {
@@ -26,6 +26,11 @@ interface Props {
 export default function CertificatesIndex({ certificates, filters, types, canIssue }: Props) {
     const [search, setSearch] = useState(filters.search);
     const typeItems = [{ value: 'all', label: 'All certificates' }, ...types];
+    const designLink = (
+        <Link href="/school/certificates/designs" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+            <Palette className="size-4" /> Certificate designs
+        </Link>
+    );
 
     function apply(next: { type?: string | null; search?: string }) {
         const params = { type: filters.type ?? '', search, ...next };
@@ -41,7 +46,9 @@ export default function CertificatesIndex({ certificates, filters, types, canIss
                 <PageHeader
                     title="Certificates"
                     description="Every testimonial and transfer certificate the school has issued. To issue one, open the student's page and choose the Certificates tab."
+                    actions={designLink}
                 />
+                <div className="md:hidden">{designLink}</div>
 
                 <div className="flex flex-wrap gap-2">
                     <form onSubmit={e => { e.preventDefault(); apply({ search }); }} className="relative min-w-60 flex-1">

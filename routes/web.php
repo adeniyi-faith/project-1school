@@ -43,6 +43,7 @@ use App\Http\Controllers\SchoolAdmin\AdmissionPipelineController;
 use App\Http\Controllers\SchoolAdmin\PromotionController;
 use App\Http\Controllers\SchoolAdmin\BroadsheetController;
 use App\Http\Controllers\SchoolAdmin\CertificateController;
+use App\Http\Controllers\SchoolAdmin\CertificateDesignController;
 use App\Http\Controllers\SchoolAdmin\CommentBankController;
 use App\Http\Controllers\SchoolAdmin\ReportCardController;
 use App\Http\Controllers\SchoolAdmin\ReportCardExportController;
@@ -134,6 +135,9 @@ Route::middleware('auth')->group(function () {
             Route::resource('students', StudentController::class)->only(['edit', 'update'])->middleware('permission:students.edit');
             // Testimonials and transfer certificates
             Route::get('certificates',                         [CertificateController::class, 'index'])->middleware('permission:students.view')->name('certificates.index');
+            Route::get('certificates/designs',                 [CertificateDesignController::class, 'index'])->middleware('permission:students.certificates')->name('certificate-designs.index');
+            Route::post('certificates/designs/{type}',         [CertificateDesignController::class, 'update'])->whereIn('type', ['testimonial', 'transfer'])->middleware('permission:settings.edit')->name('certificate-designs.update');
+            Route::get('certificates/designs/{type}/preview',  [CertificateDesignController::class, 'preview'])->whereIn('type', ['testimonial', 'transfer'])->middleware('permission:students.certificates')->name('certificate-designs.preview');
             Route::get('certificates/{certificate}/pdf',       [CertificateController::class, 'pdf'])->middleware('permission:students.view')->name('certificates.pdf');
             Route::post('certificates/{certificate}/revoke',   [CertificateController::class, 'revoke'])->middleware('permission:students.certificates')->name('certificates.revoke');
             Route::get('students/{student}/certificates/new',  [CertificateController::class, 'create'])->middleware('permission:students.certificates')->name('certificates.create');
