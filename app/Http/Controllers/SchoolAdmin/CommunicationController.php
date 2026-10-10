@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\SendEmailBlast;
-use App\Jobs\SendSmsBlast;
 use App\Models\Announcement;
 use App\Models\EmailTemplate;
 use App\Models\Message;
@@ -13,7 +11,9 @@ use App\Models\SchoolNotification;
 use App\Models\Staff;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\MessageService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class CommunicationController extends Controller
@@ -148,44 +148,30 @@ class CommunicationController extends Controller
         $sid = $this->getSchoolId();
 
         return Inertia::render('SchoolAdmin/Communication/Blast', [
-            'classes' => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->get(['id', 'name']),
+            'classes'   => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->get(['id', 'name']),
+            'audiences' => collect(MessageService::AUDIENCES)->map(fn ($label, $value) => ['value' => $value, 'label' => $label])->values(),
+            'canSms'    => $request->user()->can('sms.send'),
+            'canEmail'  => $request->user()->can('email.send'),
+            'smsReady'  => false, // no SMS provider is connected yet
         ]);
     }
 
-    public function sendBlast(Request $request)
+    public function sendBlast(Request $request, MessageService $messages)
     {
         $data = $request->validate([
             'channel'    => 'required|in:sms,email',
-            'audience'   => 'required|in:all_parents,all_students,all_staff,class',
-            'class_id'   => 'nullable|exists:classes,id',
+            'audience'   => 'required|in:'.implode(',', array_keys(MessageService::AUDIENCES)),
+            'class_id'   => ['required_if:audience,class', 'nullable', Rule::exists('classes', 'id')->where('school_id', $this->getSchoolId())],
             'subject'    => 'required_if:channel,email|nullable|string|max:255',
             'message'    => 'required|string|max:1600',
-        ]);
+        ], ['class_id.required_if' => 'Choose the class.']);
 
-        $sid = $this->getSchoolId();
+        $permission = $data['channel'] === 'sms' ? 'sms.send' : 'email.send';
+        abort_unless($request->user()->can($permission), 403);
 
-        // Build recipient list
-        if ($data['audience'] === 'all_staff') {
-            $recipients = Staff::where('school_id', $sid)->whereNotNull('email')->pluck('email')->toArray();
-            $phones     = Staff::where('school_id', $sid)->whereNotNull('phone')->pluck('phone')->toArray();
-        } else {
-            $query = Student::withoutGlobalScopes()->where('school_id', $sid);
-            if ($data['audience'] === 'class' && $data['class_id']) {
-                $query->where('class_id', $data['class_id']);
-            }
-            $recipients = $query->whereNotNull('email')->pluck('email')->toArray();
-            $phones     = $query->whereNotNull('phone')->pluck('phone')->toArray();
-        }
+        $batch = $messages->send($request->user(), $data['channel'], $data['audience'], $data['class_id'] ?? null, $data['subject'] ?? null, $data['message']);
 
-        if ($data['channel'] === 'sms') {
-            SendSmsBlast::dispatch($phones, $data['message'], $sid);
-            $count = count($phones);
-        } else {
-            SendEmailBlast::dispatch($recipients, $data['subject'], $data['message'], $sid);
-            $count = count($recipients);
-        }
-
-        return back()->with('success', "Blast queued for {$count} recipient(s).");
+        return redirect("/school/communication/sent/{$batch->id}")->with('success', 'Your message has been sent out. This page shows who it reached.');
     }
 
     // ── Email Templates ───────────────────────────────────────────

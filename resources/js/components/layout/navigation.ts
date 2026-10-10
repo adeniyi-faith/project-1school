@@ -6,7 +6,7 @@ import {
     Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff,
     Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell,
     PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug,
-    CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award,
+    CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -141,6 +141,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Announcements',    href: '/school/communication/announcements',   icon: Megaphone,     roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Messages',         href: '/school/communication/messages',         icon: MessageSquare, roles: ['super-admin','school-admin','principal','teacher','accountant','librarian'] },
             { label: 'SMS/Email Blast',  href: '/school/communication/blast',            icon: Send,          roles: ['super-admin','school-admin','principal'] },
+            { label: 'Sent Messages',    href: '/school/communication/sent',             icon: History,       roles: ['super-admin','school-admin','principal'] },
             { label: 'Email Templates',  href: '/school/communication/email-templates',  icon: Mail,          roles: ['super-admin','school-admin'] },
             { label: 'Notifications',    href: '/school/communication/notifications',    icon: Bell,          roles: ['super-admin','school-admin','principal','teacher','accountant','librarian'] },
         ],
