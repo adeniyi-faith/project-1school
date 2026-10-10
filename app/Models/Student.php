@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
 
 class Student extends Model
 {
@@ -35,7 +34,8 @@ class Student extends Model
 
     public function getPhotoUrlAttribute(): ?string
     {
-        return $this->photo ? Storage::url($this->photo) : null;
+        // Photos sit on the private disk and are served through a route that checks who is asking
+        return $this->photo ? url("/photos/students/{$this->id}").'?v='.substr(md5($this->photo), 0, 8) : null;
     }
 
     public function schoolClass(): BelongsTo

@@ -495,6 +495,34 @@ export interface ReportCardStudent {
     average: number;
     position: number | null;
     class_size: number;
-    teacher_comment: string;
-    principal_comment: string;
+    /** signer id → comment */
+    remarks: Record<string, string>;
+}
+
+/** One person who comments on and/or signs report cards */
+export interface ReportCardSignerRow {
+    id: number | null;
+    label: string;
+    name: string | null;
+    has_comment: boolean;
+    writer_permission: string;
+    has_signature: boolean;
+}
+
+/** A report card design: layout, colours, titles, on/off parts and signers */
+export interface ReportCardDesignRow {
+    id: number;
+    name: string;
+    is_default: boolean;
+    template: 'classic' | 'modern' | 'compact';
+    primary_color: string;
+    accent_color: string;
+    font_size: 'small' | 'normal' | 'large';
+    paper: 'a4' | 'letter';
+    term_title: string;
+    session_title: string;
+    footer_note: string | null;
+    options: Record<string, boolean>;
+    has_stamp: boolean;
+    signers: ReportCardSignerRow[];
 }

@@ -10,9 +10,10 @@
     $ord = fn ($p) => $p ? $p . (in_array($p % 100, [11, 12, 13]) ? 'th' : (['th', 'st', 'nd', 'rd'][$p % 10] ?? 'th')) : '—';
 @endphp
 @foreach($cards as $card)
+@php $d = $card['design']; @endphp
 <div class="card">
     @include('report-cards._header', ['card' => $card])
-    <div class="title">{{ $card['year'] }} Full-Year Report Card</div>
+    <div class="title">{{ $card['year'] }} {{ $d['session_title'] }}</div>
     @if($card['preview'])<p class="note">Preview: these results have not been published yet.</p>@endif
 
     <table class="grid">
@@ -38,30 +39,28 @@
                 @foreach($card['term_averages'] as $a)<td><strong>{{ $a === null ? '—' : $n($a) . '%' }}</strong></td>@endforeach
                 <td colspan="2"></td>
             </tr>
+            @if($d['show_overall_position'])
             <tr>
                 <td class="left">Position in class</td>
                 @foreach($card['term_positions'] as $p)<td>{{ $p ? $ord($p['position']) . ' of ' . $p['class_size'] : '—' }}</td>@endforeach
                 <td colspan="2"></td>
             </tr>
+            @endif
         </tbody>
     </table>
 
     <table class="grid">
-        <tr><th>Year average</th><th>Overall grade</th><th>Position for the year</th><th>End-of-year decision</th></tr>
+        <tr><th>Year average</th><th>Overall grade</th>@if($d['show_overall_position'])<th>Position for the year</th>@endif<th>End-of-year decision</th></tr>
         <tr>
             <td><strong>{{ $n($card['summary']['average']) }}%</strong></td>
             <td><strong>{{ $card['summary']['grade'] }}</strong></td>
-            <td><strong>{{ $ord($card['summary']['position']) }}</strong> of {{ $card['summary']['class_size'] }}</td>
+            @if($d['show_overall_position'])<td><strong>{{ $ord($card['summary']['position']) }}</strong> of {{ $card['summary']['class_size'] }}</td>@endif
             <td><strong>{{ $card['decision'] ?? 'Not decided yet' }}</strong></td>
         </tr>
     </table>
     <p class="muted">The year average is the average of the term averages above. A dash means no result for that term.</p>
 
-    <table class="sign"><tr>
-        <td><div class="line">Class teacher's signature</div></td>
-        <td><div class="line">Principal's signature and stamp</div></td>
-    </tr></table>
-
+    @include('report-cards._signers', ['card' => $card])
     @include('report-cards._key', ['card' => $card])
 </div>
 @endforeach
