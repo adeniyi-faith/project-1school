@@ -72,6 +72,7 @@ class LoginController extends Controller
         return Inertia::render('Auth/Login', [
             'showDemo' => $showDemo,
             'demoAccounts' => $showDemo ? $this->demoAccounts : [],
+            'demoEnabled' => (bool) config('app.demo_enabled'),
         ]);
     }
 

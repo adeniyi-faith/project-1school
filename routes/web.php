@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Auth\DemoController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\SchoolAdmin\AttendanceController;
 use App\Http\Controllers\SchoolAdmin\ExamController;
 use App\Http\Controllers\SchoolAdmin\FeeCategoryController;
@@ -55,6 +57,9 @@ Route::middleware('guest')->group(function () {
     Route::get('/', fn () => view('landing'))->name('home');
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store']);
+    Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:5,10');
+    Route::get('/demo', [DemoController::class, 'enter'])->middleware('throttle:20,1')->name('demo');
 });
 
 /*

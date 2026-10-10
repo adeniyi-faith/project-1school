@@ -41,4 +41,42 @@ class SupabaseAuthService
             'email' => $user['email'],
         ];
     }
+
+    /**
+     * Create a Supabase login for a brand-new school admin. Uses the
+     * service role key (server only) and marks the email as confirmed so
+     * they can sign in straight away. Returns Supabase's id for the person,
+     * or throws if Supabase refuses (for example, the email already exists).
+     */
+    public function createUser(string $email, string $password): string
+    {
+        $url = rtrim((string) config('services.supabase.url'), '/').'/auth/v1/admin/users';
+        $key = config('services.supabase.service_role_key');
+
+        $response = Http::withHeaders([
+            'apikey' => $key,
+            'Authorization' => 'Bearer '.$key,
+        ])->post($url, [
+            'email' => $email,
+            'password' => $password,
+            'email_confirm' => true,
+        ]);
+
+        $id = $response->json('id');
+
+        if (! $response->successful() || ! is_string($id)) {
+            throw new \RuntimeException('Supabase could not create this account.');
+        }
+
+        return $id;
+    }
+
+    /** Remove a Supabase login again, used to undo a half-finished sign-up. */
+    public function deleteUser(string $supabaseId): void
+    {
+        $url = rtrim((string) config('services.supabase.url'), '/').'/auth/v1/admin/users/'.$supabaseId;
+        $key = config('services.supabase.service_role_key');
+
+        Http::withHeaders(['apikey' => $key, 'Authorization' => 'Bearer '.$key])->delete($url);
+    }
 }
