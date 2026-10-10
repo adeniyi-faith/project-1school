@@ -19,10 +19,10 @@ return [
     // SHOW_DEMO_ACCOUNTS=true, so a real school never exposes them by accident.
     'show_demo_accounts' => (bool) env('SHOW_DEMO_ACCOUNTS', false),
 
-    // How people sign in. "local": email and password are checked against
-    // this app's own database (MySQL on cPanel). "supabase": Supabase checks
-    // the password instead.
-    'login_driver' => env('LOGIN_DRIVER', 'local'),
+    // How people sign in. "database" (also written "local"): email and
+    // password are checked against this app's own database (MySQL on cPanel).
+    // "supabase": Supabase checks the password instead.
+    'login_driver' => env('LOGIN_DRIVER', 'database'),
 
     // Public read-only demo: visitors click "Try the demo" and look around
     // as a demo school's admin, without an account. Nothing can be changed.
