@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
+import { nairaCompact } from '@/lib/format';
 import { Plus, Banknote, CheckCircle2, Clock, AlertCircle, Settings2, Tag, TrendingDown } from 'lucide-react';
 import type { SchoolClass, PageProps, PaginatedResponse } from '@/Types';
 
@@ -39,8 +40,8 @@ export default function FeePayments({ payments, classes, filters, stats }: Props
     }
 
     const statCards = [
-        { label: 'Total Collected', value: `₦${stats.total_collected?.toLocaleString() ?? 0}`, color: 'text-green-600', icon: Banknote },
-        { label: 'Outstanding', value: `₦${Math.max(0, stats.total_outstanding ?? 0).toLocaleString()}`, color: 'text-red-600', icon: TrendingDown },
+        { label: 'Total Collected', value: nairaCompact(stats.total_collected ?? 0), color: 'text-green-600', icon: Banknote },
+        { label: 'Outstanding', value: nairaCompact(Math.max(0, stats.total_outstanding ?? 0)), color: 'text-red-600', icon: TrendingDown },
         { label: 'Paid Receipts', value: stats.paid_count, color: 'text-indigo-600', icon: CheckCircle2 },
         { label: 'Pending', value: stats.pending_count, color: 'text-amber-600', icon: Clock },
     ];

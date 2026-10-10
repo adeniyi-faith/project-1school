@@ -111,8 +111,8 @@ Route::middleware('auth')->group(function () {
                 Route::resource($name, $controller)->only(['store', 'update', 'destroy'])->middleware('permission:settings.edit');
             }
 
-            Route::resource('students', StudentController::class)->only(['index', 'show'])->middleware('permission:students.view');
             Route::resource('students', StudentController::class)->only(['create', 'store'])->middleware('permission:students.create');
+            Route::resource('students', StudentController::class)->only(['index', 'show'])->middleware('permission:students.view');
             Route::resource('students', StudentController::class)->only(['edit', 'update'])->middleware('permission:students.edit');
             Route::resource('students', StudentController::class)->only(['destroy'])->middleware('permission:students.delete');
             Route::post('students/{student}/documents',        [StudentController::class, 'uploadDocument'])->middleware('permission:students.edit')->name('students.documents.upload');
@@ -341,8 +341,8 @@ Route::middleware('auth')->group(function () {
             Route::resource('departments',  DepartmentController::class)->only(['store', 'update', 'destroy'])->middleware('permission:staff.edit');
             Route::resource('designations', DesignationController::class)->only(['index'])->middleware('permission:staff.view');
             Route::resource('designations', DesignationController::class)->only(['store', 'update', 'destroy'])->middleware('permission:staff.edit');
-            Route::resource('staff', StaffController::class)->only(['index', 'show'])->middleware('permission:staff.view');
             Route::resource('staff', StaffController::class)->only(['create', 'store'])->middleware('permission:staff.create');
+            Route::resource('staff', StaffController::class)->only(['index', 'show'])->middleware('permission:staff.view');
             Route::resource('staff', StaffController::class)->only(['edit', 'update'])->middleware('permission:staff.edit');
             Route::resource('staff', StaffController::class)->only(['destroy'])->middleware('permission:staff.delete');
             Route::post('staff/{staff}/documents',         [StaffController::class, 'uploadDocument'])->middleware('permission:staff.edit')->name('staff.documents.upload');

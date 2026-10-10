@@ -48,7 +48,7 @@ export default function ShowStudent() {
     const InfoRow = ({ label, value }: { label: string; value?: string | null }) => (
         <div>
             <p className="text-xs text-slate-400 uppercase tracking-wide">{label}</p>
-            <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">{value || '—'}</p>
+            <p className="min-w-0 break-words text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">{value || '—'}</p>
         </div>
     );
 
@@ -60,46 +60,42 @@ export default function ShowStudent() {
             <Head title={student.full_name} />
 
             {/* Header */}
-            <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link href="/school/students"><ArrowLeft className="w-4 h-4" /></Link>
-                    </Button>
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-xl font-bold text-indigo-600 shrink-0">
-                            {student.photo_url
-                                ? <img src={student.photo_url} className="w-12 h-12 rounded-xl object-cover" alt="" />
-                                : student.first_name[0].toUpperCase()
-                            }
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-xl font-bold text-slate-900 dark:text-white">{student.full_name}</h1>
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[student.status] ?? statusColors.inactive}`}>
-                                    {student.status}
-                                </span>
-                            </div>
-                            <p className="text-sm text-slate-400 font-mono">{student.admission_no}</p>
-                        </div>
+            <div className="mb-6 flex items-start gap-3">
+                <Button variant="ghost" size="icon" asChild className="-ml-2 shrink-0">
+                    <Link href="/school/students" aria-label="Back to students"><ArrowLeft className="w-4 h-4" /></Link>
+                </Button>
+                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/40">
+                    {student.photo_url
+                        ? <img src={student.photo_url} className="size-12 object-cover" alt="" />
+                        : student.first_name[0].toUpperCase()
+                    }
+                </div>
+                <div className="min-w-0 flex-1">
+                    <h1 className="text-xl font-bold leading-tight text-slate-900 dark:text-white">{student.full_name}</h1>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="font-mono text-sm text-slate-500">{student.admission_no}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[student.status] ?? statusColors.inactive}`}>
+                            {student.status}
+                        </span>
                     </div>
                 </div>
-                <Button size="sm" asChild className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
+                <Button size="sm" asChild className="shrink-0 gap-2 bg-indigo-600 text-white hover:bg-indigo-700">
                     <Link href={`/school/students/${student.id}/edit`}>
-                        <Pencil className="w-4 h-4" /> Edit
+                        <Pencil className="w-4 h-4" /> <span className="max-sm:sr-only">Edit</span>
                     </Link>
                 </Button>
             </div>
 
             {/* Quick stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-4">
                 {[
                     { icon: GraduationCap, label: 'Class', value: student.school_class?.name ?? '—' },
                     { icon: Users,         label: 'Section', value: student.section?.name ?? '—' },
                     { icon: FileText,      label: 'Documents', value: String(student.documents?.length ?? 0) },
                 ].map((s) => (
                     <Card key={s.label} className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                        <CardContent className="p-4 flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
+                        <CardContent className="flex items-center gap-3 p-3 sm:p-4">
+                            <div className="max-sm:hidden w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
                                 <s.icon className="w-4 h-4 text-indigo-500" />
                             </div>
                             <div>
@@ -126,7 +122,7 @@ export default function ShowStudent() {
             {tab === 'personal' && (
                 <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <CardHeader className="pb-3"><CardTitle className="text-sm">Personal Details</CardTitle></CardHeader>
-                    <CardContent className="grid grid-cols-3 gap-x-6 gap-y-4">
+                    <CardContent className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 sm:gap-x-6">
                         <InfoRow label="Full Name"      value={student.full_name} />
                         <InfoRow label="Gender"         value={student.gender} />
                         <InfoRow label="Date of Birth"  value={student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString() : null} />
@@ -140,7 +136,7 @@ export default function ShowStudent() {
                         <InfoRow label="Admission Date" value={student.admission_date ? new Date(student.admission_date).toLocaleDateString() : null} />
                         <InfoRow label="Previous School" value={student.previous_school} />
                         {student.address && (
-                            <div className="col-span-3">
+                            <div className="col-span-2 sm:col-span-3">
                                 <p className="text-xs text-slate-400 uppercase tracking-wide">Address</p>
                                 <p className="text-sm text-slate-800 dark:text-slate-200 mt-0.5">{student.address}</p>
                             </div>
@@ -153,7 +149,7 @@ export default function ShowStudent() {
             {tab === 'guardian' && (
                 <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <CardHeader className="pb-3"><CardTitle className="text-sm">Guardian Details</CardTitle></CardHeader>
-                    <CardContent className="grid grid-cols-3 gap-x-6 gap-y-4">
+                    <CardContent className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 sm:gap-x-6">
                         {student.guardian ? (
                             <>
                                 <InfoRow label="Name"       value={student.guardian.name} />
@@ -162,14 +158,14 @@ export default function ShowStudent() {
                                 <InfoRow label="Email"      value={student.guardian.email} />
                                 <InfoRow label="Occupation" value={student.guardian.occupation} />
                                 {student.guardian.address && (
-                                    <div className="col-span-3">
+                                    <div className="col-span-2 sm:col-span-3">
                                         <p className="text-xs text-slate-400 uppercase tracking-wide">Address</p>
                                         <p className="text-sm text-slate-800 dark:text-slate-200 mt-0.5">{student.guardian.address}</p>
                                     </div>
                                 )}
                             </>
                         ) : (
-                            <p className="text-sm text-slate-400 col-span-3">No guardian information.</p>
+                            <p className="text-sm text-slate-400 col-span-2 sm:col-span-3">No guardian information.</p>
                         )}
                     </CardContent>
                 </Card>
