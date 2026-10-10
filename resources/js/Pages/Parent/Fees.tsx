@@ -8,8 +8,11 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Banknote, AlertTriangle, CheckCircle, CreditCard, Lock } from 'lucide-react';
+import { InstalmentTable, shortDate } from '@/components/fees/Instalments';
+import { naira } from '@/lib/format';
+import type { InstalmentSummary } from '@/Types';
 
-interface Payment { id: number; month: string; due: number; paid: number; balance: number; status: string; payment_date: string | null; }
+interface Payment { id: number; month: string; due: number; paid: number; balance: number; status: string; payment_date: string | null; due_date: string | null; instalments: InstalmentSummary | null; }
 interface Child { id: number; full_name: string; class: string | null; total_due: number; total_paid: number; balance: number; payments: Payment[]; }
 interface Props { linked: boolean; guardian: { name: string } | null; children: Child[]; payOnline?: boolean; }
 
@@ -75,7 +78,10 @@ export default function ParentFees({ linked, children, payOnline = false }: Prop
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                             {child.payments.map((p, i) => (
                                                 <tr key={i}>
-                                                    <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{p.month}</td>
+                                                    <td className="px-4 py-2 text-slate-700 dark:text-slate-300">
+                                                        {p.month}
+                                                        <PartsLine p={p} />
+                                                    </td>
                                                     <td className="px-4 py-2 text-right text-slate-600">₦{p.due.toLocaleString()}</td>
                                                     <td className="px-4 py-2 text-right text-green-600">₦{p.paid.toLocaleString()}</td>
                                                     <td className="px-4 py-2 text-center">
@@ -106,18 +112,31 @@ export default function ParentFees({ linked, children, payOnline = false }: Prop
     );
 }
 
+/** Under the fee's name: what is overdue, or the next part and its date */
+function PartsLine({ p }: { p: Payment }) {
+    const s = p.instalments;
+    if (!s || p.balance <= 0) return null;
+    if (s.overdue > 0) return <span className="block text-xs text-red-600">{naira(s.overdue, { kobo: true })} overdue · {s.parts.length} parts</span>;
+    if (s.next) return <span className="block text-xs text-slate-500">Next: {naira(s.next.left, { kobo: true })} by {shortDate(s.next.due_date)} ({s.next.label})</span>;
+    return null;
+}
+
 function PayDialog({ child, row, onClose }: { child: string; row: Payment; onClose: () => void }) {
-    const form = useForm({ amount: String(row.balance) });
+    // With parts, start from what is due now (or the next part), not the whole balance
+    const s = row.instalments;
+    const suggested = s ? (s.due_now > 0 ? s.due_now : (s.next?.left ?? row.balance)) : row.balance;
+    const form = useForm({ amount: String(Math.min(suggested, row.balance)) });
     return (
         <Dialog open onOpenChange={o => !o && onClose()}>
-            <DialogContent className="sm:max-w-sm">
+            <DialogContent className={s ? 'sm:max-w-lg' : 'sm:max-w-sm'}>
                 <DialogHeader><DialogTitle>Pay online</DialogTitle></DialogHeader>
                 <form onSubmit={e => { e.preventDefault(); form.post(`/school/parent/fees/invoices/${row.id}/pay`); }} className="space-y-4">
                     <p className="text-sm text-slate-600 dark:text-slate-300">{child}: {row.month}. Still owed: <span className="font-medium">₦{row.balance.toLocaleString()}</span>.</p>
+                    {s && <div className="overflow-x-auto"><InstalmentTable summary={s} /></div>}
                     <div className="space-y-1.5">
                         <Label htmlFor="amount">Amount to pay (₦)</Label>
                         <Input id="amount" type="number" min={1} max={row.balance} step="0.01" value={form.data.amount} onChange={e => form.setData('amount', e.target.value)} />
-                        <p className="text-xs text-slate-500">You can pay part now and the rest later.</p>
+                        <p className="text-xs text-slate-500">{s ? 'This fee is paid in parts. You can pay one part or more now.' : 'You can pay part now and the rest later.'}</p>
                         {form.errors.amount && <p className="text-xs text-red-500">{form.errors.amount}</p>}
                     </div>
                     <p className="flex items-start gap-2 text-xs text-slate-500"><Lock className="mt-0.5 size-3.5 shrink-0" /> You will pay on the school's secure payment page by card, bank transfer or USSD, then come back here. The school never sees your card details.</p>

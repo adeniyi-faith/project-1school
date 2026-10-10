@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useForm } from '@inertiajs/react';
+import { Link, router, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,13 +12,15 @@ import { PageHeader, Panel, StatStrip } from '@/components/app/kit';
 import { InvoiceStatus, METHOD_LABELS } from '@/components/fees/InvoiceStatus';
 import { naira } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, Ban, Banknote, CircleAlert, Undo2 } from 'lucide-react';
-import type { InvoiceDetail, LedgerLine, LedgerType, PaymentMethod } from '@/Types';
+import { CUSTOM, InstalmentTable, PlanPartsEditor, planPayload } from '@/components/fees/Instalments';
+import { ArrowLeft, Ban, Banknote, CalendarClock, CircleAlert, Undo2 } from 'lucide-react';
+import type { InvoiceDetail, LedgerLine, LedgerType, PaymentMethod, PaymentPlanOption, PlanPart } from '@/Types';
 
 interface Props {
     invoice: InvoiceDetail;
     entries: LedgerLine[];
-    can: { collect: boolean; correct: boolean };
+    plans: PaymentPlanOption[];
+    can: { collect: boolean; correct: boolean; plan: boolean };
 }
 
 const TYPE_LABELS: Record<LedgerType, string> = {
@@ -26,7 +28,7 @@ const TYPE_LABELS: Record<LedgerType, string> = {
 };
 const METHOD_ITEMS = (Object.keys(METHOD_LABELS) as PaymentMethod[]).map(m => ({ value: m, label: METHOD_LABELS[m] }));
 
-type Dialogs = 'pay' | 'fine' | 'void' | null;
+type Dialogs = 'pay' | 'fine' | 'void' | 'plan' | null;
 type PayForm = { amount: string; method: PaymentMethod; entry_date: string; note: string };
 
 function today() {
@@ -37,7 +39,7 @@ function ErrorText({ children }: { children?: string }) {
     return children ? <p className="text-xs text-red-500">{children}</p> : null;
 }
 
-export default function Invoice({ invoice, entries, can }: Props) {
+export default function Invoice({ invoice, entries, plans, can }: Props) {
     const [open, setOpen] = useState<Dialogs>(null);
     const [reversing, setReversing] = useState<LedgerLine | null>(null);
 
@@ -45,6 +47,18 @@ export default function Invoice({ invoice, entries, can }: Props) {
     const fine = useForm({ amount: '', note: '' });
     const voidForm = useForm({ reason: '' });
     const reverse = useForm({ reason: '' });
+    const planForm = useForm<{ plan_id: string; parts: PlanPart[] }>({ plan_id: '', parts: [] });
+    const summary = invoice.instalments;
+
+    function openPlan() {
+        planForm.clearErrors();
+        // Start from the parts it has now, so a date can be moved without retyping the rest
+        planForm.setData({
+            plan_id: summary ? CUSTOM : '',
+            parts: summary ? summary.parts.map(p => ({ label: p.label, percent: p.percent, due_date: p.due_date })) : [],
+        });
+        setOpen('plan');
+    }
 
     // A running total after each line, so the record reads like a bank statement
     let running = 0;
@@ -63,6 +77,9 @@ export default function Invoice({ invoice, entries, can }: Props) {
             )}
             {can.collect && (
                 <Button variant="outline" onClick={() => { fine.reset(); fine.clearErrors(); setOpen('fine'); }}><CircleAlert className="size-4" /> Add fine</Button>
+            )}
+            {can.plan && (
+                <Button variant="outline" onClick={openPlan}><CalendarClock className="size-4" /> {summary ? 'Change parts' : 'Pay in parts'}</Button>
             )}
             {can.correct && invoice.net_paid <= 0 && (
                 <Button variant="outline" onClick={() => { voidForm.reset(); voidForm.clearErrors(); setOpen('void'); }} className="text-red-600"><Ban className="size-4" /> Cancel invoice</Button>
@@ -97,6 +114,18 @@ export default function Invoice({ invoice, entries, can }: Props) {
                     { label: 'Paid', value: naira(invoice.net_paid), tone: 'good' },
                     { label: 'Still owed', value: naira(invoice.balance), tone: invoice.balance > 0 ? 'bad' : 'good', hint: invoice.guardian ? `Parent: ${invoice.guardian.name}${invoice.guardian.phone ? ` · ${invoice.guardian.phone}` : ''}` : undefined },
                 ]} />
+
+                {summary && (
+                    <Panel
+                        title="Payment parts"
+                        description={`${invoice.plan_name ? `${invoice.plan_name}. ` : ''}Payments fill the parts in order. Discounts and fines change every part by its share.`}
+                        action={can.plan ? (
+                            <Button variant="ghost" size="sm" onClick={() => router.delete(`/school/fees/invoices/${invoice.id}/plan`, { preserveScroll: true })}>Back to one payment</Button>
+                        ) : undefined}
+                    >
+                        <div className="overflow-x-auto"><InstalmentTable summary={summary} /></div>
+                    </Panel>
+                )}
 
                 <Panel title="Record" description="Lines are never changed or deleted. A mistake is fixed by reversing the line, which adds its opposite." flush>
                     <div className="overflow-x-auto">
@@ -223,6 +252,31 @@ export default function Invoice({ invoice, entries, can }: Props) {
                             </DialogFooter>
                         </form>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={open === 'plan'} onOpenChange={o => !o && close()}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader><DialogTitle>Pay in parts</DialogTitle></DialogHeader>
+                    <form
+                        onSubmit={e => {
+                            e.preventDefault();
+                            planForm.transform(d => planPayload(d.plan_id, d.parts));
+                            planForm.post(`/school/fees/invoices/${invoice.id}/plan`, opts);
+                        }}
+                        className="mt-2 space-y-4"
+                    >
+                        <p className="text-sm text-slate-500">Split what this invoice comes to into dated parts, for example an arrangement agreed with the parent. Anything already paid counts towards the first parts.</p>
+                        <PlanPartsEditor
+                            plans={plans} planId={planForm.data.plan_id} parts={planForm.data.parts} term={invoice.term_dates}
+                            errors={planForm.errors as Record<string, string | undefined>}
+                            onChange={(plan_id, parts) => planForm.setData({ plan_id, parts })}
+                        />
+                        <DialogFooter>
+                            <Button type="button" variant="ghost" onClick={close}>Cancel</Button>
+                            <Button type="submit" disabled={planForm.processing || planForm.data.parts.length === 0} className="bg-indigo-600 text-white hover:bg-indigo-700">Save parts</Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
 

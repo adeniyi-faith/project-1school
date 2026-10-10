@@ -17,7 +17,7 @@ class Invoice extends Model
 
     protected $fillable = [
         'school_id', 'invoice_no', 'student_id', 'fee_structure_id', 'term_id', 'period', 'amount',
-        'due_date', 'status', 'balance', 'issued_by',
+        'due_date', 'payment_plan_id', 'status', 'balance', 'issued_by',
     ];
 
     protected $casts = [
@@ -45,6 +45,17 @@ class Invoice extends Model
     public function entries(): HasMany
     {
         return $this->hasMany(LedgerEntry::class)->orderBy('entry_date')->orderBy('id');
+    }
+
+    /** The dated parts, when the invoice is paid in instalments */
+    public function instalments(): HasMany
+    {
+        return $this->hasMany(InvoiceInstalment::class)->orderBy('position');
+    }
+
+    public function paymentPlan(): BelongsTo
+    {
+        return $this->belongsTo(PaymentPlan::class)->withTrashed();
     }
 
     public function isOpen(): bool

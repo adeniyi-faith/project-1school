@@ -6,7 +6,7 @@ import {
     Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff,
     Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell,
     PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug,
-    CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck,
+    CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -76,6 +76,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Invoices',       href: '/school/fees/invoices',   icon: FileText,  roles: ['super-admin','school-admin','accountant','principal'] },
             { label: 'Scholarships',   href: '/school/fees/scholarships', icon: Gift,    roles: ['super-admin','school-admin','accountant'] },
             { label: 'Online Payments', href: '/school/fees/online-payments', icon: CreditCard, roles: ['super-admin','school-admin','accountant'] },
+            { label: 'Payment Plans', href: '/school/fees/payment-plans', icon: CalendarClock, roles: ['super-admin','school-admin','accountant'] },
             { label: 'Old Payment Records', href: '/school/fees/payments', icon: Banknote,  roles: ['super-admin','school-admin','accountant'] },
             { label: 'Fee Structures', href: '/school/fees/structures',  icon: BarChart3,   roles: ['super-admin','school-admin','accountant'] },
             { label: 'Fee Categories', href: '/school/fees/categories',  icon: ClipboardList, roles: ['super-admin','school-admin','accountant'] },
