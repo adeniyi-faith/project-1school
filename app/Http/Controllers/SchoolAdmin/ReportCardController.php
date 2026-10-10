@@ -203,7 +203,7 @@ class ReportCardController extends Controller
 
         return response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Preview</title>'
             .'<body style="font:16px system-ui,sans-serif;padding:24px;color:#334155;max-width:36rem;margin:auto"><h2 style="color:#b91c1c">The preview could not be made</h2><p>'.$text.'</p>'
-            .'<p><button onclick="window.close()" style="font:600 15px system-ui;padding:10px 16px;border:0;border-radius:8px;background:#4f46e5;color:#fff">Close and go back</button></p></body>', 422, ['Content-Type' => 'text/html; charset=UTF-8']);
+            .'</body>', 422, ['Content-Type' => 'text/html; charset=UTF-8']);
     }
 
     /**
