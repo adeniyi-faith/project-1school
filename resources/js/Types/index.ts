@@ -361,3 +361,63 @@ export interface TermReport {
     subjects: { subject: string | null; total: number; grade: string | null; remarks: string | null; position: number | null; average: number | null }[];
     ratings: { name: string | null; domain: string | null; rating: number; label: string | null }[];
 }
+
+// ───────────── Invoices, ledger and scholarships ─────────────
+
+export type InvoiceStatus = 'unpaid' | 'partial' | 'paid' | 'void';
+export type LedgerType = 'charge' | 'fine' | 'payment' | 'discount' | 'reversal';
+export type PaymentMethod = 'cash' | 'bank_transfer' | 'pos' | 'card' | 'online' | 'ussd';
+
+export interface InvoiceRow {
+    id: number;
+    invoice_no: string;
+    student: { id: number; name: string; admission_no: string; class: string | null } | null;
+    fee: string;
+    period: string;
+    amount: number;
+    balance: number;
+    status: InvoiceStatus;
+    due_date: string | null;
+}
+
+export interface InvoiceDetail extends InvoiceRow {
+    void_reason: string | null;
+    guardian: { name: string; phone: string | null } | null;
+    net_paid: number;
+}
+
+/** One line of an invoice's record. Positive adds to what is owed; negative takes it away. */
+export interface LedgerLine {
+    id: number;
+    type: LedgerType;
+    amount: number;
+    method: PaymentMethod | null;
+    reference: string | null;
+    entry_date: string | null;
+    note: string | null;
+    recorded_by: string | null;
+    reverses_id: number | null;
+    reversed: boolean;
+}
+
+export interface Scholarship {
+    id: number;
+    name: string;
+    type: 'percent' | 'fixed';
+    value: number;
+    fee_category_id: number | null;
+    fee_category: string | null;
+    description: string | null;
+    is_active: boolean;
+    holders: number;
+}
+
+export interface ScholarshipAward {
+    id: number;
+    student: { name: string; admission_no: string; class: string | null } | null;
+    scholarship: string | null;
+    approved_by: string | null;
+    approved_at: string | null;
+    note: string | null;
+    active: boolean;
+}
