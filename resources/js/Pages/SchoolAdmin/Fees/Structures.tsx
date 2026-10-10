@@ -151,7 +151,7 @@ export default function FeeStructures({ structures, classes, categories, filters
                                     <TableCell className="text-slate-600 dark:text-slate-400">{s.school_class?.name}</TableCell>
                                     <TableCell className="text-slate-600 dark:text-slate-400">{s.academic_year}</TableCell>
                                     <TableCell className="text-right font-semibold text-slate-900 dark:text-white">
-                                        ৳{Number(s.amount).toLocaleString()}
+                                        ₦{Number(s.amount).toLocaleString()}
                                     </TableCell>
                                     <TableCell>
                                         <Badge className={`border-0 text-xs ${FREQ_COLORS[s.frequency] ?? ''}`}>{FREQ_LABELS[s.frequency] ?? s.frequency}</Badge>
@@ -214,7 +214,7 @@ export default function FeeStructures({ structures, classes, categories, filters
                                 <Input value={data.academic_year} onChange={e => setData('academic_year', e.target.value)} placeholder="2025-2026" />
                             </div>
                             <div className="space-y-1.5">
-                                <Label>Amount (৳) <span className="text-red-500">*</span></Label>
+                                <Label>Amount (₦) <span className="text-red-500">*</span></Label>
                                 <Input type="number" min="0" step="0.01" value={data.amount} onChange={e => setData('amount', e.target.value)} placeholder="0.00" />
                                 {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
                             </div>

@@ -88,7 +88,7 @@ class StudentSeeder extends Seeder
                     'date_of_birth'  => $dob->toDateString(),
                     'blood_group'    => $this->bloodGroups[array_rand($this->bloodGroups)],
                     'religion'       => $this->religions[array_rand($this->religions)],
-                    'nationality'    => 'Bangladeshi',
+                    'nationality'    => 'Nigerian',
                     'phone'          => rand(0, 1) ? '018' . rand(10000000, 99999999) : null,
                     'address'        => rand(1, 99) . ' Lane ' . rand(1, 10) . ', ' . $this->areas[array_rand($this->areas)],
                     'category'       => 'general',

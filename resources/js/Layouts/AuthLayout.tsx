@@ -20,9 +20,5 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         }
     }, [theme]);
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900 flex items-center justify-center p-4">
-            {children}
-        </div>
-    );
+    return <div className="min-h-dvh bg-background">{children}</div>;
 }

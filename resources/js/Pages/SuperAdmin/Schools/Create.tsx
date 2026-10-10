@@ -20,9 +20,9 @@ const schema = z.object({
     address:  z.string().optional(),
     city:     z.string().optional(),
     state:    z.string().optional(),
-    country:  z.string().default('BD'),
-    timezone: z.string().default('Asia/Dhaka'),
-    currency: z.string().default('BDT'),
+    country:  z.string().default('NG'),
+    timezone: z.string().default('Africa/Lagos'),
+    currency: z.string().default('NGN'),
     language: z.string().default('en'),
     status:   z.enum(['active', 'inactive', 'suspended']).default('active'),
 });
@@ -35,7 +35,7 @@ export default function CreateSchool() {
     const { register, handleSubmit, setValue, watch, setError, formState: { errors, isSubmitting } } =
         useForm<FormData>({
             resolver: zodResolver(schema),
-            defaultValues: { country: 'BD', timezone: 'Asia/Dhaka', currency: 'BDT', language: 'en', status: 'active' },
+            defaultValues: { country: 'NG', timezone: 'Africa/Lagos', currency: 'NGN', language: 'en', status: 'active' },
         });
 
     const onSubmit = (data: FormData) => {
@@ -115,8 +115,8 @@ export default function CreateSchool() {
                                     <Textarea placeholder="123 School Road…" className="resize-none" rows={2} {...register('address')} />
                                 </div>
                             </div>
-                            <Field name="city" label="City" placeholder="Dhaka" />
-                            <Field name="state" label="State / Division" placeholder="Dhaka Division" />
+                            <Field name="city" label="City" placeholder="Osogbo" />
+                            <Field name="state" label="State" placeholder="Osun" />
                         </CardContent>
                     </Card>
 
@@ -127,9 +127,10 @@ export default function CreateSchool() {
                         <CardContent className="grid grid-cols-3 gap-4">
                             <div className="space-y-1.5">
                                 <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Timezone</Label>
-                                <Select defaultValue="Asia/Dhaka" onValueChange={(v) => setValue('timezone', v)}>
+                                <Select defaultValue="Africa/Lagos" onValueChange={(v) => setValue('timezone', v)}>
                                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="Africa/Lagos">Africa/Lagos (WAT)</SelectItem>
                                         <SelectItem value="Asia/Dhaka">Asia/Dhaka (BST)</SelectItem>
                                         <SelectItem value="Asia/Kolkata">Asia/Kolkata (IST)</SelectItem>
                                         <SelectItem value="UTC">UTC</SelectItem>
@@ -140,9 +141,11 @@ export default function CreateSchool() {
                             </div>
                             <div className="space-y-1.5">
                                 <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Currency</Label>
-                                <Select defaultValue="BDT" onValueChange={(v) => setValue('currency', v)}>
+                                <Select defaultValue="NGN" onValueChange={(v) => setValue('currency', v)}>
                                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="NGN">NGN (₦)</SelectItem>
+                                        <SelectItem value="GHS">GHS (₵)</SelectItem>
                                         <SelectItem value="BDT">BDT (৳)</SelectItem>
                                         <SelectItem value="USD">USD ($)</SelectItem>
                                         <SelectItem value="INR">INR (₹)</SelectItem>

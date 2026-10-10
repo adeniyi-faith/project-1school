@@ -87,7 +87,7 @@ export default function CouponsIndex({ coupons }: Props) {
                                         <tr key={c.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                             <td className="py-3 px-4 font-mono font-semibold text-indigo-600 dark:text-indigo-400">{c.code}</td>
                                             <td className="py-3 px-4">
-                                                {c.type === 'percent' ? `${c.value}%` : `$${c.value}`}
+                                                {c.type === 'percent' ? `${c.value}%` : `₦${c.value}`}
                                             </td>
                                             <td className="py-3 px-4 text-slate-500">
                                                 {c.used_count} / {c.max_uses === 0 ? '∞' : c.max_uses}

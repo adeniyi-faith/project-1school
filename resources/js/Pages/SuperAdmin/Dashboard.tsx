@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import {
     School, Users, GraduationCap, UserCog, CreditCard,
-    TrendingUp, DollarSign, Package, Tag, AlertTriangle,
+    TrendingUp, Banknote, Package, Tag, AlertTriangle,
     ArrowUpRight, CheckCircle, Clock, Ban,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,9 +45,9 @@ const AREA_COLOR  = '#6366f1';
 const BAR_COLOR   = '#22c55e';
 
 function fmt(n: number) {
-    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000)     return `$${(n / 1_000).toFixed(1)}K`;
-    return `$${n.toFixed(0)}`;
+    if (n >= 1_000_000) return `₦${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000)     return `₦${(n / 1_000).toFixed(1)}K`;
+    return `₦${n.toFixed(0)}`;
 }
 
 function KpiCard({ icon: Icon, label, value, sub, color, href }: {
@@ -116,7 +116,7 @@ export default function SuperAdminDashboard({
 
                 {/* KPI Row 2 — Revenue & Subscriptions */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <KpiCard icon={DollarSign}  label="Total Revenue"      value={fmt(kpi.totalRevenue)}
+                    <KpiCard icon={Banknote}  label="Total Revenue"      value={fmt(kpi.totalRevenue)}
                         sub="all subscriptions"               color="bg-green-500" />
                     <KpiCard icon={TrendingUp}  label="Revenue This Month"  value={fmt(kpi.revenueThisMonth)}
                         sub="current month"                   color="bg-emerald-500" />
@@ -219,8 +219,8 @@ export default function SuperAdminDashboard({
                                 <BarChart data={revenueTrend} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                                     <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                                    <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `$${v}`} />
-                                    <Tooltip contentStyle={{ fontSize: 12 }} formatter={(v: number) => [`$${v.toFixed(2)}`, 'Revenue']} />
+                                    <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `₦${v}`} />
+                                    <Tooltip contentStyle={{ fontSize: 12 }} formatter={(v: number) => [`₦${v.toFixed(2)}`, 'Revenue']} />
                                     <Bar dataKey="revenue" name="Revenue" fill={BAR_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={false} />
                                 </BarChart>
                             </ResponsiveContainer>

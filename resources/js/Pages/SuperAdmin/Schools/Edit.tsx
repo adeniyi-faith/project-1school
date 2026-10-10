@@ -20,9 +20,9 @@ const schema = z.object({
     address:  z.string().optional(),
     city:     z.string().optional(),
     state:    z.string().optional(),
-    country:  z.string().default('BD'),
-    timezone: z.string().default('Asia/Dhaka'),
-    currency: z.string().default('BDT'),
+    country:  z.string().default('NG'),
+    timezone: z.string().default('Africa/Lagos'),
+    currency: z.string().default('NGN'),
     language: z.string().default('en'),
     status:   z.enum(['active', 'inactive', 'suspended']).default('active'),
 });
@@ -132,8 +132,8 @@ export default function EditSchool() {
                         </CardHeader>
                         <CardContent className="grid grid-cols-3 gap-4">
                             {[
-                                { key: 'timezone', label: 'Timezone', opts: [['Asia/Dhaka','Asia/Dhaka (BST)'],['Asia/Kolkata','Asia/Kolkata (IST)'],['UTC','UTC'],['America/New_York','America/New_York'],['Europe/London','Europe/London']] },
-                                { key: 'currency', label: 'Currency', opts: [['BDT','BDT (৳)'],['USD','USD ($)'],['INR','INR (₹)'],['GBP','GBP (£)']] },
+                                { key: 'timezone', label: 'Timezone', opts: [['Africa/Lagos','Africa/Lagos (WAT)'],['Asia/Dhaka','Asia/Dhaka (BST)'],['Asia/Kolkata','Asia/Kolkata (IST)'],['UTC','UTC'],['America/New_York','America/New_York'],['Europe/London','Europe/London']] },
+                                { key: 'currency', label: 'Currency', opts: [['NGN','NGN (₦)'],['GHS','GHS (₵)'],['BDT','BDT (৳)'],['USD','USD ($)'],['INR','INR (₹)'],['GBP','GBP (£)']] },
                                 { key: 'language', label: 'Language', opts: [['en','English'],['bn','Bengali']] },
                             ].map(({ key, label, opts }) => (
                                 <div key={key} className="space-y-1.5">

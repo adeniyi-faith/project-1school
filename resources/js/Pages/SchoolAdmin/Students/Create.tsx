@@ -60,7 +60,7 @@ export default function CreateStudent() {
     const { register, handleSubmit, setValue, watch, setError, formState: { errors, isSubmitting } } =
         useForm<FormData>({
             resolver: zodResolver(schema),
-            defaultValues: { gender: 'male', category: 'general', status: 'active', nationality: 'Bangladeshi', guardian: { relation: 'Father' } },
+            defaultValues: { gender: 'male', category: 'general', status: 'active', nationality: 'Nigerian', guardian: { relation: 'Father' } },
         });
 
     const selectedClassId = watch('class_id');
@@ -143,7 +143,7 @@ export default function CreateStudent() {
                                 <Field name="date_of_birth" label="Date of Birth" type="date" />
                                 <Field name="blood_group" label="Blood Group" placeholder="A+" />
                                 <Field name="religion"    label="Religion"    placeholder="Islam" />
-                                <Field name="nationality" label="Nationality"  placeholder="Bangladeshi" />
+                                <Field name="nationality" label="Nationality"  placeholder="Nigerian" />
                                 <Field name="phone"       label="Phone"        placeholder="+8801700000000" />
                                 <Field name="email"       label="Email"        placeholder="student@email.com" type="email" />
                                 <div className="space-y-1.5">

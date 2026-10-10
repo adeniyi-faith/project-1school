@@ -85,7 +85,7 @@ class StaffSeeder extends Seeder
                     'date_of_birth'  => Carbon::now()->subYears(rand(25, 55))->subDays(rand(0, 364))->toDateString(),
                     'blood_group'    => $this->bloodGroups[array_rand($this->bloodGroups)],
                     'religion'       => $this->religions[array_rand($this->religions)],
-                    'nationality'    => 'Bangladeshi',
+                    'nationality'    => 'Nigerian',
                     'phone'          => '017' . rand(10000000, 99999999),
                     'email'          => strtolower($firstName) . rand(10, 99) . '@school.edu.bd',
                     'address'        => rand(1, 99) . ' Road ' . rand(1, 20) . ', ' . $this->areas[array_rand($this->areas)],

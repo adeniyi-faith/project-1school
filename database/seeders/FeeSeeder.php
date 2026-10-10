@@ -94,7 +94,7 @@ class FeeSeeder extends Seeder
                         'fine'             => 0,
                         'payment_date'     => $month . '-' . rand(5, 28),
                         'month_year'       => $month,
-                        'method'           => ['cash', 'bkash', 'nagad'][rand(0, 2)],
+                        'method'           => ['cash', 'bank_transfer', 'pos'][rand(0, 2)],
                         'status'           => $status,
                     ]);
                     $payCount++;

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, DollarSign, CheckCircle2, Clock, AlertCircle, Settings2, Tag, TrendingDown } from 'lucide-react';
+import { Plus, Banknote, CheckCircle2, Clock, AlertCircle, Settings2, Tag, TrendingDown } from 'lucide-react';
 import type { SchoolClass, PageProps, PaginatedResponse } from '@/Types';
 
 interface FeePayment {
@@ -30,7 +30,7 @@ const STATUS_STYLE: Record<string, string> = {
     overdue: 'bg-red-100 text-red-700',
 };
 const METHOD_LABELS: Record<string, string> = {
-    cash: 'Cash', card: 'Card', online: 'Online', bkash: 'bKash', nagad: 'Nagad', rocket: 'Rocket',
+    cash: 'Cash', card: 'Card', online: 'Online', bank_transfer: 'Bank transfer', pos: 'POS', ussd: 'USSD',
 };
 
 export default function FeePayments({ payments, classes, filters, stats }: Props) {
@@ -39,8 +39,8 @@ export default function FeePayments({ payments, classes, filters, stats }: Props
     }
 
     const statCards = [
-        { label: 'Total Collected', value: `৳${stats.total_collected?.toLocaleString() ?? 0}`, color: 'text-green-600', icon: DollarSign },
-        { label: 'Outstanding', value: `৳${Math.max(0, stats.total_outstanding ?? 0).toLocaleString()}`, color: 'text-red-600', icon: TrendingDown },
+        { label: 'Total Collected', value: `₦${stats.total_collected?.toLocaleString() ?? 0}`, color: 'text-green-600', icon: Banknote },
+        { label: 'Outstanding', value: `₦${Math.max(0, stats.total_outstanding ?? 0).toLocaleString()}`, color: 'text-red-600', icon: TrendingDown },
         { label: 'Paid Receipts', value: stats.paid_count, color: 'text-indigo-600', icon: CheckCircle2 },
         { label: 'Pending', value: stats.pending_count, color: 'text-amber-600', icon: Clock },
     ];
@@ -140,10 +140,10 @@ export default function FeePayments({ payments, classes, filters, stats }: Props
                                             <p className="text-sm text-slate-700 dark:text-slate-300">{p.fee_structure?.fee_category?.name}</p>
                                             <p className="text-xs text-slate-400">{p.fee_structure?.academic_year} {p.month_year ? `· ${p.month_year}` : ''}</p>
                                         </TableCell>
-                                        <TableCell className="text-right text-sm">৳{Number(p.amount_due).toLocaleString()}</TableCell>
-                                        <TableCell className="text-right text-sm font-semibold text-green-600">৳{Number(p.amount_paid).toLocaleString()}</TableCell>
+                                        <TableCell className="text-right text-sm">₦{Number(p.amount_due).toLocaleString()}</TableCell>
+                                        <TableCell className="text-right text-sm font-semibold text-green-600">₦{Number(p.amount_paid).toLocaleString()}</TableCell>
                                         <TableCell className={`text-right text-sm font-medium ${Number(balance) > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                            {Number(balance) > 0 ? `৳${Number(balance).toLocaleString()}` : '—'}
+                                            {Number(balance) > 0 ? `₦${Number(balance).toLocaleString()}` : '—'}
                                         </TableCell>
                                         <TableCell className="text-xs text-slate-500">{METHOD_LABELS[p.method] ?? p.method}</TableCell>
                                         <TableCell className="text-xs text-slate-500">

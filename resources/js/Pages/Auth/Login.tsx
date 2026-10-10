@@ -3,13 +3,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { router, usePage, Head } from '@inertiajs/react';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import AuthLayout from '@/Layouts/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Eye, EyeOff, ShieldCheck, ClipboardCheck, Banknote, Users } from 'lucide-react';
+import { LogoMark } from '@/components/layout/Logo';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { PageProps } from '@/Types';
 
@@ -33,16 +34,6 @@ interface LoginProps extends PageProps {
     demoAccounts: DemoAccount[];
     demoEnabled?: boolean;
 }
-
-const colorMap: Record<string, string> = {
-    indigo:  'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-900/50',
-    violet:  'bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/40 dark:border-violet-800 dark:text-violet-300 dark:hover:bg-violet-900/50',
-    blue:    'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/50',
-    sky:     'bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 dark:bg-sky-950/40 dark:border-sky-800 dark:text-sky-300 dark:hover:bg-sky-900/50',
-    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/50',
-    amber:   'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-900/50',
-    orange:  'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 dark:bg-orange-950/40 dark:border-orange-800 dark:text-orange-300 dark:hover:bg-orange-900/50',
-};
 
 export default function Login() {
     const { flash, errors: serverErrors, showDemo, demoAccounts, demoEnabled } = usePage<LoginProps>().props;
@@ -86,172 +77,165 @@ export default function Login() {
     };
 
     const remember = watch('remember');
+    const [showPassword, setShowPassword] = useState(false);
 
     return (
         <AuthLayout>
-            <Head title="Login" />
+            <Head title="Sign in" />
 
-            <div className="w-full max-w-md">
-                {/* Logo / Branding */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 mb-4 shadow-lg">
-                        <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                        </svg>
+            <div className="grid min-h-dvh lg:grid-cols-[1.05fr_1fr]">
+                {/* Brand panel */}
+                <aside className="relative flex flex-col gap-8 overflow-hidden bg-gradient-to-br from-[oklch(0.2_0.06_263)] via-[oklch(0.24_0.1_265)] to-[oklch(0.3_0.16_268)] px-6 pb-10 pt-8 text-white max-lg:rounded-b-[28px] max-lg:from-indigo-700 max-lg:via-indigo-700 max-lg:to-[oklch(0.36_0.16_292)] lg:p-12">
+                    <div className="pointer-events-none absolute -right-32 -top-32 size-[28rem] rounded-full bg-indigo-500/25 blur-3xl" aria-hidden="true" />
+                    <div className="pointer-events-none absolute -bottom-40 -left-24 size-[24rem] rounded-full bg-amber-400/10 blur-3xl" aria-hidden="true" />
+
+                    <div className="relative flex items-center gap-2.5">
+                        <LogoMark className="size-9 bg-white/15 from-white/20 to-white/10 shadow-none ring-1 ring-white/25" />
+                        <span className="text-lg font-semibold tracking-tight">SchoolRuns</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-                        Genius SMS
-                    </h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        School Management System
-                    </p>
-                </div>
 
-                {/* Demo accounts panel — shown only on .test / xgenious.com */}
-                {showDemo && demoAccounts.length > 0 && (
-                    <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/80 dark:border-amber-800/60 dark:bg-amber-950/20 p-4">
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-400 text-white text-xs font-bold shrink-0">!</span>
-                            <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wide">
-                                Demo Mode — click a role to fill credentials
-                            </p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            {demoAccounts.map((account) => (
-                                <button
-                                    key={account.role}
-                                    type="button"
-                                    onClick={() => fillDemo(account)}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${colorMap[account.color] ?? colorMap.indigo}`}
-                                >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 shrink-0" />
-                                    {account.role}
-                                </button>
-                            ))}
-                        </div>
-                        <p className="text-[11px] text-amber-600 dark:text-amber-500 mt-2.5">
-                            Password for all demo accounts: <span className="font-mono font-semibold">password</span>
+                    <div className="relative mt-2 max-w-md lg:mt-auto">
+                        <h1 className="text-[1.75rem] font-semibold leading-[1.12] tracking-[-0.03em] sm:text-4xl lg:text-[2.6rem]">
+                            Everything about your school, in one place.
+                        </h1>
+                        <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-white/70 lg:mt-4">
+                            Attendance, results, fees and messages for staff, parents and students.
                         </p>
                     </div>
-                )}
 
-                <Card className="shadow-xl border-0 dark:bg-slate-800/60 dark:backdrop-blur">
-                    <CardHeader className="space-y-1 pb-4">
-                        <CardTitle className="text-xl font-semibold text-slate-900 dark:text-white">
-                            Welcome back
-                        </CardTitle>
-                        <CardDescription className="text-slate-500 dark:text-slate-400">
-                            Sign in to your account to continue
-                        </CardDescription>
-                    </CardHeader>
+                    <ul className="relative hidden gap-3 lg:grid lg:grid-cols-3">
+                        {[
+                            { icon: ClipboardCheck, title: 'Daily register', text: 'Mark a class in seconds' },
+                            { icon: Banknote,       title: 'Fees in ₦',      text: 'Receipts sent by SMS' },
+                            { icon: Users,          title: 'Parents included', text: 'Results on their phone' },
+                        ].map(({ icon: Icon, title, text }) => (
+                            <li key={title} className="rounded-xl border border-white/10 bg-white/[0.06] p-4 backdrop-blur-sm">
+                                <Icon className="mb-3 size-[18px] text-indigo-200" strokeWidth={1.75} />
+                                <p className="text-sm font-medium">{title}</p>
+                                <p className="mt-0.5 text-xs text-white/55">{text}</p>
+                            </li>
+                        ))}
+                    </ul>
+                </aside>
 
-                    <CardContent>
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-                            {/* Email */}
+                {/* Form */}
+                <main className="flex items-start justify-center px-5 py-9 sm:px-8 lg:items-center lg:py-12">
+                    <div className="w-full max-w-[26rem]">
+                        <div className="mb-7">
+                            <h2 className="text-2xl font-semibold tracking-[-0.025em] text-slate-900 dark:text-white">Welcome back</h2>
+                            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Sign in to continue to your school.</p>
+                        </div>
+
+                        {showDemo && demoAccounts.length > 0 && (
+                            <div className="mb-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60">
+                                <p className="mb-3 flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+                                    <ShieldCheck className="size-3.5 text-indigo-500" /> Demo mode: pick a role to fill in the sign-in details
+                                </p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {demoAccounts.map((account) => (
+                                        <button
+                                            key={account.role}
+                                            type="button"
+                                            onClick={() => fillDemo(account)}
+                                            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 outline-none transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                                        >
+                                            {account.role}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="mt-2.5 text-[11px] text-slate-500">
+                                    Password for every demo account: <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">password</span>
+                                </p>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
                             <div className="space-y-1.5">
-                                <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Email address
-                                </Label>
+                                <Label htmlFor="email" className="text-[13px] font-medium text-slate-700 dark:text-slate-300">Email address</Label>
                                 <Input
                                     id="email"
                                     type="email"
                                     autoComplete="email"
                                     autoFocus
-                                    placeholder="admin@school.edu"
-                                    className="h-10"
+                                    placeholder="you@school.edu.ng"
+                                    className="h-11 rounded-[10px] bg-white px-3.5 text-[15px] shadow-xs dark:bg-slate-900"
+                                    aria-invalid={!!errors.email}
                                     {...register('email')}
                                 />
-                                {errors.email && (
-                                    <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
-                                )}
+                                {errors.email && <p className="text-xs text-red-600 dark:text-red-400">{errors.email.message}</p>}
                             </div>
 
-                            {/* Password */}
                             <div className="space-y-1.5">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        Password
-                                    </Label>
-                                    <a
-                                        href="/forgot-password"
-                                        className="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors"
-                                    >
+                                    <Label htmlFor="password" className="text-[13px] font-medium text-slate-700 dark:text-slate-300">Password</Label>
+                                    <a href="/forgot-password" className="text-xs font-medium text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
                                         Forgot password?
                                     </a>
                                 </div>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    autoComplete="current-password"
-                                    placeholder="••••••••"
-                                    className="h-10"
-                                    {...register('password')}
-                                />
-                                {errors.password && (
-                                    <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>
-                                )}
+                                <div className="relative">
+                                    <Input
+                                        id="password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        autoComplete="current-password"
+                                        placeholder="Enter your password"
+                                        className="h-11 rounded-[10px] bg-white px-3.5 pr-11 text-[15px] shadow-xs dark:bg-slate-900"
+                                        aria-invalid={!!errors.password}
+                                        {...register('password')}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((v) => !v)}
+                                        className="absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-400 outline-none transition-colors hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-indigo-400 dark:hover:text-slate-200"
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    >
+                                        {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                                    </button>
+                                </div>
+                                {errors.password && <p className="text-xs text-red-600 dark:text-red-400">{errors.password.message}</p>}
                             </div>
 
-                            {/* Remember me */}
                             <div className="flex items-center gap-2">
-                                <Checkbox
-                                    id="remember"
-                                    checked={remember ?? false}
-                                    onCheckedChange={(checked) =>
-                                        setValue('remember', checked === true)
-                                    }
-                                />
-                                <Label
-                                    htmlFor="remember"
-                                    className="text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none"
-                                >
-                                    Remember me for 30 days
+                                <Checkbox id="remember" checked={remember ?? false} onCheckedChange={(checked) => setValue('remember', checked === true)} />
+                                <Label htmlFor="remember" className="cursor-pointer select-none text-sm font-normal text-slate-600 dark:text-slate-400">
+                                    Keep me signed in for 30 days
                                 </Label>
                             </div>
 
-                            {/* Submit */}
                             <Button
                                 type="submit"
-                                className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors mt-2"
+                                className="h-11 w-full rounded-[10px] bg-indigo-600 text-[15px] font-medium text-white shadow-[inset_0_1px_0_oklch(1_0_0/0.2),0_1px_2px_oklch(0.3_0.15_264/0.4)] transition-colors hover:bg-indigo-700"
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? (
                                     <span className="flex items-center gap-2">
-                                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                        <svg className="size-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                                         </svg>
                                         Signing in…
                                     </span>
-                                ) : (
-                                    'Sign in'
-                                )}
+                                ) : 'Sign in'}
                             </Button>
                         </form>
-                    </CardContent>
-                </Card>
 
-                <div className="mt-5 text-center text-sm text-slate-600 dark:text-slate-400 space-y-1">
-                    <p>
-                        New school?{' '}
-                        <a href="/register" className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
-                            Register your school
-                        </a>
-                    </p>
-                    {demoEnabled && (
-                        <p>
-                            Just looking?{' '}
-                            <a href="/demo" className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
-                                Try the demo
-                            </a>
+                        <div className="mt-6 space-y-1 text-sm text-slate-600 dark:text-slate-400">
+                            <p>
+                                New school?{' '}
+                                <a href="/register" className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">Register your school</a>
+                            </p>
+                            {demoEnabled && (
+                                <p>
+                                    Just looking?{' '}
+                                    <a href="/demo" className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">Try the demo</a>
+                                </p>
+                            )}
+                        </div>
+
+                        <p className="mt-6 text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+                            Your school decides who can sign in. If you can't get in, ask the school office to check your account.
                         </p>
-                    )}
-                </div>
-
-                <p className="text-center text-xs text-slate-400 dark:text-slate-600 mt-6">
-                    &copy; {new Date().getFullYear()} Genius SMS by xgenious. All rights reserved.
-                </p>
+                    </div>
+                </main>
             </div>
         </AuthLayout>
     );

@@ -25,7 +25,7 @@ const STATUS_STYLE: Record<string, string> = {
     overdue: 'bg-red-100 text-red-700',
 };
 const METHOD_LABELS: Record<string, string> = {
-    cash: 'Cash', card: 'Card', online: 'Online', bkash: 'bKash', nagad: 'Nagad', rocket: 'Rocket',
+    cash: 'Cash', card: 'Card', online: 'Online', bank_transfer: 'Bank transfer', pos: 'POS', ussd: 'USSD',
 };
 
 export default function FeeReceipt({ payment }: { payment: FeePayment }) {
@@ -96,34 +96,34 @@ export default function FeeReceipt({ payment }: { payment: FeePayment }) {
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-500">Amount Due</span>
-                                <span className="text-slate-900 dark:text-white">৳{Number(payment.amount_due).toLocaleString()}</span>
+                                <span className="text-slate-900 dark:text-white">₦{Number(payment.amount_due).toLocaleString()}</span>
                             </div>
                             {Number(payment.fine) > 0 && (
                                 <div className="flex justify-between text-sm">
                                     <span className="text-red-500">Fine</span>
-                                    <span className="text-red-500">+ ৳{Number(payment.fine).toLocaleString()}</span>
+                                    <span className="text-red-500">+ ₦{Number(payment.fine).toLocaleString()}</span>
                                 </div>
                             )}
                             {Number(payment.discount) > 0 && (
                                 <div className="flex justify-between text-sm">
                                     <span className="text-green-500">Discount</span>
-                                    <span className="text-green-500">- ৳{Number(payment.discount).toLocaleString()}</span>
+                                    <span className="text-green-500">- ₦{Number(payment.discount).toLocaleString()}</span>
                                 </div>
                             )}
                             <div className="border-t border-slate-100 dark:border-slate-800 pt-2 flex justify-between font-semibold">
                                 <span className="text-slate-700 dark:text-slate-300">Net Due</span>
                                 <span className="text-slate-900 dark:text-white">
-                                    ৳{(Number(payment.amount_due) + Number(payment.fine) - Number(payment.discount)).toLocaleString()}
+                                    ₦{(Number(payment.amount_due) + Number(payment.fine) - Number(payment.discount)).toLocaleString()}
                                 </span>
                             </div>
                             <div className="flex justify-between font-bold text-lg">
                                 <span className="text-slate-700 dark:text-slate-300">Amount Paid</span>
-                                <span className="text-green-600">৳{Number(payment.amount_paid).toLocaleString()}</span>
+                                <span className="text-green-600">₦{Number(payment.amount_paid).toLocaleString()}</span>
                             </div>
                             {balance > 0 && (
                                 <div className="flex justify-between text-sm font-medium text-red-600">
                                     <span>Balance Due</span>
-                                    <span>৳{balance.toLocaleString()}</span>
+                                    <span>₦{balance.toLocaleString()}</span>
                                 </div>
                             )}
                         </div>

@@ -109,8 +109,8 @@ export default function InventoryPurchases({ purchases, items, filters }: Props)
                                     <TableCell className="text-sm text-slate-500">{p.vendor ?? '—'}</TableCell>
                                     <TableCell className="text-sm text-slate-400 font-mono">{p.invoice_no ?? '—'}</TableCell>
                                     <TableCell className="text-right text-sm">{Number(p.quantity).toLocaleString()}</TableCell>
-                                    <TableCell className="text-right text-sm text-slate-500">৳{Number(p.unit_price).toLocaleString()}</TableCell>
-                                    <TableCell className="text-right font-semibold text-sm text-slate-900 dark:text-white">৳{Number(p.total_price).toLocaleString()}</TableCell>
+                                    <TableCell className="text-right text-sm text-slate-500">₦{Number(p.unit_price).toLocaleString()}</TableCell>
+                                    <TableCell className="text-right font-semibold text-sm text-slate-900 dark:text-white">₦{Number(p.total_price).toLocaleString()}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -147,14 +147,14 @@ export default function InventoryPurchases({ purchases, items, filters }: Props)
                                 <Input type="number" min="0.01" step="0.01" value={form.quantity} onChange={e => setForm(p => ({ ...p, quantity: e.target.value }))} />
                             </div>
                             <div className="space-y-1.5">
-                                <Label>Unit Price (৳) <span className="text-red-500">*</span></Label>
+                                <Label>Unit Price (₦) <span className="text-red-500">*</span></Label>
                                 <Input type="number" min="0" step="0.01" value={form.unit_price} onChange={e => setForm(p => ({ ...p, unit_price: e.target.value }))} />
                             </div>
                         </div>
                         {(form.quantity && form.unit_price) && (
                             <div className="rounded-lg bg-slate-50 dark:bg-slate-900 px-4 py-2 flex justify-between text-sm">
                                 <span className="text-slate-500">Total</span>
-                                <span className="font-bold text-slate-900 dark:text-white">৳{total}</span>
+                                <span className="font-bold text-slate-900 dark:text-white">₦{total}</span>
                             </div>
                         )}
                         <div className="space-y-1.5">

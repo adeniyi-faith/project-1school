@@ -106,7 +106,7 @@ export default function HostelRooms({ hostel, rooms }: Props) {
                                     <TableCell className="text-center text-sm">{r.capacity}</TableCell>
                                     <TableCell className="text-center text-sm font-medium text-indigo-600">{r.occupied}</TableCell>
                                     <TableCell className="text-sm">{r.ac ? '✓' : '—'}</TableCell>
-                                    <TableCell className="text-right text-sm">৳{Number(r.monthly_fee).toLocaleString()}</TableCell>
+                                    <TableCell className="text-right text-sm">₦{Number(r.monthly_fee).toLocaleString()}</TableCell>
                                     <TableCell>
                                         <Badge className={`border-0 text-xs capitalize ${STATUS_STYLE[r.status] ?? ''}`}>{r.status}</Badge>
                                     </TableCell>
@@ -156,7 +156,7 @@ export default function HostelRooms({ hostel, rooms }: Props) {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
-                                <Label>Monthly Fee (৳)</Label>
+                                <Label>Monthly Fee (₦)</Label>
                                 <Input type="number" min="0" value={form.monthly_fee} onChange={e => setForm(p => ({ ...p, monthly_fee: e.target.value }))} />
                             </div>
                             <div className="space-y-1.5">
