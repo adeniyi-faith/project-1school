@@ -45,6 +45,10 @@ use App\Http\Controllers\SchoolAdmin\PromotionController;
 use App\Http\Controllers\SchoolAdmin\BroadsheetController;
 use App\Http\Controllers\SchoolAdmin\CertificateController;
 use App\Http\Controllers\SchoolAdmin\CertificateDesignController;
+use App\Http\Controllers\SchoolAdmin\CbtBankController;
+use App\Http\Controllers\SchoolAdmin\CbtTestController;
+use App\Http\Controllers\StudentCbtController;
+use App\Http\Controllers\CbtImageController;
 use App\Http\Controllers\SchoolAdmin\CommentBankController;
 use App\Http\Controllers\SchoolAdmin\ReportCardController;
 use App\Http\Controllers\SchoolAdmin\ReportCardExportController;
@@ -109,6 +113,7 @@ Route::middleware('auth')->group(function () {
 
     // Student passport photos: the controller checks the viewer (staff of the school, the student, or their parent)
     Route::get('photos/students/{student}', [StudentPhotoController::class, 'show'])->whereNumber('student')->name('students.photo');
+    Route::get('cbt/images/{question}', [CbtImageController::class, 'show'])->whereNumber('question')->name('cbt.image');
 
     /*
     |--------------------------------------------------------------------------
@@ -136,6 +141,30 @@ Route::middleware('auth')->group(function () {
             Route::resource('students', StudentController::class)->only(['edit', 'update'])->middleware('permission:students.edit');
             // Testimonials and transfer certificates
             Route::get('certificates',                         [CertificateController::class, 'index'])->middleware('permission:students.view')->name('certificates.index');
+            // Computer-based tests
+            Route::get('cbt/banks',                                   [CbtBankController::class, 'index'])->middleware('permission:cbt.view')->name('cbt.banks');
+            Route::post('cbt/banks',                                  [CbtBankController::class, 'store'])->middleware('permission:cbt.manage')->name('cbt.banks.store');
+            Route::get('cbt/banks/template',                          [CbtBankController::class, 'template'])->middleware('permission:cbt.view')->name('cbt.banks.template');
+            Route::get('cbt/banks/{bank}',                            [CbtBankController::class, 'show'])->middleware('permission:cbt.view')->whereNumber('bank')->name('cbt.banks.show');
+            Route::put('cbt/banks/{bank}',                            [CbtBankController::class, 'update'])->middleware('permission:cbt.manage')->name('cbt.banks.update');
+            Route::delete('cbt/banks/{bank}',                         [CbtBankController::class, 'destroy'])->middleware('permission:cbt.manage')->name('cbt.banks.destroy');
+            Route::post('cbt/banks/{bank}/questions',                 [CbtBankController::class, 'storeQuestion'])->middleware('permission:cbt.manage')->name('cbt.questions.store');
+            Route::post('cbt/banks/{bank}/questions/{question}',      [CbtBankController::class, 'updateQuestion'])->middleware('permission:cbt.manage')->name('cbt.questions.update');
+            Route::delete('cbt/banks/{bank}/questions/{question}',    [CbtBankController::class, 'destroyQuestion'])->middleware('permission:cbt.manage')->name('cbt.questions.destroy');
+            Route::post('cbt/banks/{bank}/import',                    [CbtBankController::class, 'import'])->middleware('permission:cbt.manage')->name('cbt.questions.import');
+            Route::get('cbt/tests',                                   [CbtTestController::class, 'index'])->middleware('permission:cbt.view')->name('cbt.tests');
+            Route::get('cbt/tests/new',                               [CbtTestController::class, 'create'])->middleware('permission:cbt.manage')->name('cbt.tests.create');
+            Route::post('cbt/tests',                                  [CbtTestController::class, 'store'])->middleware('permission:cbt.manage')->name('cbt.tests.store');
+            Route::get('cbt/tests/{test}',                            [CbtTestController::class, 'show'])->middleware('permission:cbt.view')->whereNumber('test')->name('cbt.tests.show');
+            Route::get('cbt/tests/{test}/edit',                       [CbtTestController::class, 'edit'])->middleware('permission:cbt.manage')->name('cbt.tests.edit');
+            Route::put('cbt/tests/{test}',                            [CbtTestController::class, 'update'])->middleware('permission:cbt.manage')->name('cbt.tests.update');
+            Route::delete('cbt/tests/{test}',                         [CbtTestController::class, 'destroy'])->middleware('permission:cbt.manage')->name('cbt.tests.destroy');
+            Route::post('cbt/tests/{test}/status',                    [CbtTestController::class, 'status'])->middleware('permission:cbt.manage')->name('cbt.tests.status');
+            Route::get('cbt/tests/{test}/export',                     [CbtTestController::class, 'export'])->middleware('permission:cbt.view')->name('cbt.tests.export');
+            Route::post('cbt/tests/{test}/attempts/{attempt}/time',   [CbtTestController::class, 'addTime'])->middleware('permission:cbt.manage')->name('cbt.attempts.time');
+            Route::delete('cbt/tests/{test}/attempts/{attempt}',      [CbtTestController::class, 'reset'])->middleware('permission:cbt.manage')->name('cbt.attempts.reset');
+            Route::post('cbt/tests/{test}/copy-to-results',           [CbtTestController::class, 'copyToResults'])->middleware('permission:marks.entry')->name('cbt.tests.copy');
+
             Route::get('certificates/designs',                 [CertificateDesignController::class, 'index'])->middleware('permission:students.certificates')->name('certificate-designs.index');
             Route::post('certificates/designs/{type}',         [CertificateDesignController::class, 'update'])->whereIn('type', ['testimonial', 'transfer'])->middleware('permission:settings.edit')->name('certificate-designs.update');
             Route::get('certificates/designs/{type}/preview',  [CertificateDesignController::class, 'preview'])->whereIn('type', ['testimonial', 'transfer'])->middleware('permission:students.certificates')->name('certificate-designs.preview');
@@ -477,6 +506,16 @@ Route::middleware('auth')->group(function () {
         Route::get('results',       [StudentPortalController::class, 'results'])->name('results');
         Route::get('report-cards/{sheet}',         [ReportCardPortalController::class, 'studentTerm'])->whereNumber('sheet')->name('report-cards.term');
         Route::get('report-cards/{sheet}/session', [ReportCardPortalController::class, 'studentSession'])->whereNumber('sheet')->name('report-cards.session');
+        Route::get('cbt',                   [StudentCbtController::class, 'index'])->name('cbt');
+        Route::get('cbt/{test}',            [StudentCbtController::class, 'show'])->whereNumber('test')->name('cbt.show');
+        Route::post('cbt/{test}/start',     [StudentCbtController::class, 'start'])->middleware('throttle:20,1')->name('cbt.start');
+        Route::get('cbt/{test}/exam',       [StudentCbtController::class, 'exam'])->name('cbt.exam');
+        Route::post('cbt/{test}/answer',    [StudentCbtController::class, 'answer'])->middleware('throttle:240,1')->name('cbt.answer');
+        Route::post('cbt/{test}/flag',      [StudentCbtController::class, 'flag'])->middleware('throttle:240,1')->name('cbt.flag');
+        Route::post('cbt/{test}/left',      [StudentCbtController::class, 'left'])->middleware('throttle:60,1')->name('cbt.left');
+        Route::post('cbt/{test}/ping',      [StudentCbtController::class, 'ping'])->middleware('throttle:60,1')->name('cbt.ping');
+        Route::post('cbt/{test}/submit',    [StudentCbtController::class, 'submit'])->name('cbt.submit');
+        Route::get('cbt/{test}/done',       [StudentCbtController::class, 'done'])->name('cbt.done');
         Route::get('homework',      [StudentPortalController::class, 'homework'])->name('homework');
         Route::get('fees',          [StudentPortalController::class, 'fees'])->name('fees');
         Route::get('announcements', [StudentPortalController::class, 'announcements'])->name('announcements');

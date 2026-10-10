@@ -578,3 +578,71 @@ export interface MessageDeliveryRow {
     attempts: number;
     sent_at: string | null;
 }
+
+/* ---------- Computer-based tests ---------- */
+export type CbtDifficulty = 'easy' | 'medium' | 'hard';
+
+export interface CbtBankRow {
+    id: number;
+    name: string;
+    description: string | null;
+    subject_id: number | null;
+    subject: string | null;
+    questions: number;
+    levels: Record<CbtDifficulty, number>;
+}
+
+export interface CbtQuestionRow {
+    id: number;
+    text: string;
+    options: string[];
+    correct_option: number;
+    topic: string | null;
+    difficulty: CbtDifficulty;
+    marks: number;
+    explanation: string | null;
+    image: string | null;
+}
+
+export interface CbtTestRow {
+    id: number;
+    title: string;
+    audience: 'students' | 'applicants';
+    status: 'draft' | 'published' | 'closed';
+    class: string | null;
+    subject: string | null;
+    term: string | null;
+    duration_minutes: number;
+    questions: number;
+    opens_at: string;
+    closes_at: string | null;
+    pass_mark: number | null;
+    has_code: boolean;
+    show_score: boolean;
+    max_page_leaves: number | null;
+}
+
+export type CbtAttemptStatus = 'not_started' | 'in_progress' | 'submitted' | 'timed_out';
+
+export interface CbtResultRow {
+    student_id: number;
+    name: string;
+    admission_no: string | null;
+    status: CbtAttemptStatus;
+    score: number | null;
+    max_score: number | null;
+    percent: number | null;
+    answered: number;
+    questions: number;
+    minutes: number | null;
+    attempt_id?: number | null;
+    page_leaves?: number;
+}
+
+export interface CbtPaperQuestion {
+    id: number;
+    section: number;
+    text: string;
+    image: string | null;
+    options: { value: number; text: string }[];
+}
