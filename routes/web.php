@@ -52,7 +52,7 @@ use Inertia\Inertia;
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
-    Route::get('/', fn () => redirect()->route('login'));
+    Route::get('/', fn () => view('landing'))->name('home');
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store']);
 });

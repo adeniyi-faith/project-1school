@@ -2,18 +2,16 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    /**
-     * A basic test example.
-     */
-    public function test_the_home_page_sends_visitors_on_to_the_login_flow(): void
+    public function test_the_home_page_shows_the_schoolruns_landing_page(): void
     {
         $response = $this->get('/');
 
-        $response->assertRedirect();
+        $response->assertOk();
+        $response->assertSee('SchoolRuns');
+        $response->assertSee(route('login'), false);
     }
 }
