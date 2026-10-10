@@ -129,7 +129,7 @@ export default function FeeReceipt({ payment }: { payment: FeePayment }) {
                         </div>
 
                         {/* Payment Info */}
-                        <div className="grid grid-cols-3 gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
                             <div>
                                 <p className="text-xs text-slate-400 uppercase tracking-wide">Date</p>
                                 <p className="font-medium text-slate-700 dark:text-slate-300 text-sm mt-0.5">
