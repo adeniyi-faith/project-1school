@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -27,5 +28,19 @@ class EmbeddedImage
         } catch (Throwable) {
             return null;
         }
+    }
+
+    /** A picture someone just chose in a form, shown straight away without being stored anywhere */
+    public static function fromUpload(?UploadedFile $file): ?string
+    {
+        if (! $file || ! $file->isValid()) {
+            return null;
+        }
+        $mime = $file->getMimeType();
+        if (! in_array($mime, ['image/png', 'image/jpeg', 'image/gif'], true)) {
+            return null;
+        }
+
+        return 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($file->getRealPath()));
     }
 }
