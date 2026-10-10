@@ -54,6 +54,22 @@ export default function Invoice({ invoice, entries, can }: Props) {
     const close = () => { setOpen(null); setReversing(null); };
     const opts = { preserveScroll: true, onSuccess: close };
 
+    const headerActions = (
+        <div className="flex flex-wrap gap-2">
+            {can.collect && invoice.balance > 0 && (
+                <Button onClick={() => { pay.reset(); pay.clearErrors(); pay.setData('amount', String(invoice.balance)); setOpen('pay'); }} className="bg-indigo-600 text-white hover:bg-indigo-700">
+                    <Banknote className="size-4" /> Record payment
+                </Button>
+            )}
+            {can.collect && (
+                <Button variant="outline" onClick={() => { fine.reset(); fine.clearErrors(); setOpen('fine'); }}><CircleAlert className="size-4" /> Add fine</Button>
+            )}
+            {can.correct && invoice.net_paid <= 0 && (
+                <Button variant="outline" onClick={() => { voidForm.reset(); voidForm.clearErrors(); setOpen('void'); }} className="text-red-600"><Ban className="size-4" /> Cancel invoice</Button>
+            )}
+        </div>
+    );
+
     return (
         <AppLayout title={invoice.invoice_no}>
             <div className="space-y-6">
@@ -64,22 +80,10 @@ export default function Invoice({ invoice, entries, can }: Props) {
                 <PageHeader
                     title={invoice.invoice_no}
                     description={<span className="inline-flex items-center gap-2">{invoice.fee} · {invoice.period} <InvoiceStatus status={invoice.status} /></span>}
-                    actions={
-                        <div className="flex flex-wrap gap-2">
-                            {can.collect && invoice.balance > 0 && (
-                                <Button onClick={() => { pay.reset(); pay.clearErrors(); pay.setData('amount', String(invoice.balance)); setOpen('pay'); }} className="bg-indigo-600 text-white hover:bg-indigo-700">
-                                    <Banknote className="size-4" /> Record payment
-                                </Button>
-                            )}
-                            {can.collect && (
-                                <Button variant="outline" onClick={() => { fine.reset(); fine.clearErrors(); setOpen('fine'); }}><CircleAlert className="size-4" /> Add fine</Button>
-                            )}
-                            {can.correct && invoice.net_paid <= 0 && (
-                                <Button variant="outline" onClick={() => { voidForm.reset(); voidForm.clearErrors(); setOpen('void'); }} className="text-red-600"><Ban className="size-4" /> Cancel invoice</Button>
-                            )}
-                        </div>
-                    }
+                    actions={headerActions}
                 />
+                {/* The header hides its buttons on phones, so they are repeated here */}
+                <div className="md:hidden">{headerActions}</div>
 
                 {invoice.status === 'void' && (
                     <p className="rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
