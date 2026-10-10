@@ -31,6 +31,7 @@ interface DemoAccount {
 interface LoginProps extends PageProps {
     showDemo: boolean;
     demoAccounts: DemoAccount[];
+    demoEnabled?: boolean;
 }
 
 const colorMap: Record<string, string> = {
@@ -44,7 +45,7 @@ const colorMap: Record<string, string> = {
 };
 
 export default function Login() {
-    const { flash, errors: serverErrors, showDemo, demoAccounts } = usePage<LoginProps>().props;
+    const { flash, errors: serverErrors, showDemo, demoAccounts, demoEnabled } = usePage<LoginProps>().props;
 
     const {
         register,
@@ -230,6 +231,23 @@ export default function Login() {
                         </form>
                     </CardContent>
                 </Card>
+
+                <div className="mt-5 text-center text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                    <p>
+                        New school?{' '}
+                        <a href="/register" className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
+                            Register your school
+                        </a>
+                    </p>
+                    {demoEnabled && (
+                        <p>
+                            Just looking?{' '}
+                            <a href="/demo" className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
+                                Try the demo
+                            </a>
+                        </p>
+                    )}
+                </div>
 
                 <p className="text-center text-xs text-slate-400 dark:text-slate-600 mt-6">
                     &copy; {new Date().getFullYear()} Genius SMS by xgenious. All rights reserved.

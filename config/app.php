@@ -19,6 +19,11 @@ return [
     // SHOW_DEMO_ACCOUNTS=true, so a real school never exposes them by accident.
     'show_demo_accounts' => (bool) env('SHOW_DEMO_ACCOUNTS', false),
 
+    // Public read-only demo: visitors click "Try the demo" and look around
+    // as a demo school's admin, without an account. Nothing can be changed.
+    'demo_enabled' => (bool) env('DEMO_ENABLED', false),
+    'demo_email' => env('DEMO_EMAIL', 'demo@schoolruns.demo'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment
