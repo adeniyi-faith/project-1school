@@ -7,7 +7,9 @@ use App\Http\Controllers\SchoolAdmin\AcademicSetupController;
 use App\Http\Controllers\SchoolAdmin\AttendanceController;
 use App\Http\Controllers\SchoolAdmin\ExamController;
 use App\Http\Controllers\SchoolAdmin\ResultController;
+use App\Http\Controllers\SchoolAdmin\ScholarshipController;
 use App\Http\Controllers\SchoolAdmin\FeeCategoryController;
+use App\Http\Controllers\SchoolAdmin\FeeInvoiceController;
 use App\Http\Controllers\SchoolAdmin\FeePaymentController;
 use App\Http\Controllers\SchoolAdmin\FeeStructureController;
 use App\Http\Controllers\SchoolAdmin\CommunicationController;
@@ -291,6 +293,23 @@ Route::middleware('auth')->group(function () {
             Route::get('fees/payments/collect',              [FeePaymentController::class, 'create'])->middleware('permission:fees.collect')->name('fees.payments.create');
             Route::post('fees/payments',                     [FeePaymentController::class, 'store'])->middleware('permission:fees.collect')->name('fees.payments.store');
             Route::get('fees/payments/{feePayment}',         [FeePaymentController::class, 'show'])->middleware('permission:fees.view')->name('fees.payments.show');
+            // Invoices and the fee ledger (lines are never edited; mistakes are reversed)
+            Route::get('fees/invoices',                      [FeeInvoiceController::class, 'index'])->middleware('permission:fees.view')->name('fees.invoices.index');
+            Route::post('fees/invoices',                     [FeeInvoiceController::class, 'issue'])->middleware('permission:fees.structure')->name('fees.invoices.issue');
+            Route::get('fees/invoices/{invoice}',            [FeeInvoiceController::class, 'show'])->middleware('permission:fees.view')->name('fees.invoices.show');
+            Route::post('fees/invoices/{invoice}/payments',  [FeeInvoiceController::class, 'pay'])->middleware('permission:fees.collect')->name('fees.invoices.pay');
+            Route::post('fees/invoices/{invoice}/fines',     [FeeInvoiceController::class, 'fine'])->middleware('permission:fees.collect')->name('fees.invoices.fine');
+            Route::post('fees/invoices/{invoice}/entries/{entry}/reverse', [FeeInvoiceController::class, 'reverse'])->middleware('permission:fees.waiver')->name('fees.invoices.reverse');
+            Route::post('fees/invoices/{invoice}/void',      [FeeInvoiceController::class, 'void'])->middleware('permission:fees.waiver')->name('fees.invoices.void');
+
+            // Named scholarships and discounts, with who approved each one
+            Route::get('fees/scholarships',                  [ScholarshipController::class, 'index'])->middleware('permission:fees.view')->name('fees.scholarships.index');
+            Route::post('fees/scholarships',                 [ScholarshipController::class, 'store'])->middleware('permission:fees.waiver')->name('fees.scholarships.store');
+            Route::put('fees/scholarships/{scholarship}',    [ScholarshipController::class, 'update'])->middleware('permission:fees.waiver')->name('fees.scholarships.update');
+            Route::delete('fees/scholarships/{scholarship}', [ScholarshipController::class, 'destroy'])->middleware('permission:fees.waiver')->name('fees.scholarships.destroy');
+            Route::post('fees/scholarships/awards',          [ScholarshipController::class, 'award'])->middleware('permission:fees.waiver')->name('fees.scholarships.award');
+            Route::post('fees/scholarships/awards/{award}/revoke', [ScholarshipController::class, 'revoke'])->middleware('permission:fees.waiver')->name('fees.scholarships.revoke');
+
             Route::get('fees/outstanding',                   [FeePaymentController::class, 'outstanding'])->middleware('permission:fees.reports')->name('fees.outstanding');
 
             // Communication

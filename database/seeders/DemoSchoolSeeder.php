@@ -171,7 +171,7 @@ class DemoSchoolSeeder extends Seeder
 
         foreach ([
             'behaviour_ratings', 'term_result_summaries', 'term_results', 'subject_scores', 'result_sheets', 'behaviour_traits',
-            'marks', 'exams', 'fee_payments', 'fee_structures', 'fee_categories', 'attendances',
+            'marks', 'exams', 'ledger_entries', 'invoices', 'student_scholarships', 'scholarships', 'fee_payments', 'fee_structures', 'fee_categories', 'attendances',
             'timetables', 'homework', 'books', 'announcements', 'holidays', 'grade_scales',
             'students', 'guardians', 'staff', 'designations', 'departments', 'sections',
             'subjects', 'classes', 'grading_schemes', 'assessment_components', 'assessment_schemes',
