@@ -5,14 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { Link } from '@inertiajs/react';
+import { METHOD_LABELS } from '@/components/fees/InvoiceStatus';
+import { naira } from '@/lib/format';
+import type { PaymentMethod } from '@/Types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download, Filter, TrendingUp, AlertCircle, Banknote } from 'lucide-react';
 
+/** One payment received, from the ledger */
 interface Payment {
-    id: number; amount_due: number; amount_paid: number; status: string; payment_date?: string;
-    student?: { first_name: string; last_name: string; admission_no: string };
+    id: number; student: string | null; admission_no: string | null; invoice_id: number; fee: string;
+    receipt: string | null; method: PaymentMethod | null; amount: number; date: string | null; reversed: boolean;
 }
 interface Paginated { data: Payment[]; total: number; last_page: number; links: { url: string | null; label: string; active: boolean }[]; }
 interface Props {
@@ -24,9 +28,8 @@ interface Props {
     filters:     { from_date: string; to_date: string };
 }
 
-const statusColor: Record<string, 'default' | 'secondary' | 'destructive'> = {
-    paid: 'default', pending: 'secondary', partial: 'secondary', overdue: 'destructive',
-};
+/** Laravel's page links carry "&laquo; Previous" and "Next &raquo;" as HTML entities */
+const pageLabel = (label: string) => label.replace('&laquo;', '«').replace('&raquo;', '»');
 
 export default function FinanceReport({ collected, outstanding, payroll, dailyChart, payments, filters }: Props) {
     const [fromDate, setFromDate] = useState(filters.from_date ?? '');
@@ -78,7 +81,7 @@ export default function FinanceReport({ collected, outstanding, payroll, dailyCh
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-slate-500">Collected (Period)</p>
-                                    <p className="text-2xl font-bold mt-1 text-green-600">${fmt(collected)}</p>
+                                    <p className="text-2xl font-bold mt-1 text-green-600">₦{fmt(collected)}</p>
                                 </div>
                                 <div className="p-3 rounded-xl bg-green-500"><TrendingUp className="w-6 h-6 text-white" /></div>
                             </div>
@@ -89,7 +92,7 @@ export default function FinanceReport({ collected, outstanding, payroll, dailyCh
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-slate-500">Outstanding</p>
-                                    <p className="text-2xl font-bold mt-1 text-orange-500">${fmt(outstanding)}</p>
+                                    <p className="text-2xl font-bold mt-1 text-orange-500">₦{fmt(outstanding)}</p>
                                 </div>
                                 <div className="p-3 rounded-xl bg-orange-500"><AlertCircle className="w-6 h-6 text-white" /></div>
                             </div>
@@ -100,7 +103,7 @@ export default function FinanceReport({ collected, outstanding, payroll, dailyCh
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-slate-500">Payroll (This Month)</p>
-                                    <p className="text-2xl font-bold mt-1">${fmt(payroll)}</p>
+                                    <p className="text-2xl font-bold mt-1">₦{fmt(payroll)}</p>
                                 </div>
                                 <div className="p-3 rounded-xl bg-blue-500"><Banknote className="w-6 h-6 text-white" /></div>
                             </div>
@@ -141,11 +144,11 @@ export default function FinanceReport({ collected, outstanding, payroll, dailyCh
                                 <TableRow>
                                     <TableHead>Student</TableHead>
                                     <TableHead>Admission No</TableHead>
-                                    <TableHead>Total</TableHead>
-                                    <TableHead>Paid</TableHead>
-                                    <TableHead>Balance</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Paid At</TableHead>
+                                    <TableHead>Fee</TableHead>
+                                    <TableHead>Receipt</TableHead>
+                                    <TableHead>Method</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
+                                    <TableHead>Paid On</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -153,14 +156,16 @@ export default function FinanceReport({ collected, outstanding, payroll, dailyCh
                                     <TableRow><TableCell colSpan={7} className="text-center text-slate-400 py-8">No payments in this period</TableCell></TableRow>
                                 )}
                                 {payments.data.map(p => (
-                                    <TableRow key={p.id}>
-                                        <TableCell>{p.student ? `${p.student.first_name} ${p.student.last_name}` : '—'}</TableCell>
-                                        <TableCell>{p.student?.admission_no ?? '—'}</TableCell>
-                                        <TableCell>${fmt(p.amount_due)}</TableCell>
-                                        <TableCell className="text-green-600">${fmt(p.amount_paid)}</TableCell>
-                                        <TableCell className="text-orange-500">${fmt(p.amount_due - p.amount_paid)}</TableCell>
-                                        <TableCell><Badge variant={statusColor[p.status] ?? 'secondary'}>{p.status}</Badge></TableCell>
-                                        <TableCell>{p.payment_date ? new Date(p.payment_date).toLocaleDateString() : '—'}</TableCell>
+                                    <TableRow key={p.id} className={p.reversed ? 'text-slate-400 line-through' : undefined}>
+                                        <TableCell>{p.student ?? '—'}</TableCell>
+                                        <TableCell>{p.admission_no ?? '—'}</TableCell>
+                                        <TableCell>{p.fee}</TableCell>
+                                        <TableCell className="font-mono text-xs">
+                                            <Link href={`/school/fees/invoices/${p.invoice_id}`} className="text-indigo-600 hover:underline dark:text-indigo-400">{p.receipt ?? '—'}</Link>
+                                        </TableCell>
+                                        <TableCell>{p.method ? METHOD_LABELS[p.method] ?? p.method : '—'}</TableCell>
+                                        <TableCell className="text-right text-green-600 tabular-nums">{naira(p.amount, { kobo: true })}{p.reversed && ' (reversed)'}</TableCell>
+                                        <TableCell>{p.date ?? '—'}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -172,8 +177,9 @@ export default function FinanceReport({ collected, outstanding, payroll, dailyCh
                     <div className="flex justify-center gap-1">
                         {payments.links.map((link, i) => (
                             <Button key={i} size="sm" variant={link.active ? 'default' : 'outline'} disabled={!link.url}
-                                onClick={() => link.url && router.visit(link.url)}
-                                dangerouslySetInnerHTML={{ __html: link.label }} />
+                                onClick={() => link.url && router.visit(link.url)}>
+                                {pageLabel(link.label)}
+                            </Button>
                         ))}
                     </div>
                 )}
