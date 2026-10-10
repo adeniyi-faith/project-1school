@@ -140,7 +140,8 @@ export default function ReportCards({ sheet, design, signers, students, canDesig
                                             <p className="font-medium text-slate-900 dark:text-white">{s.name}</p>
                                             <p className="text-xs text-slate-500">{s.admission_no} · {s.average}% · {ordinal(s.position)} of {s.class_size}</p>
                                             <div className="mt-2 flex gap-3 text-sm">
-                                                <a href={`${base}/report-cards/term?student=${s.id}`} target="_blank" rel="noopener" className="text-indigo-600 hover:underline dark:text-indigo-400">Term card</a>
+                                                <a href={`${base}/report-cards/term?student=${s.id}&view=html`} target="_blank" rel="noopener" className="text-indigo-600 hover:underline dark:text-indigo-400">View card</a>
+                                                <a href={`${base}/report-cards/term?student=${s.id}`} target="_blank" rel="noopener" className="text-indigo-600 hover:underline dark:text-indigo-400">Term PDF</a>
                                                 <a href={`${base}/report-cards/session?student=${s.id}`} target="_blank" rel="noopener" className="text-indigo-600 hover:underline dark:text-indigo-400">Full year</a>
                                             </div>
                                         </div>

@@ -89,7 +89,7 @@ export default function Vehicles({ vehicles, filters, stats }: Props) {
                 )}
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-4 max-w-sm">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-sm">
                     {[
                         { label: 'Total', value: stats.total, color: 'text-indigo-600' },
                         { label: 'Active', value: stats.active, color: 'text-green-600' },

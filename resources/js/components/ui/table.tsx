@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
  * the browser, so the ~100 existing tables get this without being edited one by one.
  * Pass `stack={false}` for a table that must stay a real grid (for example a marks sheet).
  */
-function labelCells(table: HTMLTableElement) {
+export function labelCells(table: HTMLTableElement) {
   const headRow = table.tHead?.rows[table.tHead.rows.length - 1]
   if (!headRow) return
   const labels: string[] = []

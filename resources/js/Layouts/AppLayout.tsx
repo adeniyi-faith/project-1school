@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
 import MobileNav from '@/components/layout/MobileNav';
+import { StackTables } from '@/components/layout/StackTables';
 import PageProgress from '@/components/layout/PageProgress';
 import { useAuthStore } from '@/Stores/useAuthStore';
 import type { PageProps } from '@/Types';
@@ -67,6 +68,7 @@ export default function AppLayout({ children, title, breadcrumbs }: AppLayoutPro
             </div>
 
             <MobileNav />
+            <StackTables />
         </div>
     );
 }
