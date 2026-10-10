@@ -147,6 +147,20 @@ class ReportCardDesignTest extends SecurityTestCase
             ->assertSee('width=device-width', false);
     }
 
+    public function test_try_it_shows_unsaved_choices_and_pictures_without_saving_anything(): void
+    {
+        $design = $this->default();
+        $logo = \Illuminate\Http\UploadedFile::fake()->image('logo.png', 40, 40);
+
+        $res = $this->post("/school/academics/report-card-designs/{$design->id}/try", [
+            'primary_color' => '#123abc', 'template' => 'modern', 'school_logo' => $logo,
+        ]);
+
+        $res->assertOk()->assertSee('#123abc', false)->assertSee('data:image/png;base64', false)->assertDontSee('Download PDF', false);
+        $this->assertNotSame('#123abc', $design->fresh()->primary_color);
+        $this->assertNull($design->fresh()->stamp_path);
+    }
+
     public function test_the_preview_prints_a_sample_card_with_the_design(): void
     {
         $design = $this->default();

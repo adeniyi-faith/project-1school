@@ -7,6 +7,7 @@ use App\Models\ReportCardDesign;
 use App\Models\ReportCardSigner;
 use App\Models\SchoolClass;
 use App\Services\ReportCardService;
+use App\Support\EmbeddedImage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -209,6 +210,79 @@ class ReportCardDesignController extends Controller
         $type = $request->input('type') === 'session' ? 'session' : 'term';
 
         return ReportCardController::pdfResponse("report-cards.{$type}", $cards->sampleCards($design, $type), "Preview {$design->name}");
+    }
+
+    /**
+     * The sample card shown on screen with whatever is chosen in the form right now: colours, switches,
+     * wording and also pictures just picked (logo, stamp, signatures). Nothing is saved or stored, so the
+     * demo school can use it too.
+     */
+    public function tryOut(Request $request, ReportCardDesign $design, ReportCardService $cards): HttpResponse
+    {
+        $image = 'nullable|image|mimes:png,jpg,jpeg|max:2048';
+        $data = $request->validate([
+            'type' => 'nullable|in:term,session',
+            'template' => ['nullable', Rule::in(ReportCardDesign::TEMPLATES)],
+            'primary_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'accent_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'font_size' => ['nullable', Rule::in(ReportCardDesign::FONT_SIZES)],
+            'paper' => ['nullable', Rule::in(ReportCardDesign::PAPERS)],
+            'term_title' => 'nullable|string|max:80',
+            'session_title' => 'nullable|string|max:80',
+            'footer_note' => 'nullable|string|max:300',
+            'options' => 'nullable|array',
+            'options.*' => 'boolean',
+            'stamp' => $image,
+            'remove_stamp' => 'boolean',
+            'school_logo' => $image,
+            'signers' => 'nullable|array|max:6',
+            'signers.*.id' => 'nullable|integer',
+            'signers.*.label' => 'nullable|string|max:60',
+            'signers.*.name' => 'nullable|string|max:100',
+            'signers.*.has_comment' => 'boolean',
+            'signers.*.signature' => $image,
+            'signers.*.remove_signature' => 'boolean',
+        ]);
+
+        $type = ($data['type'] ?? 'term') === 'session' ? 'session' : 'term';
+        $design->fill(array_filter(collect($data)->only(['template', 'primary_color', 'accent_color', 'font_size', 'paper', 'term_title', 'session_title', 'footer_note'])->all(), fn ($v) => $v !== null));
+        if (isset($data['options'])) {
+            $design->options = array_map('boolval', $data['options']);
+        }
+
+        $sample = $cards->sampleCards($design, $type);
+        $saved = $design->signers->keyBy('id');
+        $logo = EmbeddedImage::fromUpload($request->file('school_logo'));
+        $stamp = EmbeddedImage::fromUpload($request->file('stamp')) ?? ($request->boolean('remove_stamp') ? null : $sample[0]['design']['stamp']);
+
+        $signers = null;
+        if (isset($data['signers'])) {
+            $signers = [];
+            foreach ($data['signers'] as $i => $row) {
+                $old = isset($row['id']) ? $saved->get($row['id']) : null;
+                $kept = ! empty($row['remove_signature']) || ! $old ? null : EmbeddedImage::from($old->signature_path);
+                $signers[] = [
+                    'id' => $row['id'] ?? null,
+                    'label' => $row['label'] ?? '',
+                    'name' => $row['name'] ?? null,
+                    'has_comment' => (bool) ($row['has_comment'] ?? true),
+                    'signature' => EmbeddedImage::fromUpload($request->file("signers.$i.signature")) ?? $kept,
+                ];
+            }
+        }
+
+        foreach ($sample as &$card) {
+            $card['design']['stamp'] = $stamp;
+            if ($logo) {
+                $card['school']['logo'] = $logo;
+            }
+            if ($signers !== null) {
+                $card['design']['signers'] = $signers;
+            }
+        }
+        unset($card);
+
+        return ReportCardController::htmlResponse("report-cards.{$type}", $sample, "Preview {$design->name}", false);
     }
 
     private function replaceImage(?string $old, $file, int $schoolId): string

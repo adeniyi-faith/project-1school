@@ -140,6 +140,16 @@ class RegistrationAndDemoTest extends SecurityTestCase
         $this->assertSame('Demo Admin', auth()->user()->fresh()->name);
     }
 
+    public function test_the_demo_can_try_designs_with_pictures_because_nothing_is_saved(): void
+    {
+        config(['app.demo_enabled' => true, 'app.demo_email' => 'demo@schoolruns.demo']);
+        $this->get('/demo');
+
+        $this->post('/school/certificates/designs/testimonial/try', [
+            'title' => 'Demo Try', 'signature' => \Illuminate\Http\UploadedFile::fake()->image('s.png', 20, 20),
+        ])->assertOk()->assertSee('Demo Try', false);
+    }
+
     public function test_a_normal_admin_is_not_blocked_by_the_demo_guard(): void
     {
         config(['app.demo_enabled' => true, 'app.demo_email' => 'demo@schoolruns.demo']);

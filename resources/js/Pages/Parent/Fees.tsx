@@ -31,7 +31,7 @@ export default function ParentFees({ linked, children }: Props) {
                 {children.map(child => (
                     <div key={child.id}>
                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">{child.full_name} — {child.class}</p>
-                        <div className="grid grid-cols-3 gap-3 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                             <Card><CardContent className="p-3 text-center">
                                 <p className="text-[11px] text-slate-500 mb-1">Total Due</p>
                                 <p className="font-bold text-slate-800 dark:text-white">₦{child.total_due.toLocaleString()}</p>
