@@ -120,6 +120,7 @@ class StudentController extends Controller
 
         return Inertia::render('SchoolAdmin/Students/Show', [
             'student' => $student,
+            'classHistory' => PromotionController::historyFor($student),
         ]);
     }
 
