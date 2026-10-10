@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
+use App\Models\AdmissionAssessment;
+use App\Models\AdmissionInquiry;
+use App\Models\CbtCandidate;
 use App\Models\AssessmentScheme;
 use App\Models\CbtAttempt;
 use App\Models\CbtBank;
@@ -270,5 +273,168 @@ class CbtTest extends SecurityTestCase
         // A student whose paper does not have it cannot see it before the test
         $this->actingAs($this->adaUser);
         $this->get("/cbt/images/{$q->id}")->assertNotFound();
+    }
+
+    private function entranceExam(int $applicants = 2): array
+    {
+        $this->actingAs($this->teacher);
+        $this->post('/school/cbt/tests', [
+            'title' => 'JSS1 entrance exam', 'audience' => 'applicants', 'class_id' => $this->jss1->id, 'duration_minutes' => 30,
+            'opens_at' => now()->subMinute()->toIso8601String(), 'shuffle_questions' => true, 'shuffle_options' => true, 'show_score' => false, 'pass_mark' => 50,
+            'sections' => [['title' => 'Maths', 'cbt_bank_id' => $this->bank->id, 'question_count' => 4]],
+        ])->assertSessionHasNoErrors();
+        $test = Test::latest('id')->first();
+        $this->assertSame('applicants', $test->audience);
+        $this->assertNull($test->class_id);
+
+        // Cannot open without applicants
+        $this->post("/school/cbt/tests/{$test->id}/status", ['status' => 'published'])->assertSessionHasErrors('status.0');
+
+        $inquiries = collect(range(1, $applicants))->map(fn ($n) => AdmissionInquiry::create([
+            'school_id' => $this->school->id, 'student_name' => "Applicant {$n}", 'class_interested' => 'JSS 1', 'guardian_name' => 'Parent', 'guardian_phone' => "080000000{$n}", 'status' => 'new',
+        ]));
+        $this->post("/school/cbt/tests/{$test->id}/candidates", ['inquiry_ids' => $inquiries->pluck('id')->all()])->assertSessionHasNoErrors();
+        // Adding the same people again adds nobody twice
+        $this->post("/school/cbt/tests/{$test->id}/candidates", ['inquiry_ids' => $inquiries->pluck('id')->all()])->assertSessionHasNoErrors();
+        $this->assertSame($applicants, CbtCandidate::count());
+        $this->post("/school/cbt/tests/{$test->id}/status", ['status' => 'published'])->assertSessionHasNoErrors();
+
+        return [$test->fresh(), CbtCandidate::orderBy('exam_number')->get(), $inquiries];
+    }
+
+    public function test_applicants_sit_an_entrance_exam_with_their_exam_number_and_pin(): void
+    {
+        [$test, $candidates] = $this->entranceExam();
+        $first = $candidates[0];
+        $this->assertSame("E{$test->id}-001", $first->exam_number);
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $first->pin);
+        $this->assertNotSame($first->pin, $first->getRawOriginal('pin'), 'the PIN is stored encrypted');
+        $this->assertSame('pending', $first->assessment->outcome);
+        $this->assertSame('exam', $first->assessment->type);
+
+        // Slips print as a PDF
+        $this->get("/school/cbt/tests/{$test->id}/slips")->assertOk()->assertHeader('Content-Type', 'application/pdf');
+
+        // A wrong PIN is refused; the applicant has no account
+        auth()->logout();
+        $this->post('/exam/login', ['exam_number' => $first->exam_number, 'pin' => '000000x'])->assertSessionHasErrors('exam_number');
+        $this->get('/exam/start')->assertRedirect('/exam');
+
+        // Lower-case exam number works
+        $this->post('/exam/login', ['exam_number' => strtolower($first->exam_number), 'pin' => $first->pin])->assertRedirect('/exam/start');
+        $this->get('/exam/start')->assertOk()->assertInertia(fn ($p) => $p->component('Student/Cbt/Start', false)->where('person.number', $first->exam_number)->where('base', '/exam'));
+        $this->post('/exam/start')->assertRedirect('/exam/paper');
+        $attempt = CbtAttempt::sole();
+        $this->assertSame($first->id, $attempt->cbt_candidate_id);
+        $this->assertNull($attempt->student_id);
+        $this->get('/exam/paper')->assertOk()->assertInertia(fn ($p) => $p->component('Student/Cbt/Exam', false)->has('questions', 4)->missing('questions.0.correct_option'));
+
+        // 3 of 4 right = 75%, above the 50% pass mark
+        $questions = CbtQuestion::whereIn('id', collect($attempt->paper)->pluck('q'))->get()->keyBy('id');
+        foreach (array_values($attempt->paper) as $i => $line) {
+            $q = $questions[$line['q']];
+            $this->postJson('/exam/answer', ['question_id' => $q->id, 'option' => $i < 3 ? $q->correct_option : ($q->correct_option + 1) % 3])->assertOk();
+        }
+        $this->post('/exam/submit')->assertRedirect('/exam/done');
+        $this->get('/exam/done')->assertOk()->assertInertia(fn ($p) => $p->where('result.score', null)); // show_score is off
+
+        $assessment = $first->assessment->fresh();
+        $this->assertSame('passed', $assessment->outcome);
+        $this->assertEquals(3, $assessment->score);
+        $this->assertEquals(4, $assessment->max_score);
+
+        // Logging out ends the session; the PIN cannot open a second sitting
+        $this->post('/exam/logout')->assertRedirect('/exam');
+        $this->post('/exam/login', ['exam_number' => $first->exam_number, 'pin' => $first->pin]);
+        $this->get('/exam/start')->assertRedirect('/exam/done');
+        $this->assertSame(1, CbtAttempt::count());
+
+        // Staff see both applicants; the one who never came is marked absent when the exam closes
+        $this->actingAs($this->teacher);
+        $this->get("/school/cbt/tests/{$test->id}")->assertOk()->assertInertia(fn ($p) => $p->has('results', 2)->where('results.0.outcome', 'passed')->where('canCopy', false));
+        $this->post("/school/cbt/tests/{$test->id}/status", ['status' => 'closed'])->assertSessionHasNoErrors();
+        $this->assertSame('absent', $candidates[1]->assessment->fresh()->outcome);
+        $this->assertSame('passed', $assessment->fresh()->outcome);
+
+        // Removing a sitting puts the admission line back to waiting
+        $this->delete("/school/cbt/tests/{$test->id}/attempts/{$attempt->id}")->assertSessionHasNoErrors();
+        $this->assertSame('pending', $assessment->fresh()->outcome);
+        $this->assertNull($assessment->fresh()->score);
+    }
+
+    public function test_entrance_exam_failing_new_pin_and_removing_an_applicant(): void
+    {
+        [$test, $candidates, $inquiries] = $this->entranceExam();
+        [$a, $b] = [$candidates[0], $candidates[1]];
+
+        // A new PIN replaces the old one
+        $old = $a->pin;
+        $this->post("/school/cbt/tests/{$test->id}/candidates/{$a->id}/pin")->assertSessionHasNoErrors();
+        $new = $a->fresh()->pin;
+        $this->assertNotSame($old, $new);
+        auth()->logout();
+        $this->post('/exam/login', ['exam_number' => $a->exam_number, 'pin' => $old])->assertSessionHasErrors('exam_number');
+        $this->post('/exam/login', ['exam_number' => $a->exam_number, 'pin' => $new])->assertRedirect('/exam/start');
+
+        // Nothing answered = 0%, below the pass mark; time running out also records it
+        $this->post('/exam/start');
+        $this->travel(31)->minutes();
+        $this->postJson('/exam/ping')->assertOk()->assertJsonPath('finished', true);
+        $this->assertSame('failed', $a->assessment->fresh()->outcome);
+
+        // An applicant who has not started can be taken off; their pending line goes too
+        $this->actingAs($this->teacher);
+        $bAssessment = $b->admission_assessment_id;
+        $this->delete("/school/cbt/tests/{$test->id}/candidates/{$b->id}")->assertSessionHasNoErrors();
+        $this->assertNull(CbtCandidate::find($b->id));
+        $this->assertNull(AdmissionAssessment::find($bAssessment));
+        // One who has started cannot
+        $this->delete("/school/cbt/tests/{$test->id}/candidates/{$a->id}")->assertSessionHasErrors('candidate');
+
+        // Who sits it cannot be changed once people are down for it
+        $this->put("/school/cbt/tests/{$test->id}", [
+            'title' => 'X', 'audience' => 'students', 'class_id' => $this->jss1->id, 'duration_minutes' => 30, 'opens_at' => now()->toIso8601String(),
+            'sections' => [['title' => 'Maths', 'cbt_bank_id' => $this->bank->id, 'question_count' => 4]],
+        ])->assertSessionHasErrors('audience');
+    }
+
+    public function test_applicants_only_reach_their_own_sitting_and_a_draft_exam_is_closed_to_them(): void
+    {
+        Storage::fake('private');
+        [$test, $candidates] = $this->entranceExam();
+        $q = CbtQuestion::first();
+        $q->update(['image_path' => 'cbt/x.png']);
+        Storage::disk('private')->put('cbt/x.png', 'png');
+
+        auth()->logout();
+        // Not logged in: nothing
+        $this->get("/exam/images/{$q->id}")->assertRedirect('/exam');
+        $this->postJson('/exam/answer', ['question_id' => $q->id, 'option' => 0])->assertRedirect('/exam');
+
+        $this->post('/exam/login', ['exam_number' => $candidates[0]->exam_number, 'pin' => $candidates[0]->pin]);
+        $this->post('/exam/start');
+        $paper = collect(CbtAttempt::sole()->paper)->pluck('q');
+        $other = CbtQuestion::whereNotIn('id', $paper)->first();
+        $this->postJson('/exam/answer', ['question_id' => $other->id, 'option' => 0])->assertStatus(422);
+        if ($paper->contains($q->id)) {
+            $this->get("/exam/images/{$q->id}")->assertOk();
+        } else {
+            $this->get("/exam/images/{$q->id}")->assertNotFound();
+        }
+        // A student account cannot reach staff screens through the exam session
+        $this->get('/school/cbt/tests')->assertRedirect();
+
+        // An exam put back to draft lets nobody log in
+        $this->actingAs($this->teacher);
+        $draft = Test::create(['school_id' => $this->school->id, 'title' => 'Later', 'audience' => 'applicants', 'duration_minutes' => 10, 'opens_at' => now(), 'status' => 'draft']);
+        $cand = CbtCandidate::create(['school_id' => $this->school->id, 'cbt_test_id' => $draft->id, 'inquiry_id' => $candidates[1]->inquiry_id, 'exam_number' => 'E999-001', 'pin' => '123456']);
+        auth()->logout();
+        $this->post('/exam/login', ['exam_number' => $cand->exam_number, 'pin' => '123456'])->assertSessionHasErrors('exam_number');
+
+        // Staff of another school cannot see or change this exam's applicants
+        $other = $this->makeUser($this->makeSchool('Other'), 'school-admin');
+        $this->actingAs($other);
+        $this->get("/school/cbt/tests/{$test->id}/slips")->assertNotFound();
+        $this->delete("/school/cbt/tests/{$test->id}/candidates/{$candidates[1]->id}")->assertNotFound();
     }
 }

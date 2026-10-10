@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/** A timed test for a class, made of sections drawn from question banks */
+/** A timed test for a class, or an entrance exam for applicants, made of sections drawn from question banks */
 class CbtTest extends Model
 {
     use BelongsToSchool, SoftDeletes;
@@ -33,6 +33,11 @@ class CbtTest extends Model
     public function attempts(): HasMany
     {
         return $this->hasMany(CbtAttempt::class);
+    }
+
+    public function candidates(): HasMany
+    {
+        return $this->hasMany(CbtCandidate::class);
     }
 
     public function subject(): BelongsTo

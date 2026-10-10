@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\AdmissionAssessment;
+use App\Models\AdmissionInquiry;
 use App\Models\AssessmentScheme;
 use App\Models\CbtAttempt;
+use App\Models\CbtCandidate;
 use App\Models\CbtQuestion;
 use App\Models\CbtTest;
 use App\Models\ResultSheet;
@@ -11,6 +14,7 @@ use App\Models\Student;
 use App\Models\SubjectScore;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /** Computer-based tests: reading pasted questions, giving each student a paper, saving answers, marking, and results */
@@ -137,14 +141,18 @@ class CbtService
         if ($test->audience === 'students' && ! $test->class_id) {
             $problems[] = 'Choose the class that sits this test.';
         }
+        if ($test->audience === 'applicants' && ! $test->candidates()->exists()) {
+            $problems[] = 'Add the applicants who will sit this exam.';
+        }
 
         return $problems;
     }
 
-    /** The student's attempt, starting one with their own paper if they have none */
-    public function start(CbtTest $test, Student $student, ?string $code = null): CbtAttempt
+    /** The person's attempt (a student, or an applicant at an entrance exam), starting one with their own paper if they have none */
+    public function start(CbtTest $test, Student|CbtCandidate $person, ?string $code = null): CbtAttempt
     {
-        $existing = CbtAttempt::where('cbt_test_id', $test->id)->where('student_id', $student->id)->first();
+        $column = $person instanceof CbtCandidate ? 'cbt_candidate_id' : 'student_id';
+        $existing = CbtAttempt::where('cbt_test_id', $test->id)->where($column, $person->id)->first();
         if ($existing) {
             return $existing;
         }
@@ -166,12 +174,12 @@ class CbtService
 
         try {
             return CbtAttempt::create([
-                'school_id' => $test->school_id, 'cbt_test_id' => $test->id, 'student_id' => $student->id,
+                'school_id' => $test->school_id, 'cbt_test_id' => $test->id, $column => $person->id,
                 'started_at' => now(), 'deadline_at' => $deadline, 'status' => 'in_progress', 'paper' => $paper, 'answers' => [], 'flags' => [],
             ]);
         } catch (\Illuminate\Database\UniqueConstraintViolationException) {
             // Pressed Start twice at once: keep the first
-            return CbtAttempt::where('cbt_test_id', $test->id)->where('student_id', $student->id)->firstOrFail();
+            return CbtAttempt::where('cbt_test_id', $test->id)->where($column, $person->id)->firstOrFail();
         }
     }
 
@@ -263,6 +271,7 @@ class CbtService
             'extra_minutes' => $attempt->extra_minutes + $minutes,
             'status' => 'in_progress', 'submitted_at' => null, 'ended_reason' => null, 'marking' => null, 'section_scores' => null, 'score' => null, 'max_score' => null,
         ]);
+        $this->recordAdmission($attempt);
     }
 
     /** Hand in: mark every question and fix the score */
@@ -302,6 +311,7 @@ class CbtService
             'status' => $status, 'submitted_at' => $status === 'submitted' ? now() : $attempt->deadline_at, 'ended_reason' => $attempt->ended_reason,
             'marking' => $marking, 'section_scores' => $sections, 'score' => round($score, 2), 'max_score' => round($max, 2),
         ]);
+        $this->recordAdmission($attempt);
 
         return $attempt;
     }
@@ -321,7 +331,7 @@ class CbtService
     }
 
     /** The questions as the student sees them: in their order, without the answers */
-    public function paper(CbtAttempt $attempt): array
+    public function paper(CbtAttempt $attempt, string $images = '/cbt/images'): array
     {
         $questions = CbtQuestion::withTrashed()->whereIn('id', collect($attempt->paper)->pluck('q'))->get()->keyBy('id');
 
@@ -332,16 +342,19 @@ class CbtService
                 'id' => $q->id,
                 'section' => $line['s'] ?? 0,
                 'text' => $q->text,
-                'image' => $q->image_path ? "/cbt/images/{$q->id}" : null,
+                'image' => $q->image_path ? "{$images}/{$q->id}" : null,
                 'options' => collect($line['o'])->map(fn (int $i) => ['value' => $i, 'text' => $q->options[$i] ?? ''])->values()->all(),
             ] : null;
         })->filter()->values()->all();
     }
 
-    /** Every student who should sit the test, with how they did */
+    /** Every student (or applicant) who should sit the test, with how they did */
     public function results(CbtTest $test): Collection
     {
         $this->settleTest($test);
+        if ($test->audience === 'applicants') {
+            return $this->candidateResults($test);
+        }
         $attempts = $test->attempts()->get()->keyBy('student_id');
         $students = Student::where('school_id', $test->school_id)
             ->where(fn ($q) => $q->where(fn ($q) => $q->where('class_id', $test->class_id)->where('status', 'active'))->orWhereIn('id', $attempts->keys()))
@@ -349,23 +362,157 @@ class CbtService
 
         return $students->map(function (Student $s) use ($attempts) {
             $a = $attempts->get($s->id);
-            $minutes = $a && $a->isFinished() ? (int) ceil($a->started_at->diffInSeconds($a->submitted_at ?? $a->deadline_at) / 60) : null;
 
             return [
-                'student_id' => $s->id,
+                'key' => "s{$s->id}",
                 'name' => trim($s->first_name.' '.$s->last_name),
                 'admission_no' => $s->admission_no,
-                'status' => $a?->status ?? 'not_started',
-                'score' => $a?->score,
-                'max_score' => $a?->max_score,
-                'percent' => $a && $a->max_score ? round($a->score / $a->max_score * 100, 1) : null,
-                'answered' => $a ? count($a->answers ?? []) : 0,
-                'questions' => $a ? count($a->paper) : 0,
-                'minutes' => $minutes,
-                'attempt_id' => $a?->id,
-                'page_leaves' => $a?->page_leaves ?? 0,
-            ];
+                'candidate_id' => null,
+                'outcome' => null,
+            ] + $this->attemptLine($a);
         });
+    }
+
+    /** Applicants down for an entrance exam, with their exam numbers and how they did */
+    private function candidateResults(CbtTest $test): Collection
+    {
+        return $test->candidates()->with('inquiry:id,student_name,class_interested', 'assessment:id,outcome', 'attempt')->orderBy('exam_number')->get()
+            ->map(fn (CbtCandidate $c) => [
+                'key' => "c{$c->id}",
+                'name' => $c->inquiry?->student_name ?? 'Removed applicant',
+                'admission_no' => $c->exam_number,
+                'candidate_id' => $c->id,
+                'inquiry_id' => $c->inquiry_id,
+                'class_interested' => $c->inquiry?->class_interested,
+                'outcome' => $c->assessment?->outcome,
+            ] + $this->attemptLine($c->attempt));
+    }
+
+    private function attemptLine(?CbtAttempt $a): array
+    {
+        $minutes = $a && $a->isFinished() ? (int) ceil($a->started_at->diffInSeconds($a->submitted_at ?? $a->deadline_at) / 60) : null;
+
+        return [
+            'status' => $a?->status ?? 'not_started',
+            'score' => $a?->score,
+            'max_score' => $a?->max_score,
+            'percent' => $a && $a->max_score ? round($a->score / $a->max_score * 100, 1) : null,
+            'answered' => $a ? count($a->answers ?? []) : 0,
+            'questions' => $a ? count($a->paper) : 0,
+            'minutes' => $minutes,
+            'attempt_id' => $a?->id,
+            'page_leaves' => $a?->page_leaves ?? 0,
+        ];
+    }
+
+    /**
+     * Put applicants down for an entrance exam: each gets an exam number, a PIN, and an
+     * entrance-exam line on their admission record that the score fills in when they hand in.
+     * Applicants already down for this exam are skipped. Returns how many were added.
+     */
+    public function addCandidates(CbtTest $test, array $inquiryIds, ?int $by): int
+    {
+        if ($test->audience !== 'applicants') {
+            throw ValidationException::withMessages(['inquiry_ids' => 'Only entrance exams take applicants.']);
+        }
+        $have = $test->candidates()->pluck('inquiry_id')->all();
+        $inquiries = AdmissionInquiry::whereIn('id', $inquiryIds)->whereNotIn('id', $have)->orderBy('student_name')->get();
+
+        DB::transaction(function () use ($test, $inquiries, $by) {
+            $next = $this->nextExamSerial($test);
+            foreach ($inquiries as $inquiry) {
+                $assessment = AdmissionAssessment::create([
+                    'school_id' => $test->school_id, 'inquiry_id' => $inquiry->id, 'type' => 'exam', 'scheduled_at' => $test->opens_at,
+                    'venue' => 'Computer-based test', 'outcome' => 'pending', 'remarks' => "Computer-based test: {$test->title}", 'recorded_by' => $by,
+                ]);
+                CbtCandidate::create([
+                    'school_id' => $test->school_id, 'cbt_test_id' => $test->id, 'inquiry_id' => $inquiry->id, 'admission_assessment_id' => $assessment->id,
+                    'exam_number' => self::examNumber($test, $next++), 'pin' => self::newPin(),
+                ]);
+            }
+        });
+
+        return $inquiries->count();
+    }
+
+    /** Take an applicant off an entrance exam they have not started; their pending exam line goes too */
+    public function removeCandidate(CbtCandidate $candidate): void
+    {
+        if ($candidate->attempt()->exists()) {
+            throw ValidationException::withMessages(['candidate' => 'This applicant has started the exam, so they cannot be removed. Remove their sitting first.']);
+        }
+        DB::transaction(function () use ($candidate) {
+            $assessment = $candidate->assessment;
+            $candidate->delete();
+            if ($assessment && $assessment->outcome === 'pending' && $assessment->score === null) {
+                $assessment->delete();
+            }
+        });
+    }
+
+    /** A new PIN for an applicant who lost their slip, before they start */
+    public function newPinFor(CbtCandidate $candidate): void
+    {
+        $candidate->update(['pin' => self::newPin()]);
+    }
+
+    /** When an entrance exam closes, applicants who never started are marked absent */
+    public function markAbsent(CbtTest $test): void
+    {
+        if ($test->audience !== 'applicants') {
+            return;
+        }
+        $test->candidates()->whereDoesntHave('attempt')->with('assessment')->get()
+            ->each(fn (CbtCandidate $c) => $c->assessment?->outcome === 'pending' ? $c->assessment->update(['outcome' => 'absent']) : null);
+    }
+
+    /** Copy an applicant's result onto their admission record: score, and passed or failed against the pass mark */
+    public function recordAdmission(CbtAttempt $attempt): void
+    {
+        if (! $attempt->cbt_candidate_id) {
+            return;
+        }
+        $assessment = $attempt->candidate?->assessment;
+        if (! $assessment) {
+            return;
+        }
+        if (! $attempt->isFinished()) {
+            $assessment->update(['score' => null, 'max_score' => null, 'outcome' => 'pending']);
+
+            return;
+        }
+        $pass = $attempt->test?->pass_mark;
+        $percent = $attempt->max_score ? $attempt->score / $attempt->max_score * 100 : 0;
+        $assessment->update([
+            'score' => $attempt->score, 'max_score' => $attempt->max_score,
+            'outcome' => $pass === null ? 'pending' : (round($percent, 2) >= $pass ? 'passed' : 'failed'),
+        ]);
+    }
+
+    /** Put an applicant's exam line back to waiting, when their sitting is removed so they can start again */
+    public function resetAdmission(CbtAttempt $attempt): void
+    {
+        $attempt->candidate?->assessment?->update(['score' => null, 'max_score' => null, 'outcome' => 'pending']);
+    }
+
+    /** Exam numbers read like "E12-004": the exam's number, then the applicant's */
+    public static function examNumber(CbtTest $test, int $serial): string
+    {
+        return 'E'.$test->id.'-'.str_pad((string) $serial, 3, '0', STR_PAD_LEFT);
+    }
+
+    private function nextExamSerial(CbtTest $test): int
+    {
+        $last = CbtCandidate::withoutGlobalScopes()->where('cbt_test_id', $test->id)->pluck('exam_number')
+            ->map(fn ($n) => (int) Str::afterLast($n, '-'))->max();
+
+        return ($last ?? 0) + 1;
+    }
+
+    /** Six digits, no letters to mix up */
+    public static function newPin(): string
+    {
+        return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     }
 
     /** For each question in the test: how many got it and how many chose each option */
@@ -404,7 +551,7 @@ class CbtService
      */
     public function copyToResults(CbtTest $test, int $componentId): int
     {
-        if (! $test->term_id || ! $test->subject_id || ! $test->class_id) {
+        if ($test->audience !== 'students' || ! $test->term_id || ! $test->subject_id || ! $test->class_id) {
             throw ValidationException::withMessages(['component_id' => 'Set the class, subject and term on the test first.']);
         }
         $part = AssessmentScheme::forSubject($test->subject)?->components->firstWhere('id', $componentId);
