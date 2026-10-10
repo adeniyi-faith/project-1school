@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Illuminate\Support\Facades\Hash;
-
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\SupabaseAuthService;
@@ -79,7 +77,7 @@ class LoginController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, SupabaseAuthService $supabaseAuth): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
@@ -98,17 +96,11 @@ class LoginController extends Controller
             ]);
         }
 
-$user = User::where('email', $credentials['email'])->first();
+        $user = config('app.login_driver') === 'supabase'
+            ? $this->checkWithSupabase($credentials, $supabaseAuth)
+            : $this->checkLocally($credentials);
 
-        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
-            RateLimiter::hit($throttleKey, 60);
-
-            throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
-            ]);
-        }
-
-        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+        if (! $user) {
             RateLimiter::hit($throttleKey, 60);
 
             throw ValidationException::withMessages([
@@ -123,12 +115,10 @@ $user = User::where('email', $credentials['email'])->first();
 
         $user->update(['last_login_at' => now()]);
 
-        if (function_exists('activity')) {
-            activity()
-                ->causedBy($user)
-                ->withProperties(['ip' => $request->ip(), 'user_agent' => $request->userAgent()])
-                ->log('User logged in');
-        }
+        activity()
+            ->causedBy($user)
+            ->withProperties(['ip' => $request->ip(), 'user_agent' => $request->userAgent()])
+            ->log('User logged in');
 
         return redirect()->route('dashboard');
     }

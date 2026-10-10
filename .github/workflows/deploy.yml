@@ -42,9 +42,12 @@ jobs:
           password: ${{ secrets.CPANEL_PASSWORD }}
           port: 22
           script: |
-            export PATH="$HOME/bin:$PATH"
+            # Make plain "php" mean PHP 8.4 (it has the database driver), including inside composer's own steps
+            export PATH="/opt/cpanel/ea-php84/root/usr/bin:$HOME/bin:$PATH"
             cd /home2/rainofbl/public_html/school.criticalinfo.com.ng
-            git pull origin main
+            # Match the server's code to GitHub exactly (drops any hand edits made on the server)
+            git fetch origin main
+            git reset --hard origin/main
             PHP=/opt/cpanel/ea-php84/root/usr/bin/php
             $PHP -d allow_url_fopen=1 -d memory_limit=-1 $HOME/bin/composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
             $PHP artisan storage:link 2>/dev/null || true
