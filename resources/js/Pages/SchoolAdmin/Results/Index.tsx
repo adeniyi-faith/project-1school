@@ -1,10 +1,11 @@
 import { Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import { BroadsheetMenu } from '@/components/results/BroadsheetMenu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState, PageHeader, Panel } from '@/components/app/kit';
 import { ResultStatusPill } from '@/components/results/ResultStatus';
-import { ChevronRight, ClipboardCheck, MessageSquareQuote } from 'lucide-react';
+import { ChevronRight, ClipboardCheck, MessageSquareQuote, Printer } from 'lucide-react';
 import type { ResultStatus, TermOption } from '@/Types';
 
 interface SheetRow {
@@ -23,10 +24,21 @@ interface Props {
 }
 
 export default function ResultsIndex({ terms, termId, sheets }: Props) {
+    const linkClass = 'inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200';
+    const termQuery = termId ? `?term_id=${termId}` : '';
     const headerActions = (
-        <Link href={termId ? `/school/results/comment-bank?term_id=${termId}` : '/school/results/comment-bank'} className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
-            <MessageSquareQuote className="size-4" /> Comment bank
-        </Link>
+        <div className="flex flex-wrap gap-2">
+            <Link href={`/school/results/comment-bank${termQuery}`} className={linkClass}><MessageSquareQuote className="size-4" /> Comment bank</Link>
+            <Link href={`/school/results/print${termQuery}`} className={linkClass}><Printer className="size-4" /> Print report cards</Link>
+            {termId && (
+                <BroadsheetMenu className={linkClass} groups={[
+                    { title: 'Whole school, one tab per class', links: [
+                        { label: 'This term (Excel)', href: `/school/results/broadsheets?term_id=${termId}&type=term&format=xlsx` },
+                        { label: 'Full year so far (Excel)', href: `/school/results/broadsheets?term_id=${termId}&type=session&format=xlsx` },
+                    ] },
+                ]} />
+            )}
+        </div>
     );
     const termItems = terms.map(t => ({ value: String(t.id), label: t.is_current ? `${t.label} (current)` : t.label }));
 

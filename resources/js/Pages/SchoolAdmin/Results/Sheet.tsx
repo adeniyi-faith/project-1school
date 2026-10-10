@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import { BroadsheetMenu } from '@/components/results/BroadsheetMenu';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState, PageHeader, Panel } from '@/components/app/kit';
@@ -72,6 +73,10 @@ export default function ResultSheet(props: Props) {
         <div className="flex flex-wrap gap-2">
             <Link href="/school/results" className={linkClass}><ArrowLeft className="size-4" /> All classes</Link>
             {props.canPrint && <Link href={`${base}/report-cards`} className={linkClass}><FileText className="size-4" /> Report cards</Link>}
+            <BroadsheetMenu className={linkClass} groups={[
+                { title: 'This term', links: [{ label: 'PDF to print', href: `${base}/broadsheet` }, { label: 'Excel', href: `${base}/broadsheet?format=xlsx` }] },
+                { title: 'Full year so far', links: [{ label: 'PDF to print', href: `${base}/broadsheet/session` }, { label: 'Excel', href: `${base}/broadsheet/session?format=xlsx` }] },
+            ]} />
         </div>
     );
 
