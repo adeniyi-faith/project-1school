@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -74,6 +75,7 @@ class LoginController extends Controller
         return Inertia::render('Auth/Login', [
             'showDemo' => $showDemo,
             'demoAccounts' => $showDemo ? $this->demoAccounts : [],
+            'demoEnabled' => (bool) config('app.demo_enabled'),
         ]);
     }
 
@@ -96,8 +98,15 @@ class LoginController extends Controller
             ]);
         }
 
-        // Native Database Authentication
-        $user = User::where('email', $credentials['email'])->first();
+$user = User::where('email', $credentials['email'])->first();
+
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+            RateLimiter::hit($throttleKey, 60);
+
+            throw ValidationException::withMessages([
+                'email' => __('auth.failed'),
+            ]);
+        }
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             RateLimiter::hit($throttleKey, 60);
@@ -122,6 +131,49 @@ class LoginController extends Controller
         }
 
         return redirect()->route('dashboard');
+    }
+
+    /**
+     * Local sign-in: the password is checked against the hashed password
+     * stored in this app's own database.
+     */
+    private function checkLocally(array $credentials): ?User
+    {
+        $user = User::where('email', $credentials['email'])->first();
+
+        // Always hash-check, even for unknown emails, so the response time
+        // does not reveal which emails have accounts.
+        $hash = $user?->password ?? '$2y$10$YCWdLwYqB6O0Utp55QXmeuMimyCnuRbzU34zvj3HTU/Naaju.fxq2';
+
+        try {
+            $matches = Hash::check($credentials['password'], $hash);
+        } catch (\RuntimeException) {
+            // Stored value is not a real hash (e.g. a placeholder): never a match
+            $matches = false;
+        }
+
+        return $user && $matches ? $user : null;
+    }
+
+    /**
+     * Supabase sign-in: Supabase confirms the password; Laravel still
+     * decides whether that person has an account here.
+     */
+    private function checkWithSupabase(array $credentials, SupabaseAuthService $supabaseAuth): ?User
+    {
+        $supabaseUser = $supabaseAuth->signIn($credentials['email'], $credentials['password']);
+
+        if (! $supabaseUser) {
+            return null;
+        }
+
+        $user = User::where('email', $credentials['email'])->first();
+
+        if ($user && $user->supabase_id !== $supabaseUser['id']) {
+            $user->supabase_id = $supabaseUser['id'];
+        }
+
+        return $user;
     }
 
     public function destroy(Request $request): RedirectResponse

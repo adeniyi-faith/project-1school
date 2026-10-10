@@ -292,7 +292,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
     </nav>
     <div class="hdr-cta">
       <a href="{{ route('login') }}" class="btn btn-line btn-sm">Log in</a>
-      <a href="#register" class="btn btn-white btn-sm">Register your school</a>
+      <a href="{{ route('register') }}" class="btn btn-white btn-sm">Register your school</a>
     </div>
     <button class="burger" id="openMenu" aria-label="Open menu" aria-controls="menu" aria-expanded="false">
       <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden="true"><path d="M0 2h28M0 10h28M0 18h28" stroke="#fff" stroke-width="2.4"/></svg>
@@ -347,7 +347,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
       <li><a class="m-item" href="#how" data-close>How it works</a></li>
             <li><a class="m-item" href="{{ route('login') }}" data-close>Log in</a></li>
     </ul>
-    <a href="#register" class="btn btn-white btn-block" data-close>Register your school</a>
+    <a href="{{ route('register') }}" class="btn btn-white btn-block" data-close>Register your school</a>
   </div>
 </div>
 
@@ -359,11 +359,15 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
     <h1>The school management platform built for serious schools</h1>
     <p>SchoolRuns brings fees, results, attendance, admissions and AI-assisted teaching into one secure system for proprietors, staff and parents.</p>
     <div class="hero-ctas">
-      <a href="#register" class="btn btn-white">Register your school
+      <a href="{{ route('register') }}" class="btn btn-white">Register your school
         <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 10h7M10.5 7l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
       </a>
     </div>
+    @if (config('app.demo_enabled'))
+    <a href="{{ route('demo') }}" class="alt">or try the demo, no sign-up needed</a>
+    @else
     <a href="#contact" class="alt">or book a demo with our team</a>
+    @endif
   </div>
 </section>
 
@@ -557,8 +561,12 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
       <h2>Reach out to us</h2>
       <p>Register your school in minutes, or book a guided demo with our team first.</p>
       <div class="hero-ctas">
-        <a href="#register" class="btn btn-white">Register your school</a>
+        <a href="{{ route('register') }}" class="btn btn-white">Register your school</a>
+        @if (config('app.demo_enabled'))
+        <a href="{{ route('demo') }}" class="btn btn-line">Try the demo</a>
+        @else
         <a href="#contact" class="btn btn-line">Book a demo</a>
+        @endif
       </div>
       <div class="contact-lines">
         <span>hello@schoolruns.com</span>
