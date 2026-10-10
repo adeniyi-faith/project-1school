@@ -41,8 +41,10 @@ use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardCo
 use App\Http\Controllers\SchoolAdmin\AdmissionInquiryController;
 use App\Http\Controllers\SchoolAdmin\AdmissionPipelineController;
 use App\Http\Controllers\SchoolAdmin\PromotionController;
+use App\Http\Controllers\SchoolAdmin\BroadsheetController;
 use App\Http\Controllers\SchoolAdmin\CommentBankController;
 use App\Http\Controllers\SchoolAdmin\ReportCardController;
+use App\Http\Controllers\SchoolAdmin\ReportCardExportController;
 use App\Http\Controllers\ReportCardPortalController;
 use App\Http\Controllers\SchoolAdmin\ReportCardDesignController;
 use App\Http\Controllers\StudentPhotoController;
@@ -170,6 +172,11 @@ Route::middleware('auth')->group(function () {
             // Term results: part scores, behaviour ratings, positions and the approval steps
             Route::get('results',                              [ResultController::class, 'index'])->middleware('permission:results.view')->name('results.index');
             Route::get('results/comment-bank',                   [CommentBankController::class, 'index'])->middleware('permission:results.view')->name('comment-bank.index');
+            Route::get('results/print',                          [ReportCardExportController::class, 'index'])->middleware('permission:reportcard.generate')->name('report-card-exports.index');
+            Route::post('results/print',                         [ReportCardExportController::class, 'store'])->middleware('permission:reportcard.generate')->name('report-card-exports.store');
+            Route::post('results/print/{export}/step',           [ReportCardExportController::class, 'step'])->middleware('permission:reportcard.generate')->name('report-card-exports.step');
+            Route::get('results/print/{export}/download',        [ReportCardExportController::class, 'download'])->middleware('permission:reportcard.generate')->name('report-card-exports.download');
+            Route::get('results/broadsheets',                    [BroadsheetController::class, 'school'])->middleware('permission:results.view')->name('broadsheets.school');
             Route::get('results/{sheet}',                      [ResultController::class, 'show'])->middleware('permission:results.view')->name('results.show');
             Route::post('results/{sheet}/scores',              [ResultController::class, 'saveScores'])->middleware('permission:marks.entry')->name('results.scores');
             Route::post('results/{sheet}/ratings',             [ResultController::class, 'saveRatings'])->middleware('permission:marks.entry')->name('results.ratings');
@@ -184,6 +191,9 @@ Route::middleware('auth')->group(function () {
             Route::get('academics/report-card-designs/{design}/preview',  [ReportCardDesignController::class, 'preview'])->middleware('permission:reportcard.generate')->name('report-card-designs.preview');
 
             // Report cards: comments, then the term and full-year PDFs (one student or the whole class)
+            // Broadsheets: every student and subject of a class on one page (PDF or Excel)
+            Route::get('results/{sheet}/broadsheet',             [BroadsheetController::class, 'term'])->middleware('permission:results.view')->name('results.broadsheet');
+            Route::get('results/{sheet}/broadsheet/session',     [BroadsheetController::class, 'session'])->middleware('permission:results.view')->name('results.broadsheet.session');
             Route::get('results/{sheet}/report-cards',           [ReportCardController::class, 'index'])->middleware('permission:reportcard.generate')->name('results.report-cards');
             Route::get('results/{sheet}/report-cards/term',      [ReportCardController::class, 'term'])->middleware('permission:reportcard.generate')->name('results.report-cards.term');
             Route::get('results/{sheet}/report-cards/session',   [ReportCardController::class, 'session'])->middleware('permission:reportcard.generate')->name('results.report-cards.session');

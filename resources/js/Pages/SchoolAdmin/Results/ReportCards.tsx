@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { EmptyState, PageHeader, Panel } from '@/components/app/kit';
 import { ordinal } from '@/lib/format';
-import { ArrowLeft, Download, FileText, MessageSquareQuote, Palette, Wand2 } from 'lucide-react';
+import { ArrowLeft, Download, FileArchive, FileText, MessageSquareQuote, Palette, Wand2 } from 'lucide-react';
 import { fittingComments, renderComment } from '@/lib/commentBank';
 import type { CommentBankEntry, ReportCardStudent } from '@/Types';
 
 interface Signer { id: number; label: string; writer_permission: string; can_write: boolean }
 
 interface Props {
-    sheet: { id: number; status: string; term: string; class_name: string | null };
+    sheet: { id: number; term_id: number; status: string; term: string; class_name: string | null };
     design: { id: number; name: string };
     signers: Signer[];
     students: ReportCardStudent[];
@@ -67,6 +67,7 @@ export default function ReportCards({ sheet, design, signers, students, canDesig
                 <>
                     <a href={`${base}/report-cards/term`} target="_blank" rel="noopener" className={linkClass}><Download className="size-4" /> Whole class: term</a>
                     <a href={`${base}/report-cards/session`} target="_blank" rel="noopener" className={linkClass}><Download className="size-4" /> Whole class: full year</a>
+                    <Link href={`/school/results/print?term_id=${sheet.term_id}&sheet[]=${sheet.id}`} className={linkClass}><FileArchive className="size-4" /> ZIP, one file per student</Link>
                 </>
             )}
         </div>
