@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Pencil, FileUp, Trash2, FileText, User, GraduationCap, Users, Camera } from 'lucide-react';
+import { ArrowLeft, Award, Pencil, FileUp, Trash2, FileText, User, GraduationCap, Users, Camera } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import type { ClassHistoryLine, PageProps, Student } from '@/Types';
+import { CertificateList } from '@/components/certificates/CertificateList';
+import type { CertificateRow, ClassHistoryLine, PageProps, Student } from '@/Types';
 
-interface Props extends PageProps { student: Student; classHistory: ClassHistoryLine[]; canEdit: boolean }
+interface Props extends PageProps { student: Student; classHistory: ClassHistoryLine[]; canEdit: boolean; certificates: CertificateRow[]; canIssueCertificates: boolean }
 
 const MOVE_LABELS: Record<ClassHistoryLine['outcome'], string> = { promoted: 'Moved up', repeated: 'Repeated', graduated: 'Graduated' };
 
@@ -30,8 +31,9 @@ const docSchema = z.object({
 type DocForm = z.infer<typeof docSchema>;
 
 export default function ShowStudent() {
-    const { student, classHistory, canEdit } = usePage<Props>().props;
-    const [tab, setTab]       = useState<'personal' | 'guardian' | 'documents' | 'history'>('personal');
+    const { student, classHistory, canEdit, certificates, canIssueCertificates } = usePage<Props>().props;
+    const [tab, setTab]       = useState<'personal' | 'guardian' | 'documents' | 'history' | 'certificates'>(() =>
+        typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'certificates' ? 'certificates' : 'personal');
     const [docOpen, setDocOpen] = useState(false);
 
     const { register, handleSubmit, reset, formState: { errors, isSubmitting } } =
@@ -118,12 +120,12 @@ export default function ShowStudent() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-800">
-                {(['personal', 'guardian', 'documents', 'history'] as const).map((t) => (
+            <div className="flex gap-1 mb-4 overflow-x-auto border-b border-slate-200 dark:border-slate-800">
+                {(['personal', 'guardian', 'documents', 'history', 'certificates'] as const).map((t) => (
                     <button
                         key={t}
                         onClick={() => setTab(t)}
-                        className={`px-4 py-2 text-sm font-medium capitalize border-b-2 transition-colors ${tab === t ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                        className={`shrink-0 px-4 py-2 text-sm font-medium capitalize border-b-2 transition-colors ${tab === t ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                     >{t === 'history' ? 'Class history' : t}</button>
                 ))}
             </div>
@@ -238,6 +240,32 @@ export default function ShowStudent() {
                                     </li>
                                 ))}
                             </ol>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Certificates tab: testimonials and transfer certificates */}
+            {tab === 'certificates' && (
+                <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-3">
+                        <CardTitle className="text-sm">Certificates</CardTitle>
+                        {canIssueCertificates && (
+                            <div className="flex flex-wrap gap-2">
+                                <Link href={`/school/students/${student.id}/certificates/new?type=testimonial`} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700">
+                                    <Award className="size-3.5" /> Issue testimonial
+                                </Link>
+                                <Link href={`/school/students/${student.id}/certificates/new?type=transfer`} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200">
+                                    <Award className="size-3.5" /> Issue transfer certificate
+                                </Link>
+                            </div>
+                        )}
+                    </CardHeader>
+                    <CardContent>
+                        {!certificates.length ? (
+                            <p className="text-sm text-slate-400">No testimonial or transfer certificate has been issued for this student.</p>
+                        ) : (
+                            <CertificateList items={certificates} canRevoke={canIssueCertificates} />
                         )}
                     </CardContent>
                 </Card>

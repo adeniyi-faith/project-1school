@@ -6,7 +6,7 @@ import {
     Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff,
     Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell,
     PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug,
-    CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer,
+    CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -52,6 +52,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Attendance',  href: '/school/attendance', icon: ClipboardList, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Examinations',href: '/school/exams',    icon: BookOpen,       roles: ['super-admin','school-admin','principal','teacher','accountant'] },
             { label: 'Move Students Up', href: '/school/promotions',     icon: ArrowUpRight,   roles: ['super-admin','school-admin'] },
+            { label: 'Certificates', href: '/school/certificates',       icon: Award,          roles: ['super-admin','school-admin','principal'] },
             { label: 'Term Results', href: '/school/results',             icon: ClipboardCheck, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Terms',       href: '/school/academics/terms',      icon: CalendarRange, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Scores & Grades', href: '/school/academics/assessment', icon: SlidersHorizontal, roles: ['super-admin','school-admin','principal'] },

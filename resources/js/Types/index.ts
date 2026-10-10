@@ -537,3 +537,19 @@ export interface CommentBankEntry {
     max_average: number;
     comment: string;
 }
+
+/** A testimonial or transfer certificate in a list */
+export interface CertificateRow {
+    id: number;
+    type: 'testimonial' | 'transfer';
+    title: string;
+    serial: string;
+    issued_on: string | null;
+    student: string;
+    student_id: number;
+    admission_no: string | null;
+    issued_by: string | null;
+    revoked: boolean;
+    revoke_reason: string | null;
+    verify_code: string;
+}
