@@ -553,3 +553,28 @@ export interface CertificateRow {
     revoke_reason: string | null;
     verify_code: string;
 }
+
+/** One SMS or email blast in the sent-messages log */
+export interface MessageBatchRow {
+    id: number;
+    channel: 'sms' | 'email';
+    audience: string;
+    subject: string | null;
+    preview: string;
+    sent_by: string | null;
+    created_at: string | null;
+    counts: Record<'queued' | 'sent' | 'failed' | 'not_sent', number>;
+    total: number;
+}
+
+/** One person in a blast and whether their message went */
+export interface MessageDeliveryRow {
+    id: number;
+    recipient_type: 'parent' | 'student' | 'staff';
+    recipient_name: string;
+    to: string | null;
+    status: 'queued' | 'sent' | 'failed' | 'not_sent';
+    error: string | null;
+    attempts: number;
+    sent_at: string | null;
+}

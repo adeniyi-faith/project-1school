@@ -55,9 +55,9 @@ app/
   Models/            flat folder, ~60 models
   Scopes/SchoolScope.php      the "only my school" rule
   Traits/BelongsToSchool.php  adds that rule + fills school_id on create
-  Services/          GradingService, TermResultService (works out and stores term results), FeeLedgerService (every change to what a student owes, plus money-in and still-owed totals), LegacyFeeImporter (copies old fee_payments into invoices, and undoes it), PromotionService (year-end moves), ReportCardService (data for the report card PDFs), ReportCardCommentService (fills comments from the comment bank), ReportCardExportService (bulk ZIP downloads in steps), BroadsheetService, CertificateService (testimonials and transfer certificates), SupabaseAuthService
+  Services/          GradingService, TermResultService (works out and stores term results), FeeLedgerService (every change to what a student owes, plus money-in and still-owed totals), LegacyFeeImporter (copies old fee_payments into invoices, and undoes it), PromotionService (year-end moves), ReportCardService (data for the report card PDFs), ReportCardCommentService (fills comments from the comment bank), ReportCardExportService (bulk ZIP downloads in steps), BroadsheetService, CertificateService (testimonials and transfer certificates), MessageService (blasts and the sent-messages log), SupabaseAuthService
   Support/SchoolDefaults.php  starting terms, score setup and grade scales for every school
-  Jobs/              SendSmsBlast (stub: writes to the log), SendEmailBlast
+  Jobs/              DeliverMessageBatch (sends one SMS/email blast and records each line)
 routes/web.php       ONE file for all routes (no api.php)
 resources/js/        Pages/<Area>/..., components/, Layouts/, Stores/, Types/
 database/seeders/    RolePermissionSeeder (roles + permissions), demo data seeders
@@ -90,7 +90,7 @@ Everything below exists as working screens unless a caveat says otherwise.
 | Fees | Built | Two systems side by side for now. **New:** `/school/fees/invoices`: invoices (one per student, per fee structure, per period, made for a whole class at once) with a ledger underneath (`ledger_entries`: charge, fine, payment, discount, reversal). Ledger lines can never be edited or deleted (the model throws); a mistake is fixed by a reversal line. Balance and status are worked out from the ledger (`FeeLedgerService`). Overpaying is refused; an invoice can be cancelled only while nothing is paid. `/school/fees/scholarships`: named discounts (percent or fixed, all fees or one category), given to a student with the approver and reason recorded, applied to open and future invoices. Permissions: view `fees.view`, bill `fees.structure`, pay/fine `fees.collect`, reverse/cancel/scholarships `fees.waiver`. Dashboards, the finance report, the custom report and both portals read invoices and the ledger. **Old:** `fee_payments` was copied into invoices by migration `2026_10_14_000002` (copied lines carry `legacy_fee_payment_id`; `php artisan fees:copy-old-payments [--dry-run] [--undo]`; rolling back that migration undoes it but keeps invoices staff have added to since). The old rows are kept read-only under "Old Payment Records"; the old Collect and Outstanding screens now redirect to Invoices. Demo seeders write old rows and then run the copy. No payment gateway |
 | Library, Inventory/Assets, Transport, Hostel | Built | Transport has a GPS location webhook protected by a per-vehicle token (no screen shows the token yet) |
 | Homework, lesson plans, syllabus, online-class links | Built | |
-| Communication | Partly | Announcements, messages, email templates. **SMS is a stub** (logs only). No delivery log |
+| Communication | Partly | Announcements, messages, email templates. **SMS / Email Blast** (`/school/communication/blast`, `MessageService`, job `DeliverMessageBatch`): to all parents (each parent once, from `guardians`), all active students, current staff, or the parents of one class. **Sent messages** (`/school/communication/sent`, `MessageLogController`, tables `message_batches` and `message_deliveries`, needs `sms.send` or `email.send`): one line per person with status queued / sent / failed / not_sent (no or bad phone/email on record, never tried) and the reason; "Try the failed ones again" re-queues failed lines. Emails go through Laravel Mail and a refused one is marked failed. **SMS has no provider yet**: every text is marked failed with "No SMS provider is set up yet" (`MessageService::sendSms` is where Termii or another provider plugs in). "Sent" means handed to the mail server, not opened or delivered to the phone |
 | Reports | Built | Dashboard, attendance, academic, finance, custom builder, audit log, PDF/CSV exports |
 | Student and Parent portals | Built | Read-only views |
 | Mobile PWA & public API | Not built | Module 15 was removed from scope |
@@ -149,7 +149,7 @@ and the academic report. Run them before and after any change to routes, models 
 ## Known gaps (planned work)
 
 Phase 2 leftovers: old per-exam marks are not copied into term results.
-Phase 3 (rest): real SMS and a delivery log, payment gateway, payment plans, CBT, houses/clubs, shared table/form components.
+Phase 3 (rest): a real SMS provider (the log is ready for it), payment gateway, payment plans, CBT, houses/clubs, shared table/form components.
 Phase 4: queue for PDFs, Redis, safe ID generation (admission numbers and employee IDs are
 made by counting rows, which can collide), splitting the fat controllers into services.
 Small open items: the Receptionist, Driver, Warden and Store Manager roles exist in the seeder but the `/school` route group only lets six roles in (Super Admin, School Admin, Principal, Teacher, Accountant, Librarian), so those four cannot reach any school screen yet; the side menu is chosen by role in the frontend, so it can show items a role
