@@ -3,6 +3,8 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3 } from 'lucide-react';
+import { TermReportCard } from '@/components/results/TermReportCard';
+import type { TermReport } from '@/Types';
 
 interface MarkRow { subject: string | null; marks: number | null; total: number | null; grade: string | null; absent: boolean; }
 interface ExamResult { id: number; name: string; type: string; date: string | null; marks: MarkRow[]; }
@@ -10,6 +12,7 @@ interface Props {
     linked: boolean;
     student: { full_name: string; class: string | null } | null;
     exams: ExamResult[];
+    reports: TermReport[];
 }
 
 function gradeColor(g: string | null) {
@@ -21,7 +24,7 @@ function gradeColor(g: string | null) {
     return 'text-red-600';
 }
 
-export default function Results({ linked, student, exams }: Props) {
+export default function Results({ linked, student, exams, reports }: Props) {
     if (!linked) {
         return (
             <AppLayout title="My Results">
@@ -41,7 +44,15 @@ export default function Results({ linked, student, exams }: Props) {
                     <p className="text-sm text-slate-500">{student?.class}</p>
                 </div>
 
-                {exams.length === 0 ? (
+                {reports.length > 0 && (
+                    <section className="space-y-4">
+                        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Term results</h2>
+                        {reports.map(r => <TermReportCard key={r.id} report={r} />)}
+                    </section>
+                )}
+
+                {reports.length > 0 && exams.length > 0 && <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Exam marks</h2>}
+                {exams.length === 0 ? (reports.length > 0 ? null :
                     <Card><CardContent className="py-16 text-center text-slate-400">No results available yet.</CardContent></Card>
                 ) : (
                     <div className="space-y-4">

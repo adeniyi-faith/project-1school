@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PageHeader, Panel, Pill } from '@/components/app/kit';
 import { cn } from '@/lib/utils';
 import { Pencil, Plus, Star, Trash2, X } from 'lucide-react';
-import type { AssessmentComponent, AssessmentPresets, AssessmentScheme, GradeBand, GradingScheme } from '@/Types';
+import type { AssessmentComponent, AssessmentPresets, AssessmentScheme, BehaviourTrait, GradeBand, GradingScheme } from '@/Types';
 
 interface ClassRow { id: number; name: string; assessment_scheme_id: number | null; grading_scheme_id: number | null }
 interface SubjectRow { id: number; name: string; class_name: string | null; assessment_scheme_id: number | null }
@@ -21,6 +21,7 @@ interface Props {
     classes: ClassRow[];
     subjects: SubjectRow[];
     presets: AssessmentPresets;
+    traits: BehaviourTrait[];
     canEdit: boolean;
 }
 
@@ -36,7 +37,7 @@ function firstRowError(errors: Record<string, string>, prefix: string) {
     return key ? errors[key] : undefined;
 }
 
-export default function Assessment({ assessmentSchemes, gradingSchemes, classes, subjects, presets, canEdit }: Props) {
+export default function Assessment({ assessmentSchemes, gradingSchemes, classes, subjects, presets, traits, canEdit }: Props) {
     const defaultScoreSetup = assessmentSchemes.find(s => s.is_default);
     const defaultGradeScale = gradingSchemes.find(s => s.is_default);
 
@@ -285,6 +286,10 @@ export default function Assessment({ assessmentSchemes, gradingSchemes, classes,
                 </Panel>
             </div>
 
+            <div className="mx-auto mt-6 max-w-5xl pb-24 md:pb-0">
+                <TraitsPanel traits={traits} canEdit={canEdit} />
+            </div>
+
             {/* ───── score setup dialog ───── */}
             <Dialog open={scoreOpen} onOpenChange={setScoreOpen}>
                 <DialogContent className="sm:max-w-xl">
@@ -432,5 +437,62 @@ export default function Assessment({ assessmentSchemes, gradingSchemes, classes,
                 </DialogContent>
             </Dialog>
         </AppLayout>
+    );
+}
+
+/** Behaviour (affective) and skills (psychomotor) rated on the report card */
+function TraitsPanel({ traits, canEdit }: { traits: BehaviourTrait[]; canEdit: boolean }) {
+    const [adding, setAdding] = useState<BehaviourTrait['domain'] | null>(null);
+    const form = useForm({ name: '', domain: 'affective' as BehaviourTrait['domain'] });
+
+    function add(e: React.FormEvent) {
+        e.preventDefault();
+        form.post('/school/academics/behaviour-traits', { preserveScroll: true, onSuccess: () => { form.reset(); setAdding(null); } });
+    }
+    function rename(t: BehaviourTrait) {
+        const name = prompt('New name', t.name)?.trim();
+        if (name && name !== t.name) router.put(`/school/academics/behaviour-traits/${t.id}`, { name }, { preserveScroll: true });
+    }
+    function remove(t: BehaviourTrait) {
+        if (confirm(`Stop rating "${t.name}"? Ratings already given stay on past results.`)) {
+            router.delete(`/school/academics/behaviour-traits/${t.id}`, { preserveScroll: true });
+        }
+    }
+
+    return (
+        <Panel title="Behaviour & skills" description="What teachers rate from 1 to 5 each term, next to the subject scores on the report card.">
+            <div className="grid gap-6 sm:grid-cols-2">
+                {(['affective', 'psychomotor'] as const).map(domain => (
+                    <div key={domain}>
+                        <p className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">{domain === 'affective' ? 'Behaviour (affective)' : 'Skills (psychomotor)'}</p>
+                        <ul className="divide-y divide-slate-100 dark:divide-white/[0.06]">
+                            {traits.filter(t => t.domain === domain).map(t => (
+                                <li key={t.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
+                                    <span className="text-slate-700 dark:text-slate-300">{t.name}</span>
+                                    {canEdit && (
+                                        <span className="flex gap-1">
+                                            <Button size="icon" variant="ghost" className="size-7" onClick={() => rename(t)} aria-label={`Rename ${t.name}`}><Pencil className="size-3.5" /></Button>
+                                            <Button size="icon" variant="ghost" className="size-7 text-red-600" onClick={() => remove(t)} aria-label={`Remove ${t.name}`}><Trash2 className="size-3.5" /></Button>
+                                        </span>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                        {canEdit && (adding === domain ? (
+                            <form onSubmit={add} className="mt-2 flex gap-2">
+                                <Input autoFocus value={form.data.name} onChange={e => form.setData('name', e.target.value)} placeholder={domain === 'affective' ? 'e.g. Leadership' : 'e.g. Crafts'} aria-label="Name" />
+                                <Button type="submit" size="sm" disabled={form.processing || !form.data.name.trim()}>Add</Button>
+                                <Button type="button" size="sm" variant="ghost" onClick={() => setAdding(null)}>Cancel</Button>
+                            </form>
+                        ) : (
+                            <Button size="sm" variant="ghost" className="mt-1 inline-flex items-center gap-1.5" onClick={() => { form.setData({ name: '', domain }); setAdding(domain); }}>
+                                <Plus className="size-4" /> Add
+                            </Button>
+                        ))}
+                        <ErrorText>{form.errors.name}</ErrorText>
+                    </div>
+                ))}
+            </div>
+        </Panel>
     );
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\SchoolAdmin\AcademicSetupController;
 use App\Http\Controllers\SchoolAdmin\AttendanceController;
 use App\Http\Controllers\SchoolAdmin\ExamController;
+use App\Http\Controllers\SchoolAdmin\ResultController;
 use App\Http\Controllers\SchoolAdmin\FeeCategoryController;
 use App\Http\Controllers\SchoolAdmin\FeePaymentController;
 use App\Http\Controllers\SchoolAdmin\FeeStructureController;
@@ -142,6 +143,17 @@ Route::middleware('auth')->group(function () {
             Route::delete('academics/grading-schemes/{scheme}', [AcademicSetupController::class, 'destroyGradingScheme'])->middleware('permission:exams.edit')->name('academics.grading-schemes.destroy');
             Route::put('academics/classes/{class}/scheme',     [AcademicSetupController::class, 'assignClass'])->middleware('permission:exams.edit')->name('academics.classes.scheme');
             Route::put('academics/subjects/{subject}/scheme',  [AcademicSetupController::class, 'assignSubject'])->middleware('permission:exams.edit')->name('academics.subjects.scheme');
+            Route::post('academics/behaviour-traits',          [AcademicSetupController::class, 'storeTrait'])->middleware('permission:exams.edit')->name('academics.traits.store');
+            Route::put('academics/behaviour-traits/{trait}',   [AcademicSetupController::class, 'updateTrait'])->middleware('permission:exams.edit')->name('academics.traits.update');
+            Route::delete('academics/behaviour-traits/{trait}', [AcademicSetupController::class, 'destroyTrait'])->middleware('permission:exams.edit')->name('academics.traits.destroy');
+
+            // Term results: part scores, behaviour ratings, positions and the approval steps
+            Route::get('results',                              [ResultController::class, 'index'])->middleware('permission:results.view')->name('results.index');
+            Route::get('results/{sheet}',                      [ResultController::class, 'show'])->middleware('permission:results.view')->name('results.show');
+            Route::post('results/{sheet}/scores',              [ResultController::class, 'saveScores'])->middleware('permission:marks.entry')->name('results.scores');
+            Route::post('results/{sheet}/ratings',             [ResultController::class, 'saveRatings'])->middleware('permission:marks.entry')->name('results.ratings');
+            // Each step checks its own permission (see ResultSheet::ACTIONS)
+            Route::post('results/{sheet}/status',              [ResultController::class, 'transition'])->middleware('permission:results.view')->name('results.status');
             Route::redirect('grade-scales', '/school/academics/assessment')->middleware('permission:exams.view')->name('grade-scales.index');
 
             // Timetable

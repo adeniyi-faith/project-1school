@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\ResultSheet;
+use App\Services\TermResultService;
 use App\Support\DemoSchool;
 use App\Support\SchoolDefaults;
 use Database\Seeders\Demo\NigerianNames;
@@ -56,6 +58,7 @@ class DemoSchoolSeeder extends Seeder
             $this->holidays();
             $scales = $this->gradeScales($classes);
             $this->exams($classes, $subjects, $students, $scales);
+            $this->termResults($classes);
             $this->fees($classes, $students);
             $this->attendance($students, $teachers);
             $this->timetable($classes, $subjects, $teachers);
@@ -167,6 +170,7 @@ class DemoSchoolSeeder extends Seeder
         $byIds('staff_documents', 'staff_id', $staffIds);
 
         foreach ([
+            'behaviour_ratings', 'term_result_summaries', 'term_results', 'subject_scores', 'result_sheets', 'behaviour_traits',
             'marks', 'exams', 'fee_payments', 'fee_structures', 'fee_categories', 'attendances',
             'timetables', 'homework', 'books', 'announcements', 'holidays', 'grade_scales',
             'students', 'guardians', 'staff', 'designations', 'departments', 'sections',
@@ -647,6 +651,79 @@ class DemoSchoolSeeder extends Seeder
         }
 
         $this->insert('marks', $markRows);
+    }
+
+    // ───────────────────────── term results ─────────────────────────
+
+    /**
+     * Last session's Third Term is finished: CA1 + CA2 + Exam, behaviour
+     * ratings, positions, published and locked. This term has CA1 only, in draft.
+     */
+    private function termResults(array $classes): void
+    {
+        $termId = fn (string $year, int $seq) => DB::table('terms')->where('school_id', $this->sid)->where('sequence', $seq)
+            ->where('academic_year_id', DB::table('academic_years')->where('school_id', $this->sid)->where('name', $year)->value('id'))->value('id');
+        $lastTerm = $termId('2025/2026', 3);
+        $thisTerm = $termId('2026/2027', 1);
+
+        $schemeId = DB::table('assessment_schemes')->where('school_id', $this->sid)->where('is_default', true)->value('id');
+        $part = DB::table('assessment_components')->where('assessment_scheme_id', $schemeId)->pluck('id', 'short_name');
+        $traits = DB::table('behaviour_traits')->where('school_id', $this->sid)->pluck('id');
+        $service = new TermResultService();
+        $clamp = fn (float $v, float $max) => max(0, min($max, round($v * 2) / 2));
+
+        foreach ($classes as $class) {
+            $marksFor = fn (string $exam) => DB::table('marks')->join('exams', 'exams.id', '=', 'marks.exam_id')
+                ->where('exams.school_id', $this->sid)->where('exams.class_id', $class['id'])->where('exams.name', $exam)
+                ->whereNotNull('marks.marks_obtained')->get(['marks.student_id', 'marks.subject_id', 'marks.marks_obtained']);
+
+            // Third Term 2025/2026: the exam mark (out of 100) split into CA1, CA2 and Exam
+            $last = $this->insertGetId('result_sheets', [
+                'school_id' => $this->sid, 'term_id' => $lastTerm, 'class_id' => $class['id'], 'status' => 'locked',
+                'submitted_by' => $this->adminUserId, 'submitted_at' => '2026-07-20 10:00:00',
+                'approved_by' => $this->adminUserId, 'approved_at' => '2026-07-21 09:00:00',
+                'published_by' => $this->adminUserId, 'published_at' => '2026-07-22 09:00:00',
+                'locked_by' => $this->adminUserId, 'locked_at' => '2026-08-01 09:00:00',
+            ]);
+            $scores = [];
+            $studentIds = [];
+            foreach ($marksFor('Third Term Examination 2025/2026') as $m) {
+                $pct = (float) $m->marks_obtained;
+                $studentIds[$m->student_id] = true;
+                foreach ([['CA1', 20], ['CA2', 20], ['Exam', 60]] as [$short, $max]) {
+                    $scores[] = [
+                        'school_id' => $this->sid, 'result_sheet_id' => $last, 'student_id' => $m->student_id, 'subject_id' => $m->subject_id,
+                        'assessment_component_id' => $part[$short],
+                        'score' => $clamp(($pct + ($short === 'Exam' ? 0 : $this->gauss(2, 6))) * $max / 100, $max),
+                    ];
+                }
+            }
+            $this->insert('subject_scores', $scores);
+
+            $ratings = [];
+            foreach (array_keys($studentIds) as $studentId) {
+                foreach ($traits as $traitId) {
+                    $ratings[] = [
+                        'school_id' => $this->sid, 'result_sheet_id' => $last, 'student_id' => $studentId,
+                        'behaviour_trait_id' => $traitId, 'rating' => (int) $this->weighted(['5' => 30, '4' => 42, '3' => 22, '2' => 6]),
+                    ];
+                }
+            }
+            $this->insert('behaviour_ratings', $ratings);
+
+            // First Term 2026/2027: only CA1 so far, still being entered
+            $current = $this->insertGetId('result_sheets', [
+                'school_id' => $this->sid, 'term_id' => $thisTerm, 'class_id' => $class['id'], 'status' => 'draft',
+            ]);
+            $this->insert('subject_scores', $marksFor('First Term Continuous Assessment 1, 2026/2027')->map(fn ($m) => [
+                'school_id' => $this->sid, 'result_sheet_id' => $current, 'student_id' => $m->student_id, 'subject_id' => $m->subject_id,
+                'assessment_component_id' => $part['CA1'], 'score' => $clamp((float) $m->marks_obtained * 0.2, 20),
+            ])->all());
+
+            foreach ([$last, $current] as $sheetId) {
+                $service->compute(ResultSheet::findOrFail($sheetId));
+            }
+        }
     }
 
     // ───────────────────────── fees (naira) ─────────────────────────
