@@ -81,6 +81,7 @@ class SchoolDefaults
             self::ensureAssessmentScheme($schoolId);
             self::ensureGradingScheme($schoolId);
             self::ensureBehaviourTraits($schoolId);
+            self::ensureReportCardDesign($schoolId);
         });
     }
 
@@ -206,5 +207,39 @@ class SchoolDefaults
             }
         }
         DB::table('behaviour_traits')->insert($rows);
+    }
+
+    /**
+     * A default report card design with a Class Teacher and a Principal who comment and sign.
+     * Returns [class teacher signer id, principal signer id] (null when a school changed them).
+     */
+    public static function ensureReportCardDesign(int $schoolId): array
+    {
+        $design = DB::table('report_card_designs')->where('school_id', $schoolId)->whereNull('deleted_at')
+            ->orderByDesc('is_default')->orderBy('id')->first();
+        $now = now();
+
+        if (! $design) {
+            $id = DB::table('report_card_designs')->insertGetId([
+                'school_id' => $schoolId, 'name' => 'Standard', 'is_default' => true, 'template' => 'classic',
+                'primary_color' => '#312e81', 'accent_color' => '#4f46e5', 'font_size' => 'normal', 'paper' => 'a4',
+                'term_title' => 'Report Card', 'session_title' => 'Full-Year Report Card', 'options' => null,
+                'created_at' => $now, 'updated_at' => $now,
+            ]);
+            foreach ([['Class Teacher', 'marks.entry'], ['Principal', 'results.publish']] as $i => [$label, $permission]) {
+                DB::table('report_card_signers')->insert([
+                    'school_id' => $schoolId, 'report_card_design_id' => $id, 'label' => $label, 'has_comment' => true,
+                    'writer_permission' => $permission, 'sort_order' => $i, 'created_at' => $now, 'updated_at' => $now,
+                ]);
+            }
+            $design = (object) ['id' => $id];
+        }
+
+        $signers = DB::table('report_card_signers')->where('report_card_design_id', $design->id)->orderBy('sort_order')->get();
+
+        return [
+            $signers->firstWhere('writer_permission', 'marks.entry')?->id,
+            $signers->firstWhere('writer_permission', 'results.publish')?->id,
+        ];
     }
 }

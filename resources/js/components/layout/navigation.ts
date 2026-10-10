@@ -6,7 +6,7 @@ import {
     Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff,
     Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell,
     PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug,
-    CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight,
+    CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -55,6 +55,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Term Results', href: '/school/results',             icon: ClipboardCheck, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Terms',       href: '/school/academics/terms',      icon: CalendarRange, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Scores & Grades', href: '/school/academics/assessment', icon: SlidersHorizontal, roles: ['super-admin','school-admin','principal'] },
+            { label: 'Report Card Designs', href: '/school/academics/report-card-designs', icon: Palette, roles: ['super-admin','school-admin','principal'] },
         ],
     },
     {

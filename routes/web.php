@@ -41,6 +41,10 @@ use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardCo
 use App\Http\Controllers\SchoolAdmin\AdmissionInquiryController;
 use App\Http\Controllers\SchoolAdmin\AdmissionPipelineController;
 use App\Http\Controllers\SchoolAdmin\PromotionController;
+use App\Http\Controllers\SchoolAdmin\ReportCardController;
+use App\Http\Controllers\ReportCardPortalController;
+use App\Http\Controllers\SchoolAdmin\ReportCardDesignController;
+use App\Http\Controllers\StudentPhotoController;
 use App\Http\Controllers\SchoolAdmin\VisitorLogController;
 use App\Http\Controllers\PublicAdmissionController;
 use App\Http\Controllers\StudentPortalController;
@@ -96,6 +100,9 @@ Route::middleware('auth')->group(function () {
         };
     })->name('dashboard');
 
+    // Student passport photos: the controller checks the viewer (staff of the school, the student, or their parent)
+    Route::get('photos/students/{student}', [StudentPhotoController::class, 'show'])->whereNumber('student')->name('students.photo');
+
     /*
     |--------------------------------------------------------------------------
     | School Admin routes (school-admin, principal)
@@ -124,6 +131,9 @@ Route::middleware('auth')->group(function () {
             Route::post('students/{student}/documents',        [StudentController::class, 'uploadDocument'])->middleware('permission:students.edit')->name('students.documents.upload');
             Route::delete('students/documents/{document}',     [StudentController::class, 'deleteDocument'])->middleware('permission:students.edit')->name('students.documents.delete');
             Route::get('students/documents/{document}/download', [StudentController::class, 'downloadDocument'])->middleware('permission:students.view')->name('students.documents.download');
+            Route::post('students/photos',                    [StudentPhotoController::class, 'bulk'])->middleware('permission:students.edit')->name('students.photos.bulk');
+            Route::post('students/{student}/photo',            [StudentPhotoController::class, 'store'])->middleware('permission:students.edit')->name('students.photo.store');
+            Route::delete('students/{student}/photo',          [StudentPhotoController::class, 'destroy'])->middleware('permission:students.edit')->name('students.photo.destroy');
 
             // ── Year-end promotion: move a class up, keep some back, graduate the top class ──
             Route::get('promotions',                        [PromotionController::class, 'index'])->middleware('permission:students.promote')->name('promotions.index');
@@ -163,6 +173,20 @@ Route::middleware('auth')->group(function () {
             Route::post('results/{sheet}/ratings',             [ResultController::class, 'saveRatings'])->middleware('permission:marks.entry')->name('results.ratings');
             // Each step checks its own permission (see ResultSheet::ACTIONS)
             Route::post('results/{sheet}/status',              [ResultController::class, 'transition'])->middleware('permission:results.view')->name('results.status');
+            // Report card designs: layout, colours, what shows, and who comments and signs
+            Route::get('academics/report-card-designs',                   [ReportCardDesignController::class, 'index'])->middleware('permission:reportcard.generate')->name('report-card-designs.index');
+            Route::post('academics/report-card-designs',                  [ReportCardDesignController::class, 'store'])->middleware('permission:settings.edit')->name('report-card-designs.store');
+            Route::post('academics/report-card-designs/{design}',         [ReportCardDesignController::class, 'update'])->middleware('permission:settings.edit')->name('report-card-designs.update');
+            Route::delete('academics/report-card-designs/{design}',       [ReportCardDesignController::class, 'destroy'])->middleware('permission:settings.edit')->name('report-card-designs.destroy');
+            Route::post('academics/report-card-designs/{design}/classes', [ReportCardDesignController::class, 'assignClasses'])->middleware('permission:settings.edit')->name('report-card-designs.classes');
+            Route::get('academics/report-card-designs/{design}/preview',  [ReportCardDesignController::class, 'preview'])->middleware('permission:reportcard.generate')->name('report-card-designs.preview');
+
+            // Report cards: comments, then the term and full-year PDFs (one student or the whole class)
+            Route::get('results/{sheet}/report-cards',           [ReportCardController::class, 'index'])->middleware('permission:reportcard.generate')->name('results.report-cards');
+            Route::get('results/{sheet}/report-cards/term',      [ReportCardController::class, 'term'])->middleware('permission:reportcard.generate')->name('results.report-cards.term');
+            Route::get('results/{sheet}/report-cards/session',   [ReportCardController::class, 'session'])->middleware('permission:reportcard.generate')->name('results.report-cards.session');
+            // Who may write each comment is set on the signer (teachers or heads); the controller checks it
+            Route::post('results/{sheet}/comments',              [ReportCardController::class, 'saveComments'])->middleware('permission:results.view')->name('results.comments');
             Route::redirect('grade-scales', '/school/academics/assessment')->middleware('permission:exams.view')->name('grade-scales.index');
 
             // Timetable
@@ -416,6 +440,8 @@ Route::middleware('auth')->group(function () {
         Route::get('timetable',     [StudentPortalController::class, 'timetable'])->name('timetable');
         Route::get('attendance',    [StudentPortalController::class, 'attendance'])->name('attendance');
         Route::get('results',       [StudentPortalController::class, 'results'])->name('results');
+        Route::get('report-cards/{sheet}',         [ReportCardPortalController::class, 'studentTerm'])->whereNumber('sheet')->name('report-cards.term');
+        Route::get('report-cards/{sheet}/session', [ReportCardPortalController::class, 'studentSession'])->whereNumber('sheet')->name('report-cards.session');
         Route::get('homework',      [StudentPortalController::class, 'homework'])->name('homework');
         Route::get('fees',          [StudentPortalController::class, 'fees'])->name('fees');
         Route::get('announcements', [StudentPortalController::class, 'announcements'])->name('announcements');
@@ -425,6 +451,8 @@ Route::middleware('auth')->group(function () {
         Route::get('dashboard',     [ParentPortalController::class, 'dashboard'])->name('dashboard');
         Route::get('attendance',    [ParentPortalController::class, 'attendance'])->name('attendance');
         Route::get('results',       [ParentPortalController::class, 'results'])->name('results');
+        Route::get('report-cards/{student}/{sheet}',         [ReportCardPortalController::class, 'parentTerm'])->whereNumber(['student', 'sheet'])->name('report-cards.term');
+        Route::get('report-cards/{student}/{sheet}/session', [ReportCardPortalController::class, 'parentSession'])->whereNumber(['student', 'sheet'])->name('report-cards.session');
         Route::get('fees',          [ParentPortalController::class, 'fees'])->name('fees');
         Route::get('announcements', [ParentPortalController::class, 'announcements'])->name('announcements');
     });

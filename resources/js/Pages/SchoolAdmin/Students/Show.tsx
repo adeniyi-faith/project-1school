@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Pencil, FileUp, Trash2, FileText, User, GraduationCap, Users } from 'lucide-react';
+import { ArrowLeft, Pencil, FileUp, Trash2, FileText, User, GraduationCap, Users, Camera } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import type { ClassHistoryLine, PageProps, Student } from '@/Types';
 
-interface Props extends PageProps { student: Student; classHistory: ClassHistoryLine[] }
+interface Props extends PageProps { student: Student; classHistory: ClassHistoryLine[]; canEdit: boolean }
 
 const MOVE_LABELS: Record<ClassHistoryLine['outcome'], string> = { promoted: 'Moved up', repeated: 'Repeated', graduated: 'Graduated' };
 
@@ -30,7 +30,7 @@ const docSchema = z.object({
 type DocForm = z.infer<typeof docSchema>;
 
 export default function ShowStudent() {
-    const { student, classHistory } = usePage<Props>().props;
+    const { student, classHistory, canEdit } = usePage<Props>().props;
     const [tab, setTab]       = useState<'personal' | 'guardian' | 'documents' | 'history'>('personal');
     const [docOpen, setDocOpen] = useState(false);
 
@@ -66,12 +66,20 @@ export default function ShowStudent() {
                 <Button variant="ghost" size="icon" asChild className="-ml-2 shrink-0">
                     <Link href="/school/students" aria-label="Back to students"><ArrowLeft className="w-4 h-4" /></Link>
                 </Button>
-                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/40">
+                <label className={`group relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/40 ${canEdit ? 'cursor-pointer' : ''}`}
+                    title={canEdit ? 'Change photo (JPG or PNG, up to 2 MB)' : undefined}>
                     {student.photo_url
                         ? <img src={student.photo_url} className="size-12 object-cover" alt="" />
                         : student.first_name[0].toUpperCase()
                     }
-                </div>
+                    {canEdit && (
+                        <>
+                            <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"><Camera className="size-4 text-white" /></span>
+                            <input type="file" accept="image/png,image/jpeg" className="sr-only"
+                                onChange={e => { const f = e.target.files?.[0]; if (f) router.post(`/school/students/${student.id}/photo`, { photo: f }, { forceFormData: true, preserveScroll: true }); }} />
+                        </>
+                    )}
+                </label>
                 <div className="min-w-0 flex-1">
                     <h1 className="text-xl font-bold leading-tight text-slate-900 dark:text-white">{student.full_name}</h1>
                     <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
