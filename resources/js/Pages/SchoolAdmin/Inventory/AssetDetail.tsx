@@ -74,8 +74,8 @@ export default function AssetDetail({ asset }: { asset: Asset }) {
                             { label: 'Asset Code',    value: asset.asset_code },
                             { label: 'Category',      value: asset.category ?? '—' },
                             { label: 'Purchase Date', value: asset.purchase_date ? new Date(asset.purchase_date).toLocaleDateString() : '—' },
-                            { label: 'Purchase Price',value: `৳${Number(asset.purchase_price).toLocaleString()}` },
-                            { label: 'Current Value', value: `৳${Number(asset.current_value).toLocaleString()}` },
+                            { label: 'Purchase Price',value: `₦${Number(asset.purchase_price).toLocaleString()}` },
+                            { label: 'Current Value', value: `₦${Number(asset.current_value).toLocaleString()}` },
                             { label: 'Depreciation',  value: `${asset.depreciation_rate}% / yr (${asset.depreciation_method.replace('_', ' ')})` },
                             { label: 'Location',      value: asset.location ?? '—' },
                             { label: 'Assigned To',   value: asset.assigned_to ?? '—' },
@@ -118,7 +118,7 @@ export default function AssetDetail({ asset }: { asset: Asset }) {
                                         <TableCell className="text-sm text-slate-500">{new Date(log.date).toLocaleDateString()}</TableCell>
                                         <TableCell className="text-sm text-slate-700 dark:text-slate-300">{log.description}</TableCell>
                                         <TableCell className="text-sm text-slate-500">{log.vendor ?? '—'}</TableCell>
-                                        <TableCell className="text-right text-sm font-medium">৳{Number(log.cost).toLocaleString()}</TableCell>
+                                        <TableCell className="text-right text-sm font-medium">₦{Number(log.cost).toLocaleString()}</TableCell>
                                         <TableCell className="text-sm text-slate-500">
                                             {log.next_maintenance_date ? new Date(log.next_maintenance_date).toLocaleDateString() : '—'}
                                         </TableCell>
@@ -144,7 +144,7 @@ export default function AssetDetail({ asset }: { asset: Asset }) {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
-                                <Label>Cost (৳)</Label>
+                                <Label>Cost (₦)</Label>
                                 <Input type="number" min="0" value={form.cost} onChange={e => setForm(p => ({ ...p, cost: e.target.value }))} />
                             </div>
                             <div className="space-y-1.5">

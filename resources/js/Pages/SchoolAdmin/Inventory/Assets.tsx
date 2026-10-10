@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Pencil, Trash2, Eye, DollarSign, CheckCircle2, Wrench } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, Banknote, CheckCircle2, Wrench } from 'lucide-react';
 import type { PageProps, PaginatedResponse } from '@/Types';
 
 interface Asset {
@@ -101,7 +101,7 @@ export default function Assets({ assets, categories, filters, stats }: Props) {
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {[
-                        { label: 'Total Value', value: `৳${stats.total_value.toLocaleString()}`, color: 'text-indigo-600', icon: DollarSign },
+                        { label: 'Total Value', value: `₦${stats.total_value.toLocaleString()}`, color: 'text-indigo-600', icon: Banknote },
                         { label: 'Active', value: stats.active, color: 'text-green-600', icon: CheckCircle2 },
                         { label: 'In Maintenance', value: stats.maintenance, color: 'text-amber-600', icon: Wrench },
                         { label: 'Disposed', value: stats.disposed, color: 'text-slate-500', icon: Trash2 },
@@ -163,8 +163,8 @@ export default function Assets({ assets, categories, filters, stats }: Props) {
                                     </TableCell>
                                     <TableCell className="text-sm text-slate-500">{a.category ?? '—'}</TableCell>
                                     <TableCell className="text-sm text-slate-500">{a.location ?? '—'}</TableCell>
-                                    <TableCell className="text-right text-sm text-slate-500">৳{Number(a.purchase_price).toLocaleString()}</TableCell>
-                                    <TableCell className="text-right font-semibold text-sm text-slate-900 dark:text-white">৳{Number(a.current_value).toLocaleString()}</TableCell>
+                                    <TableCell className="text-right text-sm text-slate-500">₦{Number(a.purchase_price).toLocaleString()}</TableCell>
+                                    <TableCell className="text-right font-semibold text-sm text-slate-900 dark:text-white">₦{Number(a.current_value).toLocaleString()}</TableCell>
                                     <TableCell>
                                         <Badge className={`border-0 text-xs capitalize ${STATUS_STYLE[a.status] ?? ''}`}>{a.status}</Badge>
                                     </TableCell>
@@ -207,12 +207,12 @@ export default function Assets({ assets, categories, filters, stats }: Props) {
                                 <Input type="date" value={form.purchase_date} onChange={e => setForm(p => ({ ...p, purchase_date: e.target.value }))} />
                             </div>
                             <div className="space-y-1.5">
-                                <Label>Purchase Price (৳) <span className="text-red-500">*</span></Label>
+                                <Label>Purchase Price (₦) <span className="text-red-500">*</span></Label>
                                 <Input type="number" min="0" value={form.purchase_price} onChange={e => setForm(p => ({ ...p, purchase_price: e.target.value }))} />
                             </div>
                             {editing && (
                                 <div className="space-y-1.5">
-                                    <Label>Current Value (৳)</Label>
+                                    <Label>Current Value (₦)</Label>
                                     <Input type="number" min="0" value={form.current_value} onChange={e => setForm(p => ({ ...p, current_value: e.target.value }))} />
                                 </div>
                             )}

@@ -11,7 +11,7 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
@@ -58,83 +58,166 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * SchoolRuns design tokens.
+ * Pages across the app use Tailwind's slate and indigo utilities directly, so the two scales are
+ * redefined here. Every existing page picks up the new neutrals (ink navy) and the brand colour
+ * (cobalt on desktop, purple on phones) without per-page edits.
+ */
+@theme {
+    --color-slate-50:  oklch(0.977 0.004 258);
+    --color-slate-100: oklch(0.955 0.007 258);
+    --color-slate-200: oklch(0.915 0.011 258);
+    --color-slate-300: oklch(0.845 0.016 258);
+    --color-slate-400: oklch(0.69 0.024 260);
+    --color-slate-500: oklch(0.555 0.03 261);
+    --color-slate-600: oklch(0.455 0.036 262);
+    --color-slate-700: oklch(0.375 0.04 262);
+    --color-slate-800: oklch(0.275 0.045 262);
+    --color-slate-900: oklch(0.215 0.05 262);
+    --color-slate-950: oklch(0.165 0.045 263);
+
+    --color-indigo-50:  oklch(0.975 0.012 262);
+    --color-indigo-100: oklch(0.945 0.028 262);
+    --color-indigo-200: oklch(0.895 0.055 262);
+    --color-indigo-300: oklch(0.815 0.1 262);
+    --color-indigo-400: oklch(0.7 0.155 262);
+    --color-indigo-500: oklch(0.595 0.195 263);
+    --color-indigo-600: oklch(0.515 0.21 264);
+    --color-indigo-700: oklch(0.45 0.195 265);
+    --color-indigo-800: oklch(0.38 0.155 265);
+    --color-indigo-900: oklch(0.31 0.115 265);
+    --color-indigo-950: oklch(0.225 0.075 265);
+
+    --shadow-xs: 0 1px 1px 0 oklch(0.2 0.05 262 / 0.04);
+    --shadow-sm: 0 1px 2px 0 oklch(0.2 0.05 262 / 0.05), 0 1px 1px 0 oklch(0.2 0.05 262 / 0.03);
+    --shadow-md: 0 4px 12px -2px oklch(0.2 0.05 262 / 0.08), 0 2px 4px -2px oklch(0.2 0.05 262 / 0.05);
+    --shadow-lg: 0 14px 30px -10px oklch(0.2 0.05 262 / 0.16), 0 4px 8px -4px oklch(0.2 0.05 262 / 0.06);
+    --shadow-xl: 0 24px 50px -16px oklch(0.2 0.05 262 / 0.24);
+}
+
+/* Phones get the purple app look from the design preview; the scale keeps the same lightness steps. */
+@media (max-width: 767px) {
+    :root {
+        --color-indigo-50:  oklch(0.975 0.014 295);
+        --color-indigo-100: oklch(0.945 0.03 295);
+        --color-indigo-200: oklch(0.895 0.06 295);
+        --color-indigo-300: oklch(0.815 0.11 295);
+        --color-indigo-400: oklch(0.7 0.165 295);
+        --color-indigo-500: oklch(0.6 0.2 293);
+        --color-indigo-600: oklch(0.51 0.215 292);
+        --color-indigo-700: oklch(0.445 0.2 292);
+        --color-indigo-800: oklch(0.375 0.16 292);
+        --color-indigo-900: oklch(0.31 0.12 292);
+        --color-indigo-950: oklch(0.225 0.08 292);
+        --brand: var(--color-indigo-600);
+    }
+}
+
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
+    --brand: var(--color-indigo-600);
+    --background: var(--color-slate-50);
+    --foreground: var(--color-slate-900);
     --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
+    --card-foreground: var(--color-slate-900);
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --popover-foreground: var(--color-slate-900);
+    --primary: var(--color-indigo-600);
+    --primary-foreground: oklch(0.99 0.004 262);
+    --secondary: var(--color-slate-100);
+    --secondary-foreground: var(--color-slate-800);
+    --muted: var(--color-slate-100);
+    --muted-foreground: var(--color-slate-500);
+    --accent: var(--color-indigo-50);
+    --accent-foreground: var(--color-indigo-700);
+    --destructive: oklch(0.55 0.21 25);
+    --border: var(--color-slate-200);
+    --input: var(--color-slate-300);
+    --ring: var(--color-indigo-400);
+    --chart-1: var(--color-indigo-600);
+    --chart-2: var(--color-indigo-300);
+    --chart-3: oklch(0.6 0.11 175);
+    --chart-4: oklch(0.72 0.14 75);
+    --chart-5: var(--color-slate-400);
+    --radius: 0.5rem;
+    --sidebar: oklch(0.205 0.055 263);
+    --sidebar-foreground: oklch(0.8 0.025 262);
+    --sidebar-primary: var(--color-indigo-500);
+    --sidebar-primary-foreground: oklch(0.99 0 0);
+    --sidebar-accent: oklch(1 0 0 / 7%);
+    --sidebar-accent-foreground: oklch(1 0 0);
+    --sidebar-border: oklch(1 0 0 / 8%);
+    --sidebar-ring: var(--color-indigo-400);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --brand: var(--color-indigo-400);
+    --background: var(--color-slate-950);
+    --foreground: oklch(0.96 0.006 262);
+    --card: var(--color-slate-900);
+    --card-foreground: oklch(0.96 0.006 262);
+    --popover: var(--color-slate-900);
+    --popover-foreground: oklch(0.96 0.006 262);
+    --primary: var(--color-indigo-500);
+    --primary-foreground: oklch(0.99 0.004 262);
+    --secondary: var(--color-slate-800);
+    --secondary-foreground: oklch(0.96 0.006 262);
+    --muted: var(--color-slate-800);
+    --muted-foreground: var(--color-slate-400);
+    --accent: oklch(0.3 0.08 264);
+    --accent-foreground: var(--color-indigo-200);
+    --destructive: oklch(0.7 0.18 22);
+    --border: oklch(1 0 0 / 9%);
+    --input: oklch(1 0 0 / 14%);
+    --ring: var(--color-indigo-400);
+    --chart-1: var(--color-indigo-400);
+    --chart-2: var(--color-indigo-700);
+    --chart-3: oklch(0.75 0.12 175);
+    --chart-4: oklch(0.8 0.14 80);
+    --chart-5: var(--color-slate-500);
+    --sidebar: oklch(0.15 0.045 263);
+    --sidebar-foreground: oklch(0.78 0.025 262);
+    --sidebar-primary: var(--color-indigo-400);
+    --sidebar-primary-foreground: oklch(0.15 0.04 263);
+    --sidebar-accent: oklch(1 0 0 / 7%);
+    --sidebar-accent-foreground: oklch(1 0 0);
+    --sidebar-border: oklch(1 0 0 / 8%);
+    --sidebar-ring: var(--color-indigo-400);
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+    * {
+        @apply border-border outline-ring/50;
     }
-  body {
-    @apply bg-background text-foreground;
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings: 'cv11', 'ss01';
+        text-rendering: optimizeLegibility;
     }
-  html {
-    @apply font-sans;
+    html {
+        @apply font-sans;
     }
+    h1, h2, h3 {
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+    }
+    /* Money and counts line up in columns. */
+    table, .tabular {
+        font-variant-numeric: tabular-nums;
+    }
+    ::selection {
+        background: color-mix(in oklch, var(--color-indigo-500) 25%, transparent);
+    }
+    @media (prefers-reduced-motion: reduce) {
+        *, ::before, ::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
+/* Thin, quiet scrollbars inside the app shell. */
+.scroll-quiet {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, currentColor 20%, transparent) transparent;
 }

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Download, Filter, TrendingUp, AlertCircle, DollarSign } from 'lucide-react';
+import { Download, Filter, TrendingUp, AlertCircle, Banknote } from 'lucide-react';
 
 interface Payment {
     id: number; amount_due: number; amount_paid: number; status: string; payment_date?: string;
@@ -102,7 +102,7 @@ export default function FinanceReport({ collected, outstanding, payroll, dailyCh
                                     <p className="text-sm text-slate-500">Payroll (This Month)</p>
                                     <p className="text-2xl font-bold mt-1">${fmt(payroll)}</p>
                                 </div>
-                                <div className="p-3 rounded-xl bg-blue-500"><DollarSign className="w-6 h-6 text-white" /></div>
+                                <div className="p-3 rounded-xl bg-blue-500"><Banknote className="w-6 h-6 text-white" /></div>
                             </div>
                         </CardContent>
                     </Card>
@@ -124,7 +124,7 @@ export default function FinanceReport({ collected, outstanding, payroll, dailyCh
                                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                     <XAxis dataKey="day" tick={{ fontSize: 11 }} />
                                     <YAxis tick={{ fontSize: 11 }} />
-                                    <Tooltip formatter={(v: number) => [`$${fmt(v)}`, 'Collected']} />
+                                    <Tooltip formatter={(v: number) => [`₦${fmt(v)}`, 'Collected']} />
                                     <Area type="monotone" dataKey="amount" stroke="#6366f1" fill="url(#colorFee)" strokeWidth={2} isAnimationActive={false} />
                                 </AreaChart>
                             </ResponsiveContainer>

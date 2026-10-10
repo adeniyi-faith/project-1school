@@ -189,7 +189,7 @@ export default function HostelAllocations({ allocations, hostels, filters }: Pro
                                     <SelectContent>
                                         {rooms.map(r => (
                                             <SelectItem key={r.id} value={String(r.id)}>
-                                                Room {r.room_no} {r.floor ? `(${r.floor})` : ''} — {r.type}{r.ac ? ' AC' : ''} · {r.capacity - r.occupied} beds left · ৳{Number(r.monthly_fee).toLocaleString()}/mo
+                                                Room {r.room_no} {r.floor ? `(${r.floor})` : ''} — {r.type}{r.ac ? ' AC' : ''} · {r.capacity - r.occupied} beds left · ₦{Number(r.monthly_fee).toLocaleString()}/mo
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

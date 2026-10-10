@@ -244,7 +244,7 @@ export default function SubscriptionsIndex({ subscriptions, schools, packages, c
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label>Payment Method</Label>
-                                <Input value={form.data.payment_method} onChange={e => form.setData('payment_method', e.target.value)} placeholder="cash, card, bkash..." />
+                                <Input value={form.data.payment_method} onChange={e => form.setData('payment_method', e.target.value)} placeholder="cash, card, bank transfer..." />
                             </div>
                             <div>
                                 <Label>Coupon</Label>
@@ -252,7 +252,7 @@ export default function SubscriptionsIndex({ subscriptions, schools, packages, c
                                     <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="_none">None</SelectItem>
-                                        {coupons.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.code} ({c.type === 'percent' ? `${c.value}%` : `$${c.value}`})</SelectItem>)}
+                                        {coupons.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.code} ({c.type === 'percent' ? `${c.value}%` : `₦${c.value}`})</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>

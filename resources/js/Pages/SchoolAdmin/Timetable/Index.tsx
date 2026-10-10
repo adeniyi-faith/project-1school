@@ -10,8 +10,9 @@ import {
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
-import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState, PageHeader, Panel } from '@/components/app/kit';
 import { Plus, Trash2, CalendarDays, User } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/react';
 import type { SchoolClass, Section, Subject, Staff, Timetable, TimeSlot, DayOfWeek, PageProps } from '@/Types';
 
@@ -27,20 +28,25 @@ interface Props {
     filters: { class_id?: string; section_id?: string };
 }
 
+const DAY_FULL: Record<string, string> = {
+    monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday',
+    thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday',
+};
+
 const DAY_LABELS: Record<string, string> = {
     monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed',
     thursday: 'Thu', friday: 'Fri', saturday: 'Sat', sunday: 'Sun',
 };
 
 const SUBJECT_COLORS = [
-    'bg-indigo-100 text-indigo-700 border-indigo-200',
-    'bg-emerald-100 text-emerald-700 border-emerald-200',
-    'bg-amber-100 text-amber-700 border-amber-200',
-    'bg-rose-100 text-rose-700 border-rose-200',
-    'bg-cyan-100 text-cyan-700 border-cyan-200',
-    'bg-violet-100 text-violet-700 border-violet-200',
-    'bg-orange-100 text-orange-700 border-orange-200',
-    'bg-teal-100 text-teal-700 border-teal-200',
+    'bg-indigo-50 text-indigo-800 ring-indigo-200/80 dark:bg-indigo-500/15 dark:text-indigo-200 dark:ring-indigo-400/20',
+    'bg-emerald-50 text-emerald-800 ring-emerald-200/80 dark:bg-emerald-500/15 dark:text-emerald-200 dark:ring-emerald-400/20',
+    'bg-amber-50 text-amber-900 ring-amber-200/80 dark:bg-amber-500/15 dark:text-amber-200 dark:ring-amber-400/20',
+    'bg-rose-50 text-rose-800 ring-rose-200/80 dark:bg-rose-500/15 dark:text-rose-200 dark:ring-rose-400/20',
+    'bg-cyan-50 text-cyan-800 ring-cyan-200/80 dark:bg-cyan-500/15 dark:text-cyan-200 dark:ring-cyan-400/20',
+    'bg-violet-50 text-violet-800 ring-violet-200/80 dark:bg-violet-500/15 dark:text-violet-200 dark:ring-violet-400/20',
+    'bg-orange-50 text-orange-900 ring-orange-200/80 dark:bg-orange-500/15 dark:text-orange-200 dark:ring-orange-400/20',
+    'bg-teal-50 text-teal-800 ring-teal-200/80 dark:bg-teal-500/15 dark:text-teal-200 dark:ring-teal-400/20',
 ];
 
 function fmt12(time: string) {
@@ -54,6 +60,7 @@ export default function TimetableIndex({ classes, sections, subjects, teachers, 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState<{ day: DayOfWeek; start: string; end: string } | null>(null);
     const [existingPeriod, setExistingPeriod] = useState<Timetable | null>(null);
+    const [mobileDay, setMobileDay] = useState<DayOfWeek | null>(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         class_id:    filters.class_id ?? '',
@@ -115,138 +122,168 @@ export default function TimetableIndex({ classes, sections, subjects, teachers, 
         return dayGrid[slot.start] ?? dayGrid[slot.start + ':00'];
     }
 
+    const activeDay: DayOfWeek = mobileDay ?? days[0];
+
+    const PeriodCell = ({ day, slot, period, compact }: { day: DayOfWeek; slot: TimeSlot; period?: Timetable; compact?: boolean }) => {
+        if (!period) {
+            return (
+                <button
+                    type="button"
+                    onClick={() => openSlot(day, slot)}
+                    aria-label={`Add a period on ${DAY_FULL[day]} at ${fmt12(slot.start)}`}
+                    className={cn(
+                        'flex w-full items-center justify-center rounded-lg border border-dashed border-slate-200 text-slate-300 outline-none transition-colors hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-400 dark:border-white/10 dark:text-slate-600 dark:hover:bg-indigo-500/10',
+                        compact ? 'h-12' : 'h-[3.75rem]',
+                    )}
+                >
+                    <Plus className="size-4" />
+                </button>
+            );
+        }
+        const color = subjectColorMap[period.subject_id] ?? SUBJECT_COLORS[0];
+        return (
+            <div className={cn('group relative rounded-lg p-2.5 ring-1 ring-inset transition-shadow hover:shadow-sm', color)}>
+                <button type="button" onClick={() => openSlot(day, slot)} className="block w-full text-left outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-indigo-400">
+                    <span className="block truncate text-[13px] font-semibold leading-tight">{period.subject?.name ?? '—'}</span>
+                    {period.teacher && <span className="mt-0.5 block truncate text-[11px] opacity-75">{period.teacher.first_name} {period.teacher.last_name}</span>}
+                    {period.room && <span className="block truncate text-[11px] opacity-60">Room {period.room}</span>}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => handleDelete(period)}
+                    aria-label={`Remove ${period.subject?.name ?? 'period'}`}
+                    className="absolute right-1.5 top-1.5 z-10 rounded p-1 opacity-0 outline-none transition-opacity hover:text-red-600 focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-60"
+                >
+                    <Trash2 className="size-3" />
+                </button>
+            </div>
+        );
+    };
+
     return (
-        <AppLayout title="Timetable">
+        <AppLayout breadcrumbs={[{ label: 'Academic' }, { label: 'Timetable' }]}>
             <div className="space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Timetable</h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Weekly class schedule builder</p>
-                    </div>
-                    <Link href="/school/timetable/teacher">
-                        <Button variant="outline" className="inline-flex items-center gap-2">
-                            <User className="w-4 h-4" /> Teacher Schedule
-                        </Button>
-                    </Link>
-                </div>
+                <PageHeader
+                    title="Timetable"
+                    description="Build the weekly schedule. Select an empty slot to add a period."
+                    actions={
+                        <Link href="/school/timetable/teacher" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-xs transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+                            <User className="size-4" /> Teacher schedule
+                        </Link>
+                    }
+                />
 
                 {flash?.success && (
-                    <div className="rounded-md bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-300">
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
                         {flash.success}
                     </div>
                 )}
 
-                {/* Filters */}
-                <Card className="border-slate-200 dark:border-slate-800">
-                    <CardContent className="p-4">
-                        <div className="flex flex-wrap gap-3">
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Class</label>
-                                <Select value={filters.class_id ?? ''} onValueChange={v => applyFilter('class_id', v)}>
-                                    <SelectTrigger className="w-40"><SelectValue placeholder="Select class" /></SelectTrigger>
-                                    <SelectContent>
-                                        {classes.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            {filteredSections.length > 0 && (
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Section</label>
-                                    <Select value={filters.section_id ?? ''} onValueChange={v => applyFilter('section_id', v)}>
-                                        <SelectTrigger className="w-36"><SelectValue placeholder="All sections" /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="">All Sections</SelectItem>
-                                            {filteredSections.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
+                <div className="flex flex-wrap gap-3">
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-slate-500">Class</label>
+                        <Select value={filters.class_id ?? ''} onValueChange={v => applyFilter('class_id', v)}>
+                            <SelectTrigger className="h-10 w-44"><SelectValue placeholder="Select class" /></SelectTrigger>
+                            <SelectContent>
+                                {classes.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {filteredSections.length > 0 && (
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-slate-500">Section</label>
+                            <Select value={filters.section_id ?? ''} onValueChange={v => applyFilter('section_id', v)}>
+                                <SelectTrigger className="h-10 w-40"><SelectValue placeholder="All sections" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="">All sections</SelectItem>
+                                    {filteredSections.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                         </div>
-                    </CardContent>
-                </Card>
+                    )}
+                </div>
 
-                {/* Grid */}
                 {!filters.class_id ? (
-                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center justify-center py-24">
-                        <div className="text-center">
-                            <CalendarDays className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                            <p className="text-slate-500">Select a class to view or build its timetable</p>
-                        </div>
-                    </div>
+                    <Panel>
+                        <EmptyState icon={CalendarDays} title="Pick a class" text="Choose a class above to see or build its weekly timetable." />
+                    </Panel>
                 ) : (
-                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-x-auto">
-                        <table className="w-full min-w-[700px]">
-                            <thead>
-                                <tr className="bg-slate-50 dark:bg-slate-900">
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide w-28 border-b border-slate-200 dark:border-slate-800">
-                                        Time
-                                    </th>
-                                    {days.map(day => (
-                                        <th key={day} className="px-2 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-l border-slate-200 dark:border-slate-800">
-                                            {DAY_LABELS[day]}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {defaultSlots.map((slot, slotIdx) => (
-                                    <tr key={slot.start} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0">
-                                        <td className="px-4 py-2 text-xs text-slate-400 whitespace-nowrap">
-                                            <span className="font-medium text-slate-600 dark:text-slate-300">{fmt12(slot.start)}</span>
-                                            <br />
-                                            <span className="text-[11px]">{fmt12(slot.end)}</span>
-                                        </td>
-                                        {days.map(day => {
-                                            const period = getPeriod(day, slot);
-                                            const colorClass = period ? (subjectColorMap[period.subject_id] ?? SUBJECT_COLORS[0]) : '';
-
-                                            return (
-                                                <td key={day} className="px-1 py-1 border-l border-slate-100 dark:border-slate-800/50 align-top">
-                                                    {period ? (
-                                                        <div
-                                                            className={`rounded-lg border p-2 cursor-pointer hover:opacity-80 transition-opacity group relative ${colorClass}`}
-                                                            onClick={() => openSlot(day, slot)}
-                                                        >
-                                                            <p className="text-xs font-semibold truncate">{period.subject?.name ?? '—'}</p>
-                                                            {period.teacher && (
-                                                                <p className="text-[10px] opacity-70 truncate">{period.teacher.first_name} {period.teacher.last_name}</p>
-                                                            )}
-                                                            {period.room && (
-                                                                <p className="text-[10px] opacity-60 truncate">Room {period.room}</p>
-                                                            )}
-                                                            <button
-                                                                type="button"
-                                                                onClick={e => { e.stopPropagation(); handleDelete(period); }}
-                                                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-current hover:text-red-600 transition-all"
-                                                            >
-                                                                <Trash2 className="w-3 h-3" />
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => openSlot(day, slot)}
-                                                            className="w-full h-14 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-300 dark:text-slate-700 hover:border-indigo-300 hover:text-indigo-400 transition-colors"
-                                                        >
-                                                            <Plus className="w-4 h-4" />
-                                                        </button>
-                                                    )}
+                    <>
+                        {/* Desktop grid */}
+                        <Panel flush className="hidden overflow-hidden md:block" bodyClassName="pt-0">
+                            <div className="overflow-x-auto scroll-quiet">
+                                <table className="w-full min-w-[720px] border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th className="w-28 border-b border-slate-200 bg-slate-50/70 px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.03]">Time</th>
+                                            {days.map(day => (
+                                                <th key={day} className="border-b border-l border-slate-200 bg-slate-50/70 px-2 py-3 text-center text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.03]">
+                                                    {DAY_LABELS[day]}
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {defaultSlots.map(slot => (
+                                            <tr key={slot.start} className="border-b border-slate-100 last:border-0 dark:border-white/[0.05]">
+                                                <td className="whitespace-nowrap px-4 py-2 align-top text-xs text-slate-400">
+                                                    <span className="font-medium text-slate-700 dark:text-slate-200">{fmt12(slot.start)}</span>
+                                                    <br />
+                                                    <span className="text-[11px]">{fmt12(slot.end)}</span>
                                                 </td>
-                                            );
-                                        })}
-                                    </tr>
+                                                {days.map(day => (
+                                                    <td key={day} className="border-l border-slate-100 p-1 align-top dark:border-white/[0.05]">
+                                                        <PeriodCell day={day} slot={slot} period={getPeriod(day, slot)} />
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </Panel>
+
+                        {/* Phone: one day at a time */}
+                        <div className="space-y-3 md:hidden">
+                            <div role="tablist" aria-label="Day" className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}>
+                                {days.map(day => (
+                                    <button
+                                        key={day}
+                                        role="tab"
+                                        aria-selected={activeDay === day}
+                                        onClick={() => setMobileDay(day)}
+                                        className={cn(
+                                            'rounded-xl border py-2.5 text-center text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400',
+                                            activeDay === day
+                                                ? 'border-indigo-600 bg-indigo-600 text-white'
+                                                : 'border-slate-200 bg-white text-slate-600 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300',
+                                        )}
+                                    >
+                                        {DAY_LABELS[day]}
+                                    </button>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            </div>
+                            <Panel title={DAY_FULL[activeDay]} flush bodyClassName="divide-y divide-slate-100 dark:divide-white/[0.06]">
+                                {defaultSlots.map(slot => (
+                                    <div key={slot.start} className="flex gap-3 px-4 py-3">
+                                        <div className="w-14 shrink-0 pt-1 text-xs text-slate-400">
+                                            <span className="block font-medium text-slate-700 dark:text-slate-200">{fmt12(slot.start)}</span>
+                                            {fmt12(slot.end)}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <PeriodCell day={activeDay} slot={slot} period={getPeriod(activeDay, slot)} compact />
+                                        </div>
+                                    </div>
+                                ))}
+                            </Panel>
+                        </div>
+                    </>
                 )}
 
-                {/* Subject color legend */}
                 {subjects.length > 0 && filters.class_id && (
                     <div className="flex flex-wrap gap-2">
                         {subjects.map((s, i) => (
-                            <span key={s.id} className={`px-2.5 py-1 rounded-full text-xs font-medium border ${SUBJECT_COLORS[i % SUBJECT_COLORS.length]}`}>
+                            <span key={s.id} className={cn('rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset', SUBJECT_COLORS[i % SUBJECT_COLORS.length])}>
                                 {s.name}
                             </span>
                         ))}
