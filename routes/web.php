@@ -40,6 +40,7 @@ use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsCont
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\SchoolAdmin\AdmissionInquiryController;
 use App\Http\Controllers\SchoolAdmin\AdmissionPipelineController;
+use App\Http\Controllers\SchoolAdmin\PromotionController;
 use App\Http\Controllers\SchoolAdmin\VisitorLogController;
 use App\Http\Controllers\PublicAdmissionController;
 use App\Http\Controllers\StudentPortalController;
@@ -123,6 +124,11 @@ Route::middleware('auth')->group(function () {
             Route::post('students/{student}/documents',        [StudentController::class, 'uploadDocument'])->middleware('permission:students.edit')->name('students.documents.upload');
             Route::delete('students/documents/{document}',     [StudentController::class, 'deleteDocument'])->middleware('permission:students.edit')->name('students.documents.delete');
             Route::get('students/documents/{document}/download', [StudentController::class, 'downloadDocument'])->middleware('permission:students.view')->name('students.documents.download');
+
+            // ── Year-end promotion: move a class up, keep some back, graduate the top class ──
+            Route::get('promotions',                        [PromotionController::class, 'index'])->middleware('permission:students.promote')->name('promotions.index');
+            Route::post('promotions',                       [PromotionController::class, 'store'])->middleware('permission:students.promote')->name('promotions.store');
+            Route::post('promotions/{promotionBatch}/undo', [PromotionController::class, 'undo'])->middleware('permission:students.promote')->name('promotions.undo');
 
             // Exams
             Route::get('exams',                              [ExamController::class, 'index'])->middleware('permission:exams.view')->name('exams.index');

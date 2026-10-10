@@ -440,3 +440,47 @@ export interface AdmissionAssessment {
     remarks: string | null;
     recorded_by: string | null;
 }
+
+// ───────────── Year-end promotion ─────────────
+
+export type PromotionOutcome = 'promoted' | 'repeated' | 'graduated';
+
+/** A student waiting to be moved at the end of the year */
+export interface PromotionCandidate {
+    id: number;
+    name: string;
+    admission_no: string | null;
+    section_id: number | null;
+    section: string | null;
+    year_average: number | null;
+    terms_counted: number;
+    suggested: PromotionOutcome;
+}
+
+/** One "move this class up" action, shown in the history list */
+export interface PromotionBatchRow {
+    id: number;
+    year: string | null;
+    from: string | null;
+    to: string | null;
+    promoted: number;
+    repeated: number;
+    graduated: number;
+    by: string | null;
+    at: string | null;
+    undone: { by: string | null; at: string } | null;
+}
+
+/** One line of a student's class history */
+export interface ClassHistoryLine {
+    id: number;
+    year: string | null;
+    outcome: PromotionOutcome;
+    from: string | null;
+    to: string | null;
+    to_section: string | null;
+    year_average: number | null;
+    reason: string | null;
+    by: string | null;
+    at: string | null;
+}
