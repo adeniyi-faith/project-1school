@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home2/rainofbl/public_html/school.criticalinfo.com.ng/
+    - /bin/cp -R * $DEPLOYPATH
