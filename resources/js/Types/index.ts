@@ -495,6 +495,8 @@ export interface ReportCardStudent {
     average: number;
     position: number | null;
     class_size: number;
+    first_name: string;
+    gender: string | null;
     /** signer id → comment */
     remarks: Record<string, string>;
 }
@@ -525,4 +527,13 @@ export interface ReportCardDesignRow {
     options: Record<string, boolean>;
     has_stamp: boolean;
     signers: ReportCardSignerRow[];
+}
+
+/** A saved report card comment, used for students whose average is in its range */
+export interface CommentBankEntry {
+    id: number;
+    writer_permission: string;
+    min_average: number;
+    max_average: number;
+    comment: string;
 }

@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState, PageHeader, Panel } from '@/components/app/kit';
 import { ResultStatusPill } from '@/components/results/ResultStatus';
-import { ChevronRight, ClipboardCheck } from 'lucide-react';
+import { ChevronRight, ClipboardCheck, MessageSquareQuote } from 'lucide-react';
 import type { ResultStatus, TermOption } from '@/Types';
 
 interface SheetRow {
@@ -23,6 +23,11 @@ interface Props {
 }
 
 export default function ResultsIndex({ terms, termId, sheets }: Props) {
+    const headerActions = (
+        <Link href={termId ? `/school/results/comment-bank?term_id=${termId}` : '/school/results/comment-bank'} className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+            <MessageSquareQuote className="size-4" /> Comment bank
+        </Link>
+    );
     const termItems = terms.map(t => ({ value: String(t.id), label: t.is_current ? `${t.label} (current)` : t.label }));
 
     return (
@@ -31,7 +36,10 @@ export default function ResultsIndex({ terms, termId, sheets }: Props) {
                 <PageHeader
                     title="Term results"
                     description="Enter CA and exam scores for each class, then submit, approve and publish the results."
+                    actions={headerActions}
                 />
+                {/* The header hides its buttons on phones, so they are repeated here */}
+                <div className="md:hidden">{headerActions}</div>
 
                 {terms.length === 0 ? (
                     <Panel>
