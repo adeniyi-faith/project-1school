@@ -33,20 +33,24 @@ export function usePreview() {
             });
             const text = await res.text();
 
-            if (res.redirected && new URL(res.url).pathname.includes('login')) {
-                finish({ error: 'You have been signed out. Sign in again, then try the preview.' });
+            if (res.redirected) {
+                // sent somewhere else (signed out, or a read-only account): that page is not a preview
+                finish({ error: 'The preview was refused. If you are signed out, sign in again, then try again.' });
             } else if (res.status === 419) {
                 finish({ error: 'This page has been open too long. Reload it, then try the preview again.' });
             } else if (res.status === 403) {
                 finish({ error: 'You do not have permission to preview this.' });
             } else if (res.status === 413) {
                 finish({ error: 'The pictures are too big to send. Try smaller ones.' });
+            } else if (res.ok && text.includes('id="sheet"')) {
+                finish({ html: text });
             } else if (res.status === 422 && text.includes('<h2')) {
                 finish({ html: text }); // a plain page that says what to fix
             } else if (!res.ok) {
                 finish({ error: `The preview could not be made (error ${res.status}). Please tell support.` });
             } else {
-                finish({ html: text });
+                // a page that is not a preview must never be shown inside the frame
+                finish({ error: 'The server answered with something that is not a preview. Please tell support.' });
             }
         } catch (e) {
             finish({ error: (e as Error).name === 'AbortError' ? 'The preview took too long. Check your connection and try again.' : 'The preview could not be made. Check your connection and try again.' });
