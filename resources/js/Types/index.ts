@@ -336,3 +336,28 @@ export interface AssessmentPresets {
     assessment: { key: string; name: string; components: AssessmentComponent[] }[];
     grading: { key: string; name: string; bands: GradeBand[] }[];
 }
+
+// ───────────── Term results ─────────────
+
+export type ResultStatus = 'draft' | 'submitted' | 'approved' | 'published' | 'locked';
+export type ResultAction = 'submit' | 'approve' | 'return' | 'publish' | 'unpublish' | 'lock' | 'unlock';
+
+export interface BehaviourTrait {
+    id: number;
+    name: string;
+    domain: 'affective' | 'psychomotor';
+}
+
+/** A published term result as parents and students see it */
+export interface TermReport {
+    id: number;
+    term: string;
+    class: string | null;
+    average: number;
+    total_score: number;
+    position: number | null;
+    class_size: number;
+    class_average: number | null;
+    subjects: { subject: string | null; total: number; grade: string | null; remarks: string | null; position: number | null; average: number | null }[];
+    ratings: { name: string | null; domain: string | null; rating: number; label: string | null }[];
+}

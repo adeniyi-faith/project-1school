@@ -27,3 +27,11 @@ export function initials(name: string | null | undefined): string {
     if (!name) return '?';
     return name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 }
+
+/** 1 -> 1st, 2 -> 2nd, 3 -> 3rd, 11 -> 11th, 22 -> 22nd. For class positions. */
+export function ordinal(n: number | null | undefined): string {
+    if (n === null || n === undefined) return '—';
+    const rem100 = n % 100;
+    if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
+    return n + ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] ?? 'th');
+}

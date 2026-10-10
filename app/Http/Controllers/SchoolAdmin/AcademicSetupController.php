@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SchoolAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\AssessmentScheme;
+use App\Models\BehaviourTrait;
 use App\Models\GradeScale;
 use App\Models\GradingScheme;
 use App\Models\SchoolClass;
@@ -123,8 +124,41 @@ class AcademicSetupController extends Controller
                     'bands' => array_map(fn ($b) => ['grade' => $b[0], 'min_marks' => $b[1], 'max_marks' => $b[2], 'remarks' => $b[3], 'gpa' => $b[4]], $p['bands']),
                 ])->values(),
             ],
+            'traits' => BehaviourTrait::orderBy('domain')->orderBy('sort_order')->get(['id', 'name', 'domain']),
             'canEdit' => (bool) auth()->user()?->can('exams.edit'),
         ]);
+    }
+
+    // ───────────────────────── behaviour & skills ─────────────────────────
+
+    public function storeTrait(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name'   => 'required|string|max:60',
+            'domain' => 'required|in:' . implode(',', BehaviourTrait::DOMAINS),
+        ]);
+
+        BehaviourTrait::create($data + [
+            'school_id' => $this->getSchoolId(),
+            'sort_order' => (int) BehaviourTrait::where('domain', $data['domain'])->max('sort_order') + 1,
+        ]);
+
+        return back()->with('success', "{$data['name']} added.");
+    }
+
+    public function updateTrait(Request $request, BehaviourTrait $trait): RedirectResponse
+    {
+        $trait->update($request->validate(['name' => 'required|string|max:60']));
+
+        return back()->with('success', 'Renamed.');
+    }
+
+    public function destroyTrait(BehaviourTrait $trait): RedirectResponse
+    {
+        // Soft delete: ratings already given stay on past report cards
+        $trait->delete();
+
+        return back()->with('success', "{$trait->name} removed.");
     }
 
     public function storeAssessmentScheme(Request $request): RedirectResponse

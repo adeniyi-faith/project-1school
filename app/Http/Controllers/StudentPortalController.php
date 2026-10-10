@@ -10,6 +10,7 @@ use App\Models\Homework;
 use App\Models\Mark;
 use App\Models\Student;
 use App\Models\Timetable;
+use App\Services\TermResultService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -126,6 +127,7 @@ class StudentPortalController extends Controller
         /* ── Recent Exam Marks ── */
         $marks = Mark::where('school_id', $user->school_id)
             ->where('student_id', $student->id)
+            ->visibleToFamilies()
             ->with(['exam:id,name,type', 'subject:id,name'])
             ->orderByDesc('created_at')
             ->limit(8)
@@ -281,6 +283,7 @@ class StudentPortalController extends Controller
 
         $exams = Exam::where('school_id', $student->school_id)
             ->where('class_id', $student->class_id)
+            ->whereIn('status', ['published', 'completed'])
             ->with(['marks' => fn ($q) => $q->where('student_id', $student->id)->with('subject:id,name,full_marks,pass_marks')])
             ->orderByDesc('start_date')
             ->get()
@@ -303,6 +306,7 @@ class StudentPortalController extends Controller
             'linked'  => true,
             'student' => ['full_name' => $student->full_name, 'class' => $student->schoolClass?->name],
             'exams'   => $exams,
+            'reports' => app(TermResultService::class)->familyReports($student),
         ]);
     }
 

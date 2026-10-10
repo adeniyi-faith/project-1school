@@ -88,7 +88,11 @@ return new class extends Migration
 
         // Give every existing school its terms, a default score setup and a grade scale.
         // Grades a school already typed in are kept as its default scale.
-        DB::table('schools')->pluck('id')->each(fn ($id) => SchoolDefaults::apply((int) $id));
+        DB::table('schools')->pluck('id')->each(function ($id) {
+            SchoolDefaults::ensureTerms((int) $id);
+            SchoolDefaults::ensureAssessmentScheme((int) $id);
+            SchoolDefaults::ensureGradingScheme((int) $id);
+        });
     }
 
     public function down(): void
