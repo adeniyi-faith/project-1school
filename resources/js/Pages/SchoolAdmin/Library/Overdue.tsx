@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, AlertTriangle, DollarSign } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Banknote } from 'lucide-react';
 
 interface OverdueIssue {
     id: number; overdue_days: number; estimated_fine: number;
@@ -41,9 +41,9 @@ export default function OverdueBooks({ overdue, summary }: { overdue: OverdueIss
                     </Card>
                     <Card className="border-amber-200 dark:border-amber-900">
                         <CardContent className="p-4 flex items-center gap-3">
-                            <DollarSign className="w-5 h-5 text-amber-500" />
+                            <Banknote className="w-5 h-5 text-amber-500" />
                             <div>
-                                <p className="text-xl font-bold text-amber-600">৳{summary.total_fine_est?.toLocaleString()}</p>
+                                <p className="text-xl font-bold text-amber-600">₦{summary.total_fine_est?.toLocaleString()}</p>
                                 <p className="text-xs text-slate-500">Est. Fines</p>
                             </div>
                         </CardContent>
@@ -88,7 +88,7 @@ export default function OverdueBooks({ overdue, summary }: { overdue: OverdueIss
                                         <TableCell className="text-center">
                                             <Badge className="bg-red-100 text-red-700 border-0 font-bold">{iss.overdue_days} days</Badge>
                                         </TableCell>
-                                        <TableCell className="text-right font-semibold text-amber-600">৳{iss.estimated_fine?.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-semibold text-amber-600">₦{iss.estimated_fine?.toLocaleString()}</TableCell>
                                         <TableCell>
                                             <Link href="/school/library/issues">
                                                 <Button size="sm" variant="outline" className="text-xs h-7">Return</Button>

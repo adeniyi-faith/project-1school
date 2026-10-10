@@ -4,9 +4,8 @@ import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save } from 'lucide-react';
+import { EmptyState, PageHeader, Panel, PersonAvatar } from '@/components/app/kit';
+import { ArrowLeft, Save, Users } from 'lucide-react';
 import type { Subject, Section, PageProps } from '@/Types';
 
 interface Student { id: number; first_name: string; last_name: string | null; roll_no: string | null; section?: Section; }
@@ -74,110 +73,115 @@ export default function MarksEntry({ exam, subjects, students, existingMarks, se
         });
     }
 
+    const filled = students.reduce((n, st) => n + subjects.filter(sub => {
+        const r = buffer[st.id]?.[sub.id];
+        return r && (r.is_absent || r.marks_obtained !== '');
+    }).length, 0);
+    const total = students.length * subjects.length;
+
     return (
-        <AppLayout title={`Marks — ${exam.name}`}>
-            <div className="space-y-6">
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                    <div className="flex items-center gap-3">
-                        <Link href="/school/exams" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white">
-                            <ArrowLeft className="w-4 h-4" /> Exams
-                        </Link>
-                        <span className="text-slate-300 dark:text-slate-700">|</span>
-                        <div>
-                            <h1 className="text-xl font-bold text-slate-900 dark:text-white">{exam.name}</h1>
-                            <p className="text-sm text-slate-500">{exam.school_class?.name} · Marks Entry</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        {sections.length > 0 && (
-                            <Select value={filters.section_id ?? ''} onValueChange={v => applyFilter('section_id', v)}>
-                                <SelectTrigger className="w-36"><SelectValue placeholder="All Sections" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="">All Sections</SelectItem>
-                                    {sections.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        )}
-                        <Link href={`/school/exams/${exam.id}/results`}>
-                            <Button variant="outline">View Results</Button>
-                        </Link>
-                        <Button onClick={handleSave} disabled={saving || students.length === 0} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
-                            <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Marks'}
-                        </Button>
-                    </div>
-                </div>
+        <AppLayout breadcrumbs={[{ label: 'Exams', href: '/school/exams' }, { label: exam.name }, { label: 'Marks' }]}>
+            <div className="space-y-6 pb-24 md:pb-0">
+                <PageHeader
+                    title={exam.name}
+                    description={`${exam.school_class?.name ?? ''} · Enter marks for each student`}
+                    actions={
+                        <>
+                            <Link href="/school/exams" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+                                <ArrowLeft className="size-4" /> Exams
+                            </Link>
+                            <Link href={`/school/exams/${exam.id}/results`} className="inline-flex h-9 items-center rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+                                View results
+                            </Link>
+                            <Button onClick={handleSave} disabled={saving || students.length === 0} className="gap-2">
+                                <Save className="size-4" /> {saving ? 'Saving…' : 'Save marks'}
+                            </Button>
+                        </>
+                    }
+                />
 
                 {flash?.success && (
-                    <div className="rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">{flash.success}</div>
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">{flash.success}</div>
+                )}
+
+                {sections.length > 0 && (
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-slate-500">Section</label>
+                        <Select value={filters.section_id ?? ''} onValueChange={v => applyFilter('section_id', v)}>
+                            <SelectTrigger className="h-10 w-48"><SelectValue placeholder="All sections" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">All sections</SelectItem>
+                                {sections.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 )}
 
                 {students.length === 0 ? (
-                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center justify-center py-20">
-                        <p className="text-slate-400">No active students found in this class.</p>
-                    </div>
+                    <Panel><EmptyState icon={Users} title="No students yet" text="No active students were found in this class." /></Panel>
                 ) : (
-                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-slate-50 dark:bg-slate-900">
-                                    <TableHead className="w-8">#</TableHead>
-                                    <TableHead className="min-w-[140px]">Student</TableHead>
-                                    {subjects.map(sub => (
-                                        <TableHead key={sub.id} className="text-center min-w-[100px]">
-                                            <div>{sub.name}</div>
-                                            <div className="text-[10px] text-slate-400 font-normal">/ {sub.full_marks}</div>
-                                        </TableHead>
-                                    ))}
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {students.map((student, idx) => (
-                                    <TableRow key={student.id}>
-                                        <TableCell className="text-slate-400 text-xs">{idx + 1}</TableCell>
-                                        <TableCell>
-                                            <p className="font-medium text-slate-900 dark:text-white text-sm">{student.first_name} {student.last_name}</p>
-                                            <p className="text-xs text-slate-400">{student.roll_no ? `Roll: ${student.roll_no}` : ''} {student.section?.name ?? ''}</p>
-                                        </TableCell>
-                                        {subjects.map(sub => {
-                                            const rec = buffer[student.id]?.[sub.id];
-                                            const isAbsent = rec?.is_absent ?? false;
-                                            return (
-                                                <TableCell key={sub.id} className="text-center p-1.5">
-                                                    <div className="flex flex-col items-center gap-1">
+                    <Panel flush title="Mark sheet" description={`${filled} of ${total} entries filled`}>
+                        <div className="overflow-x-auto scroll-quiet">
+                            <table className="w-full min-w-max border-collapse text-sm">
+                                <thead>
+                                    <tr className="bg-slate-50/70 dark:bg-white/[0.03]">
+                                        <th className="sticky left-0 z-10 min-w-[180px] border-y border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-white/[0.08] dark:bg-slate-900">Student</th>
+                                        {subjects.map(sub => (
+                                            <th key={sub.id} className="min-w-[110px] border-y border-slate-200 px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-white/[0.08]">
+                                                {sub.name}
+                                                <span className="block text-[11px] font-normal normal-case tracking-normal text-slate-400">out of {sub.full_marks}</span>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {students.map(student => (
+                                        <tr key={student.id} className="border-b border-slate-100 last:border-0 dark:border-white/[0.05]">
+                                            <td className="sticky left-0 z-10 bg-white px-4 py-2.5 dark:bg-slate-950">
+                                                <div className="flex items-center gap-2.5">
+                                                    <PersonAvatar name={`${student.first_name} ${student.last_name ?? ''}`} className="size-8" />
+                                                    <div className="min-w-0">
+                                                        <p className="truncate font-medium text-slate-900 dark:text-white">{student.first_name} {student.last_name}</p>
+                                                        <p className="text-xs text-slate-400">{[student.roll_no && `Roll ${student.roll_no}`, student.section?.name].filter(Boolean).join(' · ')}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            {subjects.map(sub => {
+                                                const rec = buffer[student.id]?.[sub.id];
+                                                const isAbsent = rec?.is_absent ?? false;
+                                                return (
+                                                    <td key={sub.id} className="px-3 py-2 text-center">
                                                         <Input
                                                             type="number"
+                                                            inputMode="decimal"
                                                             min="0"
                                                             max={sub.full_marks}
-                                                            className={`w-20 h-8 text-center text-sm ${isAbsent ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : ''}`}
+                                                            aria-label={`${sub.name} marks for ${student.first_name}`}
+                                                            className={`mx-auto h-9 w-20 text-center tabular-nums ${isAbsent ? 'bg-slate-100 text-slate-400 dark:bg-white/[0.04]' : ''}`}
                                                             value={isAbsent ? '' : (rec?.marks_obtained ?? '')}
                                                             disabled={isAbsent}
                                                             onChange={e => setMark(student.id, sub.id, 'marks_obtained', e.target.value)}
                                                             placeholder="—"
                                                         />
-                                                        <label className="flex items-center gap-1 text-[10px] text-slate-400 cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={isAbsent}
-                                                                onChange={e => setMark(student.id, sub.id, 'is_absent', e.target.checked)}
-                                                                className="w-3 h-3"
-                                                            />
+                                                        <label className="mt-1 flex cursor-pointer items-center justify-center gap-1 text-[11px] text-slate-400">
+                                                            <input type="checkbox" checked={isAbsent} onChange={e => setMark(student.id, sub.id, 'is_absent', e.target.checked)} className="size-3 accent-indigo-600" />
                                                             Absent
                                                         </label>
-                                                    </div>
-                                                </TableCell>
-                                            );
-                                        })}
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Panel>
                 )}
 
                 {students.length > 0 && (
-                    <div className="flex justify-end">
-                        <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
-                            <Save className="w-4 h-4" /> {saving ? 'Saving...' : `Save Marks (${students.length} students × ${subjects.length} subjects)`}
+                    <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 border-t border-slate-200 bg-white/95 p-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0 dark:border-white/10 dark:bg-slate-950/95">
+                        <Button onClick={handleSave} disabled={saving} className="h-11 w-full gap-2 md:ml-auto md:flex md:h-9 md:w-auto">
+                            <Save className="size-4" /> {saving ? 'Saving…' : `Save marks (${students.length} students × ${subjects.length} subjects)`}
                         </Button>
                     </div>
                 )}

@@ -30,7 +30,7 @@ export default function StaffCreate({ departments, designations }: Props) {
         date_of_birth: '',
         blood_group:   '',
         religion:      '',
-        nationality:   'Bangladeshi',
+        nationality:   'Nigerian',
         phone:         '',
         email:         '',
         address:       '',

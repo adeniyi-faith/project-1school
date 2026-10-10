@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Search, User, DollarSign } from 'lucide-react';
+import { ArrowLeft, Search, User, Banknote } from 'lucide-react';
 import type { SchoolClass, PageProps } from '@/Types';
 
 interface Student {
@@ -119,7 +119,7 @@ export default function CollectFee({ student, structures, classes }: Props) {
                 {/* Payment Form */}
                 {student && (
                     <Card className="border-slate-200 dark:border-slate-800">
-                        <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><DollarSign className="w-4 h-4" /> Payment Details</CardTitle></CardHeader>
+                        <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Banknote className="w-4 h-4" /> Payment Details</CardTitle></CardHeader>
                         <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="space-y-1.5">
@@ -129,7 +129,7 @@ export default function CollectFee({ student, structures, classes }: Props) {
                                         <SelectContent>
                                             {structures.map(s => (
                                                 <SelectItem key={s.id} value={String(s.id)}>
-                                                    {s.fee_category?.name} — ৳{Number(s.amount).toLocaleString()} ({s.frequency}) · {s.academic_year}
+                                                    {s.fee_category?.name} — ₦{Number(s.amount).toLocaleString()} ({s.frequency}) · {s.academic_year}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -139,7 +139,7 @@ export default function CollectFee({ student, structures, classes }: Props) {
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
-                                        <Label>Amount Due (৳) <span className="text-red-500">*</span></Label>
+                                        <Label>Amount Due (₦) <span className="text-red-500">*</span></Label>
                                         <Input type="number" min="0" step="0.01" value={data.amount_due} onChange={e => setData('amount_due', e.target.value)} />
                                         {errors.amount_due && <p className="text-xs text-red-500">{errors.amount_due}</p>}
                                     </div>
@@ -151,11 +151,11 @@ export default function CollectFee({ student, structures, classes }: Props) {
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
-                                        <Label>Discount (৳)</Label>
+                                        <Label>Discount (₦)</Label>
                                         <Input type="number" min="0" step="0.01" value={data.discount} onChange={e => setData('discount', e.target.value)} />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label>Fine (৳)</Label>
+                                        <Label>Fine (₦)</Label>
                                         <Input type="number" min="0" step="0.01" value={data.fine} onChange={e => setData('fine', e.target.value)} />
                                     </div>
                                 </div>
@@ -164,20 +164,20 @@ export default function CollectFee({ student, structures, classes }: Props) {
                                 <div className="rounded-lg bg-slate-50 dark:bg-slate-900 px-4 py-3 flex items-center justify-between">
                                     <div className="text-sm text-slate-500">Net Due</div>
                                     <div className="font-bold text-lg text-slate-900 dark:text-white">
-                                        ৳{(Number(data.amount_due || 0) + Number(data.fine || 0) - Number(data.discount || 0)).toLocaleString()}
+                                        ₦{(Number(data.amount_due || 0) + Number(data.fine || 0) - Number(data.discount || 0)).toLocaleString()}
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
-                                        <Label>Amount Paid (৳) <span className="text-red-500">*</span></Label>
+                                        <Label>Amount Paid (₦) <span className="text-red-500">*</span></Label>
                                         <Input type="number" min="0" step="0.01" value={data.amount_paid} onChange={e => setData('amount_paid', e.target.value)} />
                                         {errors.amount_paid && <p className="text-xs text-red-500">{errors.amount_paid}</p>}
                                     </div>
                                     <div className="space-y-1.5">
                                         <Label>Balance</Label>
                                         <div className={`h-10 rounded-md border px-3 flex items-center font-semibold ${balance > 0 ? 'text-red-600 border-red-200 bg-red-50 dark:bg-red-950/20' : 'text-green-600 border-green-200 bg-green-50 dark:bg-green-950/20'}`}>
-                                            {balance > 0 ? `৳${balance.toLocaleString()}` : 'Fully Paid'}
+                                            {balance > 0 ? `₦${balance.toLocaleString()}` : 'Fully Paid'}
                                         </div>
                                     </div>
                                 </div>
@@ -193,11 +193,11 @@ export default function CollectFee({ student, structures, classes }: Props) {
                                             <SelectTrigger><SelectValue /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="cash">Cash</SelectItem>
+                                                <SelectItem value="bank_transfer">Bank transfer</SelectItem>
+                                                <SelectItem value="pos">POS</SelectItem>
                                                 <SelectItem value="card">Card</SelectItem>
-                                                <SelectItem value="online">Online</SelectItem>
-                                                <SelectItem value="bkash">bKash</SelectItem>
-                                                <SelectItem value="nagad">Nagad</SelectItem>
-                                                <SelectItem value="rocket">Rocket</SelectItem>
+                                                <SelectItem value="online">Online (Paystack, Flutterwave)</SelectItem>
+                                                <SelectItem value="ussd">USSD</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>

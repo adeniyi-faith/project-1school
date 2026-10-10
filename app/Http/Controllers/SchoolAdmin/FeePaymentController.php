@@ -74,7 +74,7 @@ class FeePaymentController extends Controller
             'fine'             => 'nullable|numeric|min:0',
             'payment_date'     => 'required|date',
             'month_year'       => 'nullable|string|max:10',
-            'method'           => 'required|in:cash,card,online,bkash,nagad,rocket',
+            'method'           => 'required|in:cash,bank_transfer,pos,card,online,ussd',
             'note'             => 'nullable|string|max:500',
         ]);
 
