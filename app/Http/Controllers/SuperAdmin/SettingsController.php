@@ -29,8 +29,8 @@ class SettingsController extends Controller
             'support_email'    => 'nullable|email|max:150',
             'support_phone'    => 'nullable|string|max:25',
             'footer_copyright' => 'nullable|string|max:300',
-            'logo'             => 'nullable|image|max:2048',
-            'favicon'          => 'nullable|image|max:512',
+            'logo'             => 'nullable|image|max:10240',
+            'favicon'          => 'nullable|image|max:2048',
         ]);
 
         PlatformSetting::set('platform_name',    $request->platform_name,    'general');
@@ -41,14 +41,14 @@ class SettingsController extends Controller
         if ($request->hasFile('logo')) {
             $old = PlatformSetting::get('platform_logo');
             if ($old) Storage::disk('public')->delete($old);
-            $path = $request->file('logo')->store('platform', 'public');
+            $path = \App\Support\ImageShrinker::store($request->file('logo'), 'platform', 'public', 600);
             PlatformSetting::set('platform_logo', $path, 'general');
         }
 
         if ($request->hasFile('favicon')) {
             $old = PlatformSetting::get('platform_favicon');
             if ($old) Storage::disk('public')->delete($old);
-            $path = $request->file('favicon')->store('platform', 'public');
+            $path = \App\Support\ImageShrinker::store($request->file('favicon'), 'platform', 'public', 128);
             PlatformSetting::set('platform_favicon', $path, 'general');
         }
 

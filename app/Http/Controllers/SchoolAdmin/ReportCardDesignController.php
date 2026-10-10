@@ -25,7 +25,7 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 class ReportCardDesignController extends Controller
 {
     /** Signatures and stamps: PNG (best with a see-through background) or JPG, up to 1 MB */
-    private const IMAGE_RULE = 'nullable|image|mimes:png,jpg,jpeg|max:1024';
+    private const IMAGE_RULE = 'nullable|image|mimes:png,jpg,jpeg|max:10240';
 
     public function index(Request $request): Response
     {
@@ -219,8 +219,8 @@ class ReportCardDesignController extends Controller
      */
     public function tryOut(Request $request, ReportCardDesign $design, ReportCardService $cards): HttpResponse
     {
-        $image = 'nullable|image|mimes:png,jpg,jpeg|max:2048';
-        $data = $request->validate([
+        $image = 'nullable|image|mimes:png,jpg,jpeg|max:10240';
+        $check = validator($request->all(), [
             'type' => 'nullable|in:term,session',
             'template' => ['nullable', Rule::in(ReportCardDesign::TEMPLATES)],
             'primary_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
@@ -243,6 +243,10 @@ class ReportCardDesignController extends Controller
             'signers.*.signature' => $image,
             'signers.*.remove_signature' => 'boolean',
         ]);
+        if ($check->fails()) {
+            return ReportCardController::problemPage($check->errors()->first());
+        }
+        $data = $check->validated();
 
         $type = ($data['type'] ?? 'term') === 'session' ? 'session' : 'term';
         $design->fill(array_filter(collect($data)->only(['template', 'primary_color', 'accent_color', 'font_size', 'paper', 'term_title', 'session_title', 'footer_note'])->all(), fn ($v) => $v !== null));
@@ -287,7 +291,7 @@ class ReportCardDesignController extends Controller
 
     private function replaceImage(?string $old, $file, int $schoolId): string
     {
-        $path = $file->store("schools/{$schoolId}/report-cards", 'private');
+        $path = \App\Support\ImageShrinker::store($file, "schools/{$schoolId}/report-cards", 'private', 600);
         if ($old) {
             Storage::disk('private')->delete($old);
         }

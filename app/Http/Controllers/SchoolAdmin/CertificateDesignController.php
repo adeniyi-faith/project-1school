@@ -83,8 +83,8 @@ class CertificateDesignController extends Controller
     public function tryOut(Request $request, string $type): HttpResponse
     {
         abort_unless(isset(StudentCertificate::TYPES[$type]), 404);
-        $image = 'nullable|image|mimes:png,jpg,jpeg|max:2048';
-        $data = $request->validate([
+        $image = 'nullable|image|mimes:png,jpg,jpeg|max:10240';
+        $check = validator($request->all(), [
             'border' => ['nullable', Rule::in(CertificateTemplate::BORDERS)],
             'primary_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'accent_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
@@ -98,10 +98,14 @@ class CertificateDesignController extends Controller
             'stamp' => $image,
             'signature' => $image,
         ]);
+        if ($check->fails()) {
+            return ReportCardController::problemPage($check->errors()->first());
+        }
+        $data = $check->validated();
 
         $unknown = array_diff($this->blanksIn(($data['body'] ?? '').' '.($data['closing'] ?? '')), CertificateTemplate::BLANKS);
         if ($unknown) {
-            return response()->json(['message' => 'These blanks are not known: '.implode(', ', $unknown), 'errors' => ['body' => ['These blanks are not known: '.implode(', ', $unknown).'. Use only the ones listed.']]], 422);
+            return ReportCardController::problemPage('These blanks are not known: '.implode(', ', $unknown).'. Use only the ones listed.');
         }
 
         $template = CertificateTemplate::for((int) $request->user()->school_id, $type);

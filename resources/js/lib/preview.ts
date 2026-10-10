@@ -1,43 +1,60 @@
 /**
  * Shows a sample card or certificate in a new tab using what is on the form right now
- * (including pictures just chosen). Nothing is saved. The tab is opened first, straight from the
- * click, so the phone does not block it as a pop-up.
+ * (including pictures just chosen). Nothing is saved.
+ *
+ * The form is sent by the browser itself straight into the new tab, like a normal link. An earlier
+ * version fetched the page with JavaScript and then wrote it into the tab, but phones pause the page
+ * you left behind, so the tab sat on "getting ready" for ever.
  */
-export async function openTryOut(url: string, body: FormData): Promise<string | null> {
-    const tab = window.open('', '_blank');
+export function openTryOut(url: string, body: FormData): string | null {
+    const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content;
+    const name = `try-${Date.now()}`;
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.enctype = 'multipart/form-data';
+    form.target = name;
+    form.style.display = 'none';
+
+    const add = (key: string, value: string) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+    };
+    if (csrf) add('_token', csrf);
+
+    for (const [key, value] of body.entries()) {
+        if (typeof value === 'string') {
+            add(key, value);
+            continue;
+        }
+        if (value.size === 0) continue;
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.name = key;
+        try {
+            const files = new DataTransfer();
+            files.items.add(value);
+            input.files = files.files;
+        } catch {
+            return 'This browser cannot preview a picture that is not saved yet. Save it, then preview.';
+        }
+        form.appendChild(input);
+    }
+
+    const tab = window.open('', name);
     if (!tab) {
         return 'Your browser blocked the preview window. Allow pop-ups for this site and try again.';
     }
     tab.document.write('<meta name="viewport" content="width=device-width, initial-scale=1"><body style="font:16px system-ui;padding:24px;color:#334155">Getting your preview ready…</body>');
 
-    try {
-        const xsrf = document.cookie.split('; ').find(c => c.startsWith('XSRF-TOKEN='));
-        const res = await fetch(url, {
-            method: 'POST',
-            body,
-            credentials: 'same-origin',
-            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', ...(xsrf ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrf.split('=')[1]) } : {}) },
-        });
-        const text = await res.text();
-
-        if (!res.ok) {
-            let message = 'The preview could not be made.';
-            try {
-                const json = JSON.parse(text);
-                message = (Object.values(json.errors ?? {}).flat()[0] as string | undefined) ?? json.message ?? message;
-            } catch { /* keep the plain message */ }
-            tab.close();
-            return message;
-        }
-
-        tab.document.open();
-        tab.document.write(text);
-        tab.document.close();
-        return null;
-    } catch {
-        tab.close();
-        return 'The preview could not be made. Check your connection and try again.';
-    }
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(() => form.remove(), 1000);
+    return null;
 }
 
 /** Adds a nested value (object, array or File) to a FormData the way Laravel reads it: a[b][0]=... */
