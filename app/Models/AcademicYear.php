@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Support\SchoolDefaults;
 use App\Traits\BelongsToSchool;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AcademicYear extends Model
@@ -20,6 +22,17 @@ class AcademicYear extends Model
         'end_date'   => 'date',
         'is_current' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        // A new school year comes with its terms (three unless the school set otherwise)
+        static::created(fn (AcademicYear $year) => SchoolDefaults::createTermsFor($year->school_id, $year->id));
+    }
+
+    public function terms(): HasMany
+    {
+        return $this->hasMany(Term::class)->orderBy('sequence');
+    }
 
     /**
      * When setting a year as current, unset all others for the same school.

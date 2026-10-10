@@ -4,16 +4,17 @@ namespace App\Http\Controllers\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
-use App\Models\GradeScale;
 use App\Models\Mark;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Models\Term;
 use App\Services\GradingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,7 +22,7 @@ class ExamController extends Controller
 {
     public function index(Request $request): Response
     {
-        $exams = Exam::with('schoolClass:id,name')
+        $exams = Exam::with(['schoolClass:id,name', 'term:id,name,academic_year_id', 'term.academicYear:id,name'])
             ->when($request->class_id, fn ($q) => $q->where('class_id', $request->class_id))
             ->when($request->status,   fn ($q) => $q->where('status', $request->status))
             ->latest()
@@ -39,6 +40,10 @@ class ExamController extends Controller
                 'links' => ['prev' => $exams->previousPageUrl(), 'next' => $exams->nextPageUrl()],
             ],
             'classes' => SchoolClass::orderBy('numeric_name')->get(['id', 'name']),
+            'terms'   => Term::with('academicYear:id,name,start_date')->get()
+                ->sortBy([fn ($a, $b) => strcmp((string) $b->academicYear?->start_date, (string) $a->academicYear?->start_date), ['sequence', 'asc']])
+                ->map(fn (Term $t) => ['id' => $t->id, 'label' => trim(($t->academicYear?->name ?? '') . ' · ' . $t->name, ' ·'), 'is_current' => $t->is_current])
+                ->values(),
             'filters' => $request->only('class_id', 'status'),
             'stats'   => [
                 'total'     => Exam::count(),
@@ -55,6 +60,7 @@ class ExamController extends Controller
             'name'        => 'required|string|max:150',
             'type'        => 'required|in:unit_test,mid_term,final,custom',
             'class_id'    => 'required|exists:classes,id',
+            'term_id'     => ['nullable', Rule::exists('terms', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
             'start_date'  => 'nullable|date',
             'end_date'    => 'nullable|date|after_or_equal:start_date',
             'status'      => 'required|in:draft,published,completed',
@@ -72,6 +78,7 @@ class ExamController extends Controller
             'name'        => 'required|string|max:150',
             'type'        => 'required|in:unit_test,mid_term,final,custom',
             'class_id'    => 'required|exists:classes,id',
+            'term_id'     => ['nullable', Rule::exists('terms', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
             'start_date'  => 'nullable|date',
             'end_date'    => 'nullable|date|after_or_equal:start_date',
             'status'      => 'required|in:draft,published,completed',
@@ -137,7 +144,7 @@ class ExamController extends Controller
         ]);
 
         $schoolId = $this->getSchoolId();
-        $grading  = new GradingService($schoolId);
+        $grading  = GradingService::forClass($schoolId, $exam->class_id);
 
         DB::transaction(function () use ($data, $exam, $schoolId, $grading) {
             foreach ($data['marks'] as $row) {
@@ -236,53 +243,8 @@ class ExamController extends Controller
             'subjects'   => $subjects,
             'results'    => $results->values(),
             'sections'   => Section::where('class_id', $exam->class_id)->orderBy('name')->get(['id', 'name']),
-            'gradeScale' => GradeScale::orderByDesc('min_marks')->get(),
+            'gradeScale' => GradingService::forClass($exam->school_id, $exam->class_id)->scales(),
             'filters'    => ['section_id' => $sectionId],
         ]);
-    }
-
-    /**
-     * Grade scales management page.
-     */
-    public function gradeScales(): Response
-    {
-        return Inertia::render('SchoolAdmin/Exams/GradeScales', [
-            'scales' => GradeScale::orderBy('sort_order')->get(),
-        ]);
-    }
-
-    public function saveGradeScale(Request $request): RedirectResponse
-    {
-        $data = $request->validate([
-            'grade'      => 'required|string|max:10',
-            'gpa'        => 'required|numeric|min:0|max:5',
-            'min_marks'  => 'required|numeric|min:0|max:100',
-            'max_marks'  => 'required|numeric|min:0|max:100',
-            'remarks'    => 'nullable|string|max:50',
-            'sort_order' => 'nullable|integer',
-        ]);
-
-        GradeScale::create(array_merge($data, ['school_id' => $this->getSchoolId()]));
-        return back()->with('success', 'Grade added.');
-    }
-
-    public function updateGradeScale(Request $request, GradeScale $gradeScale): RedirectResponse
-    {
-        $data = $request->validate([
-            'grade'      => 'required|string|max:10',
-            'gpa'        => 'required|numeric|min:0|max:5',
-            'min_marks'  => 'required|numeric|min:0|max:100',
-            'max_marks'  => 'required|numeric|min:0|max:100',
-            'remarks'    => 'nullable|string|max:50',
-            'sort_order' => 'nullable|integer',
-        ]);
-        $gradeScale->update($data);
-        return back()->with('success', 'Grade updated.');
-    }
-
-    public function deleteGradeScale(GradeScale $gradeScale): RedirectResponse
-    {
-        $gradeScale->delete();
-        return back()->with('success', 'Grade deleted.');
     }
 }

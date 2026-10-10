@@ -12,19 +12,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, MoreHorizontal, Pencil, Trash2, ClipboardList, BarChart3, BookOpen, FileText, Settings } from 'lucide-react';
-import type { SchoolClass, PageProps, PaginatedResponse } from '@/Types';
+import type { SchoolClass, PageProps, PaginatedResponse, TermOption } from '@/Types';
 
 interface Exam {
-    id: number; name: string; type: string; class_id: number;
+    id: number; name: string; type: string; class_id: number; term_id: number | null;
     start_date: string | null; end_date: string | null;
     status: 'draft' | 'published' | 'completed';
     description: string | null; created_at: string;
     school_class?: SchoolClass;
+    term?: { id: number; name: string; academic_year?: { id: number; name: string } | null } | null;
 }
 
 interface Props {
     exams: PaginatedResponse<Exam>;
     classes: SchoolClass[];
+    terms: TermOption[];
     filters: { class_id?: string; status?: string };
     stats: { total: number; draft: number; published: number; completed: number };
 }
@@ -38,9 +40,9 @@ const TYPE_LABELS: Record<string, string> = {
     unit_test: 'Unit Test', mid_term: 'Mid Term', final: 'Final', custom: 'Custom',
 };
 
-const emptyForm = { name: '', type: 'mid_term', class_id: '', start_date: '', end_date: '', status: 'draft', description: '' };
+const emptyForm = { name: '', type: 'mid_term', class_id: '', term_id: '', start_date: '', end_date: '', status: 'draft', description: '' };
 
-export default function ExamsIndex({ exams, classes, filters, stats }: Props) {
+export default function ExamsIndex({ exams, classes, terms, filters, stats }: Props) {
     const { flash } = usePage<PageProps>().props;
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<Exam | null>(null);
@@ -50,9 +52,14 @@ export default function ExamsIndex({ exams, classes, filters, stats }: Props) {
         router.get('/school/exams', { ...filters, [key]: value || undefined }, { preserveScroll: true });
     }
 
-    function openCreate() { reset(); setEditing(null); setOpen(true); }
+    const currentTermId = terms.find(t => t.is_current)?.id;
+
+    function openCreate() {
+        reset(); setData('term_id', currentTermId ? String(currentTermId) : '');
+        setEditing(null); setOpen(true);
+    }
     function openEdit(e: Exam) {
-        setData({ name: e.name, type: e.type, class_id: String(e.class_id), start_date: e.start_date ?? '', end_date: e.end_date ?? '', status: e.status, description: e.description ?? '' });
+        setData({ name: e.name, type: e.type, class_id: String(e.class_id), term_id: e.term_id ? String(e.term_id) : '', start_date: e.start_date ?? '', end_date: e.end_date ?? '', status: e.status, description: e.description ?? '' });
         setEditing(e); setOpen(true);
     }
 
@@ -86,8 +93,8 @@ export default function ExamsIndex({ exams, classes, filters, stats }: Props) {
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{stats.total} exams configured</p>
                     </div>
                     <div className="flex gap-2">
-                        <Link href="/school/grade-scales">
-                            <Button variant="outline" className="inline-flex items-center gap-2"><Settings className="w-4 h-4" /> Grade Scale</Button>
+                        <Link href="/school/academics/assessment">
+                            <Button variant="outline" className="inline-flex items-center gap-2"><Settings className="w-4 h-4" /> Scores &amp; Grades</Button>
                         </Link>
                         <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
                             <Plus className="w-4 h-4" /> Add Exam
@@ -153,7 +160,10 @@ export default function ExamsIndex({ exams, classes, filters, stats }: Props) {
                             ) : exams.data.map((exam) => (
                                 <TableRow key={exam.id}>
                                     <TableCell className="font-medium text-slate-900 dark:text-white">{exam.name}</TableCell>
-                                    <TableCell className="text-slate-500 text-sm">{exam.school_class?.name ?? '—'}</TableCell>
+                                    <TableCell className="text-slate-500 text-sm">
+                                        {exam.school_class?.name ?? '—'}
+                                        {exam.term && <div className="text-xs text-slate-400">{exam.term.name}{exam.term.academic_year ? `, ${exam.term.academic_year.name}` : ''}</div>}
+                                    </TableCell>
                                     <TableCell><Badge variant="outline" className="text-xs">{TYPE_LABELS[exam.type] ?? exam.type}</Badge></TableCell>
                                     <TableCell className="text-slate-500 text-sm">
                                         {exam.start_date ? new Date(exam.start_date).toLocaleDateString() : '—'}
@@ -220,6 +230,16 @@ export default function ExamsIndex({ exams, classes, filters, stats }: Props) {
                                 </Select>
                                 {errors.class_id && <p className="text-xs text-red-500">{errors.class_id}</p>}
                             </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Term</Label>
+                            <Select value={data.term_id} onValueChange={v => setData('term_id', v ?? '')} items={terms.map(t => ({ value: String(t.id), label: t.label }))}>
+                                <SelectTrigger><SelectValue placeholder="Select term" /></SelectTrigger>
+                                <SelectContent>
+                                    {terms.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.label}{t.is_current ? ' (current)' : ''}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            {errors.term_id && <p className="text-xs text-red-500">{errors.term_id}</p>}
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
