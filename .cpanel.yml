@@ -6,3 +6,11 @@ deployment:
     # `*` skips hidden files, so copy the root .htaccess explicitly. It keeps the
     # app's files private by sending every request into public/.
     - /bin/cp .htaccess $DEPLOYPATH
+    # Install the app's PHP parts (the vendor folder) on the server. Uses PHP 8.3
+    # if cPanel has it. The "|| echo" lets the deploy carry on if a step is not
+    # available on this host, so the files above are always copied.
+    - cd $DEPLOYPATH && export PATH=/opt/cpanel/ea-php83/root/usr/bin:$PATH && (composer install --no-dev --optimize-autoloader --no-interaction || echo "composer install skipped or failed")
+    # Build the front-end files (needs Node on the server).
+    - cd $DEPLOYPATH && (npm ci && npm run build || echo "front-end build skipped or failed")
+    # Refresh Laravel's saved settings. Never touches your .env file.
+    - cd $DEPLOYPATH && export PATH=/opt/cpanel/ea-php83/root/usr/bin:$PATH && (php artisan storage:link || true) && (php artisan config:cache || true)
