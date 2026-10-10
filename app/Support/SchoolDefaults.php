@@ -67,6 +67,12 @@ class SchoolDefaults
         ],
     ];
 
+    /** What most Nigerian report cards rate, 1 (poor) to 5 (excellent) */
+    public const BEHAVIOUR_TRAITS = [
+        'affective' => ['Punctuality', 'Attendance', 'Neatness', 'Politeness', 'Honesty', 'Self-control', 'Relationship with others', 'Attentiveness'],
+        'psychomotor' => ['Handwriting', 'Verbal fluency', 'Sports and games', 'Drawing and painting', 'Musical skills', 'Handling of tools'],
+    ];
+
     /** Fill in whatever the school is missing. Safe to run more than once. */
     public static function apply(int $schoolId): void
     {
@@ -74,6 +80,7 @@ class SchoolDefaults
             self::ensureTerms($schoolId);
             self::ensureAssessmentScheme($schoolId);
             self::ensureGradingScheme($schoolId);
+            self::ensureBehaviourTraits($schoolId);
         });
     }
 
@@ -183,5 +190,21 @@ class SchoolDefaults
         ], $p['bands'], array_keys($p['bands'])));
 
         return $id;
+    }
+
+    public static function ensureBehaviourTraits(int $schoolId): void
+    {
+        if (DB::table('behaviour_traits')->where('school_id', $schoolId)->whereNull('deleted_at')->exists()) {
+            return;
+        }
+
+        $now = now();
+        $rows = [];
+        foreach (self::BEHAVIOUR_TRAITS as $domain => $names) {
+            foreach ($names as $i => $name) {
+                $rows[] = ['school_id' => $schoolId, 'name' => $name, 'domain' => $domain, 'sort_order' => $i + 1, 'created_at' => $now, 'updated_at' => $now];
+            }
+        }
+        DB::table('behaviour_traits')->insert($rows);
     }
 }

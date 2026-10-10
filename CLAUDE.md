@@ -14,7 +14,7 @@ Teacher, Accountant, Librarian, Receptionist, Driver, Warden, Store Manager, Stu
 
 Long-term direction: a Nigerian-first "Education OS" (three terms, continuous assessment,
 WAEC-style report cards, Naira payments). The build checklist for that lives in the project's
-shared files; Phase 1 (safety fixes) is finished. Phase 2 is under way: terms and score/grade setup are done; stored results and fees come next.
+shared files; Phase 1 (safety fixes) is finished. Phase 2 is under way: terms, score/grade setup and stored term results are done; fees (invoices, ledger) come next.
 
 ---
 
@@ -55,7 +55,7 @@ app/
   Models/            flat folder, ~60 models
   Scopes/SchoolScope.php      the "only my school" rule
   Traits/BelongsToSchool.php  adds that rule + fills school_id on create
-  Services/          GradingService, SupabaseAuthService (the only services)
+  Services/          GradingService, TermResultService (works out and stores term results), SupabaseAuthService
   Support/SchoolDefaults.php  starting terms, score setup and grade scales for every school
   Jobs/              SendSmsBlast (stub: writes to the log), SendEmailBlast
 routes/web.php       ONE file for all routes (no api.php)
@@ -82,7 +82,8 @@ Everything below exists as working screens unless a caveat says otherwise.
 | Staff & HR | Built | Staff, departments, designations, documents, leave, salary structure, payroll, payslip PDF |
 | Attendance | Built | Student and staff, daily marking, calendar |
 | Timetable | Built | |
-| Exams & results | Built, limited | Exams belong to a term, and grades use the class's grade scale. Still **one number per student/subject/exam**: scores are not yet split into the score parts, results are computed live, no stored positions |
+| Exams (single marks) | Built | The older per-exam marks screen still works (one number per student/subject/exam), graded with the class's scale. Parents and students only see marks from exams marked published or completed |
+| Term results | Built | `/school/results`: scores entered per score part (CA1, CA2, Exam ...) per class and term (`subject_scores`), stored in `term_results` / `term_result_summaries` with subject and class positions (ties share a place), averages, highest/lowest, and a version number. Worked out again on every save (`TermResultService`). Each class/term is a `result_sheet` with steps draft → submitted → approved → published → locked (`ResultSheet::ACTIONS`; submit needs `marks.entry`, approve/publish `results.publish`, lock `results.lock`). Scores only change in draft. Behaviour (affective) and skills (psychomotor) ratings 1–5. Portals show only published/locked results. No report card PDF yet (Phase 3) |
 | Fees | Built, limited | Staff type in payments by hand. No invoices, no ledger, no payment gateway |
 | Library, Inventory/Assets, Transport, Hostel | Built | Transport has a GPS location webhook protected by a per-vehicle token (no screen shows the token yet) |
 | Homework, lesson plans, syllabus, online-class links | Built | |
@@ -143,7 +144,7 @@ and the academic report. Run them before and after any change to routes, models 
 
 ## Known gaps (planned work)
 
-Phase 2 (rest): scores entered per score part, stored results, invoices and payment ledger.
+Phase 2 (rest): invoices, payment ledger, scholarships, data migration. Old per-exam marks are not copied into term results.
 Phase 3: admission-to-enrolment, promotion, report cards, real SMS, payment gateway, CBT.
 Phase 4: queue for PDFs, Redis, safe ID generation (admission numbers and employee IDs are
 made by counting rows, which can collide), splitting the fat controllers into services.
