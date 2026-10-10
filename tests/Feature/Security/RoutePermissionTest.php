@@ -37,7 +37,7 @@ class RoutePermissionTest extends SecurityTestCase
     {
         $user = $this->makeUser($this->makeSchool('School A'), $role);
 
-        $response = $this->actingAs($user)->call($method, route($routeName, $params), [], [], [], ['HTTP_X-Inertia' => 'true']);
+        $response = $this->actingAs($user)->call($method, route($routeName, $params), [], [], [], $this->transformHeadersToServerVars(['X-Inertia' => 'true']));
 
         $response->assertForbidden();
     }

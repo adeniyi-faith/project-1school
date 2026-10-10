@@ -3,13 +3,13 @@
 namespace Database\Seeders;
 
 use App\Models\Exam;
-use App\Models\GradeScale;
 use App\Models\Mark;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Services\GradingService;
+use App\Support\SchoolDefaults;
 use Illuminate\Database\Seeder;
 
 class ExamSeeder extends Seeder
@@ -19,13 +19,8 @@ class ExamSeeder extends Seeder
         $school = School::where('slug', 'greenfield-academy')->firstOrFail();
         $sid    = $school->id;
 
-        // ── Grade Scale ───────────────────────────────────────────────
-        if (GradeScale::where('school_id', $sid)->doesntExist()) {
-            foreach (GradingService::defaultScales() as $scale) {
-                GradeScale::create(array_merge($scale, ['school_id' => $sid]));
-            }
-            $this->command->info('Grade scale seeded.');
-        }
+        // Terms, score setup and grade scale (fills in only what is missing)
+        SchoolDefaults::apply($sid);
 
         $grading = new GradingService($sid);
 

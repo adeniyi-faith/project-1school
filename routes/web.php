@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\DemoController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\SchoolAdmin\AcademicSetupController;
 use App\Http\Controllers\SchoolAdmin\AttendanceController;
 use App\Http\Controllers\SchoolAdmin\ExamController;
 use App\Http\Controllers\SchoolAdmin\FeeCategoryController;
@@ -127,10 +128,21 @@ Route::middleware('auth')->group(function () {
             Route::get('exams/{exam}/marks',                 [ExamController::class, 'marks'])->middleware('permission:marks.view')->name('exams.marks');
             Route::post('exams/{exam}/marks',                [ExamController::class, 'saveMarks'])->middleware('permission:marks.entry')->name('exams.marks.save');
             Route::get('exams/{exam}/results',               [ExamController::class, 'results'])->middleware('permission:results.view')->name('exams.results');
-            Route::get('grade-scales',                       [ExamController::class, 'gradeScales'])->middleware('permission:exams.view')->name('grade-scales.index');
-            Route::post('grade-scales',                      [ExamController::class, 'saveGradeScale'])->middleware('permission:exams.edit')->name('grade-scales.store');
-            Route::put('grade-scales/{gradeScale}',          [ExamController::class, 'updateGradeScale'])->middleware('permission:exams.edit')->name('grade-scales.update');
-            Route::delete('grade-scales/{gradeScale}',       [ExamController::class, 'deleteGradeScale'])->middleware('permission:exams.edit')->name('grade-scales.destroy');
+            // School years, terms, score setups and grade scales
+            Route::get('academics/terms',                      [AcademicSetupController::class, 'terms'])->middleware('permission:exams.view')->name('academics.terms');
+            Route::post('academics/years',                     [AcademicSetupController::class, 'storeYear'])->middleware('permission:exams.edit')->name('academics.years.store');
+            Route::put('academics/terms/{term}',               [AcademicSetupController::class, 'updateTerm'])->middleware('permission:exams.edit')->name('academics.terms.update');
+            Route::post('academics/terms/{term}/current',      [AcademicSetupController::class, 'makeTermCurrent'])->middleware('permission:exams.edit')->name('academics.terms.current');
+            Route::get('academics/assessment',                 [AcademicSetupController::class, 'assessment'])->middleware('permission:exams.view')->name('academics.assessment');
+            Route::post('academics/assessment-schemes',        [AcademicSetupController::class, 'storeAssessmentScheme'])->middleware('permission:exams.edit')->name('academics.assessment-schemes.store');
+            Route::put('academics/assessment-schemes/{scheme}', [AcademicSetupController::class, 'updateAssessmentScheme'])->middleware('permission:exams.edit')->name('academics.assessment-schemes.update');
+            Route::delete('academics/assessment-schemes/{scheme}', [AcademicSetupController::class, 'destroyAssessmentScheme'])->middleware('permission:exams.edit')->name('academics.assessment-schemes.destroy');
+            Route::post('academics/grading-schemes',           [AcademicSetupController::class, 'storeGradingScheme'])->middleware('permission:exams.edit')->name('academics.grading-schemes.store');
+            Route::put('academics/grading-schemes/{scheme}',   [AcademicSetupController::class, 'updateGradingScheme'])->middleware('permission:exams.edit')->name('academics.grading-schemes.update');
+            Route::delete('academics/grading-schemes/{scheme}', [AcademicSetupController::class, 'destroyGradingScheme'])->middleware('permission:exams.edit')->name('academics.grading-schemes.destroy');
+            Route::put('academics/classes/{class}/scheme',     [AcademicSetupController::class, 'assignClass'])->middleware('permission:exams.edit')->name('academics.classes.scheme');
+            Route::put('academics/subjects/{subject}/scheme',  [AcademicSetupController::class, 'assignSubject'])->middleware('permission:exams.edit')->name('academics.subjects.scheme');
+            Route::redirect('grade-scales', '/school/academics/assessment')->middleware('permission:exams.view')->name('grade-scales.index');
 
             // Timetable
             Route::get('timetable',                      [TimetableController::class, 'index'])->middleware('permission:timetable.view')->name('timetable.index');
