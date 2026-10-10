@@ -38,8 +38,13 @@ class RegisterController extends Controller
             'password' => ['required', 'string', 'min:8', 'max:100', 'confirmed'],
         ]);
 
+        $useSupabase = config('app.login_driver') === 'supabase';
+        $supabaseId = null;
+
         try {
-            $supabaseId = $supabaseAuth->createUser($data['email'], $data['password']);
+            if ($useSupabase) {
+                $supabaseId = $supabaseAuth->createUser($data['email'], $data['password']);
+            }
         } catch (Throwable $e) {
             report($e);
 
@@ -49,7 +54,7 @@ class RegisterController extends Controller
         }
 
         try {
-            $user = DB::transaction(function () use ($data, $supabaseId) {
+            $user = DB::transaction(function () use ($data, $supabaseId, $useSupabase) {
                 $school = School::create([
                     'name' => $data['school_name'],
                     'slug' => $this->uniqueSlug($data['school_name']),
@@ -58,7 +63,8 @@ class RegisterController extends Controller
                     'status' => 'active',
                 ]);
 
-                // Laravel never keeps the real password; Supabase checks it.
+                // With Supabase, it checks the password and we keep a random
+                // placeholder. Otherwise the password is stored hashed here.
                 $user = User::create([
                     'school_id' => $school->id,
                     'name' => $data['name'],
@@ -66,7 +72,7 @@ class RegisterController extends Controller
                     'phone' => $data['phone'] ?? null,
                     'supabase_id' => $supabaseId,
                     'status' => 'active',
-                    'password' => Str::random(64),
+                    'password' => $useSupabase ? Str::random(64) : $data['password'],
                 ]);
 
                 $user->assignRole(Role::findOrCreate('school-admin', 'web'));
@@ -76,8 +82,10 @@ class RegisterController extends Controller
         } catch (Throwable $e) {
             report($e);
 
-            // Undo the Supabase login so the person can try again cleanly
-            $supabaseAuth->deleteUser($supabaseId);
+            // Undo the Supabase login (if any) so the person can try again cleanly
+            if ($supabaseId) {
+                $supabaseAuth->deleteUser($supabaseId);
+            }
 
             throw ValidationException::withMessages([
                 'email' => 'Something went wrong while setting up your school. Please try again.',

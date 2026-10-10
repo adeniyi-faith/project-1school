@@ -9,6 +9,7 @@ class LoginProtectionTest extends SecurityTestCase
 {
     public function test_repeated_wrong_passwords_get_blocked(): void
     {
+        config(['app.login_driver' => 'supabase']);
         RateLimiter::clear('x');
         Http::fake(['*' => Http::response(['error' => 'invalid'], 400)]);
 

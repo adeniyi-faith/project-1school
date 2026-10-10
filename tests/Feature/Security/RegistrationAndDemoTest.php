@@ -16,8 +16,66 @@ class RegistrationAndDemoTest extends SecurityTestCase
         'password_confirmation' => 'a-strong-pass',
     ];
 
+    public function test_by_default_registration_and_sign_in_use_the_local_database_only(): void
+    {
+        Http::fake(); // any call to Supabase would be recorded
+
+        $this->post('/register', $this->form)->assertRedirect(route('dashboard'));
+        $user = User::where('email', 'ada@brightfuture.test')->firstOrFail();
+        $this->assertNull($user->supabase_id);
+        $this->assertNotSame('a-strong-pass', $user->password);
+
+        auth()->logout();
+
+        $this->post('/login', ['email' => 'ada@brightfuture.test', 'password' => 'wrong-pass'])
+            ->assertSessionHasErrors('email');
+        $this->assertGuest();
+
+        $this->post('/login', ['email' => 'ada@brightfuture.test', 'password' => 'a-strong-pass'])
+            ->assertRedirect(route('dashboard'));
+        $this->assertAuthenticatedAs($user);
+
+        Http::assertNothingSent();
+    }
+
+    public function test_an_unknown_email_or_placeholder_password_cannot_sign_in_locally(): void
+    {
+        $u = User::factory()->create(['email' => 'p@example.test']);
+        // Store a raw, unhashed value, like the placeholder left by a demo or Supabase user
+        \Illuminate\Support\Facades\DB::table('users')->where('id', $u->id)->update(['password' => 'not-hashed-placeholder']);
+
+        $this->post('/login', ['email' => 'nobody@example.test', 'password' => 'whatever1'])
+            ->assertSessionHasErrors('email');
+        $this->post('/login', ['email' => 'p@example.test', 'password' => 'not-hashed-placeholder'])
+            ->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    public function test_make_admin_creates_a_super_admin_who_can_sign_in(): void
+    {
+        $this->artisan('make:admin', ['email' => 'boss@example.test'])
+            ->expectsQuestion('Choose a password (at least 8 characters)', 'super-secret-1')
+            ->assertSuccessful();
+
+        $user = User::where('email', 'boss@example.test')->firstOrFail();
+        $this->assertTrue($user->hasRole('super-admin'));
+
+        $this->post('/login', ['email' => 'boss@example.test', 'password' => 'super-secret-1'])
+            ->assertRedirect(route('dashboard'));
+    }
+
+    public function test_a_school_can_register_with_supabase_when_that_driver_is_on(): void
+    {
+        config(['app.login_driver' => 'supabase']);
+        Http::fake(['*/auth/v1/admin/users' => Http::response(['id' => 'sb-123'], 200)]);
+
+        $this->post('/register', $this->form)->assertRedirect(route('dashboard'));
+        $this->assertSame('sb-123', User::where('email', 'ada@brightfuture.test')->firstOrFail()->supabase_id);
+    }
+
     public function test_a_school_can_register_and_lands_signed_in_as_its_admin(): void
     {
+        config(['app.login_driver' => 'supabase']);
         Http::fake(['*/auth/v1/admin/users' => Http::response(['id' => 'sb-123'], 200)]);
 
         $this->post('/register', $this->form)->assertRedirect(route('dashboard'));
@@ -43,6 +101,7 @@ class RegistrationAndDemoTest extends SecurityTestCase
 
     public function test_a_supabase_failure_creates_no_school(): void
     {
+        config(['app.login_driver' => 'supabase']);
         Http::fake(['*' => Http::response(['msg' => 'nope'], 422)]);
 
         $this->post('/register', $this->form)->assertSessionHasErrors('email');
