@@ -1,127 +1,115 @@
+import { Link, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { useForm } from '@inertiajs/react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageSquare, Mail, Info } from 'lucide-react';
+import { PageHeader, Panel } from '@/components/app/kit';
+import { History, Info, Mail, MessageSquare } from 'lucide-react';
 
-interface SchoolClass { id: number; name: string; }
-interface Props { classes: SchoolClass[]; }
+interface Props {
+    classes: { id: number; name: string }[];
+    audiences: { value: string; label: string }[];
+    canSms: boolean;
+    canEmail: boolean;
+    smsReady: boolean;
+}
 
-export default function Blast({ classes }: Props) {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        channel:   'email',
-        audience:  'all_parents',
-        class_id:  '',
-        subject:   '',
-        message:   '',
+export default function Blast({ classes, audiences, canSms, canEmail, smsReady }: Props) {
+    const { data, setData, post, processing, errors } = useForm({
+        channel: canEmail ? 'email' : 'sms',
+        audience: 'all_parents',
+        class_id: '',
+        subject: '',
+        message: '',
     });
+    const classItems = classes.map(c => ({ value: String(c.id), label: c.name }));
+    const sms = data.channel === 'sms';
+    const texts = Math.max(1, Math.ceil(data.message.length / 160));
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        post('/school/communication/blast', {
-            onSuccess: () => reset(),
-        });
+        post('/school/communication/blast');
     }
+
+    const logLink = (
+        <Link href="/school/communication/sent" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+            <History className="size-4" /> Sent messages
+        </Link>
+    );
 
     return (
         <AppLayout title="SMS / Email Blast">
-            <div className="max-w-2xl space-y-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">SMS / Email Blast</h1>
-                    <p className="text-sm text-slate-500 mt-0.5">Send bulk notifications to parents, students, or staff</p>
-                </div>
+            <div className="mx-auto max-w-2xl space-y-6 pb-24 md:pb-0">
+                <PageHeader title="SMS / Email Blast" description="Send one message to many parents, students or staff. Afterwards you can see who it reached." actions={logLink} />
+                <div className="md:hidden">{logLink}</div>
 
-                {/* Info */}
-                <div className="flex gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 text-sm text-blue-700 dark:text-blue-300">
-                    <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>Messages are dispatched via queue. Large blasts may take a few minutes to complete.</span>
-                </div>
-
-                <Card>
-                    <CardHeader><CardTitle>Compose Blast</CardTitle></CardHeader>
-                    <CardContent>
-                        <form onSubmit={submit} className="space-y-5">
-                            {/* Channel */}
+                <form onSubmit={submit}>
+                    <Panel>
+                        <div className="space-y-5">
                             <div>
-                                <Label>Channel *</Label>
-                                <div className="flex gap-3 mt-2">
-                                    <button type="button"
-                                        onClick={() => setData('channel', 'email')}
-                                        className={`flex-1 flex items-center gap-2 p-3 rounded-lg border text-sm font-medium transition-colors ${data.channel === 'email' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
-                                    >
-                                        <Mail className="w-4 h-4" /> Email
-                                    </button>
-                                    <button type="button"
-                                        onClick={() => setData('channel', 'sms')}
-                                        className={`flex-1 flex items-center gap-2 p-3 rounded-lg border text-sm font-medium transition-colors ${data.channel === 'sms' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
-                                    >
-                                        <MessageSquare className="w-4 h-4" /> SMS
-                                    </button>
+                                <Label>Send by</Label>
+                                <div className="mt-2 flex gap-3">
+                                    {([['email', 'Email', Mail, canEmail], ['sms', 'SMS', MessageSquare, canSms]] as const).map(([value, label, Icon, allowed]) => allowed && (
+                                        <button key={value} type="button" onClick={() => setData('channel', value)}
+                                            className={`flex flex-1 items-center gap-2 rounded-lg border p-3 text-sm font-medium transition-colors ${data.channel === value ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300' : 'border-slate-200 hover:border-slate-300 dark:border-slate-700'}`}>
+                                            <Icon className="size-4" /> {label}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
-                            {/* Audience */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label>Audience *</Label>
-                                    <Select value={data.audience} onValueChange={v => setData('audience', v)}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all_parents">All Parents</SelectItem>
-                                            <SelectItem value="all_students">All Students</SelectItem>
-                                            <SelectItem value="all_staff">All Staff</SelectItem>
-                                            <SelectItem value="class">Specific Class</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                {data.audience === 'class' && (
-                                    <div>
-                                        <Label>Class</Label>
-                                        <Select value={data.class_id} onValueChange={v => setData('class_id', v)}>
-                                            <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
-                                            <SelectContent>
-                                                {classes.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                        {errors.class_id && <p className="text-xs text-red-500 mt-1">{errors.class_id}</p>}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Subject (email only) */}
-                            {data.channel === 'email' && (
-                                <div>
-                                    <Label>Subject *</Label>
-                                    <Input value={data.subject} onChange={e => setData('subject', e.target.value)} placeholder="Email subject line" />
-                                    {errors.subject && <p className="text-xs text-red-500 mt-1">{errors.subject}</p>}
+                            {sms && !smsReady && (
+                                <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                                    <Info className="mt-0.5 size-4 shrink-0" />
+                                    <span>No SMS provider is connected yet, so texts will not actually go out. They will show as "Failed" in Sent messages, and you can try them again once SMS is set up.</span>
                                 </div>
                             )}
 
-                            {/* Message */}
-                            <div>
-                                <Label>Message *</Label>
-                                <Textarea
-                                    value={data.message}
-                                    onChange={e => setData('message', e.target.value)}
-                                    rows={6}
-                                    placeholder={data.channel === 'sms' ? 'SMS text (max 160 chars per message)...' : 'Email body...'}
-                                />
-                                {data.channel === 'sms' && (
-                                    <p className="text-xs text-slate-400 mt-1">{data.message.length} characters</p>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-1.5">
+                                    <Label>Who to send to</Label>
+                                    <Select items={audiences} value={data.audience} onValueChange={v => v && setData('audience', v)}>
+                                        <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                                        <SelectContent>{audiences.map(a => <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                {data.audience === 'class' && (
+                                    <div className="space-y-1.5">
+                                        <Label>Class</Label>
+                                        <Select items={classItems} value={data.class_id} onValueChange={v => setData('class_id', v ?? '')}>
+                                            <SelectTrigger className="w-full"><SelectValue placeholder="Choose a class" /></SelectTrigger>
+                                            <SelectContent>{classItems.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                        {errors.class_id && <p className="text-xs text-red-500">{errors.class_id}</p>}
+                                    </div>
                                 )}
-                                {errors.message && <p className="text-xs text-red-500 mt-1">{errors.message}</p>}
+                            </div>
+                            <p className="-mt-2 text-xs text-slate-500">Parents get one message each, even with several children here. Only active students and current staff are included.</p>
+
+                            {!sms && (
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="subject">Subject</Label>
+                                    <Input id="subject" value={data.subject} onChange={e => setData('subject', e.target.value)} placeholder="e.g. Resumption date for second term" />
+                                    {errors.subject && <p className="text-xs text-red-500">{errors.subject}</p>}
+                                </div>
+                            )}
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="message">Message</Label>
+                                <Textarea id="message" value={data.message} onChange={e => setData('message', e.target.value)} rows={6} maxLength={1600}
+                                    placeholder={sms ? 'Keep texts short: 160 characters make one SMS.' : 'Write your email here.'} />
+                                {sms && <p className="text-xs text-slate-500">{data.message.length} characters, about {texts} SMS per person</p>}
+                                {errors.message && <p className="text-xs text-red-500">{errors.message}</p>}
                             </div>
 
-                            <Button type="submit" disabled={processing} className="w-full">
-                                {processing ? 'Queuing...' : `Send ${data.channel === 'sms' ? 'SMS' : 'Email'} Blast`}
+                            <Button type="submit" disabled={processing} className="w-full bg-indigo-600 text-white hover:bg-indigo-700">
+                                {processing ? 'Sending…' : `Send ${sms ? 'SMS' : 'email'}`}
                             </Button>
-                        </form>
-                    </CardContent>
-                </Card>
+                        </div>
+                    </Panel>
+                </form>
             </div>
         </AppLayout>
     );
