@@ -2,7 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { GraduationCap, DollarSign, Bell, TrendingUp, Users, User, CheckCircle, AlertTriangle } from 'lucide-react';
+import { GraduationCap, Banknote, Bell, TrendingUp, Users, User, CheckCircle, AlertTriangle } from 'lucide-react';
 
 interface Guardian { id: number; name: string; phone: string; email: string | null; }
 interface ChildAttendance { total: number; present: number; absent: number; percentage: number; }
@@ -71,12 +71,12 @@ function ChildCard({ child }: { child: Child }) {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-xs text-slate-500">Total Paid</p>
-                            <p className="font-semibold text-green-600">৳{child.fees.total_paid.toLocaleString()}</p>
+                            <p className="font-semibold text-green-600">₦{child.fees.total_paid.toLocaleString()}</p>
                         </div>
                         <div className="text-right">
                             <p className="text-xs text-slate-500">Balance Due</p>
                             <p className={cn('font-semibold', child.fees.balance > 0 ? 'text-red-600' : 'text-green-600')}>
-                                {child.fees.balance > 0 ? `৳${child.fees.balance.toLocaleString()}` : 'Clear'}
+                                {child.fees.balance > 0 ? `₦${child.fees.balance.toLocaleString()}` : 'Clear'}
                             </p>
                         </div>
                     </div>
@@ -158,7 +158,7 @@ export default function ParentDashboard({ linked, guardian, children, announceme
                                 <AlertTriangle className="w-4 h-4" />
                                 <div>
                                     <p className="text-xs text-white/80">Total Due</p>
-                                    <p className="font-bold">৳{totalDue.toLocaleString()}</p>
+                                    <p className="font-bold">₦{totalDue.toLocaleString()}</p>
                                 </div>
                             </div>
                         ) : (

@@ -150,7 +150,7 @@ export default function LibraryIssues({ issues, books, students, staffList, filt
                                         {iss.returned_date ? new Date(iss.returned_date).toLocaleDateString() : '—'}
                                     </TableCell>
                                     <TableCell className={`text-right text-sm ${Number(iss.fine) > 0 ? 'text-red-600 font-medium' : 'text-slate-400'}`}>
-                                        {Number(iss.fine) > 0 ? `৳${Number(iss.fine).toLocaleString()}` : '—'}
+                                        {Number(iss.fine) > 0 ? `₦${Number(iss.fine).toLocaleString()}` : '—'}
                                     </TableCell>
                                     <TableCell>
                                         <Badge className={`border-0 text-xs capitalize ${STATUS_STYLE[iss.status] ?? ''}`}>{iss.status}</Badge>
@@ -224,7 +224,7 @@ export default function LibraryIssues({ issues, books, students, staffList, filt
                             </div>
                         </div>
                         <div className="space-y-1.5">
-                            <Label>Fine Per Day (৳)</Label>
+                            <Label>Fine Per Day (₦)</Label>
                             <Input type="number" min="0" step="0.5" value={issueForm.fine_per_day} onChange={e => setIssueForm(p => ({ ...p, fine_per_day: e.target.value }))} />
                         </div>
                         <div className="space-y-1.5">
@@ -249,7 +249,7 @@ export default function LibraryIssues({ issues, books, students, staffList, filt
                         <div className="rounded-lg bg-slate-50 dark:bg-slate-900 p-3 text-sm space-y-1">
                             <p className="font-medium">{returnOpen?.book?.title}</p>
                             <p className="text-slate-500">Due: {returnOpen?.due_date ? new Date(returnOpen.due_date).toLocaleDateString() : '—'}</p>
-                            <p className="text-slate-500">Fine rate: ৳{returnOpen?.fine} / day</p>
+                            <p className="text-slate-500">Fine rate: ₦{returnOpen?.fine} / day</p>
                         </div>
                         <div className="space-y-1.5">
                             <Label>Return Date <span className="text-red-500">*</span></Label>

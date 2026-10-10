@@ -114,7 +114,7 @@ export default function TransportRoutes({ routes, vehicles, filters }: Props) {
                                         {r.vehicle ? (r.vehicle.name ?? r.vehicle.registration_no) : '—'}
                                     </TableCell>
                                     <TableCell className="text-sm text-slate-500">{r.stops?.length ?? 0} stops</TableCell>
-                                    <TableCell className="text-right text-sm font-medium">৳{Number(r.monthly_fee).toLocaleString()}</TableCell>
+                                    <TableCell className="text-right text-sm font-medium">₦{Number(r.monthly_fee).toLocaleString()}</TableCell>
                                     <TableCell className="text-center">
                                         <Badge className="bg-indigo-100 text-indigo-700 border-0 text-xs">{r.students_count}</Badge>
                                     </TableCell>
@@ -172,7 +172,7 @@ export default function TransportRoutes({ routes, vehicles, filters }: Props) {
                             </div>
                         </div>
                         <div className="space-y-1.5">
-                            <Label>Monthly Fee (৳)</Label>
+                            <Label>Monthly Fee (₦)</Label>
                             <Input type="number" min="0" value={form.monthly_fee} onChange={e => setForm(p => ({ ...p, monthly_fee: e.target.value }))} />
                         </div>
 

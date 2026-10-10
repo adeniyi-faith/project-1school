@@ -3,10 +3,9 @@ import { usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
+import MobileNav from '@/components/layout/MobileNav';
 import PageProgress from '@/components/layout/PageProgress';
 import { useAuthStore } from '@/Stores/useAuthStore';
-import { useUIStore } from '@/Stores/useUIStore';
-import { cn } from '@/lib/utils';
 import type { PageProps } from '@/Types';
 
 interface AppLayoutProps {
@@ -18,7 +17,6 @@ interface AppLayoutProps {
 export default function AppLayout({ children, title, breadcrumbs }: AppLayoutProps) {
     const { flash, faviconUrl } = usePage<PageProps>().props;
     const theme = useAuthStore((s) => s.theme);
-    const { sidebarOpen } = useUIStore();
 
     // Favicon sync
     useEffect(() => {
@@ -48,20 +46,26 @@ export default function AppLayout({ children, title, breadcrumbs }: AppLayoutPro
     }, [flash]);
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+        <div className="flex h-dvh overflow-hidden bg-background">
             <PageProgress />
-            {/* Sidebar */}
-            <div className={cn('hidden md:flex', !sidebarOpen && 'md:hidden')}>
+            <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-card focus:px-3 focus:py-2 focus:text-sm focus:shadow-lg">
+                Skip to content
+            </a>
+
+            {/* Sidebar (tablet and up) */}
+            <div className="hidden md:flex">
                 <Sidebar />
             </div>
 
             {/* Main */}
-            <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                 <Topbar title={title} breadcrumbs={breadcrumbs} />
-                <main className="flex-1 overflow-y-auto p-6">
-                    {children}
+                <main id="main" className="scroll-quiet flex-1 overflow-y-auto px-4 pb-28 pt-5 md:px-8 md:pb-10 md:pt-7">
+                    <div className="mx-auto w-full max-w-[1400px]">{children}</div>
                 </main>
             </div>
+
+            <MobileNav />
         </div>
     );
 }

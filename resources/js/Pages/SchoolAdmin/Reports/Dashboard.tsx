@@ -1,10 +1,12 @@
-import AppLayout from '@/Layouts/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, UserCog, CalendarCheck, DollarSign, Clock, AlertCircle } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
+import { Activity as ActivityIcon } from 'lucide-react';
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    LineChart, Line, Legend,
+    Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
+import AppLayout from '@/Layouts/AppLayout';
+import { EmptyState, PageHeader, PersonAvatar, Panel, StatStrip, type StatItem } from '@/components/app/kit';
+import { naira, nairaCompact } from '@/lib/format';
+import type { PageProps } from '@/Types';
 
 interface Activity { id: number; description: string; causer?: { name: string }; created_at: string; }
 interface Props {
@@ -22,119 +24,114 @@ interface Props {
     schools?:         number;
 }
 
-function KpiCard({ title, value, sub, icon: Icon, color }: { title: string; value: string | number; sub?: string; icon: React.ElementType; color: string }) {
+const AXIS = { fontSize: 12, fill: 'var(--color-slate-400)' };
+const GRID = 'color-mix(in oklch, var(--color-slate-400) 22%, transparent)';
+
+function ChartTip({ active, payload, label, money }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string; money?: boolean }) {
+    if (!active || !payload?.length) return null;
     return (
-        <Card>
-            <CardContent className="pt-5 pb-5">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm text-slate-500">{title}</p>
-                        <p className="text-2xl font-bold mt-1">{value}</p>
-                        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
-                    </div>
-                    <div className={`p-3 rounded-xl ${color}`}>
-                        <Icon className="w-6 h-6 text-white" />
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-lg dark:border-white/10 dark:bg-slate-800">
+            <p className="mb-1 font-medium text-slate-900 dark:text-white">{label}</p>
+            {payload.map((p) => (
+                <p key={p.name} className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                    <span className="size-2 rounded-full" style={{ background: p.color }} />
+                    <span className="capitalize">{p.name}</span>
+                    <span className="ml-auto pl-3 font-semibold tabular-nums text-slate-900 dark:text-white">{money ? naira(p.value) : p.value}</span>
+                </p>
+            ))}
+        </div>
     );
 }
 
+function timeAgo(iso: string) {
+    const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins} min ago`;
+    const hrs = Math.round(mins / 60);
+    if (hrs < 24) return `${hrs} hr ago`;
+    return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
+}
+
 export default function Dashboard({ role, totalStudents, totalStaff, attendancePct, monthFees, pendingFees, pendingHomework, todayCollection, feeChart, attChart, recentActivity, schools }: Props) {
-    const fmt = (n: number) => new Intl.NumberFormat().format(n);
+    const { auth } = usePage<PageProps>().props;
+    const fmt = (n: number) => new Intl.NumberFormat('en-NG').format(n);
+    const firstName = auth.user?.name?.split(' ')[0] ?? '';
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    const today = new Date().toLocaleDateString('en-NG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    const stats: StatItem[] = role === 'super-admin'
+        ? [
+            { label: 'Schools', value: fmt(schools ?? 0) },
+            { label: 'Students', value: fmt(totalStudents) },
+            { label: 'Revenue', value: nairaCompact(monthFees) },
+            { label: 'Outstanding fees', value: nairaCompact(pendingFees), tone: pendingFees > 0 ? 'warn' : 'default' },
+        ]
+        : [
+            { label: 'Students', value: fmt(totalStudents), hint: 'Active this session' },
+            { label: 'Staff', value: fmt(totalStaff), hint: 'Active members' },
+            { label: 'Present today', value: `${attendancePct}%`, tone: attendancePct >= 90 ? 'good' : attendancePct >= 75 ? 'default' : 'warn', hint: 'Of students marked' },
+            { label: 'Fees this month', value: nairaCompact(monthFees), hint: `${nairaCompact(pendingFees)} still outstanding` },
+        ];
+
+    const extras: StatItem[] = [];
+    if (role !== 'super-admin') extras.push({ label: 'Outstanding fees', value: nairaCompact(pendingFees), tone: pendingFees > 0 ? 'warn' : 'default' });
+    if (role === 'accountant' && todayCollection !== undefined) extras.push({ label: 'Collected today', value: naira(todayCollection), tone: 'good' });
+    if (['school-admin', 'principal', 'teacher'].includes(role)) extras.push({ label: 'Homework pending', value: fmt(pendingHomework) });
 
     return (
-        <AppLayout title="Reports Dashboard">
+        <AppLayout title="Dashboard">
             <div className="space-y-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Analytics Dashboard</h1>
-                    <p className="text-sm text-slate-500 mt-0.5">School performance overview</p>
+                <PageHeader title={`${greeting}${firstName ? `, ${firstName}` : ''}`} description={today} />
+
+                <StatStrip items={stats} />
+                {extras.length > 0 && role !== 'super-admin' && <StatStrip items={extras} className={extras.length === 1 ? 'sm:max-w-xs' : ''} />}
+
+                <div className="grid gap-4 lg:grid-cols-2">
+                    <Panel title="Fees collected" description="Last 6 months">
+                        {feeChart.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={240}>
+                                <BarChart data={feeChart} margin={{ top: 8, right: 4, left: -8, bottom: 0 }} barCategoryGap="28%">
+                                    <CartesianGrid vertical={false} stroke={GRID} />
+                                    <XAxis dataKey="month" tick={AXIS} axisLine={false} tickLine={false} />
+                                    <YAxis tick={AXIS} axisLine={false} tickLine={false} tickFormatter={nairaCompact} width={64} />
+                                    <Tooltip cursor={{ fill: 'color-mix(in oklch, var(--color-indigo-500) 8%, transparent)' }} content={<ChartTip money />} />
+                                    <Bar dataKey="amount" name="Collected" fill="var(--color-indigo-500)" radius={[5, 5, 0, 0]} maxBarSize={36} isAnimationActive={false} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : <EmptyState icon={ActivityIcon} title="No payments yet" text="Collected fees will chart here." />}
+                    </Panel>
+
+                    <Panel title="Attendance" description="Students present and absent, last 7 days">
+                        {attChart.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={240}>
+                                <LineChart data={attChart} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                                    <CartesianGrid vertical={false} stroke={GRID} />
+                                    <XAxis dataKey="day" tick={AXIS} axisLine={false} tickLine={false} />
+                                    <YAxis tick={AXIS} axisLine={false} tickLine={false} allowDecimals={false} />
+                                    <Tooltip content={<ChartTip />} />
+                                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+                                    <Line type="monotone" dataKey="present" name="Present" stroke="var(--color-indigo-500)" strokeWidth={2.25} dot={false} activeDot={{ r: 4 }} isAnimationActive={false} />
+                                    <Line type="monotone" dataKey="absent" name="Absent" stroke="oklch(0.65 0.19 22)" strokeWidth={2.25} dot={false} activeDot={{ r: 4 }} isAnimationActive={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        ) : <EmptyState icon={ActivityIcon} title="No attendance marked" text="Daily registers will chart here." />}
+                    </Panel>
                 </div>
 
-                {/* KPI Cards */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {role === 'super-admin' ? (
-                        <>
-                            <KpiCard title="Total Schools"   value={schools ?? 0}          icon={Users}        color="bg-indigo-500" />
-                            <KpiCard title="Total Students"  value={fmt(totalStudents)}     icon={Users}        color="bg-green-500" />
-                            <KpiCard title="Total Revenue"   value={`$${fmt(monthFees)}`}   icon={DollarSign}   color="bg-blue-500" />
-                        </>
-                    ) : (
-                        <>
-                            <KpiCard title="Total Students"  value={fmt(totalStudents)}     icon={Users}        color="bg-indigo-500" />
-                            <KpiCard title="Active Staff"    value={fmt(totalStaff)}        icon={UserCog}      color="bg-violet-500" />
-                            <KpiCard title="Today Attendance" value={`${attendancePct}%`}   icon={CalendarCheck} color="bg-green-500" />
-                            <KpiCard title="This Month Fees" value={`$${fmt(monthFees)}`}   icon={DollarSign}   color="bg-blue-500" />
-                        </>
-                    )}
-                    <KpiCard title="Outstanding Fees"  value={`$${fmt(pendingFees)}`}      icon={AlertCircle}  color="bg-orange-500" />
-                    {role === 'accountant' && todayCollection !== undefined && (
-                        <KpiCard title="Today Collection" value={`$${fmt(todayCollection)}`} icon={DollarSign} color="bg-teal-500" />
-                    )}
-                    {(role === 'school-admin' || role === 'principal' || role === 'teacher') && (
-                        <KpiCard title="Homework Pending" value={pendingHomework}           icon={Clock}        color="bg-yellow-500" />
-                    )}
-                </div>
-
-                <div className="grid gap-6 lg:grid-cols-2">
-                    {/* Fee Collection Chart */}
-                    {feeChart.length > 0 && (
-                        <Card>
-                            <CardHeader><CardTitle>Fee Collection (Last 6 Months)</CardTitle></CardHeader>
-                            <CardContent>
-                                <ResponsiveContainer width="100%" height={220}>
-                                    <BarChart data={feeChart}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                                        <YAxis tick={{ fontSize: 11 }} />
-                                        <Tooltip formatter={(v: number) => [`$${fmt(v)}`, 'Collected']} />
-                                        <Bar dataKey="amount" fill="#6366f1" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Attendance Chart */}
-                    {attChart.length > 0 && (
-                        <Card>
-                            <CardHeader><CardTitle>Attendance — Last 7 Days</CardTitle></CardHeader>
-                            <CardContent>
-                                <ResponsiveContainer width="100%" height={220}>
-                                    <LineChart data={attChart}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                        <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                                        <YAxis tick={{ fontSize: 11 }} />
-                                        <Tooltip />
-                                        <Legend />
-                                        <Line type="monotone" dataKey="present" stroke="#22c55e" strokeWidth={2} dot={{ r: 4 }} isAnimationActive={false} />
-                                        <Line type="monotone" dataKey="absent"  stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} isAnimationActive={false} />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
-
-                {/* Recent Activity */}
                 {recentActivity && recentActivity.length > 0 && (
-                    <Card>
-                        <CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader>
-                        <CardContent className="divide-y divide-slate-100 dark:divide-slate-800 p-0">
-                            {recentActivity.map((a) => (
-                                <div key={a.id} className="flex items-center gap-3 px-4 py-2.5">
-                                    <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-xs font-semibold text-indigo-600">
-                                        {(a.causer?.name ?? '?')[0].toUpperCase()}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm text-slate-700 dark:text-slate-300">{a.description}</p>
-                                        <p className="text-xs text-slate-400">{a.causer?.name} · {new Date(a.created_at).toLocaleString()}</p>
-                                    </div>
+                    <Panel title="Recent activity" flush bodyClassName="divide-y divide-slate-100 dark:divide-white/[0.06]">
+                        {recentActivity.map((a) => (
+                            <div key={a.id} className="flex items-center gap-3 px-5 py-3">
+                                <PersonAvatar name={a.causer?.name ?? '?'} className="size-8" />
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm text-slate-800 dark:text-slate-200">{a.description}</p>
+                                    <p className="text-xs text-slate-500">{a.causer?.name}</p>
                                 </div>
-                            ))}
-                        </CardContent>
-                    </Card>
+                                <time className="shrink-0 text-xs text-slate-400" dateTime={a.created_at}>{timeAgo(a.created_at)}</time>
+                            </div>
+                        ))}
+                    </Panel>
                 )}
             </div>
         </AppLayout>

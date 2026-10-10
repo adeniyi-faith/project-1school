@@ -215,7 +215,7 @@ class LibraryController extends Controller
             $bookIssue->book->increment('available_copies');
         });
 
-        $msg = $fine > 0 ? "Book returned. Fine: ৳{$fine}" : 'Book returned successfully.';
+        $msg = $fine > 0 ? "Book returned. Fine: ₦{$fine}" : 'Book returned successfully.';
         return back()->with('success', $msg);
     }
 

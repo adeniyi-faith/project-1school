@@ -33,7 +33,7 @@ const TABS = [
 type TabId = typeof TABS[number]['id'];
 
 const TIMEZONES = [
-    'UTC', 'Asia/Dhaka', 'Asia/Kolkata', 'Asia/Karachi', 'Asia/Dubai',
+    'Africa/Lagos', 'UTC', 'Asia/Dhaka', 'Asia/Kolkata', 'Asia/Karachi', 'Asia/Dubai',
     'America/New_York', 'America/Chicago', 'America/Los_Angeles',
     'Europe/London', 'Europe/Berlin', 'Africa/Cairo', 'Australia/Sydney',
 ];

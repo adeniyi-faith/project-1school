@@ -25,7 +25,7 @@ export default function StaffEdit({ staff, departments, designations }: Props) {
         date_of_birth:  staff.date_of_birth ?? '',
         blood_group:    staff.blood_group ?? '',
         religion:       staff.religion ?? '',
-        nationality:    staff.nationality ?? 'Bangladeshi',
+        nationality:    staff.nationality ?? 'Nigerian',
         phone:          staff.phone ?? '',
         email:          staff.email ?? '',
         address:        staff.address ?? '',
