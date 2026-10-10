@@ -32,10 +32,11 @@ interface DemoAccount {
 interface LoginProps extends PageProps {
     showDemo: boolean;
     demoAccounts: DemoAccount[];
+    demoEnabled?: boolean;
 }
 
 export default function Login() {
-    const { flash, errors: serverErrors, showDemo, demoAccounts } = usePage<LoginProps>().props;
+    const { flash, errors: serverErrors, showDemo, demoAccounts, demoEnabled } = usePage<LoginProps>().props;
 
     const {
         register,
@@ -217,7 +218,20 @@ export default function Login() {
                             </Button>
                         </form>
 
-                        <p className="mt-8 text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+                        <div className="mt-6 space-y-1 text-sm text-slate-600 dark:text-slate-400">
+                            <p>
+                                New school?{' '}
+                                <a href="/register" className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">Register your school</a>
+                            </p>
+                            {demoEnabled && (
+                                <p>
+                                    Just looking?{' '}
+                                    <a href="/demo" className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">Try the demo</a>
+                                </p>
+                            )}
+                        </div>
+
+                        <p className="mt-6 text-xs leading-relaxed text-slate-400 dark:text-slate-500">
                             Your school decides who can sign in. If you can't get in, ask the school office to check your account.
                         </p>
                     </div>

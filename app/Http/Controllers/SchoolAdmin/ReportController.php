@@ -209,11 +209,12 @@ class ReportController extends Controller
         $classPerformance = [];
         if ($request->exam_id) {
             $classPerformance = SchoolClass::where('school_id', $sid)
-                ->with(['marks' => fn ($q) => $q->where('exam_id', $request->exam_id)])
                 ->get()
                 ->map(function ($class) use ($request) {
                     $marks = Mark::whereHas('student', fn ($q) => $q->where('class_id', $class->id))
                         ->where('exam_id', $request->exam_id)
+                        ->where(fn ($q) => $q->whereNotNull('marks_obtained')->orWhere('is_absent', true))
+                        ->with('subject:id,full_marks,pass_marks')
                         ->get();
                     $total   = $marks->count();
                     $passed  = $marks->where('is_pass', true)->count();
@@ -234,7 +235,11 @@ class ReportController extends Controller
             $subjectPerformance = Subject::where('school_id', $sid)
                 ->get()
                 ->map(function ($subject) use ($request) {
-                    $marks = Mark::where('subject_id', $subject->id)->where('exam_id', $request->exam_id)->get();
+                    $marks = Mark::where('subject_id', $subject->id)
+                        ->where('exam_id', $request->exam_id)
+                        ->where(fn ($q) => $q->whereNotNull('marks_obtained')->orWhere('is_absent', true))
+                        ->with('subject:id,full_marks,pass_marks')
+                        ->get();
                     return [
                         'subject'     => $subject->name,
                         'avg_percent' => $marks->count() ? round($marks->avg('percentage'), 1) : 0,
@@ -367,7 +372,17 @@ class ReportController extends Controller
 
     public function auditLog(Request $request)
     {
+        $sid = $this->getSchoolId();
+
+        // Only this school's history: entries stamped with the school, or made by one of its users
         $logs = Activity::with('causer:id,name')
+            ->where(function ($q) use ($sid) {
+                $q->where('properties->school_id', $sid)
+                  ->orWhere(function ($q) use ($sid) {
+                      $q->where('causer_type', \App\Models\User::class)
+                        ->whereIn('causer_id', \App\Models\User::withoutGlobalScopes()->where('school_id', $sid)->select('id'));
+                  });
+            })
             ->when($request->causer_id, fn ($q) => $q->where('causer_id', $request->causer_id))
             ->when($request->subject_type, fn ($q) => $q->where('subject_type', 'like', '%' . $request->subject_type . '%'))
             ->when($request->from_date, fn ($q) => $q->whereDate('created_at', '>=', $request->from_date))

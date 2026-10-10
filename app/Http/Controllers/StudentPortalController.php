@@ -281,7 +281,7 @@ class StudentPortalController extends Controller
 
         $exams = Exam::where('school_id', $student->school_id)
             ->where('class_id', $student->class_id)
-            ->with(['marks' => fn ($q) => $q->where('student_id', $student->id)->with('subject:id,name')])
+            ->with(['marks' => fn ($q) => $q->where('student_id', $student->id)->with('subject:id,name,full_marks,pass_marks')])
             ->orderByDesc('start_date')
             ->get()
             ->filter(fn ($e) => $e->marks->isNotEmpty())

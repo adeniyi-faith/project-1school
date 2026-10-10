@@ -1,0 +1,79 @@
+name: Deploy to cPanel
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install NPM dependencies and build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload compiled assets to cPanel via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USERNAME }}
+          password: ${{ secrets.CPANEL_PASSWORD }}
+          port: 22
+          source: "public/build"
+          target: "/home2/rainofbl/public_html/school.criticalinfo.com.ng"
+          strip_components: 0
+
+      - name: Run post-deployment commands via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USERNAME }}
+          password: ${{ secrets.CPANEL_PASSWORD }}
+          port: 22
+          script: |
+            # Pick a PHP 8.4+ command-line program that has the database driver (PDO + pdo_mysql).
+            # The first match wins; every candidate is listed in this log so we can see what the server has.
+            PHP=""
+            for CAND in /opt/cpanel/ea-php85/root/usr/bin/php /opt/cpanel/ea-php84/root/usr/bin/php /opt/alt/php85/usr/bin/php /opt/alt/php84/usr/bin/php /usr/local/bin/ea-php84 /usr/local/bin/php $(command -v php 2>/dev/null); do
+              [ -x "$CAND" ] || continue
+              VER=$("$CAND" -r 'echo PHP_VERSION;' 2>/dev/null)
+              HAS=$("$CAND" -r 'echo (class_exists("PDO") && extension_loaded("pdo_mysql")) ? "yes" : "no";' 2>/dev/null)
+              echo "PHP candidate: $CAND version=$VER pdo_mysql=$HAS"
+              if [ -z "$PHP" ] && [ "$HAS" = "yes" ] && "$CAND" -r 'exit(version_compare(PHP_VERSION, "8.4.0", ">=") ? 0 : 1);' 2>/dev/null; then
+                PHP="$CAND"
+              fi
+            done
+            if [ -z "$PHP" ]; then
+              echo "ERROR: no PHP 8.4+ with PDO and pdo_mysql found. In cPanel > Select PHP Version (or MultiPHP INI Editor), enable PDO and pdo_mysql for PHP 8.4."
+              exit 1
+            fi
+            echo "Using PHP: $PHP"
+            # Make plain "php" mean the chosen PHP, including inside composer's own steps
+            mkdir -p "$HOME/.php-shim" && ln -sf "$PHP" "$HOME/.php-shim/php"
+            export PATH="$HOME/.php-shim:$HOME/bin:$PATH"
+            cd /home2/rainofbl/public_html/school.criticalinfo.com.ng
+            # Match the server's code to GitHub exactly (drops any hand edits made on the server)
+            git fetch origin main
+            git reset --hard origin/main
+            $PHP -d allow_url_fopen=1 -d memory_limit=-1 $HOME/bin/composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+            $PHP artisan storage:link 2>/dev/null || true
+            $PHP artisan config:clear
+            # Update the database tables, then make sure the roles and permissions exist
+            $PHP artisan migrate --force
+            $PHP artisan db:seed --class=RolePermissionSeeder --force
+            # Fill the public demo school with sample data, once, when DEMO_ENABLED=true
+            $PHP artisan demo:fill
+            $PHP artisan config:cache
+            $PHP artisan route:cache
+            $PHP artisan view:cache

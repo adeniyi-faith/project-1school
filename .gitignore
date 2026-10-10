@@ -1,3 +1,45 @@
+<<<<<<< HEAD
+# cPanel & Server Defaults
+cgi-bin/
+.well-known/
+php.ini
+.user.ini
+
+# Environment & Sensitive Credentials
+.env
+.env.backup
+.env.production
+.env.local
+
+# Laravel Defaults
+/vendor/
+/node_modules/
+/public/storage
+/public/hot
+/storage/*.key
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+.phpunit.result.cache
+
+# WordPress Core Folders
+wp/wp-admin/
+wp/wp-includes/
+wp/wp-content/themes/*
+wp/wp-content/plugins/*
+
+# Exceptions (Keep specific themes/plugins if needed, 
+e.g. custom builds)
+# !wp/wp-content/plugins/your-custom-plugin/
+# !wp/wp-content/themes/your-custom-theme/
+
+# Uploads & Caches
+wp/wp-content/uploads/
+wp/wp-content/cache/
+wp/wp-content/wfcache/
+
+=======
 *.log
 .DS_Store
 .env
@@ -22,3 +64,4 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+>>>>>>> origin/main

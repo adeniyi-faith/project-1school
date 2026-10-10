@@ -59,7 +59,7 @@ class ParentPortalController extends Controller
             /* Recent marks */
             $marks = Mark::where('school_id', $student->school_id)
                 ->where('student_id', $student->id)
-                ->with(['exam:id,name', 'subject:id,name'])
+                ->with(['exam:id,name', 'subject:id,name,full_marks,pass_marks'])
                 ->orderByDesc('created_at')
                 ->limit(5)
                 ->get()
