@@ -1,8 +1,14 @@
-# xgenious School Management System — Requirements Overview
+# SchoolRuns School Management System — Requirements Overview
 
 **Version:** 1.0.0
-**Status:** Draft — Claude Code Ready
+**Status:** Built and running; this file was corrected in October 2026 to match the code
 **Date:** 2026
+
+> **Read this first.** This overview used to describe an earlier plan (Laravel 11, Redis,
+> Horizon, Sanctum, Stripe, 2FA, a `/api/v1` API, a mobile app). Those were **not built**.
+> The tables below now describe what exists. The module files in `./modules/` are still the
+> original specs: use them as the *goal* for each area, and check `CLAUDE.md` ("What is built")
+> and the code before assuming a feature exists.
 
 ---
 
@@ -17,22 +23,24 @@ A fully-featured, production-ready, free open-source School Management System (S
 - Enable white-label deployment for agency clients
 - Build with modern, maintainable stack
 
-## Tech Stack
+## Tech Stack (what is actually used)
 
 | Layer | Technology | Purpose |
 |---|---|---|
-| Backend | Laravel 11 (PHP 8.3) | REST API, Auth, Business Logic, Queue, Jobs |
-| Frontend | React 18 + TypeScript | SPA via Inertia.js |
-| Bridge | Inertia.js | Server-driven SPA — replaces traditional API responses for pages |
-| State | Zustand | Global client state (auth user, notifications, UI) |
-| UI | shadcn/ui + Tailwind CSS | Accessible component library, dark mode support |
-| Database | MySQL 8 / PostgreSQL 16 | Primary relational store |
-| Cache | Redis | Sessions, queue, rate limiting, real-time |
-| Queue | Laravel Horizon | Email, SMS, PDF generation jobs |
-| Storage | Laravel Storage (S3-compat) | Documents, avatars, reports |
-| Auth | Laravel Sanctum + Spatie RBAC | API tokens + role/permission guard |
-| PDF | Laravel DomPDF / Snappy | Report cards, fee receipts, payslips |
-| Testing | PestPHP + Vitest + Playwright | Unit, integration, E2E |
+| Backend | Laravel 13 (PHP 8.4 in practice) | Pages, login handling, business logic, jobs |
+| Frontend | React 19 + TypeScript, Vite, Tailwind CSS 4 | Pages served through Inertia.js |
+| Bridge | Inertia.js 3 | Server-driven pages — no separate page API |
+| State | Zustand | Small global client state (signed-in user, UI, attendance) |
+| UI | shadcn-style components on Base UI | Accessible components, dark mode |
+| Login | Supabase (password check) + Laravel session | Supabase confirms the password; Laravel decides access |
+| Permissions | Spatie laravel-permission | Roles and per-action permissions |
+| Audit | Spatie laravel-activitylog | Who changed fees, marks, payroll, users |
+| Database | Supabase Postgres (production), SQLite (local/tests) | Primary store |
+| Cache / sessions / queue | Database drivers (queue is `sync` unless changed) | No Redis |
+| Storage | Laravel Storage — `supabase` (S3 style) and a `private` disk for documents | Files |
+| PDF | Laravel DomPDF | Receipts, payslips, exports (generated in the request) |
+| Hosting | Railway | `railway.json`, `Procfile` |
+| Testing | PHPUnit | Backend only; no frontend tests, no CI yet |
 
 ## Core Modules (19 Total)
 
@@ -60,30 +68,21 @@ A fully-featured, production-ready, free open-source School Management System (S
 | 18 | [Inventory & Asset Management](./modules/18-inventory-asset-management.md) | Sprint 12B | Phase 5 |
 | 19 | [Subscription & Package Management](./modules/19-subscription-package-management.md) | Sprint 17B | Phase 7 |
 
-## Development Roadmap
+## Where the project stands
 
-| Phase | Sprint | Focus |
+Modules 01–14 and 16–19 were built across the original sprints (see `CLAUDE.md` for the
+per-area status and caveats). Module 15 (Mobile PWA & API) was removed from scope.
+The online payments sprint (Sprint 10), the API and PWA work, the Vitest/Playwright/CI test setup
+and the Docker launch pieces from the original roadmap were **not delivered**.
+
+Since then, the work is organised in four phases (checklist kept with the project files):
+
+| Phase | Goal | State |
 |---|---|---|
-| Phase 1 | Sprint 1 | Infrastructure: Laravel setup, MySQL, Redis, Sanctum, Spatie RBAC, Inertia + React + TS, shadcn/ui, Zustand, base layout, dark mode, auth pages |
-| Phase 1 | Sprint 2 | Auth & Tenancy: Multi-school seed, super-admin scaffold, school CRUD, global school_id scope, activity log, role/permission seeder |
-| Phase 2 | Sprint 3 | School Config: School profile, classes, sections, subjects, shifts, holidays |
-| Phase 2 | Sprint 4 | Students: Admission wizard, student list, profile tabs, document upload, bulk import, ID card PDF |
-| Phase 2 | Sprint 5 | HR Basic: Staff registration, staff list, departments, designations, staff profile |
-| Phase 3 | Sprint 6 | Attendance: Daily mark, calendar view, QR scan, parent SMS notification, staff attendance |
-| Phase 3 | Sprint 7 | Scheduling: Timetable builder (DnD), conflict detection, exam schedule, room management, iCal export |
-| Phase 3 | Sprint 8 | Exams: Examination setup, marks entry, grading system, report card PDF, merit list, tabulation sheet |
-| Phase 4 | Sprint 9 | Fees: Fee categories, structures, collection UI, receipt PDF, outstanding report, fine job |
-| Phase 4 | Sprint 10 | Online Payments: Stripe integration, webhook handler, payment confirmation, dashboard widget |
-| Phase 4 | Sprint 11 | HR Advanced: Leave workflow, payroll structure, monthly payroll generation, payslip PDF |
-| Phase 5 | Sprint 12 | Library: Book catalog, ISBN lookup, issue/return, fine, e-library upload |
-| Phase 5 | Sprint 13 | Transport: Routes, vehicle fleet, student assignment, driver portal, live tracking stub |
-| Phase 5 | Sprint 14 | Academics: Homework assignment/submission, lesson plan, syllabus upload, online class links |
-| Phase 6 | Sprint 15 | Communication: Announcements, messaging, noticeboard, SMS/email blast, push notifications, parent portal |
-| Phase 6 | Sprint 16 | Reports: Custom report builder, all dashboards per role, audit log UI, export PDF/CSV |
-| Phase 7 | Sprint 17 | API & PWA: PWA manifest, service worker, offline support, API keys, webhook config, Swagger docs |
-| Phase 7 | Sprint 18 | Testing & CI: PestPHP unit tests, Vitest component tests, Playwright E2E, GitHub Actions CI/CD |
-| Phase 7 | Sprint 19 | Optimization: N+1 fixes, index review, lazy loading, security hardening, Horizon tuning |
-| Phase 7 | Sprint 20 | Launch Prep: README, Docker compose, update script, demo seeder, video walkthrough plan |
+| 1 Foundation | Close security gaps (school separation, permissions, login limits, private files, audit trail), fix broken report, correct these docs | Done |
+| 2 Nigerianization | Terms, continuous assessment, stored results with positions, invoices and payment ledger | Next |
+| 3 Education OS | Admission-to-enrolment, promotion, report cards, SMS, payment gateway, CBT | Planned |
+| 4 Scale readiness | Queue PDFs, Redis, safe ID generation, split fat controllers into services | Planned |
 
 ## Non-Functional Requirements Summary
 
@@ -98,15 +97,15 @@ A fully-featured, production-ready, free open-source School Management System (S
 - Eloquent parameterized queries only (no raw SQL injection risk)
 - React default XSS escaping (no dangerouslySetInnerHTML)
 - File uploads: MIME validated, stored outside webroot
-- API rate limit: 60 req/min per token
-- 2FA enforced for Admin and Accountant roles
-- Audit log for all financial and role changes
+- No public API exists yet (target only)
+- 2FA: **not built** (target)
+- Audit log: built for fee payments, marks, payroll, user changes and role changes
+- Login: 5 wrong tries per email + device, then a short wait
+- Every `/school` screen is guarded by a specific permission
 
 ### Scalability
-- Stateless app servers + Redis sessions (horizontal scaling)
-- Horizon queue workers (auto-restart on failure)
-- S3-compatible storage (MinIO self-hosted / AWS S3)
-- Read replicas supported via Laravel DB::connection('read')
+- **Today:** database sessions/cache/queue, one app server on Railway, Supabase storage. Not ready for many busy schools yet.
+- **Target (Phase 4):** Redis for cache/sessions/queue, real queue workers, PDFs on the queue.
 
 ### Accessibility
 - shadcn/ui ARIA-compliant components
@@ -119,7 +118,7 @@ A fully-featured, production-ready, free open-source School Management System (S
 - RTL support (Arabic, Urdu) via Tailwind RTL plugin
 
 ## Architecture Principles
-- **Modular monolith**: `app/Modules/{ModuleName}/{Controllers,Models,Services,Requests,Resources}`
-- **Multi-tenancy**: `school_id` global scope on every model and query
-- **Inertia-first**: pages served via Inertia; REST endpoints only for external API consumers and AJAX sub-requests
-- **Queue everything**: PDF generation, bulk imports, SMS/email dispatched via Horizon
+- **Single-folder monolith**: `app/Http/Controllers/{SchoolAdmin,SuperAdmin,...}`, flat `app/Models`. The `app/Modules/*` layout in the old plan was never used; moving to services is Phase 4 work
+- **Multi-tenancy**: `school_id` + the `SchoolScope` rule on every school-owned model (four platform-level models are the documented exceptions)
+- **Inertia-first**: pages served via Inertia; there is no REST API
+- **Queue slow work (target):** today PDFs run inside the request and message blasts use a stub job. Moving them to a real queue is Phase 4
