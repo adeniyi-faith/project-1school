@@ -14,7 +14,7 @@ Teacher, Accountant, Librarian, Receptionist, Driver, Warden, Store Manager, Stu
 
 Long-term direction: a Nigerian-first "Education OS" (three terms, continuous assessment,
 WAEC-style report cards, Naira payments). The build checklist for that lives in the project's
-shared files; Phase 1 (safety fixes) is finished. Phase 2 (terms, score/grade setup, stored term results, invoices, the payment ledger, scholarships, and moving old fee payments into invoices) is finished. Phase 3 is under way: admission inquiry → entrance exam/interview → offer → enrolment is done, and so is year-end promotion (move up, repeat, graduate).
+shared files; Phase 1 (safety fixes) is finished. Phase 2 (terms, score/grade setup, stored term results, invoices, the payment ledger, scholarships, and moving old fee payments into invoices) is finished. Phase 3 is under way: admission inquiry → entrance exam/interview → offer → enrolment is done, year-end promotion (move up, repeat, graduate) and report cards (term and full year) are done too.
 
 ---
 
@@ -34,7 +34,7 @@ shared files; Phase 1 (safety fixes) is finished. Phase 2 (terms, score/grade se
 | Files | Laravel Storage. Disks: `local`, `public`, `supabase` (S3 style), and `private` (documents) |
 | PDF | barryvdh/laravel-dompdf, generated inside the web request |
 | Queue / cache / sessions | Database drivers. `QUEUE_CONNECTION=sync` by default (jobs run inside the request). The `Procfile` starts `queue:work`; set `QUEUE_CONNECTION=database` in production to use it |
-| Hosting | Railway (`railway.json`, `Procfile`). `vercel.json` is left over from an earlier attempt |
+| Hosting | **cPanel** (the live site). After each update someone runs `php artisan migrate --force` (and the seeder when permissions change) by hand in cPanel Terminal, and uploads `public/build`. `railway.json`, `Procfile` and `vercel.json` are left over from earlier attempts |
 | Tests | PHPUnit 12 (`php artisan test`). There are no frontend tests and no CI workflow yet |
 
 **Not in this project (despite older docs):** Laravel 11, `app/Modules/*` folders, Redis,
@@ -55,7 +55,7 @@ app/
   Models/            flat folder, ~60 models
   Scopes/SchoolScope.php      the "only my school" rule
   Traits/BelongsToSchool.php  adds that rule + fills school_id on create
-  Services/          GradingService, TermResultService (works out and stores term results), FeeLedgerService (every change to what a student owes, plus money-in and still-owed totals), LegacyFeeImporter (copies old fee_payments into invoices, and undoes it), SupabaseAuthService
+  Services/          GradingService, TermResultService (works out and stores term results), FeeLedgerService (every change to what a student owes, plus money-in and still-owed totals), LegacyFeeImporter (copies old fee_payments into invoices, and undoes it), PromotionService (year-end moves), ReportCardService (data for the report card PDFs), SupabaseAuthService
   Support/SchoolDefaults.php  starting terms, score setup and grade scales for every school
   Jobs/              SendSmsBlast (stub: writes to the log), SendEmailBlast
 routes/web.php       ONE file for all routes (no api.php)
@@ -84,7 +84,8 @@ Everything below exists as working screens unless a caveat says otherwise.
 | Attendance | Built | Student and staff, daily marking, calendar |
 | Timetable | Built | |
 | Exams (single marks) | Built | The older per-exam marks screen still works (one number per student/subject/exam), graded with the class's scale. Parents and students only see marks from exams marked published or completed |
-| Term results | Built | `/school/results`: scores entered per score part (CA1, CA2, Exam ...) per class and term (`subject_scores`), stored in `term_results` / `term_result_summaries` with subject and class positions (ties share a place), averages, highest/lowest, and a version number. Worked out again on every save (`TermResultService`). Each class/term is a `result_sheet` with steps draft → submitted → approved → published → locked (`ResultSheet::ACTIONS`; submit needs `marks.entry`, approve/publish `results.publish`, lock `results.lock`). Scores only change in draft. Behaviour (affective) and skills (psychomotor) ratings 1–5. Portals show only published/locked results. No report card PDF yet (Phase 3) |
+| Term results | Built | `/school/results`: scores entered per score part (CA1, CA2, Exam ...) per class and term (`subject_scores`), stored in `term_results` / `term_result_summaries` with subject and class positions (ties share a place), averages, highest/lowest, and a version number. Worked out again on every save (`TermResultService`). Each class/term is a `result_sheet` with steps draft → submitted → approved → published → locked (`ResultSheet::ACTIONS`; submit needs `marks.entry`, approve/publish `results.publish`, lock `results.lock`). Scores only change in draft. Behaviour (affective) and skills (psychomotor) ratings 1–5. Portals show only published/locked results |
+| Report cards | Built | `/school/results/{sheet}/report-cards` (`ReportCardController`, `ReportCardService`, views in `resources/views/report-cards`): class teacher's comment (`marks.entry`) and principal's comment (`results.publish`) per student in `report_card_comments`, frozen once the sheet is locked. Term card PDF (part scores, total, grade, subject position, class average/highest/lowest, overall average and position, behaviour and skills, attendance within the term's dates, comments, next term's start date, grade key) and full-year card PDF (each term's total per subject, year average and grade, term averages and positions, year position, end-of-year decision from promotions). One student or the whole class in one file; needs `reportcard.generate`. Cards for unpublished results are marked "Preview". Students and parents download their own from the portal results page (`ReportCardPortalController`), published/locked terms only. PDFs are made inside the request (Phase 4 moves them to the queue) |
 | Fees | Built | Two systems side by side for now. **New:** `/school/fees/invoices`: invoices (one per student, per fee structure, per period, made for a whole class at once) with a ledger underneath (`ledger_entries`: charge, fine, payment, discount, reversal). Ledger lines can never be edited or deleted (the model throws); a mistake is fixed by a reversal line. Balance and status are worked out from the ledger (`FeeLedgerService`). Overpaying is refused; an invoice can be cancelled only while nothing is paid. `/school/fees/scholarships`: named discounts (percent or fixed, all fees or one category), given to a student with the approver and reason recorded, applied to open and future invoices. Permissions: view `fees.view`, bill `fees.structure`, pay/fine `fees.collect`, reverse/cancel/scholarships `fees.waiver`. Dashboards, the finance report, the custom report and both portals read invoices and the ledger. **Old:** `fee_payments` was copied into invoices by migration `2026_10_14_000002` (copied lines carry `legacy_fee_payment_id`; `php artisan fees:copy-old-payments [--dry-run] [--undo]`; rolling back that migration undoes it but keeps invoices staff have added to since). The old rows are kept read-only under "Old Payment Records"; the old Collect and Outstanding screens now redirect to Invoices. Demo seeders write old rows and then run the copy. No payment gateway |
 | Library, Inventory/Assets, Transport, Hostel | Built | Transport has a GPS location webhook protected by a per-vehicle token (no screen shows the token yet) |
 | Homework, lesson plans, syllabus, online-class links | Built | |
@@ -147,7 +148,7 @@ and the academic report. Run them before and after any change to routes, models 
 ## Known gaps (planned work)
 
 Phase 2 leftovers: old per-exam marks are not copied into term results.
-Phase 3 (rest): report cards, testimonials/transfer certificates, real SMS and a delivery log, payment gateway, payment plans, CBT, houses/clubs, shared table/form components.
+Phase 3 (rest): testimonials/transfer certificates, real SMS and a delivery log, payment gateway, payment plans, CBT, houses/clubs, shared table/form components.
 Phase 4: queue for PDFs, Redis, safe ID generation (admission numbers and employee IDs are
 made by counting rows, which can collide), splitting the fat controllers into services.
 Small open items: the Receptionist, Driver, Warden and Store Manager roles exist in the seeder but the `/school` route group only lets six roles in (Super Admin, School Admin, Principal, Teacher, Accountant, Librarian), so those four cannot reach any school screen yet; the side menu is chosen by role in the frontend, so it can show items a role

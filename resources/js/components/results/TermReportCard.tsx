@@ -2,8 +2,11 @@ import { Panel } from '@/components/app/kit';
 import { ordinal } from '@/lib/format';
 import type { TermReport } from '@/Types';
 
-/** One published term result, as parents and students see it. */
-export function TermReportCard({ report }: { report: TermReport }) {
+/**
+ * One published term result, as parents and students see it.
+ * downloadUrl is the printable report card; the full-year card is the same address plus /session.
+ */
+export function TermReportCard({ report, downloadUrl }: { report: TermReport; downloadUrl?: string }) {
     const behaviour = report.ratings.filter(r => r.domain === 'affective');
     const skills = report.ratings.filter(r => r.domain === 'psychomotor');
 
@@ -65,6 +68,12 @@ export function TermReportCard({ report }: { report: TermReport }) {
                             </ul>
                         </div>
                     ))}
+                </div>
+            )}
+            {downloadUrl && (
+                <div className="flex flex-wrap gap-4 border-t border-slate-100 px-5 py-3 text-sm dark:border-white/[0.06]">
+                    <a href={downloadUrl} target="_blank" rel="noopener" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Download report card</a>
+                    <a href={`${downloadUrl}/session`} target="_blank" rel="noopener" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Full-year report so far</a>
                 </div>
             )}
         </Panel>

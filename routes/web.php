@@ -41,6 +41,8 @@ use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardCo
 use App\Http\Controllers\SchoolAdmin\AdmissionInquiryController;
 use App\Http\Controllers\SchoolAdmin\AdmissionPipelineController;
 use App\Http\Controllers\SchoolAdmin\PromotionController;
+use App\Http\Controllers\SchoolAdmin\ReportCardController;
+use App\Http\Controllers\ReportCardPortalController;
 use App\Http\Controllers\SchoolAdmin\VisitorLogController;
 use App\Http\Controllers\PublicAdmissionController;
 use App\Http\Controllers\StudentPortalController;
@@ -163,6 +165,12 @@ Route::middleware('auth')->group(function () {
             Route::post('results/{sheet}/ratings',             [ResultController::class, 'saveRatings'])->middleware('permission:marks.entry')->name('results.ratings');
             // Each step checks its own permission (see ResultSheet::ACTIONS)
             Route::post('results/{sheet}/status',              [ResultController::class, 'transition'])->middleware('permission:results.view')->name('results.status');
+            // Report cards: comments, then the term and full-year PDFs (one student or the whole class)
+            Route::get('results/{sheet}/report-cards',           [ReportCardController::class, 'index'])->middleware('permission:reportcard.generate')->name('results.report-cards');
+            Route::get('results/{sheet}/report-cards/term',      [ReportCardController::class, 'term'])->middleware('permission:reportcard.generate')->name('results.report-cards.term');
+            Route::get('results/{sheet}/report-cards/session',   [ReportCardController::class, 'session'])->middleware('permission:reportcard.generate')->name('results.report-cards.session');
+            Route::post('results/{sheet}/comments/teacher',      [ReportCardController::class, 'saveTeacherComments'])->middleware('permission:marks.entry')->name('results.comments.teacher');
+            Route::post('results/{sheet}/comments/principal',    [ReportCardController::class, 'savePrincipalComments'])->middleware('permission:results.publish')->name('results.comments.principal');
             Route::redirect('grade-scales', '/school/academics/assessment')->middleware('permission:exams.view')->name('grade-scales.index');
 
             // Timetable
@@ -416,6 +424,8 @@ Route::middleware('auth')->group(function () {
         Route::get('timetable',     [StudentPortalController::class, 'timetable'])->name('timetable');
         Route::get('attendance',    [StudentPortalController::class, 'attendance'])->name('attendance');
         Route::get('results',       [StudentPortalController::class, 'results'])->name('results');
+        Route::get('report-cards/{sheet}',         [ReportCardPortalController::class, 'studentTerm'])->whereNumber('sheet')->name('report-cards.term');
+        Route::get('report-cards/{sheet}/session', [ReportCardPortalController::class, 'studentSession'])->whereNumber('sheet')->name('report-cards.session');
         Route::get('homework',      [StudentPortalController::class, 'homework'])->name('homework');
         Route::get('fees',          [StudentPortalController::class, 'fees'])->name('fees');
         Route::get('announcements', [StudentPortalController::class, 'announcements'])->name('announcements');
@@ -425,6 +435,8 @@ Route::middleware('auth')->group(function () {
         Route::get('dashboard',     [ParentPortalController::class, 'dashboard'])->name('dashboard');
         Route::get('attendance',    [ParentPortalController::class, 'attendance'])->name('attendance');
         Route::get('results',       [ParentPortalController::class, 'results'])->name('results');
+        Route::get('report-cards/{student}/{sheet}',         [ReportCardPortalController::class, 'parentTerm'])->whereNumber(['student', 'sheet'])->name('report-cards.term');
+        Route::get('report-cards/{student}/{sheet}/session', [ReportCardPortalController::class, 'parentSession'])->whereNumber(['student', 'sheet'])->name('report-cards.session');
         Route::get('fees',          [ParentPortalController::class, 'fees'])->name('fees');
         Route::get('announcements', [ParentPortalController::class, 'announcements'])->name('announcements');
     });

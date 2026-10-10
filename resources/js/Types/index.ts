@@ -484,3 +484,17 @@ export interface ClassHistoryLine {
     by: string | null;
     at: string | null;
 }
+
+// ───────────── Report cards ─────────────
+
+/** A student on a class's report-card page, with the two comments */
+export interface ReportCardStudent {
+    id: number;
+    name: string;
+    admission_no: string | null;
+    average: number;
+    position: number | null;
+    class_size: number;
+    teacher_comment: string;
+    principal_comment: string;
+}
