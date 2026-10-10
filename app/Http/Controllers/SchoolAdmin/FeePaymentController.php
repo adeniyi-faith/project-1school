@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\FeeCategory;
 use App\Models\FeePayment;
-use App\Models\FeeStructure;
 use App\Models\SchoolClass;
-use App\Models\Student;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
+/**
+ * The old fee payment records (before invoices). Kept read-only so past receipts can still be
+ * looked up; their money was copied into invoices and the ledger.
+ */
 class FeePaymentController extends Controller
 {
     public function index(Request $request)
@@ -40,67 +40,20 @@ class FeePaymentController extends Controller
         ]);
     }
 
+    /**
+     * The old "Collect fee" form. Fees are now taken on invoices, and the old rows were copied there,
+     * so this sends staff to the invoices instead of adding to the old table.
+     */
     public function create(Request $request)
     {
-        $sid = $this->getSchoolId();
-
-        $student = null;
-        $structures = collect();
-
-        if ($request->student_id) {
-            $student = Student::with('schoolClass:id,name')->findOrFail($request->student_id);
-            $structures = FeeStructure::with('feeCategory:id,name,type')
-                ->where('school_id', $sid)
-                ->where('class_id', $student->class_id)
-                ->where('is_active', true)
-                ->get();
-        }
-
-        return Inertia::render('SchoolAdmin/Fees/Collect', [
-            'student'    => $student,
-            'structures' => $structures,
-            'classes'    => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->get(['id', 'name']),
-        ]);
+        return redirect()->route('school.fees.invoices.index', array_filter(['search' => $request->query('student_id')]))
+            ->with('info', 'Fees are now taken on invoices. Open the student\'s invoice and press "Record payment".');
     }
 
-    public function store(Request $request)
+    public function store()
     {
-        $data = $request->validate([
-            'student_id'       => 'required|exists:students,id',
-            'fee_structure_id' => 'required|exists:fee_structures,id',
-            'amount_due'       => 'required|numeric|min:0',
-            'amount_paid'      => 'required|numeric|min:0',
-            'discount'         => 'nullable|numeric|min:0',
-            'fine'             => 'nullable|numeric|min:0',
-            'payment_date'     => 'required|date',
-            'month_year'       => 'nullable|string|max:10',
-            'method'           => 'required|in:cash,bank_transfer,pos,card,online,ussd',
-            'note'             => 'nullable|string|max:500',
-        ]);
-
-        $sid = $this->getSchoolId();
-
-        $amountDue    = (float) $data['amount_due'];
-        $amountPaid   = (float) $data['amount_paid'];
-        $discount     = (float) ($data['discount'] ?? 0);
-        $fine         = (float) ($data['fine'] ?? 0);
-        $netDue       = $amountDue + $fine - $discount;
-        $balance      = $netDue - $amountPaid;
-
-        $status = match (true) {
-            $balance <= 0          => 'paid',
-            $amountPaid > 0        => 'partial',
-            default                => 'pending',
-        };
-
-        FeePayment::create(array_merge($data, [
-            'school_id' => $sid,
-            'discount'  => $discount,
-            'fine'      => $fine,
-            'status'    => $status,
-        ]));
-
-        return redirect('/school/fees/payments')->with('success', 'Payment recorded successfully.');
+        return redirect()->route('school.fees.invoices.index')
+            ->with('error', 'Fees are now taken on invoices. Open the student\'s invoice and press "Record payment".');
     }
 
     public function show(FeePayment $feePayment)
@@ -116,49 +69,10 @@ class FeePaymentController extends Controller
         ]);
     }
 
-    public function outstanding(Request $request)
+    /** Who still owes now comes from the invoices. */
+    public function outstanding()
     {
-        $sid = $this->getSchoolId();
-
-        // Students with pending/overdue/partial fees
-        $query = FeePayment::with([
-            'student:id,first_name,last_name,admission_no,class_id',
-            'student.schoolClass:id,name',
-            'feeStructure:id,fee_category_id,academic_year',
-            'feeStructure.feeCategory:id,name',
-        ])
-            ->whereIn('status', ['pending', 'partial', 'overdue'])
-            ->when($request->class_id, fn ($q) => $q->whereHas('student', fn ($sq) => $sq->where('class_id', $request->class_id)))
-            ->orderBy('payment_date');
-
-        $outstandingPayments = $query->get();
-
-        // Group by student
-        $byStudent = $outstandingPayments->groupBy('student_id')->map(function ($payments) {
-            $student = $payments->first()->student;
-            $totalDue  = $payments->sum(fn ($p) => (float)$p->amount_due + (float)$p->fine - (float)$p->discount);
-            $totalPaid = $payments->sum('amount_paid');
-            $balance   = $totalDue - $totalPaid;
-
-            return [
-                'student'       => $student,
-                'payment_count' => $payments->count(),
-                'total_due'     => round($totalDue, 2),
-                'total_paid'    => round($totalPaid, 2),
-                'balance'       => round($balance, 2),
-                'payments'      => $payments->values(),
-            ];
-        })->values();
-
-        return Inertia::render('SchoolAdmin/Fees/Outstanding', [
-            'outstanding' => $byStudent,
-            'classes'     => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->get(['id', 'name']),
-            'filters'     => $request->only('class_id'),
-            'summary'     => [
-                'total_students'    => $byStudent->count(),
-                'total_outstanding' => round($byStudent->sum('balance'), 2),
-            ],
-        ]);
+        return redirect()->route('school.fees.invoices.index', ['status' => 'open']);
     }
 
     private function getStats(int $sid): array

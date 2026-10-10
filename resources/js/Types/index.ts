@@ -48,6 +48,7 @@ export interface PageProps {
     flash: {
         success?: string;
         error?: string;
+        info?: string;
     };
     faviconUrl: string | null;
     errors: Record<string, string>;

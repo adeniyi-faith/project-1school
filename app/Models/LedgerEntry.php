@@ -27,7 +27,7 @@ class LedgerEntry extends Model
 
     protected $fillable = [
         'school_id', 'invoice_id', 'student_id', 'type', 'amount', 'method', 'reference',
-        'entry_date', 'note', 'student_scholarship_id', 'reverses_id', 'recorded_by',
+        'entry_date', 'note', 'student_scholarship_id', 'reverses_id', 'recorded_by', 'legacy_fee_payment_id',
     ];
 
     protected $casts = [
@@ -47,6 +47,11 @@ class LedgerEntry extends Model
             ->logOnly(['invoice_id', 'student_id', 'type', 'amount', 'method', 'reference', 'entry_date', 'note', 'reverses_id'])
             ->useLogName('fees')
             ->setDescriptionForEvent(fn (string $event) => "Ledger line {$event}");
+    }
+
+    public function student(): BelongsTo
+    {
+        return $this->belongsTo(Student::class);
     }
 
     public function invoice(): BelongsTo

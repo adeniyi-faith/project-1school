@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { nairaCompact } from '@/lib/format';
-import { Plus, Banknote, CheckCircle2, Clock, AlertCircle, Settings2, Tag, TrendingDown } from 'lucide-react';
+import { Banknote, CheckCircle2, Clock, FileText, TrendingDown } from 'lucide-react';
 import type { SchoolClass, PageProps, PaginatedResponse } from '@/Types';
 
 interface FeePayment {
@@ -47,29 +47,20 @@ export default function FeePayments({ payments, classes, filters, stats }: Props
     ];
 
     return (
-        <AppLayout title="Fee Payments">
+        <AppLayout title="Old Payment Records">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Fee Management</h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{payments.meta?.total ?? 0} payment records</p>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Old payment records</h1>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                            {payments.meta?.total ?? 0} payments recorded before invoices. Kept so old receipts can be looked up; their money has been copied into invoices.
+                        </p>
                     </div>
-                    <div className="flex gap-2">
-                        <Link href="/school/fees/outstanding">
-                            <Button variant="outline" className="inline-flex items-center gap-2"><AlertCircle className="w-4 h-4" /> Outstanding</Button>
-                        </Link>
-                        <Link href="/school/fees/structures">
-                            <Button variant="outline" className="inline-flex items-center gap-2"><Settings2 className="w-4 h-4" /> Structures</Button>
-                        </Link>
-                        <Link href="/school/fees/categories">
-                            <Button variant="outline" className="inline-flex items-center gap-2"><Tag className="w-4 h-4" /> Categories</Button>
-                        </Link>
-                        <Link href="/school/fees/payments/collect">
-                            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
-                                <Plus className="w-4 h-4" /> Collect Fee
-                            </Button>
-                        </Link>
-                    </div>
+                    <Link href="/school/fees/invoices">
+                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
+                            <FileText className="w-4 h-4" /> Go to invoices
+                        </Button>
+                    </Link>
                 </div>
 
                 {/* Stats */}
