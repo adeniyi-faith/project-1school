@@ -11,6 +11,7 @@ import { PageHeader, Panel, Pill } from '@/components/app/kit';
 import { cn } from '@/lib/utils';
 import { appendDeep, usePreview } from '@/lib/preview';
 import { PreviewOverlay } from '@/components/app/PreviewOverlay';
+import { LogoTip } from '@/components/app/LogoTip';
 import { ArrowDown, ArrowUp, Eye, Plus, Trash2 } from 'lucide-react';
 import type { ReportCardDesignRow, ReportCardSignerRow } from '@/Types';
 
@@ -39,6 +40,8 @@ const TEMPLATE_INFO: Record<ReportCardDesignRow['template'], { label: string; te
     classic: { label: 'Classic', text: 'Logo on the left, coloured table headings, boxed tables' },
     modern: { label: 'Modern', text: 'Centred header, light tables with coloured lines' },
     compact: { label: 'Compact', text: 'Smaller and tighter, fits many subjects on one page' },
+    banner: { label: 'Banner', text: 'Bold coloured header band, striped tables, strong headings' },
+    elegant: { label: 'Elegant', text: 'Framed page, serif lettering, thin lines. Looks like a certificate' },
 };
 const SIGNER_TITLES = ['Class Teacher', 'Form Master', 'Form Mistress', 'Head Teacher', 'Headmaster', 'Headmistress', 'Principal', 'Vice Principal', 'Academic Director', 'Head of Department', 'Proprietor', 'Proprietress', 'Administrator', 'Guidance Counsellor'];
 const SIZE_ITEMS = [{ value: 'small', label: 'Small' }, { value: 'normal', label: 'Normal' }, { value: 'large', label: 'Large' }];
@@ -332,6 +335,7 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
                         {err('stamp') && <p className="text-xs text-red-500">{err('stamp')}</p>}
                     </div>
 
+                    <LogoTip />
                     <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-sm dark:border-white/[0.06]">
                         <span className="text-slate-500">Try another school logo:</span>
                         <input type="file" accept="image/png,image/jpeg" className="text-xs" onChange={e => setTrialLogo(e.target.files?.[0] ?? null)} />
@@ -390,17 +394,29 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
 /** A tiny drawing of each layout so schools can tell them apart before previewing */
 function TemplateThumb({ template, primary, accent }: { template: ReportCardDesignRow['template']; primary: string; accent: string }) {
     const rows = template === 'compact' ? 6 : 4;
+    const centred = template === 'modern' || template === 'elegant';
+    const light = template === 'modern' || template === 'elegant';
     return (
-        <div className="h-24 rounded-md border border-slate-200 bg-white p-2 dark:border-white/10">
-            <div className={cn('flex items-center gap-1.5', template === 'modern' && 'flex-col gap-0.5')}>
-                <span className="size-3 rounded-full" style={{ background: primary }} />
-                <span className="h-1.5 w-14 rounded" style={{ background: primary }} />
-            </div>
-            <div className="mt-1.5 h-px" style={{ background: template === 'modern' ? accent : primary }} />
+        <div className={cn('h-24 rounded-md bg-white p-2', template === 'elegant' ? 'border-[3px] border-double' : 'border border-slate-200 dark:border-white/10')}
+            style={template === 'elegant' ? { borderColor: primary } : undefined}>
+            {template === 'banner' ? (
+                <div className="-mx-1 -mt-1 flex items-center gap-1.5 rounded-sm px-1.5 py-1" style={{ background: primary, borderBottom: `2px solid ${accent}` }}>
+                    <span className="size-3 rounded-sm bg-white" />
+                    <span className="h-1.5 w-14 rounded bg-white/90" />
+                </div>
+            ) : (
+                <>
+                    <div className={cn('flex items-center gap-1.5', centred && 'flex-col gap-0.5')}>
+                        <span className="size-3 rounded-full" style={{ background: primary }} />
+                        <span className="h-1.5 w-14 rounded" style={{ background: primary }} />
+                    </div>
+                    <div className="mt-1.5 h-px" style={{ background: light ? accent : primary, height: template === 'elegant' ? 3 : undefined, borderTop: template === 'elegant' ? `1px solid ${primary}` : undefined, borderBottom: template === 'elegant' ? `1px solid ${primary}` : undefined }} />
+                </>
+            )}
             <div className="mt-1.5 space-y-0.5">
-                <div className="h-1.5 rounded-sm" style={{ background: template === 'modern' ? '#e5e7eb' : primary, borderBottom: template === 'modern' ? `1px solid ${accent}` : undefined }} />
+                <div className="h-1.5 rounded-sm" style={{ background: light ? (template === 'elegant' ? '#faf7f0' : '#e5e7eb') : primary, borderBottom: light ? `1px solid ${template === 'elegant' ? primary : accent}` : template === 'banner' ? `1px solid ${accent}` : undefined }} />
                 {Array.from({ length: rows }).map((_, i) => (
-                    <div key={i} className={cn('h-1 rounded-sm', template === 'modern' ? 'bg-slate-100' : 'border border-slate-200')} />
+                    <div key={i} className={cn('h-1 rounded-sm', template === 'modern' ? 'bg-slate-100' : template === 'banner' ? (i % 2 ? 'bg-slate-100' : 'bg-white') : 'border border-slate-200')} />
                 ))}
             </div>
         </div>

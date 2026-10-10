@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LogoTip } from '@/components/app/LogoTip';
 import { EmptyState, PageHeader, Panel, Pill } from '@/components/app/kit';
 import { ResultStatusPill } from '@/components/results/ResultStatus';
 import { Download, FileArchive, Printer, RotateCw } from 'lucide-react';
@@ -84,6 +85,7 @@ export default function PrintReportCards({ terms, termId, sheets, chosen, export
                     title="Print report cards"
                     description="Download report cards for one class, several classes or the whole school in one ZIP file."
                 />
+                <LogoTip />
 
                 {terms.length === 0 ? (
                     <Panel><EmptyState icon={Printer} title="No terms yet" text="Add a school year on the Terms page first." /></Panel>

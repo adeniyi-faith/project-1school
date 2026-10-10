@@ -161,6 +161,33 @@ class ReportCardDesignTest extends SecurityTestCase
         $this->assertNull($design->fresh()->stamp_path);
     }
 
+    public function test_every_template_makes_a_term_and_a_year_card(): void
+    {
+        $design = $this->default();
+
+        foreach (\App\Models\ReportCardDesign::TEMPLATES as $template) {
+            foreach (['term', 'session'] as $type) {
+                $this->post("/school/academics/report-card-designs/{$design->id}/try", ['template' => $template, 'type' => $type])
+                    ->assertOk()
+                    ->assertSee('Adaeze Okafor', false);
+                $this->get("/school/academics/report-card-designs/{$design->id}/preview".($type === 'session' ? '?type=session' : ''))->assertOk();
+            }
+        }
+
+        $this->assertContains('banner', \App\Models\ReportCardDesign::TEMPLATES);
+        $this->assertContains('elegant', \App\Models\ReportCardDesign::TEMPLATES);
+    }
+
+    public function test_the_new_templates_can_be_saved(): void
+    {
+        $design = $this->default();
+
+        foreach (['banner', 'elegant'] as $template) {
+            $this->post("/school/academics/report-card-designs/{$design->id}", $this->payload($design, ['template' => $template]))->assertSessionHasNoErrors();
+            $this->assertSame($template, $design->fresh()->template);
+        }
+    }
+
     public function test_the_preview_prints_a_sample_card_with_the_design(): void
     {
         $design = $this->default();
