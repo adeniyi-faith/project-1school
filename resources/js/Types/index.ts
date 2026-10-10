@@ -379,13 +379,28 @@ export interface InvoiceRow {
     balance: number;
     status: InvoiceStatus;
     due_date: string | null;
+    instalments: InstalmentSummary | null;
 }
 
 export interface InvoiceDetail extends InvoiceRow {
     void_reason: string | null;
     guardian: { name: string; phone: string | null } | null;
     net_paid: number;
+    plan_name: string | null;
+    term_dates: { start: string | null; end: string | null } | null;
 }
+
+/** Paying a fee in dated parts */
+export type InstalmentState = 'paid' | 'overdue' | 'due' | 'upcoming' | 'cancelled';
+export interface InstalmentPart { label: string; percent: number; due_date: string; amount: number; paid: number; left: number; state: InstalmentState }
+export interface InstalmentSummary {
+    parts: InstalmentPart[];
+    due_now: number;
+    overdue: number;
+    next: { label: string; due_date: string; left: number } | null;
+}
+export interface PlanPart { label: string; percent: number | string; due_date?: string }
+export interface PaymentPlanOption { id: number; name: string; parts: PlanPart[] }
 
 /** One line of an invoice's record. Positive adds to what is owed; negative takes it away. */
 export interface LedgerLine {

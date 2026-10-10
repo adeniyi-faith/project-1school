@@ -201,14 +201,16 @@ class FeeLedgerService
     public function refresh(Invoice $invoice): void
     {
         $balance = $this->balanceOf($invoice);
+        $paid = $this->netPaid($invoice);
         $status = match (true) {
             $invoice->voided_at !== null => 'void',
             $balance <= 0.004 => 'paid',
-            $this->netPaid($invoice) > 0 => 'partial',
+            $paid > 0 => 'partial',
             default => 'unpaid',
         };
 
         $invoice->forceFill(['balance' => $balance, 'status' => $status])->save();
+        InstalmentService::spread($invoice, $balance, $paid);
     }
 
     public function balanceOf(Invoice $invoice): float
@@ -265,7 +267,7 @@ class FeeLedgerService
             ->where('school_id', $student->school_id)
             ->where('student_id', $student->id)
             ->where('status', '!=', 'void')
-            ->with(['feeStructure.feeCategory:id,name', 'entries'])
+            ->with(['feeStructure.feeCategory:id,name', 'entries', 'instalments'])
             ->orderByDesc('id')
             ->get();
 
@@ -283,6 +285,8 @@ class FeeLedgerService
                 'balance' => $invoice->balance,
                 'status' => $invoice->status,
                 'payment_date' => $lastPaid ? Carbon::parse($lastPaid)->format('d M Y') : null,
+                'due_date' => $invoice->due_date?->format('d M Y'),
+                'instalments' => InstalmentService::summary($invoice),
             ];
         });
 

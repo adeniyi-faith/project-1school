@@ -52,6 +52,7 @@ use App\Http\Controllers\CandidateCbtController;
 use App\Http\Controllers\ParentPaymentController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SchoolAdmin\OnlinePaymentController;
+use App\Http\Controllers\SchoolAdmin\PaymentPlanController;
 use App\Http\Controllers\CbtImageController;
 use App\Http\Controllers\SchoolAdmin\CommentBankController;
 use App\Http\Controllers\SchoolAdmin\ReportCardController;
@@ -397,6 +398,14 @@ Route::middleware('auth')->group(function () {
             // Invoices and the fee ledger (lines are never edited; mistakes are reversed)
             Route::get('fees/invoices',                      [FeeInvoiceController::class, 'index'])->middleware('permission:fees.view')->name('fees.invoices.index');
             Route::post('fees/invoices',                     [FeeInvoiceController::class, 'issue'])->middleware('permission:fees.structure')->name('fees.invoices.issue');
+            Route::post('fees/invoices/plans',               [FeeInvoiceController::class, 'planMany'])->middleware('permission:fees.structure')->name('fees.invoices.plan-many');
+            Route::post('fees/invoices/{invoice}/plan',      [FeeInvoiceController::class, 'plan'])->middleware('permission:fees.structure')->name('fees.invoices.plan');
+            Route::delete('fees/invoices/{invoice}/plan',    [FeeInvoiceController::class, 'unplan'])->middleware('permission:fees.structure')->name('fees.invoices.unplan');
+            // Saved ways of paying a fee in parts
+            Route::get('fees/payment-plans',                 [PaymentPlanController::class, 'index'])->middleware('permission:fees.view')->name('fees.plans.index');
+            Route::post('fees/payment-plans',                [PaymentPlanController::class, 'store'])->middleware('permission:fees.structure')->name('fees.plans.store');
+            Route::put('fees/payment-plans/{plan}',          [PaymentPlanController::class, 'update'])->middleware('permission:fees.structure')->name('fees.plans.update');
+            Route::delete('fees/payment-plans/{plan}',       [PaymentPlanController::class, 'destroy'])->middleware('permission:fees.structure')->name('fees.plans.destroy');
             Route::get('fees/invoices/{invoice}',            [FeeInvoiceController::class, 'show'])->middleware('permission:fees.view')->name('fees.invoices.show');
             Route::post('fees/invoices/{invoice}/payments',  [FeeInvoiceController::class, 'pay'])->middleware('permission:fees.collect')->name('fees.invoices.pay');
             Route::post('fees/invoices/{invoice}/fines',     [FeeInvoiceController::class, 'fine'])->middleware('permission:fees.collect')->name('fees.invoices.fine');
