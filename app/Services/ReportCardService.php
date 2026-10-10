@@ -330,7 +330,7 @@ class ReportCardService
     }
 
     /** student_id => what is still owed on their open invoices */
-    private function feesOwed(array $studentIds): array
+    public function feesOwed(array $studentIds): array
     {
         return Invoice::whereIn('student_id', $studentIds)->whereIn('status', ['unpaid', 'partial'])
             ->groupBy('student_id')->selectRaw('student_id, SUM(balance) as owed')

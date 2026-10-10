@@ -20,7 +20,7 @@ class RolePermissionSeeder extends Seeder
 
         // Students
         'students.view', 'students.create', 'students.edit', 'students.delete',
-        'students.import', 'students.export', 'students.promote', 'students.idcard',
+        'students.import', 'students.export', 'students.promote', 'students.idcard', 'students.certificates',
 
         // Admissions: entrance exams, interviews and the accept/decline decision
         'admissions.manage',
@@ -97,7 +97,7 @@ class RolePermissionSeeder extends Seeder
 
         'principal' => [
             'academic-years.view', 'users.view',
-            'students.view', 'students.export', 'students.idcard', 'admissions.manage',
+            'students.view', 'students.export', 'students.idcard', 'students.certificates', 'admissions.manage',
             'staff.view',
             'attendance.view', 'attendance.report', 'attendance.export',
             'timetable.view',

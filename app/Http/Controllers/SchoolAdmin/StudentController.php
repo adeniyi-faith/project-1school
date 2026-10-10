@@ -7,6 +7,7 @@ use App\Models\Guardian;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Student;
+use App\Models\StudentCertificate;
 use App\Models\StudentDocument;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -122,6 +123,9 @@ class StudentController extends Controller
             'student' => $student,
             'classHistory' => PromotionController::historyFor($student),
             'canEdit' => auth()->user()->can('students.edit'),
+            'certificates' => StudentCertificate::with('issuer:id,name')->where('student_id', $student->id)->latest('id')->get()
+                ->map(fn (StudentCertificate $c) => CertificateController::row($c)),
+            'canIssueCertificates' => auth()->user()->can('students.certificates'),
         ]);
     }
 
