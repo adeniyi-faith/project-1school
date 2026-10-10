@@ -23,7 +23,7 @@ class DemoReadOnly
             && config('app.demo_email')
             && strcasecmp($user->email, (string) config('app.demo_email')) === 0
             && ! $request->isMethodSafe()
-            && ! $request->routeIs('logout', 'report-card-designs.try', 'certificate-designs.try')
+            && ! $request->routeIs('logout', 'school.report-card-designs.try', 'school.certificate-designs.try')
         ) {
             if ($request->header('X-Inertia') || ! $request->expectsJson()) {
                 return back()->with('error', 'This is a read-only demo. Register your school to make changes.');

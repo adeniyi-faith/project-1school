@@ -240,6 +240,7 @@ class ParentPortalController extends Controller
 
         return Inertia::render('Parent/Fees', [
             'linked'   => true,
+            'payOnline' => app(\App\Services\OnlinePaymentService::class)->enabled($guardian->school_id),
             'guardian' => ['name' => $guardian->name],
             'children' => $children,
         ]);

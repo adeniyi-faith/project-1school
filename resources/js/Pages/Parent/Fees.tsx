@@ -1,18 +1,25 @@
+import { useState } from 'react';
+import { useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Banknote, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Banknote, AlertTriangle, CheckCircle, CreditCard, Lock } from 'lucide-react';
 
-interface Payment { month: string; due: number; paid: number; balance: number; status: string; payment_date: string | null; }
+interface Payment { id: number; month: string; due: number; paid: number; balance: number; status: string; payment_date: string | null; }
 interface Child { id: number; full_name: string; class: string | null; total_due: number; total_paid: number; balance: number; payments: Payment[]; }
-interface Props { linked: boolean; guardian: { name: string } | null; children: Child[]; }
+interface Props { linked: boolean; guardian: { name: string } | null; children: Child[]; payOnline?: boolean; }
 
 const statusColor: Record<string, string> = {
     paid: 'bg-green-100 text-green-700', partial: 'bg-amber-100 text-amber-700',
     unpaid: 'bg-red-100 text-red-700',   overdue: 'bg-red-100 text-red-700',
 };
 
-export default function ParentFees({ linked, children }: Props) {
+export default function ParentFees({ linked, children, payOnline = false }: Props) {
+    const [paying, setPaying] = useState<{ child: string; row: Payment } | null>(null);
     if (!linked) {
         return (
             <AppLayout title="Fee Status">
@@ -62,6 +69,7 @@ export default function ParentFees({ linked, children }: Props) {
                                                 <th className="px-4 py-2 font-medium text-right">Paid</th>
                                                 <th className="px-4 py-2 font-medium text-center">Status</th>
                                                 <th className="px-4 py-2 font-medium text-right hidden md:table-cell">Date</th>
+                                                {payOnline && <th className="px-4 py-2" />}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -74,6 +82,15 @@ export default function ParentFees({ linked, children }: Props) {
                                                         <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full capitalize', statusColor[p.status] ?? 'bg-slate-100 text-slate-600')}>{p.status}</span>
                                                     </td>
                                                     <td className="px-4 py-2 text-right text-slate-400 text-xs hidden md:table-cell">{p.payment_date ?? '—'}</td>
+                                                    {payOnline && (
+                                                        <td className="px-4 py-2 text-right">
+                                                            {p.balance > 0 && (
+                                                                <Button size="sm" onClick={() => setPaying({ child: child.full_name, row: p })} className="bg-emerald-600 text-white hover:bg-emerald-700">
+                                                                    <CreditCard className="size-4" /> Pay
+                                                                </Button>
+                                                            )}
+                                                        </td>
+                                                    )}
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -84,6 +101,32 @@ export default function ParentFees({ linked, children }: Props) {
                     </div>
                 ))}
             </div>
+            {paying && <PayDialog child={paying.child} row={paying.row} onClose={() => setPaying(null)} />}
         </AppLayout>
+    );
+}
+
+function PayDialog({ child, row, onClose }: { child: string; row: Payment; onClose: () => void }) {
+    const form = useForm({ amount: String(row.balance) });
+    return (
+        <Dialog open onOpenChange={o => !o && onClose()}>
+            <DialogContent className="sm:max-w-sm">
+                <DialogHeader><DialogTitle>Pay online</DialogTitle></DialogHeader>
+                <form onSubmit={e => { e.preventDefault(); form.post(`/school/parent/fees/invoices/${row.id}/pay`); }} className="space-y-4">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">{child}: {row.month}. Still owed: <span className="font-medium">₦{row.balance.toLocaleString()}</span>.</p>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="amount">Amount to pay (₦)</Label>
+                        <Input id="amount" type="number" min={1} max={row.balance} step="0.01" value={form.data.amount} onChange={e => form.setData('amount', e.target.value)} />
+                        <p className="text-xs text-slate-500">You can pay part now and the rest later.</p>
+                        {form.errors.amount && <p className="text-xs text-red-500">{form.errors.amount}</p>}
+                    </div>
+                    <p className="flex items-start gap-2 text-xs text-slate-500"><Lock className="mt-0.5 size-3.5 shrink-0" /> You will pay on the school's secure payment page by card, bank transfer or USSD, then come back here. The school never sees your card details.</p>
+                    <DialogFooter>
+                        <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+                        <Button type="submit" disabled={form.processing} className="bg-emerald-600 text-white hover:bg-emerald-700">Continue to payment</Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }
