@@ -35,6 +35,9 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email:rfc', 'max:190', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:30'],
+            'state' => ['required', 'string', 'max:60'],
+            'city' => ['required', 'string', 'max:100'],
+            'address' => ['nullable', 'string', 'max:255'],
             'password' => ['required', 'string', 'min:8', 'max:100', 'confirmed'],
         ]);
 
@@ -60,6 +63,13 @@ class RegisterController extends Controller
                     'slug' => $this->uniqueSlug($data['school_name']),
                     'email' => $data['email'],
                     'phone' => $data['phone'] ?? null,
+                    'state' => $data['state'],
+                    'city' => $data['city'],
+                    'address' => $data['address'] ?? null,
+                    // Schools sign up in Nigeria: naira, Lagos time
+                    'country' => 'NG',
+                    'currency' => 'NGN',
+                    'timezone' => 'Africa/Lagos',
                     'status' => 'active',
                 ]);
 
