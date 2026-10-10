@@ -130,7 +130,7 @@ export default function EditSchool() {
                         <CardHeader className="pb-3">
                             <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">Locale Settings</CardTitle>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-3 gap-4">
+                        <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             {[
                                 { key: 'timezone', label: 'Timezone', opts: [['Africa/Lagos','Africa/Lagos (WAT)'],['Asia/Dhaka','Asia/Dhaka (BST)'],['Asia/Kolkata','Asia/Kolkata (IST)'],['UTC','UTC'],['America/New_York','America/New_York'],['Europe/London','Europe/London']] },
                                 { key: 'currency', label: 'Currency', opts: [['NGN','NGN (₦)'],['GHS','GHS (₵)'],['BDT','BDT (৳)'],['USD','USD ($)'],['INR','INR (₹)'],['GBP','GBP (£)']] },

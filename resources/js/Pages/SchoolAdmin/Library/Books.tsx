@@ -223,7 +223,7 @@ export default function LibraryBooks({ books, categories, filters, stats }: Prop
                                 <Input value={data.publisher} onChange={e => setData('publisher', e.target.value)} />
                             </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div className="space-y-1.5">
                                 <Label>Year</Label>
                                 <Input type="number" min="1900" max="2099" value={data.publication_year} onChange={e => setData('publication_year', e.target.value)} placeholder="2024" />

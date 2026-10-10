@@ -139,6 +139,7 @@ Route::middleware('auth')->group(function () {
             Route::get('certificates/designs',                 [CertificateDesignController::class, 'index'])->middleware('permission:students.certificates')->name('certificate-designs.index');
             Route::post('certificates/designs/{type}',         [CertificateDesignController::class, 'update'])->whereIn('type', ['testimonial', 'transfer'])->middleware('permission:settings.edit')->name('certificate-designs.update');
             Route::get('certificates/designs/{type}/preview',  [CertificateDesignController::class, 'preview'])->whereIn('type', ['testimonial', 'transfer'])->middleware('permission:students.certificates')->name('certificate-designs.preview');
+            Route::post('certificates/designs/{type}/try',     [CertificateDesignController::class, 'tryOut'])->whereIn('type', ['testimonial', 'transfer'])->middleware('permission:students.certificates')->name('certificate-designs.try');
             Route::get('certificates/{certificate}/pdf',       [CertificateController::class, 'pdf'])->middleware('permission:students.view')->name('certificates.pdf');
             Route::post('certificates/{certificate}/revoke',   [CertificateController::class, 'revoke'])->middleware('permission:students.certificates')->name('certificates.revoke');
             Route::get('students/{student}/certificates/new',  [CertificateController::class, 'create'])->middleware('permission:students.certificates')->name('certificates.create');
@@ -201,6 +202,7 @@ Route::middleware('auth')->group(function () {
             Route::post('academics/report-card-designs/{design}',         [ReportCardDesignController::class, 'update'])->middleware('permission:settings.edit')->name('report-card-designs.update');
             Route::delete('academics/report-card-designs/{design}',       [ReportCardDesignController::class, 'destroy'])->middleware('permission:settings.edit')->name('report-card-designs.destroy');
             Route::post('academics/report-card-designs/{design}/classes', [ReportCardDesignController::class, 'assignClasses'])->middleware('permission:settings.edit')->name('report-card-designs.classes');
+            Route::post('academics/report-card-designs/{design}/try',     [ReportCardDesignController::class, 'tryOut'])->middleware('permission:reportcard.generate')->name('report-card-designs.try');
             Route::get('academics/report-card-designs/{design}/preview',  [ReportCardDesignController::class, 'preview'])->middleware('permission:reportcard.generate')->name('report-card-designs.preview');
 
             // Report cards: comments, then the term and full-year PDFs (one student or the whole class)

@@ -86,7 +86,7 @@ export default function Payslip({ payroll }: { payroll: Payroll }) {
                         </div>
 
                         {/* Attendance */}
-                        <div className="grid grid-cols-3 gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
                             {[
                                 { label: 'Working Days', value: payroll.working_days },
                                 { label: 'Present Days', value: payroll.present_days, color: 'text-green-600' },

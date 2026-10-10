@@ -124,7 +124,7 @@ export default function CreateSchool() {
                         <CardHeader className="pb-3">
                             <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">Locale Settings</CardTitle>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-3 gap-4">
+                        <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div className="space-y-1.5">
                                 <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Timezone</Label>
                                 <Select defaultValue="Africa/Lagos" onValueChange={(v) => setValue('timezone', v)}>
