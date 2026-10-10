@@ -172,7 +172,7 @@ class DemoSchoolSeeder extends Seeder
         $byIds('staff_documents', 'staff_id', $staffIds);
 
         foreach ([
-            'report_card_remarks', 'behaviour_ratings', 'term_result_summaries', 'term_results', 'subject_scores', 'result_sheets', 'behaviour_traits',
+            'report_card_exports', 'report_card_remarks', 'behaviour_ratings', 'term_result_summaries', 'term_results', 'subject_scores', 'result_sheets', 'behaviour_traits',
             'student_promotions', 'promotion_batches', 'marks', 'exams', 'ledger_entries', 'invoices', 'student_scholarships', 'scholarships', 'fee_payments', 'fee_structures', 'fee_categories', 'attendances',
             'timetables', 'homework', 'books', 'announcements', 'holidays', 'grade_scales',
             'students', 'guardians', 'staff', 'designations', 'departments', 'sections',

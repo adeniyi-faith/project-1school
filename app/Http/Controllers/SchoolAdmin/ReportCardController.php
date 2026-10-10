@@ -40,6 +40,7 @@ class ReportCardController extends Controller
         return Inertia::render('SchoolAdmin/Results/ReportCards', [
             'sheet' => [
                 'id' => $sheet->id,
+                'term_id' => $sheet->term_id,
                 'status' => $sheet->status,
                 'term' => trim(($sheet->term?->academicYear?->name ?? '').' · '.$sheet->term?->name, ' ·'),
                 'class_name' => $sheet->schoolClass?->name,
