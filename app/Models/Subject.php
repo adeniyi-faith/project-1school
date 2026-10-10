@@ -13,6 +13,7 @@ class Subject extends Model
 
     protected $fillable = [
         'school_id', 'class_id', 'name', 'code', 'type', 'full_marks', 'pass_marks',
+        'assessment_scheme_id',
     ];
 
     public function schoolClass(): BelongsTo

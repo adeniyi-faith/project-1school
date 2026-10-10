@@ -3,17 +3,40 @@
 namespace App\Services;
 
 use App\Models\GradeScale;
+use App\Models\GradingScheme;
+use App\Models\SchoolClass;
 use Illuminate\Support\Collection;
 
 class GradingService
 {
     private Collection $scales;
 
-    public function __construct(int $schoolId)
+    /**
+     * Grades with one of the school's grade scales. With no scale named,
+     * the school's default scale is used.
+     */
+    public function __construct(int $schoolId, ?int $gradingSchemeId = null)
     {
+        $schemeId = $gradingSchemeId
+            ?? GradingScheme::where('school_id', $schoolId)->where('is_default', true)->value('id');
+
         $this->scales = GradeScale::where('school_id', $schoolId)
+            ->where('grading_scheme_id', $schemeId)
             ->orderByDesc('min_marks')
             ->get();
+    }
+
+    /** The grade scale a class uses: its own if set, else the school default. */
+    public static function forClass(int $schoolId, ?int $classId): self
+    {
+        $schemeId = $classId ? SchoolClass::withTrashed()->whereKey($classId)->value('grading_scheme_id') : null;
+
+        return new self($schoolId, $schemeId);
+    }
+
+    public function scales(): Collection
+    {
+        return $this->scales;
     }
 
     public function calculate(float $marks, float $fullMarks): array
@@ -31,18 +54,5 @@ class GradingService
         }
 
         return ['grade' => 'F', 'gpa' => 0.00, 'remarks' => 'Fail'];
-    }
-
-    public static function defaultScales(): array
-    {
-        return [
-            ['grade' => 'A+', 'gpa' => 5.00, 'min_marks' => 80, 'max_marks' => 100, 'remarks' => 'Outstanding',   'sort_order' => 1],
-            ['grade' => 'A',  'gpa' => 4.00, 'min_marks' => 70, 'max_marks' => 79,  'remarks' => 'Excellent',     'sort_order' => 2],
-            ['grade' => 'A-', 'gpa' => 3.50, 'min_marks' => 60, 'max_marks' => 69,  'remarks' => 'Very Good',     'sort_order' => 3],
-            ['grade' => 'B',  'gpa' => 3.00, 'min_marks' => 50, 'max_marks' => 59,  'remarks' => 'Good',          'sort_order' => 4],
-            ['grade' => 'C',  'gpa' => 2.00, 'min_marks' => 40, 'max_marks' => 49,  'remarks' => 'Satisfactory',  'sort_order' => 5],
-            ['grade' => 'D',  'gpa' => 1.00, 'min_marks' => 33, 'max_marks' => 39,  'remarks' => 'Pass',          'sort_order' => 6],
-            ['grade' => 'F',  'gpa' => 0.00, 'min_marks' => 0,  'max_marks' => 32,  'remarks' => 'Fail',          'sort_order' => 7],
-        ];
     }
 }

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Support\DemoSchool;
+use App\Support\SchoolDefaults;
 use Database\Seeders\Demo\NigerianNames;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -46,13 +47,15 @@ class DemoSchoolSeeder extends Seeder
             $this->wipe();
             $this->profile($school);
             $this->academicYears();
+            // Terms for each year, the CA1 + CA2 + Exam setup and the WAEC grade scale
+            SchoolDefaults::apply($this->sid);
             $classes = $this->classes();
             $subjects = $this->subjects($classes);
             $teachers = $this->staff();
             $students = $this->students($classes);
             $this->holidays();
-            $gradeScale = $this->gradeScale();
-            $this->exams($classes, $subjects, $students, $gradeScale);
+            $scales = $this->gradeScales($classes);
+            $this->exams($classes, $subjects, $students, $scales);
             $this->fees($classes, $students);
             $this->attendance($students, $teachers);
             $this->timetable($classes, $subjects, $teachers);
@@ -167,7 +170,8 @@ class DemoSchoolSeeder extends Seeder
             'marks', 'exams', 'fee_payments', 'fee_structures', 'fee_categories', 'attendances',
             'timetables', 'homework', 'books', 'announcements', 'holidays', 'grade_scales',
             'students', 'guardians', 'staff', 'designations', 'departments', 'sections',
-            'subjects', 'classes', 'academic_years',
+            'subjects', 'classes', 'grading_schemes', 'assessment_components', 'assessment_schemes',
+            'terms', 'academic_years',
         ] as $table) {
             if (Schema::hasTable($table) && Schema::hasColumn($table, 'school_id')) {
                 DB::table($table)->where('school_id', $sid)->delete();
@@ -555,27 +559,27 @@ class DemoSchoolSeeder extends Seeder
         ], $rows));
     }
 
-    /** WAEC-style grades, the way Nigerian report cards show them */
-    private function gradeScale(): array
+    /**
+     * WAEC grades (A1 – F9) are the school default. Nursery and primary
+     * classes use the simpler A – F scale, as many Nigerian schools do.
+     *
+     * @return array<int, array> grade bands per class id, as [grade, gpa, min %]
+     */
+    private function gradeScales(array $classes): array
     {
-        $scale = [
-            ['A1', 5.00, 75, 100, 'Excellent'],
-            ['B2', 4.50, 70, 74, 'Very Good'],
-            ['B3', 4.00, 65, 69, 'Good'],
-            ['C4', 3.50, 60, 64, 'Credit'],
-            ['C5', 3.00, 55, 59, 'Credit'],
-            ['C6', 2.50, 50, 54, 'Credit'],
-            ['D7', 2.00, 45, 49, 'Pass'],
-            ['E8', 1.00, 40, 44, 'Pass'],
-            ['F9', 0.00, 0, 39, 'Fail'],
-        ];
+        $simpleId = SchoolDefaults::createGradingScheme($this->sid, 'simple');
+        $asRows = fn (string $preset) => array_map(fn ($b) => [$b[0], $b[4], $b[1]], SchoolDefaults::GRADING_PRESETS[$preset]['bands']);
 
-        $this->insert('grade_scales', array_map(fn ($r, $i) => [
-            'school_id' => $this->sid, 'grade' => $r[0], 'gpa' => $r[1], 'min_marks' => $r[2],
-            'max_marks' => $r[3], 'remarks' => $r[4], 'sort_order' => $i + 1,
-        ], $scale, array_keys($scale)));
+        $byClass = [];
+        foreach ($classes as $class) {
+            $simple = in_array($class['level'], ['early', 'primary'], true);
+            if ($simple) {
+                DB::table('classes')->where('id', $class['id'])->update(['grading_scheme_id' => $simpleId]);
+            }
+            $byClass[$class['id']] = $asRows($simple ? 'simple' : 'waec');
+        }
 
-        return $scale;
+        return $byClass;
     }
 
     private function gradeFor(float $marks, array $scale): array
@@ -586,12 +590,12 @@ class DemoSchoolSeeder extends Seeder
             }
         }
 
-        return ['F9', 0.00];
+        return [end($scale)[0], 0.00];
     }
 
     // ───────────────────────── exams & results ─────────────────────────
 
-    private function exams(array $classes, array $subjects, array $students, array $scale): void
+    private function exams(array $classes, array $subjects, array $students, array $scales): void
     {
         $byClass = [];
         foreach ($students as $s) {
@@ -601,6 +605,11 @@ class DemoSchoolSeeder extends Seeder
         // A few subjects are harder than others, so results look natural
         $bias = ['Mathematics' => -6, 'Further Mathematics' => -8, 'Physics' => -5, 'Chemistry' => -4, 'English Language' => -2, 'Physical & Health Education' => 9, 'Cultural & Creative Arts' => 8, 'Computer Studies' => 5, 'Creative Arts & Colouring' => 9, 'Religious Studies (CRS/IRS)' => 6];
 
+        // [year, term number] each exam belongs to
+        $termId = fn (string $year, int $seq) => DB::table('terms')->where('school_id', $this->sid)->where('sequence', $seq)
+            ->where('academic_year_id', DB::table('academic_years')->where('school_id', $this->sid)->where('name', $year)->value('id'))->value('id');
+        $terms = [$termId('2025/2026', 3), $termId('2026/2027', 1), $termId('2026/2027', 1)];
+
         $examPlan = [
             ['Third Term Examination 2025/2026', 'final', '2026-07-06', '2026-07-17', 'completed', 1.0, 'End of session examination.'],
             ['First Term Continuous Assessment 1, 2026/2027', 'unit_test', '2026-09-28', '2026-10-02', 'completed', 0.6, 'First continuous assessment, 40 marks scaled to 100.'],
@@ -609,9 +618,9 @@ class DemoSchoolSeeder extends Seeder
 
         $markRows = [];
         foreach ($classes as $class) {
-            foreach ($examPlan as [$name, $type, $start, $end, $status, $effort, $desc]) {
+            foreach ($examPlan as $p => [$name, $type, $start, $end, $status, $effort, $desc]) {
                 $examId = $this->insertGetId('exams', [
-                    'school_id' => $this->sid, 'class_id' => $class['id'], 'name' => $name, 'type' => $type,
+                    'school_id' => $this->sid, 'class_id' => $class['id'], 'term_id' => $terms[$p], 'name' => $name, 'type' => $type,
                     'start_date' => $start, 'end_date' => $end, 'status' => $status, 'description' => $desc,
                 ]);
 
@@ -625,7 +634,7 @@ class DemoSchoolSeeder extends Seeder
                         $raw = $student['ability'] * 100 + ($bias[$subject['name']] ?? 0) + $this->gauss(0, 9);
                         // CA scores run a little lower than final exam scores
                         $marks = $absent ? null : round(max(9, min(99, $raw - ($effort < 1 ? 4 : 0))) * 2) / 2;
-                        [$grade, $gpa] = $marks === null ? [null, null] : $this->gradeFor($marks, $scale);
+                        [$grade, $gpa] = $marks === null ? [null, null] : $this->gradeFor($marks, $scales[$class['id']]);
 
                         $markRows[] = [
                             'school_id' => $this->sid, 'exam_id' => $examId, 'student_id' => $student['id'],

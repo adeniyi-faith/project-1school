@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SchoolDefaults;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -30,6 +31,9 @@ class School extends Model
                 $school->slug = Str::slug($school->name);
             }
         });
+
+        // Every new school starts with terms, a score setup and the WAEC grade scale
+        static::created(fn (School $school) => SchoolDefaults::apply($school->id));
     }
 
     public function users(): HasMany

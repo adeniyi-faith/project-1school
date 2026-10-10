@@ -13,7 +13,7 @@ class Exam extends Model
     use BelongsToSchool, SoftDeletes;
 
     protected $fillable = [
-        'school_id', 'class_id', 'name', 'type', 'start_date', 'end_date', 'status', 'description',
+        'school_id', 'class_id', 'term_id', 'name', 'type', 'start_date', 'end_date', 'status', 'description',
     ];
 
     protected $casts = [
@@ -24,6 +24,11 @@ class Exam extends Model
     public function schoolClass(): BelongsTo
     {
         return $this->belongsTo(SchoolClass::class, 'class_id');
+    }
+
+    public function term(): BelongsTo
+    {
+        return $this->belongsTo(Term::class);
     }
 
     public function marks(): HasMany
