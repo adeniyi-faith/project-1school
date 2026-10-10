@@ -14,7 +14,7 @@ Teacher, Accountant, Librarian, Receptionist, Driver, Warden, Store Manager, Stu
 
 Long-term direction: a Nigerian-first "Education OS" (three terms, continuous assessment,
 WAEC-style report cards, Naira payments). The build checklist for that lives in the project's
-shared files; Phase 1 (safety fixes) is finished, Phase 2 starts with results and fees.
+shared files; Phase 1 (safety fixes) is finished. Phase 2 is under way: terms and score/grade setup are done; stored results and fees come next.
 
 ---
 
@@ -56,6 +56,7 @@ app/
   Scopes/SchoolScope.php      the "only my school" rule
   Traits/BelongsToSchool.php  adds that rule + fills school_id on create
   Services/          GradingService, SupabaseAuthService (the only services)
+  Support/SchoolDefaults.php  starting terms, score setup and grade scales for every school
   Jobs/              SendSmsBlast (stub: writes to the log), SendEmailBlast
 routes/web.php       ONE file for all routes (no api.php)
 resources/js/        Pages/<Area>/..., components/, Layouts/, Stores/, Types/
@@ -75,12 +76,13 @@ Everything below exists as working screens unless a caveat says otherwise.
 | Login, roles, permissions | Built | Password check via Supabase. No password reset, no self-sign-up, no 2FA. Accounts are created by admins |
 | Multi-school (tenancy) | Built | `school_id` + `SchoolScope`. Super Admin manages schools, packages, subscriptions, module switches |
 | School setup | Built | Classes, sections, subjects, shifts, holidays, academic year, settings, branding, integrations |
+| Terms, score setups, grade scales | Built | Each school year has terms (3 by default, from the `terms_per_year` setting). Admins choose score parts (CA1, CA2, CA3, assignment, exam ... adding up to 100) and grade scales (WAEC A1–F9 default, simple A–F preset), per school, per class, and per subject for score parts. Pages: `/school/academics/terms`, `/school/academics/assessment` |
 | Students | Built | Admission, profile, documents (private disk) |
 | Admissions CRM, visitor log | Built | Inquiry → follow-ups. No automatic "turn an inquiry into a student" step |
 | Staff & HR | Built | Staff, departments, designations, documents, leave, salary structure, payroll, payslip PDF |
 | Attendance | Built | Student and staff, daily marking, calendar |
 | Timetable | Built | |
-| Exams & results | Built, limited | **One number per student/subject/exam.** No terms, no continuous-assessment weighting, results computed live, no stored positions |
+| Exams & results | Built, limited | Exams belong to a term, and grades use the class's grade scale. Still **one number per student/subject/exam**: scores are not yet split into the score parts, results are computed live, no stored positions |
 | Fees | Built, limited | Staff type in payments by hand. No invoices, no ledger, no payment gateway |
 | Library, Inventory/Assets, Transport, Hostel | Built | Transport has a GPS location webhook protected by a per-vehicle token (no screen shows the token yet) |
 | Homework, lesson plans, syllabus, online-class links | Built | |
@@ -141,7 +143,7 @@ and the academic report. Run them before and after any change to routes, models 
 
 ## Known gaps (planned work)
 
-Phase 2: terms, assessment components, stored results, invoices and payment ledger.
+Phase 2 (rest): scores entered per score part, stored results, invoices and payment ledger.
 Phase 3: admission-to-enrolment, promotion, report cards, real SMS, payment gateway, CBT.
 Phase 4: queue for PDFs, Redis, safe ID generation (admission numbers and employee IDs are
 made by counting rows, which can collide), splitting the fat controllers into services.

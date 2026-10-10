@@ -272,3 +272,67 @@ export type PaginatedResponse<T> = {
         next: string | null;
     };
 };
+
+// ───────────── School years, terms, score setups and grade scales ─────────────
+
+export interface Term {
+    id: number;
+    name: string;
+    sequence: number;
+    start_date: string | null;
+    end_date: string | null;
+    is_current: boolean;
+}
+
+export interface AcademicYearWithTerms {
+    id: number;
+    name: string;
+    start_date: string | null;
+    end_date: string | null;
+    is_current: boolean;
+    terms: Term[];
+}
+
+/** A term as offered in a dropdown, e.g. "2026/2027 · First Term" */
+export interface TermOption {
+    id: number;
+    label: string;
+    is_current: boolean;
+}
+
+/** One score part, e.g. CA1 worth 20 marks */
+export type AssessmentComponent = {
+    id?: number;
+    name: string;
+    short_name: string;
+    max_score: number;
+};
+
+export interface AssessmentScheme {
+    id: number;
+    name: string;
+    is_default: boolean;
+    components: AssessmentComponent[];
+}
+
+/** One grade in a grade scale, e.g. A1 from 75 to 100 */
+export type GradeBand = {
+    id?: number;
+    grade: string;
+    min_marks: number;
+    max_marks: number;
+    remarks: string | null;
+    gpa: number;
+};
+
+export interface GradingScheme {
+    id: number;
+    name: string;
+    is_default: boolean;
+    bands: GradeBand[];
+}
+
+export interface AssessmentPresets {
+    assessment: { key: string; name: string; components: AssessmentComponent[] }[];
+    grading: { key: string; name: string; bands: GradeBand[] }[];
+}
