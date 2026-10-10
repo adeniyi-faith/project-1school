@@ -2,7 +2,10 @@
 
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
 
+import * as React from "react"
+
 import { cn } from "@/lib/utils"
+import { asChildProps } from "@/lib/as-child"
 
 function TooltipProvider({
   delay = 0,
@@ -21,8 +24,20 @@ function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
   return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
 }
 
-function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+function TooltipTrigger({
+  asChild,
+  children,
+  ...props
+}: TooltipPrimitive.Trigger.Props & { asChild?: boolean }) {
+  const { render, children: inner } = asChildProps(asChild, children) as {
+    render?: React.ReactElement
+    children?: React.ReactNode
+  }
+  return (
+    <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} render={render}>
+      {inner}
+    </TooltipPrimitive.Trigger>
+  )
 }
 
 function TooltipContent({

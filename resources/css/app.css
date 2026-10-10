@@ -221,3 +221,113 @@
     scrollbar-width: thin;
     scrollbar-color: color-mix(in oklch, currentColor 20%, transparent) transparent;
 }
+
+/* ---------- Phones: tables become stacked rows (see components/ui/table.tsx) ---------- */
+@media (max-width: 767px) {
+    [data-slot='table-container'][data-stack] {
+        overflow-x: visible;
+    }
+    [data-stack] table,
+    [data-stack] tbody,
+    [data-stack] tr {
+        display: block;
+        width: 100%;
+    }
+    [data-stack] thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+    }
+    [data-stack] tbody tr {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--color-slate-200);
+    }
+    [data-stack] tbody tr:last-child {
+        border-bottom: 0;
+    }
+    [data-stack] td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        width: 100%;
+        padding: 0.4rem 1rem;
+        text-align: right;
+        white-space: normal;
+        word-break: break-word;
+    }
+    [data-stack] td[data-label]::before {
+        content: attr(data-label);
+        flex-shrink: 0;
+        max-width: 45%;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--color-slate-500);
+    }
+    /* the first column (name, receipt no.) leads each row, without its heading */
+    [data-stack] td[data-primary] {
+        justify-content: flex-start;
+        text-align: left;
+        font-weight: 600;
+        padding-top: 0.6rem;
+    }
+    [data-stack] td[data-primary]::before {
+        display: none;
+    }
+    [data-stack] td[data-index] {
+        display: none;
+    }
+    /* cells with no heading (row actions, "no results" messages) */
+    [data-stack] td:not([data-label]) {
+        justify-content: flex-end;
+    }
+    [data-stack] td[colspan] {
+        justify-content: center;
+        text-align: center;
+    }
+    .dark [data-stack] tbody tr {
+        border-bottom-color: rgb(255 255 255 / 0.08);
+    }
+}
+
+/* ---------- Phones: page headers and forms ---------- */
+@media (max-width: 767px) {
+    /* title on the left, button on the right: let them wrap instead of squeezing the title */
+    .flex.justify-between:has(> div:first-child > h1) {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    .flex.justify-between:has(> div:first-child > h1) > :not(:first-child) {
+        margin-left: auto;
+    }
+    /* a row of several header buttons gets its own full-width line */
+    .flex.justify-between:has(> div:first-child > h1) > .flex:has(> :nth-child(2)) {
+        flex-wrap: wrap;
+        width: 100%;
+        margin-left: 0;
+    }
+    .flex.justify-between:has(> div:first-child > h1) > .flex:has(> :nth-child(2)) > * {
+        flex: 1 1 auto;
+    }
+    .flex.justify-between:has(> div:first-child > h1) > .flex:has(> :nth-child(2)) > * > button {
+        width: 100%;
+    }
+    h1 {
+        font-size: 1.5rem;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+    }
+    /* two-column form rows become one column so labels and values stay readable */
+    form .grid.grid-cols-2,
+    [role='dialog'] .grid.grid-cols-2 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    form .grid.grid-cols-2 > *,
+    [role='dialog'] .grid.grid-cols-2 > * {
+        grid-column: 1 / -1;
+    }
+}
