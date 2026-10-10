@@ -162,8 +162,8 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
         <form onSubmit={save} className="space-y-6">
             <Panel title="Look" action={
                 <div className="flex flex-wrap gap-2">
-                    <a href={`${base}/preview`} target="_blank" rel="noopener"><Button type="button" variant="outline" size="sm"><Eye className="size-4" /> Preview term card</Button></a>
-                    <a href={`${base}/preview?type=session`} target="_blank" rel="noopener"><Button type="button" variant="outline" size="sm"><Eye className="size-4" /> Preview full year</Button></a>
+                    <a href={`${base}/preview?view=html`} target="_blank" rel="noopener"><Button type="button" variant="outline" size="sm"><Eye className="size-4" /> Preview term card</Button></a>
+                    <a href={`${base}/preview?type=session&view=html`} target="_blank" rel="noopener"><Button type="button" variant="outline" size="sm"><Eye className="size-4" /> Preview full year</Button></a>
                 </div>
             }>
                 <div className="space-y-5">

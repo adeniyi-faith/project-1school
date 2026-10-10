@@ -81,7 +81,7 @@ export default function PayrollPage({ payrolls, departments, filters, stats }: P
                 )}
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-4 max-w-lg">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-lg">
                     {[
                         { label: 'Net Payable', value: `₦${stats.total_net?.toLocaleString() ?? 0}`, color: 'text-indigo-600', icon: Banknote },
                         { label: 'Paid', value: stats.paid_count, color: 'text-green-600', icon: CheckCircle2 },

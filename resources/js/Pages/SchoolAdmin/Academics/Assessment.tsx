@@ -372,12 +372,12 @@ export default function Assessment({ assessmentSchemes, gradingSchemes, classes,
                             <Input id="grade-name" value={gradeForm.data.name} onChange={e => gradeForm.setData('name', e.target.value)} />
                             <ErrorText>{gradeForm.errors.name}</ErrorText>
                         </div>
-                        <div className="max-h-[50vh] space-y-2 overflow-y-auto">
-                            <div className="grid grid-cols-[4rem_4.5rem_4.5rem_1fr_4rem_2rem] gap-2 text-xs font-medium text-slate-500">
+                        <div className="max-h-[50vh] space-y-2 overflow-auto">
+                            <div className="grid min-w-[26rem] grid-cols-[4rem_4.5rem_4.5rem_1fr_4rem_2rem] gap-2 text-xs font-medium text-slate-500">
                                 <span>Grade</span><span>From %</span><span>To %</span><span>Remark</span><span>Points</span><span />
                             </div>
                             {gradeForm.data.bands.map((b, i) => (
-                                <div key={i} className="grid grid-cols-[4rem_4.5rem_4.5rem_1fr_4rem_2rem] items-center gap-2">
+                                <div key={i} className="grid min-w-[26rem] grid-cols-[4rem_4.5rem_4.5rem_1fr_4rem_2rem] items-center gap-2">
                                     <Input aria-label="Grade" value={b.grade} onChange={e => setBand(i, { grade: e.target.value })} />
                                     <Input aria-label="From %" type="number" min="0" max="100" step="0.5" value={b.min_marks} onChange={e => setBand(i, { min_marks: Number(e.target.value) })} />
                                     <Input aria-label="To %" type="number" min="0" max="100" step="0.5" value={b.max_marks} onChange={e => setBand(i, { max_marks: Number(e.target.value) })} />

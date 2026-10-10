@@ -331,3 +331,11 @@
         grid-column: 1 / -1;
     }
 }
+
+/* A grid with no column rule would size its one column to the widest item and push the page sideways
+   on phones. This is the lowest-priority default: any grid-cols-* class still wins. */
+@layer base {
+    .grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

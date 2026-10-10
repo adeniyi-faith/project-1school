@@ -118,7 +118,7 @@ export default function TeacherSchedule({ teachers, periods, grid, days, default
 
                         {/* Grid */}
                         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-x-auto">
-                            <table className="w-full min-w-[700px]">
+                            <table data-no-stack className="w-full min-w-[700px]">
                                 <thead>
                                     <tr className="bg-slate-50 dark:bg-slate-900">
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-28 border-b border-slate-200 dark:border-slate-800">Time</th>

@@ -223,7 +223,7 @@ function ScoresTab({ sheet, canEnter, subjects, subjectId, components, students,
         >
             {firstError && <p className="px-5 pb-3 text-sm text-red-600">{firstError}</p>}
             <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table data-no-stack className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-slate-100 text-left text-xs text-slate-500 dark:border-white/[0.06] dark:text-slate-400">
                             <th className="sticky left-0 bg-white px-5 py-2 font-medium dark:bg-slate-900">Student</th>
@@ -318,7 +318,7 @@ function BehaviourTab({ sheet, canEnter, students, traits, ratings, ratingLabels
             )}
         >
             <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table data-no-stack className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-slate-100 text-left text-xs text-slate-500 dark:border-white/[0.06] dark:text-slate-400">
                             <th className="sticky left-0 bg-white px-5 py-2 font-medium dark:bg-slate-900">Student</th>
@@ -366,7 +366,7 @@ function ResultsTab({ sheet, summaries, students }: Props) {
             description={`${summaries.length} of ${students.length} students have results. Class average ${sheet.class_average ?? '—'}%. Students with the same average share a position.`}
         >
             <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table data-no-stack className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-slate-100 text-left text-xs text-slate-500 dark:border-white/[0.06] dark:text-slate-400">
                             <th className="px-5 py-2 font-medium">Position</th>

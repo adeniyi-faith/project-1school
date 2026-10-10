@@ -72,7 +72,8 @@ export function TermReportCard({ report, downloadUrl }: { report: TermReport; do
             )}
             {downloadUrl && (
                 <div className="flex flex-wrap gap-4 border-t border-slate-100 px-5 py-3 text-sm dark:border-white/[0.06]">
-                    <a href={downloadUrl} target="_blank" rel="noopener" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Download report card</a>
+                    <a href={`${downloadUrl}?view=html`} target="_blank" rel="noopener" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">View report card</a>
+                    <a href={downloadUrl} target="_blank" rel="noopener" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Download PDF</a>
                     <a href={`${downloadUrl}/session`} target="_blank" rel="noopener" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Full-year report so far</a>
                 </div>
             )}

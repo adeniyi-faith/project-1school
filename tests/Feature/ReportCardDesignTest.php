@@ -136,6 +136,17 @@ class ReportCardDesignTest extends SecurityTestCase
         $this->assertSame($secondary->id, $this->default()->id);
     }
 
+    public function test_the_preview_can_show_on_screen_as_a_web_page(): void
+    {
+        $design = $this->default();
+
+        $this->get("/school/academics/report-card-designs/{$design->id}/preview?view=html")
+            ->assertOk()
+            ->assertHeader('content-type', 'text/html; charset=UTF-8')
+            ->assertSee('Download PDF', false)
+            ->assertSee('width=device-width', false);
+    }
+
     public function test_the_preview_prints_a_sample_card_with_the_design(): void
     {
         $design = $this->default();

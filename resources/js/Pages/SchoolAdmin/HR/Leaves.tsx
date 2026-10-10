@@ -94,7 +94,7 @@ export default function LeaveRequests({ requests, leaveTypes, staffList, filters
                 )}
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-4 max-w-md">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-md">
                     {statCards.map(({ label, value, color, icon: Icon }) => (
                         <Card key={label} className="border-slate-200 dark:border-slate-800">
                             <CardContent className="p-4 flex items-center gap-3">

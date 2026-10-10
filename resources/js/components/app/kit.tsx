@@ -24,15 +24,15 @@ export function Panel({
     return (
         <section className={cn('min-w-0 rounded-xl border border-slate-200 bg-white shadow-xs dark:border-white/[0.08] dark:bg-slate-900', className)}>
             {(title || action) && (
-                <header className="flex items-start justify-between gap-3 px-5 pt-4">
+                <header className="flex flex-wrap items-start justify-between gap-3 px-4 pt-4 sm:px-5">
                     <div className="min-w-0">
                         {title && <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">{title}</h2>}
                         {description && <p className="mt-0.5 text-[13px] text-slate-500 dark:text-slate-400">{description}</p>}
                     </div>
-                    {action && <div className="shrink-0 text-[13px]">{action}</div>}
+                    {action && <div className="text-[13px] sm:shrink-0">{action}</div>}
                 </header>
             )}
-            <div className={cn(flush ? 'pt-3' : 'px-5 pb-5 pt-4', bodyClassName)}>{children}</div>
+            <div className={cn(flush ? 'pt-3' : 'px-4 pb-5 pt-4 sm:px-5', bodyClassName)}>{children}</div>
         </section>
     );
 }

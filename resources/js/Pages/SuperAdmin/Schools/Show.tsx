@@ -69,7 +69,7 @@ export default function ShowSchool() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {/* Stats */}
                 {[
                     { icon: Users, label: 'Total Users', value: school.users_count },
