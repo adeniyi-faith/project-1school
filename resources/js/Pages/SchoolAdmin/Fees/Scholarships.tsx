@@ -78,21 +78,25 @@ export default function Scholarships({ scholarships, awards, categories, can }: 
         }
     }
 
+    const headerActions = canManage && (
+        <div className="flex gap-2">
+            <Button variant="outline" onClick={() => openPolicy(null)}><Plus className="size-4" /> New scholarship</Button>
+            <Button disabled={active.length === 0} onClick={() => { award.reset(); award.clearErrors(); setAwardOpen(true); }} className="bg-indigo-600 text-white hover:bg-indigo-700">
+                <UserPlus className="size-4" /> Give to a student
+            </Button>
+        </div>
+    );
+
     return (
         <AppLayout title="Scholarships">
             <div className="space-y-6">
                 <PageHeader
                     title="Scholarships and discounts"
                     description="Name each discount once (staff child, sibling, merit ...), then give it to students. Every award records who approved it and why."
-                    actions={canManage && (
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => openPolicy(null)}><Plus className="size-4" /> New scholarship</Button>
-                            <Button disabled={active.length === 0} onClick={() => { award.reset(); award.clearErrors(); setAwardOpen(true); }} className="bg-indigo-600 text-white hover:bg-indigo-700">
-                                <UserPlus className="size-4" /> Give to a student
-                            </Button>
-                        </div>
-                    )}
+                    actions={headerActions}
                 />
+                {/* The header hides its buttons on phones, so they are repeated here */}
+                <div className="md:hidden">{headerActions}</div>
 
                 <Panel title="Scholarships" flush>
                     {scholarships.length === 0 ? (

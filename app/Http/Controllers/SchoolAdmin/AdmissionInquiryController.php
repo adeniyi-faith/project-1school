@@ -14,7 +14,7 @@ class AdmissionInquiryController extends Controller
     {
         $sid = $this->getSchoolId();
 
-        $inquiries = AdmissionInquiry::with('followups.staff:id,name')
+        $inquiries = AdmissionInquiry::with(['followups.staff:id,name', 'assessments:id,inquiry_id,type,outcome,score,max_score'])
             ->where('school_id', $sid)
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->when($request->search, fn ($q) => $q->where(function ($q2) use ($request) {
@@ -40,7 +40,8 @@ class AdmissionInquiryController extends Controller
             'guardian_name'      => 'required|string|max:150',
             'guardian_phone'     => 'required|string|max:25',
             'guardian_email'     => 'nullable|email|max:150',
-            'status'             => 'in:new,follow_up,admitted,dropped',
+            // "accepted" and "admitted" are only reached through the Accept and Enrol actions
+            'status'             => 'in:new,follow_up,dropped',
             'notes'              => 'nullable|string',
             'next_followup_date' => 'nullable|date',
             'source'             => 'nullable|string|max:50',
@@ -61,12 +62,16 @@ class AdmissionInquiryController extends Controller
             'guardian_name'      => 'required|string|max:150',
             'guardian_phone'     => 'required|string|max:25',
             'guardian_email'     => 'nullable|email|max:150',
-            'status'             => 'in:new,follow_up,admitted,dropped',
+            // "accepted" and "admitted" are only reached through the Accept and Enrol actions
+            'status'             => 'in:new,follow_up,dropped',
             'notes'              => 'nullable|string',
             'next_followup_date' => 'nullable|date',
             'source'             => 'nullable|string|max:50',
         ]);
 
+        if (in_array($admissionInquiry->status, ['accepted', 'admitted'], true)) {
+            unset($data['status']); // editing contact details must not undo a decision or an enrolment
+        }
         $admissionInquiry->update($data);
 
         return back()->with('success', 'Inquiry updated.');

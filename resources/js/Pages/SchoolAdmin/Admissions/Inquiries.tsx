@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { useForm, router } from '@inertiajs/react';
+import { Link, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,27 +10,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Edit, Trash2, MessageSquare, ChevronDown, ChevronUp, ClipboardList } from 'lucide-react';
+import { InquiryStatusPill, INQUIRY_STATUS_LABELS } from '@/components/admissions/InquiryStatus';
+import type { AssessmentOutcome, InquiryStatus } from '@/Types';
 
 interface Followup { id: number; note: string; next_date: string | null; created_at: string; staff: { name: string } | null; }
 interface Inquiry {
     id: number; student_name: string; class_interested: string;
     guardian_name: string; guardian_phone: string; guardian_email: string | null;
-    status: 'new' | 'follow_up' | 'admitted' | 'dropped';
+    status: InquiryStatus;
     notes: string | null; next_followup_date: string | null;
     source: string; followups: Followup[];
+    assessments: { id: number; type: 'exam' | 'interview'; outcome: AssessmentOutcome; score: number | null; max_score: number | null }[];
 }
 interface PaginatedInquiries { data: Inquiry[]; current_page: number; last_page: number; total: number; }
 interface Props { inquiries: PaginatedInquiries; filters: { status?: string; search?: string }; }
 
-const statusColors: Record<string, string> = {
-    new:       'bg-blue-100 text-blue-700',
-    follow_up: 'bg-yellow-100 text-yellow-700',
-    admitted:  'bg-green-100 text-green-700',
-    dropped:   'bg-red-100 text-red-700',
-};
-const statusLabels: Record<string, string> = {
-    new: 'New', follow_up: 'Follow Up', admitted: 'Admitted', dropped: 'Dropped',
-};
+/** Statuses staff can pick by hand. "Place offered" and "Enrolled" come from the actions on the inquiry's page. */
+type EditableStatus = 'new' | 'follow_up' | 'dropped';
+const OUTCOME_SHORT: Record<AssessmentOutcome, string> = { pending: 'booked', passed: 'passed', failed: 'did not pass', absent: 'absent' };
 
 export default function Inquiries({ inquiries, filters }: Props) {
     const [showModal,  setShowModal]  = useState(false);
@@ -44,7 +41,7 @@ export default function Inquiries({ inquiries, filters }: Props) {
 
     const form = useForm({
         student_name: '', class_interested: '', guardian_name: '', guardian_phone: '',
-        guardian_email: '', status: 'new' as Inquiry['status'], notes: '',
+        guardian_email: '', status: 'new' as EditableStatus, notes: '',
         next_followup_date: '', source: 'walk-in',
     });
 
@@ -59,7 +56,7 @@ export default function Inquiries({ inquiries, filters }: Props) {
         form.setData({
             student_name: i.student_name, class_interested: i.class_interested,
             guardian_name: i.guardian_name, guardian_phone: i.guardian_phone,
-            guardian_email: i.guardian_email ?? '', status: i.status,
+            guardian_email: i.guardian_email ?? '', status: (['new', 'follow_up', 'dropped'].includes(i.status) ? i.status : 'follow_up') as EditableStatus,
             notes: i.notes ?? '', next_followup_date: i.next_followup_date ?? '',
             source: i.source,
         });
@@ -91,7 +88,7 @@ export default function Inquiries({ inquiries, filters }: Props) {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Admission Inquiries</h1>
-                        <p className="text-sm text-slate-500 mt-0.5">Manage prospective student inquiries</p>
+                        <p className="text-sm text-slate-500 mt-0.5">Open an inquiry to book an entrance exam or interview, offer a place, and enrol the child.</p>
                     </div>
                     <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> New Inquiry</Button>
                 </div>
@@ -107,14 +104,15 @@ export default function Inquiries({ inquiries, filters }: Props) {
                             </div>
                             <div className="w-44">
                                 <Label>Status</Label>
-                                <Select value={status || '_all'} onValueChange={v => setStatus(v === '_all' ? '' : v)}>
+                                <Select value={status || '_all'} onValueChange={v => setStatus(!v || v === '_all' ? '' : v)}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="_all">All Statuses</SelectItem>
                                         <SelectItem value="new">New</SelectItem>
-                                        <SelectItem value="follow_up">Follow Up</SelectItem>
-                                        <SelectItem value="admitted">Admitted</SelectItem>
-                                        <SelectItem value="dropped">Dropped</SelectItem>
+                                        <SelectItem value="follow_up">{INQUIRY_STATUS_LABELS.follow_up}</SelectItem>
+                                        <SelectItem value="accepted">{INQUIRY_STATUS_LABELS.accepted}</SelectItem>
+                                        <SelectItem value="admitted">{INQUIRY_STATUS_LABELS.admitted}</SelectItem>
+                                        <SelectItem value="dropped">{INQUIRY_STATUS_LABELS.dropped}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -139,17 +137,20 @@ export default function Inquiries({ inquiries, filters }: Props) {
                                     <div className="flex items-center gap-3 p-4">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="font-semibold text-slate-900 dark:text-white">{i.student_name}</span>
+                                                <Link href={`/school/admissions/inquiries/${i.id}`} className="font-semibold text-slate-900 hover:text-indigo-600 hover:underline dark:text-white dark:hover:text-indigo-400">{i.student_name}</Link>
                                                 <span className="text-xs text-slate-400">Class: {i.class_interested}</span>
-                                                <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${statusColors[i.status]}`}>
-                                                    {statusLabels[i.status]}
-                                                </span>
+                                                <InquiryStatusPill status={i.status} />
                                                 <span className="text-xs text-slate-400 capitalize">{i.source}</span>
                                             </div>
                                             <div className="text-sm text-slate-500 mt-0.5">
                                                 {i.guardian_name} · {i.guardian_phone}
                                                 {i.guardian_email && <span className="ml-2">{i.guardian_email}</span>}
                                             </div>
+                                            {i.assessments.length > 0 && (
+                                                <div className="text-xs text-slate-500 mt-0.5">
+                                                    {i.assessments.map(a => `${a.type === 'exam' ? 'Exam' : 'Interview'} ${OUTCOME_SHORT[a.outcome]}${a.score != null ? ` (${a.score}/${a.max_score})` : ''}`).join(' · ')}
+                                                </div>
+                                            )}
                                             {i.next_followup_date && (
                                                 <div className="text-xs text-amber-600 mt-0.5">Follow up: {new Date(i.next_followup_date).toLocaleDateString()}</div>
                                             )}
@@ -245,19 +246,22 @@ export default function Inquiries({ inquiries, filters }: Props) {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label>Status</Label>
-                                <Select value={form.data.status} onValueChange={v => form.setData('status', v as Inquiry['status'])}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="new">New</SelectItem>
-                                        <SelectItem value="follow_up">Follow Up</SelectItem>
-                                        <SelectItem value="admitted">Admitted</SelectItem>
-                                        <SelectItem value="dropped">Dropped</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                {editItem && (editItem.status === 'accepted' || editItem.status === 'admitted') ? (
+                                    <p className="py-2 text-sm text-slate-500">{INQUIRY_STATUS_LABELS[editItem.status]}. Change it from the inquiry's page.</p>
+                                ) : (
+                                    <Select value={form.data.status} onValueChange={v => form.setData('status', v as EditableStatus)}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="new">{INQUIRY_STATUS_LABELS.new}</SelectItem>
+                                            <SelectItem value="follow_up">{INQUIRY_STATUS_LABELS.follow_up}</SelectItem>
+                                            <SelectItem value="dropped">{INQUIRY_STATUS_LABELS.dropped}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             </div>
                             <div>
                                 <Label>Source</Label>
-                                <Select value={form.data.source} onValueChange={v => form.setData('source', v)}>
+                                <Select value={form.data.source} onValueChange={v => form.setData('source', v ?? 'walk-in')}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="walk-in">Walk-in</SelectItem>

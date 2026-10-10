@@ -14,7 +14,7 @@ Teacher, Accountant, Librarian, Receptionist, Driver, Warden, Store Manager, Stu
 
 Long-term direction: a Nigerian-first "Education OS" (three terms, continuous assessment,
 WAEC-style report cards, Naira payments). The build checklist for that lives in the project's
-shared files; Phase 1 (safety fixes) is finished. Phase 2 (terms, score/grade setup, stored term results, invoices, the payment ledger, scholarships, and moving old fee payments into invoices) is finished. Phase 3 is next.
+shared files; Phase 1 (safety fixes) is finished. Phase 2 (terms, score/grade setup, stored term results, invoices, the payment ledger, scholarships, and moving old fee payments into invoices) is finished. Phase 3 is under way: admission inquiry → entrance exam/interview → offer → enrolment is done.
 
 ---
 
@@ -78,7 +78,7 @@ Everything below exists as working screens unless a caveat says otherwise.
 | School setup | Built | Classes, sections, subjects, shifts, holidays, academic year, settings, branding, integrations |
 | Terms, score setups, grade scales | Built | Each school year has terms (3 by default, from the `terms_per_year` setting). Admins choose score parts (CA1, CA2, CA3, assignment, exam ... adding up to 100) and grade scales (WAEC A1–F9 default, simple A–F preset), per school, per class, and per subject for score parts. Pages: `/school/academics/terms`, `/school/academics/assessment` |
 | Students | Built | Admission, profile, documents (private disk) |
-| Admissions CRM, visitor log | Built | Inquiry → follow-ups. No automatic "turn an inquiry into a student" step |
+| Admissions CRM, visitor log | Built | Inquiry → follow-ups → optional entrance exams and interviews (`admission_assessments`: booked, then passed / did not pass / absent, with score) → "Offer a place" or "Decline" (who and why are recorded; needs `admissions.manage`, held by school-admin and principal) → "Enrol" (needs `students.create`), which creates the student and links them to an existing parent with the same phone number, or a new one. Page: `/school/admissions/inquiries/{id}` (`AdmissionPipelineController`). "Place offered" and "Enrolled" can only be reached through those actions, not the edit form |
 | Staff & HR | Built | Staff, departments, designations, documents, leave, salary structure, payroll, payslip PDF |
 | Attendance | Built | Student and staff, daily marking, calendar |
 | Timetable | Built | |
@@ -146,7 +146,7 @@ and the academic report. Run them before and after any change to routes, models 
 ## Known gaps (planned work)
 
 Phase 2 leftovers: old per-exam marks are not copied into term results.
-Phase 3: admission-to-enrolment, promotion, report cards, real SMS, payment gateway, CBT.
+Phase 3 (rest): promotion, report cards, testimonials/transfer certificates, real SMS and a delivery log, payment gateway, payment plans, CBT, houses/clubs, shared table/form components.
 Phase 4: queue for PDFs, Redis, safe ID generation (admission numbers and employee IDs are
 made by counting rows, which can collide), splitting the fat controllers into services.
 Small open items: the Receptionist, Driver, Warden and Store Manager roles exist in the seeder but the `/school` route group only lets six roles in (Super Admin, School Admin, Principal, Teacher, Accountant, Librarian), so those four cannot reach any school screen yet; the side menu is chosen by role in the frontend, so it can show items a role
