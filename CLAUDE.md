@@ -1,242 +1,149 @@
-# CLAUDE.md — xgenious School Management System
+# CLAUDE.md — SchoolRuns (School Management System)
 
-> This file is the canonical guide for all Claude Code development sessions on this project.
-> Read this file at the start of every session before writing any code.
+> The guide for every Claude Code session on this project. Read it before writing code.
+> It describes what is **actually built today**. Where the older planning files in
+> `requirements/` describe something different, this file wins. Last checked: October 2026.
 
 ---
 
-## Project Identity
+## What this project is
 
-| Field | Value |
+A school management system for many schools on one install. One Laravel app serves its own
+React pages through Inertia.js (no separate API). Roles: Super Admin, School Admin, Principal,
+Teacher, Accountant, Librarian, Receptionist, Driver, Warden, Store Manager, Student, Parent.
+
+Long-term direction: a Nigerian-first "Education OS" (three terms, continuous assessment,
+WAEC-style report cards, Naira payments). The build checklist for that lives in the project's
+shared files; Phase 1 (safety fixes) is finished, Phase 2 starts with results and fees.
+
+---
+
+## Tech stack (what is really in the repo)
+
+| Layer | What is used |
 |---|---|
-| Project | xgenious School Management System (SMS) |
-| Type | Laravel + Inertia.js + React (Monolithic SPA) |
-| Edition | Free & Open Source |
-| Version | 1.0.0 |
-| SRS Reference | `requirements/00-overview.md` |
+| Backend | Laravel 13, PHP (`composer.json` says ^8.3, but the lock file pulls Symfony 8 which needs PHP 8.4 — use 8.4) |
+| Frontend | React 19 + TypeScript, Vite 8, Tailwind CSS 4 |
+| Bridge | Inertia.js 3 (every page is rendered through it) |
+| UI | shadcn-style components (Base UI) in `resources/js/components` |
+| Client state | Zustand — three small stores (`useAuthStore`, `useUIStore`, `useAttendanceStore`) |
+| Forms | react-hook-form + zod; charts with recharts |
+| Login | **Supabase checks the password** (`app/Services/SupabaseAuthService.php`); Laravel then decides what the person may do |
+| Permissions | Spatie laravel-permission (roles + permissions), Spatie laravel-activitylog (audit trail) |
+| Database | Supabase Postgres in production; SQLite for local development and tests |
+| Files | Laravel Storage. Disks: `local`, `public`, `supabase` (S3 style), and `private` (documents) |
+| PDF | barryvdh/laravel-dompdf, generated inside the web request |
+| Queue / cache / sessions | Database drivers. `QUEUE_CONNECTION=sync` by default (jobs run inside the request). The `Procfile` starts `queue:work`; set `QUEUE_CONNECTION=database` in production to use it |
+| Hosting | Railway (`railway.json`, `Procfile`). `vercel.json` is left over from an earlier attempt |
+| Tests | PHPUnit 12 (`php artisan test`). There are no frontend tests and no CI workflow yet |
+
+**Not in this project (despite older docs):** Laravel 11, `app/Modules/*` folders, Redis,
+Horizon, Sanctum, a `/api/v1` REST layer, Stripe or any payment gateway, 2FA, PestPHP,
+Vitest, Playwright, a mobile/PWA app, and a real SMS provider.
 
 ---
 
-## Tech Stack
-
-| Layer | Technology | Version |
-|---|---|---|
-| Backend | Laravel | 11 |
-| Language | PHP | 8.3 |
-| Frontend | React + TypeScript | 18 |
-| Bridge | Inertia.js | latest |
-| State Management | Zustand | latest |
-| UI Components | shadcn/ui + Tailwind CSS | latest |
-| Database | MySQL | 8 |
-| Cache / Queue | Redis + Laravel Horizon | latest |
-| Auth | Laravel Sanctum + Spatie RBAC | latest |
-| PDF | Laravel DomPDF / Snappy | latest |
-| Storage | Laravel Storage (S3-compat / MinIO) | latest |
-| Testing | PestPHP + Vitest + Playwright | latest |
-
----
-
-## Directory Structure
+## Code layout
 
 ```
 app/
-  Modules/
-    {ModuleName}/
-      Controllers/
-      Models/
-      Services/
-      Requests/
-      Resources/
-resources/
-  js/
-    Pages/
-      {Module}/          ← Inertia page components
-    Components/          ← Shared UI components
-    Stores/
-      *.ts               ← Zustand store slices
-    Types/
-      *.ts               ← Shared TypeScript types
-requirements/
-  00-overview.md         ← Full SRS overview
-  modules/
-    01-authentication-access-control.md
-    02-school-setup-configuration.md
-    03-student-management.md
-    04-staff-hr-management.md
-    05-attendance-management.md
-    06-timetable-scheduling.md
-    07-examination-results.md
-    08-fee-management.md
-    09-library-management.md
-    10-transport-management.md
-    11-homework-lesson-planning.md
-    12-communication.md
-    13-reports-analytics.md
-    14-system-administration.md
-    15-mobile-pwa-api.md
+  Http/Controllers/
+    Auth/            LoginController (Supabase login, rate limited)
+    SchoolAdmin/     one controller per area (students, fees, exams ...) — "fat controllers"
+    SuperAdmin/      schools, packages, subscriptions, module manager, platform settings
+    StudentPortalController, ParentPortalController, PublicAdmissionController
+  Models/            flat folder, ~60 models
+  Scopes/SchoolScope.php      the "only my school" rule
+  Traits/BelongsToSchool.php  adds that rule + fills school_id on create
+  Services/          GradingService, SupabaseAuthService (the only services)
+  Jobs/              SendSmsBlast (stub: writes to the log), SendEmailBlast
+routes/web.php       ONE file for all routes (no api.php)
+resources/js/        Pages/<Area>/..., components/, Layouts/, Stores/, Types/
+database/seeders/    RolePermissionSeeder (roles + permissions), demo data seeders
+tests/Feature/Security/   the safety-net tests (see below)
+requirements/        the original specs — a target, not a description of the code
 ```
 
 ---
 
-## Module Development Status
+## What is built (module status)
 
-Track the current sprint and completed modules here. Update after each sprint.
+Everything below exists as working screens unless a caveat says otherwise.
 
-| # | Module | Status | Sprint |
-|---|---|---|---|
-| 01 | Authentication & Access Control | ✅ Done (Sprint 1) | Sprint 1–2 |
-| 01 | Auth & Tenancy — Multi-school, Super Admin scaffold | ✅ Done (Sprint 2) | Sprint 2 |
-| 01 | Schools CRUD — Super Admin Schools Management | ✅ Done (Sprint 2B) | Sprint 2B |
-| 02 | School Setup & Configuration | ✅ Done (Sprint 3) | Sprint 3 |
-| 03 | Student Management | ✅ Done (Sprint 4) | Sprint 4 |
-| 16 | Admission Inquiry & Visitor Management | ✅ Done (Sprint 4B) | Sprint 4B |
-| 04 | Staff & HR Management (Basic) | ✅ Done (Sprint 5) | Sprint 5 |
-| 05 | Attendance Management | ✅ Done (Sprint 6) | Sprint 6 |
-| 06 | Timetable & Scheduling | ✅ Done (Sprint 7) | Sprint 7 |
-| 07 | Examination & Results | ✅ Done (Sprint 8) | Sprint 8 |
-| 08 | Fee Management | ✅ Done (Sprint 9) | Sprint 9–10 |
-| 04 | Staff & HR Management (Advanced) | ✅ Done (Sprint 11) | Sprint 11 |
-| 09 | Library Management | ✅ Done (Sprint 12) | Sprint 12 |
-| 18 | Inventory & Asset Management | ✅ Done (Sprint 12B) | Sprint 12B |
-| 10 | Transport Management | ✅ Done (Sprint 13) | Sprint 13 |
-| 17 | Hostel Management | ✅ Done (Sprint 13B) | Sprint 13B |
-| 11 | Homework & Lesson Planning | ✅ Done (Sprint 14) | Sprint 14 |
-| 12 | Communication | ✅ Done (Sprint 15) | Sprint 15 |
-| 13 | Reports & Analytics | ✅ Done (Sprint 16) | Sprint 16 |
-| 14 | System Administration | ✅ Done (Sprint 17) | Sprint 17 |
-| 15 | Mobile PWA & API | Removed | — |
-| 19 | Subscription & Package Management | ✅ Done (Sprint 17B) | Sprint 17B |
-
-> Update status to: `In Progress` → `Done` as each sprint completes.
-
----
-
-## Session Rules (Read Before Every Sprint)
-
-### 1. Always reference the module requirements file
-Before writing code for any module, read the corresponding file in `requirements/modules/`.
-
-### 2. Follow the sprint order
-Do not skip sprints. Each phase depends on the previous. The order is:
-`Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7`
-
-### 3. Multi-tenancy is non-negotiable
-Every model must:
-- Have a `school_id` FK column (indexed)
-- Use the global Eloquent scope that automatically applies `school_id`
-- Never return data across school boundaries
-
-### 4. Inertia-first, not API-first (for pages)
-- Page rendering goes through Inertia — no separate API call for page data
-- REST endpoints in `/api/v1/` are only for external consumers and AJAX sub-requests (live search, file uploads, mobile app)
-
-### 5. Queue everything slow
-- PDF generation → dispatch to queue, return a polling URL or notify when done
-- Bulk imports → queue with progress tracking
-- SMS/email blasts → queue via Horizon
-
-### 6. No N+1 queries
-- Always eager load relationships
-- Use `with()`, `load()`, or `loadMissing()` appropriately
-- Check with Laravel Telescope or query log during development
-
-### 7. TypeScript types for all Inertia props
-- Every page component receives typed props defined in `resources/js/Types/`
-- No `any` types on Inertia page props
-
-### 8. Zustand for global state only
-- Local UI state → `useState`
-- Cross-component shared state → Zustand store slices in `resources/js/Stores/`
-- Do not put API response data in Zustand unless it's truly global (e.g., current user, unread notifications)
-
-### 9. shadcn/ui components as the foundation
-- Use shadcn/ui components before writing custom components
-- Dark mode via Tailwind `dark:` classes — do not use separate CSS files for theming
-- Keep accessibility (ARIA) intact — do not strip ARIA attributes from shadcn components
-
-### 10. Security defaults
-- Never use raw SQL — Eloquent parameterized queries only
-- Never use `dangerouslySetInnerHTML`
-- Validate all file uploads (MIME type + size)
-- Store uploaded files outside webroot (use `storage/app/private` or S3)
-- Rate limit all API routes
-
----
-
-## Key Packages
-
-| Package | Purpose |
-|---|---|
-| `spatie/laravel-permission` | Roles & permissions |
-| `spatie/laravel-activitylog` | Audit logging |
-| `spatie/laravel-backup` | Database & file backups |
-| `pragmarx/google2fa` | TOTP 2FA |
-| `laravel/horizon` | Queue monitoring |
-| `barryvdh/laravel-dompdf` | PDF generation |
-| `maatwebsite/laravel-excel` | Excel import/export |
-| `darkaonline/l5-swagger` | API documentation |
-| `tanstack/react-table` | DataTable with sorting/filtering |
-| `react-hook-form` + `zod` | Form validation |
-| `recharts` | Charts and graphs |
-| `react-dnd` | Drag-and-drop (timetable builder) |
-| `jsqr` | QR code scanning |
-| `workbox` | PWA service worker |
-
----
-
-## Database Conventions
-
-All tables must include:
-```sql
-id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
-school_id   BIGINT UNSIGNED NOT NULL INDEX (FK to schools.id)
-created_at  TIMESTAMP
-updated_at  TIMESTAMP
-deleted_at  TIMESTAMP NULL  -- soft deletes on all major tables
-```
-
----
-
-## API Response Format
-
-All REST API responses follow JSON:API-lite:
-```json
-{
-  "data": {},
-  "meta": { "total": 100, "per_page": 15, "current_page": 1 },
-  "links": { "first": "...", "last": "...", "prev": null, "next": "..." },
-  "message": "Success"
-}
-```
-
----
-
-## Environment Variables Reference
-
-| Variable | Example | Purpose |
+| Area | Status | Caveats |
 |---|---|---|
-| `APP_URL` | `https://school.example.com` | Base URL |
-| `DB_CONNECTION` | `mysql` | Database driver |
-| `REDIS_HOST` | `redis` | Cache / queue |
-| `MAIL_MAILER` | `smtp` | Email driver |
-| `STRIPE_SECRET` | `sk_live_...` | Payment gateway |
-| `VONAGE_API_KEY` | `abc123` | SMS gateway |
-| `AWS_BUCKET` | `sms-files` | File storage |
-| `MULTITENANCY_MODE` | `subdomain` / `path` | Tenant routing |
-| `SUPER_ADMIN_EMAIL` | `admin@xgenious.com` | First super admin |
+| Login, roles, permissions | Built | Password check via Supabase. No password reset, no self-sign-up, no 2FA. Accounts are created by admins |
+| Multi-school (tenancy) | Built | `school_id` + `SchoolScope`. Super Admin manages schools, packages, subscriptions, module switches |
+| School setup | Built | Classes, sections, subjects, shifts, holidays, academic year, settings, branding, integrations |
+| Students | Built | Admission, profile, documents (private disk) |
+| Admissions CRM, visitor log | Built | Inquiry → follow-ups. No automatic "turn an inquiry into a student" step |
+| Staff & HR | Built | Staff, departments, designations, documents, leave, salary structure, payroll, payslip PDF |
+| Attendance | Built | Student and staff, daily marking, calendar |
+| Timetable | Built | |
+| Exams & results | Built, limited | **One number per student/subject/exam.** No terms, no continuous-assessment weighting, results computed live, no stored positions |
+| Fees | Built, limited | Staff type in payments by hand. No invoices, no ledger, no payment gateway |
+| Library, Inventory/Assets, Transport, Hostel | Built | Transport has a GPS location webhook protected by a per-vehicle token (no screen shows the token yet) |
+| Homework, lesson plans, syllabus, online-class links | Built | |
+| Communication | Partly | Announcements, messages, email templates. **SMS is a stub** (logs only). No delivery log |
+| Reports | Built | Dashboard, attendance, academic, finance, custom builder, audit log, PDF/CSV exports |
+| Student and Parent portals | Built | Read-only views |
+| Mobile PWA & public API | Not built | Module 15 was removed from scope |
 
 ---
 
-## Sprint Checklist Template
+## Rules for every session
 
-Use this checklist at the start of each sprint session:
+1. **Read the module spec** in `requirements/modules/` first, but treat it as the goal; check the code for what exists.
+2. **Every table that belongs to a school** has an indexed `school_id` (soft deletes on major tables) and its model uses `BelongsToSchool`. A test (`TenantCoverageTest`) fails if a new model with `school_id` skips the rule. Only four models are allowed to skip it (listed with reasons in that test).
+3. **Every route under `/school` needs a `permission:` check** in `routes/web.php`. A test (`RoutePermissionTest`) fails if you add one without it. Pick the permission from `RolePermissionSeeder`; add a new permission there if none fits, and tell the user to re-run the seeder on deploy.
+4. **Super Admin** passes every permission check (`Gate::before` in `AppServiceProvider`).
+5. **Audit trail:** fee payments, marks, payroll and users are logged automatically; every log entry is stamped with the school. Role changes are logged by hand where they happen. Never log passwords.
+6. **Inertia first:** pages get their data from the controller, not from a separate API call.
+7. **No N+1 queries:** eager load with `with()`/`load()`. Computed values on `Mark` (`percentage`, `is_pass`, `total_marks`) need the `subject` relation loaded.
+8. **TypeScript types** for page props live in `resources/js/Types/`. Avoid `any`.
+9. **Zustand only for truly global state.** Local state stays in `useState`.
+10. **Security defaults:** Eloquent only (no raw SQL); no `dangerouslySetInnerHTML`; validate uploads (type + size); uploaded documents go on the `private` disk and are served through a route that checks the person's school and permission.
+11. **Slow work:** PDF, imports and message blasts currently run inside the request or the stub job. Moving them to the queue is Phase 4 work; do not pretend it is done.
+12. **Keep this file true.** If you change the stack, add a module or fix a caveat above, update the table.
 
-- [ ] Read the module requirements file in `requirements/modules/`
-- [ ] Check `CLAUDE.md` Module Development Status table — confirm prerequisites are `Done`
-- [ ] Confirm all migrations follow database conventions (school_id, soft deletes)
-- [ ] Confirm all models have the global `school_id` scope applied
-- [ ] Confirm API routes are grouped under `/api/v1/` with Sanctum middleware
-- [ ] Confirm Inertia page components have typed props
-- [ ] Confirm slow operations (PDF, bulk, email) are queued
-- [ ] Run `php artisan test` and `npm run type-check` before ending session
-- [ ] Update the Module Development Status table in this file
+---
+
+## Running things
+
+```bash
+composer install            # needs PHP 8.4 (see above)
+npm install && npm run build
+cp .env.example .env && php artisan key:generate
+php artisan migrate --seed
+php artisan test            # PHPUnit; uses in-memory SQLite and a built-in test app key
+```
+
+There is no `npm run type-check`, no lint script and no frontend test runner yet.
+
+### Environment variables that matter
+
+| Variable | Purpose |
+|---|---|
+| `APP_URL`, `APP_KEY`, `APP_DEBUG` | Basics |
+| `DB_*` | Database (SQLite locally, Supabase Postgres in production) |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Login checks |
+| `FILESYSTEM_DISK`, `SUPABASE_STORAGE_*` | Where uploads go. With a bucket set, the `private` disk also uses it |
+| `QUEUE_CONNECTION` | `sync` by default; use `database` with the worker |
+| `SHOW_DEMO_ACCOUNTS` | `true` only on demo sites to show one-click demo logins |
+
+### Safety-net tests (`tests/Feature/Security`)
+
+School separation (models and by-id access), route permissions per role, user-account
+permissions, login throttle, demo-login flag, private documents, GPS token, audit trail,
+and the academic report. Run them before and after any change to routes, models or permissions.
+
+---
+
+## Known gaps (planned work)
+
+Phase 2: terms, assessment components, stored results, invoices and payment ledger.
+Phase 3: admission-to-enrolment, promotion, report cards, real SMS, payment gateway, CBT.
+Phase 4: queue for PDFs, Redis, safe ID generation (admission numbers and employee IDs are
+made by counting rows, which can collide), splitting the fat controllers into services.
+Small open items: the Receptionist, Driver, Warden and Store Manager roles exist in the seeder but the `/school` route group only lets six roles in (Super Admin, School Admin, Principal, Teacher, Accountant, Librarian), so those four cannot reach any school screen yet; the side menu is chosen by role in the frontend, so it can show items a role
+can no longer open; a screen to show each vehicle's GPS token; no CI workflow.
