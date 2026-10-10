@@ -3,21 +3,26 @@
 namespace App\Http\Controllers\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdmissionInquiry;
 use App\Models\AssessmentScheme;
 use App\Models\CbtAttempt;
 use App\Models\CbtBank;
+use App\Models\CbtCandidate;
 use App\Models\CbtQuestion;
 use App\Models\CbtTest;
+use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Services\CbtService;
 use App\Support\SimpleXlsx;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -67,7 +72,7 @@ class CbtTestController extends Controller
 
     public function update(Request $request, CbtTest $test): RedirectResponse
     {
-        $data = $this->validated($request);
+        $data = $this->validated($request, $test);
         $started = $test->attempts()->exists();
         DB::transaction(function () use ($data, $test, $started) {
             $test->update($data['test']);
@@ -101,13 +106,16 @@ class CbtTestController extends Controller
         if ($status === 'draft' && $test->attempts()->exists()) {
             return back()->with('error', 'People have started this test, so it cannot go back to draft. Close it instead.');
         }
+        $test->update(['status' => $status]);
         if ($status === 'closed') {
             $this->cbt->settleTest($test);
+            $this->cbt->markAbsent($test);
         }
-        $test->update(['status' => $status]);
 
         return back()->with('success', match ($status) {
-            'published' => 'The test is open. Students in the class can start it in their portal from its opening time.',
+            'published' => $test->audience === 'applicants'
+                ? 'The exam is open. Applicants log in at '.url('/exam').' with the exam number and PIN on their slip, from its opening time.'
+                : 'The test is open. Students in the class can start it in their portal from its opening time.',
             'closed' => 'The test is closed. Nobody can start it now; anyone still writing can finish their time.',
             default => 'The test is back to draft.',
         });
@@ -140,7 +148,61 @@ class CbtTestController extends Controller
             'questionReport' => $this->cbt->questionReport($test),
             'scoreParts' => $scheme ? $scheme->components->map(fn ($c) => ['id' => $c->id, 'label' => "{$c->name} (out of {$c->max_score})"])->values() : [],
             'canManage' => $request->user()->can('cbt.manage'),
-            'canCopy' => $request->user()->can('marks.entry'),
+            'canCopy' => $test->audience === 'students' && $request->user()->can('marks.entry'),
+            // Applicants who can still be put down for this entrance exam
+            'applicants' => $test->audience === 'applicants'
+                ? AdmissionInquiry::whereNotIn('status', ['admitted', 'dropped'])->whereNotIn('id', $test->candidates()->select('inquiry_id'))
+                    ->orderBy('student_name')->limit(500)->get(['id', 'student_name', 'class_interested', 'guardian_phone'])
+                : [],
+            'examUrl' => url('/exam'),
+        ]);
+    }
+
+    /** Put applicants down for an entrance exam */
+    public function addCandidates(Request $request, CbtTest $test): RedirectResponse
+    {
+        $ids = $request->validate([
+            'inquiry_ids' => 'required|array|min:1|max:500',
+            'inquiry_ids.*' => ['integer', Rule::exists('admission_inquiries', 'id')->where('school_id', $request->user()->school_id)->whereNull('deleted_at')],
+        ], ['inquiry_ids.required' => 'Choose at least one applicant.'])['inquiry_ids'];
+        $count = $this->cbt->addCandidates($test, $ids, $request->user()->id);
+
+        return back()->with('success', "{$count} applicant(s) added. Print their exam slips: each has an exam number and a PIN to log in with.");
+    }
+
+    public function removeCandidate(CbtTest $test, CbtCandidate $candidate): RedirectResponse
+    {
+        abort_unless($candidate->cbt_test_id === $test->id, 404);
+        $this->cbt->removeCandidate($candidate);
+
+        return back()->with('success', 'Applicant taken off this exam.');
+    }
+
+    /** A new PIN for an applicant who lost their slip */
+    public function newPin(CbtTest $test, CbtCandidate $candidate): RedirectResponse
+    {
+        abort_unless($candidate->cbt_test_id === $test->id, 404);
+        $this->cbt->newPinFor($candidate);
+
+        return back()->with('success', 'New PIN made. Print their slip again; the old PIN no longer works.');
+    }
+
+    /** Exam slips to print and hand out: one applicant, or all of them, several to a page */
+    public function slips(Request $request, CbtTest $test): HttpResponse
+    {
+        abort_unless($test->audience === 'applicants', 404);
+        $candidates = $test->candidates()->with('inquiry:id,student_name,class_interested')
+            ->when($request->integer('candidate'), fn ($q, $id) => $q->where('id', $id))
+            ->orderBy('exam_number')->get();
+        abort_if($candidates->isEmpty(), 404);
+
+        $bytes = Pdf::loadView('cbt.slips', [
+            'test' => $test, 'school' => School::find($test->school_id), 'candidates' => $candidates, 'examUrl' => url('/exam'),
+        ])->setPaper('a4', 'portrait')->output();
+
+        return response($bytes, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.Str::slug($test->title).'-exam-slips.pdf"',
         ]);
     }
 
@@ -148,14 +210,15 @@ class CbtTestController extends Controller
     {
         $test->load('sections');
         $results = $this->cbt->results($test);
-        $attempts = $test->attempts()->get()->keyBy('student_id');
+        $attempts = $test->attempts()->get()->keyBy('id');
         $titles = $test->sections->pluck('title')->all();
-        $rows = [array_merge(['Admission no.', 'Name', 'Status', 'Score', 'Out of', 'Percent'], $titles, ['Answered', 'Left the page', 'Minutes'])];
+        $applicants = $test->audience === 'applicants';
+        $rows = [array_merge([$applicants ? 'Exam no.' : 'Admission no.', 'Name', 'Status', 'Score', 'Out of', 'Percent'], $titles, ['Answered', 'Left the page', 'Minutes'], $applicants ? ['Outcome'] : [])];
         foreach ($results as $r) {
-            $a = $attempts->get($r['student_id']);
+            $a = $r['attempt_id'] ? $attempts->get($r['attempt_id']) : null;
             $sections = array_map(fn ($i) => isset($a?->section_scores[$i]) ? $a->section_scores[$i]['score'].' / '.$a->section_scores[$i]['max'] : '', array_keys($titles));
             $rows[] = array_merge([$r['admission_no'], $r['name'], self::STATUS_WORDS[$r['status']], $r['score'], $r['max_score'], $r['percent']], $sections,
-                [$r['answered'].' of '.$r['questions'], $a?->page_leaves ?? '', $r['minutes']]);
+                [$r['answered'].' of '.$r['questions'], $a?->page_leaves ?? '', $r['minutes']], $applicants ? [ucfirst((string) $r['outcome'])] : []);
         }
         $bytes = (new SimpleXlsx())->sheet('Results', $rows)->bytes();
 
@@ -179,6 +242,7 @@ class CbtTestController extends Controller
     public function reset(CbtTest $test, CbtAttempt $attempt): RedirectResponse
     {
         abort_unless($attempt->cbt_test_id === $test->id, 404);
+        $this->cbt->resetAdmission($attempt);
         $attempt->delete();
 
         return back()->with('success', 'Their sitting was removed. They can start the test again with a new set of questions.');
@@ -213,13 +277,14 @@ class CbtTestController extends Controller
 
         return Inertia::render('SchoolAdmin/Cbt/TestForm', [
             'test' => $test ? [
-                'id' => $test->id, 'title' => $test->title, 'class_id' => $test->class_id, 'subject_id' => $test->subject_id, 'term_id' => $test->term_id,
+                'id' => $test->id, 'title' => $test->title, 'audience' => $test->audience, 'class_id' => $test->class_id, 'subject_id' => $test->subject_id, 'term_id' => $test->term_id,
                 'instructions' => $test->instructions, 'duration_minutes' => $test->duration_minutes,
                 'opens_at' => $test->opens_at->toIso8601String(), 'closes_at' => $test->closes_at?->toIso8601String(),
                 'shuffle_questions' => $test->shuffle_questions, 'shuffle_options' => $test->shuffle_options, 'show_score' => $test->show_score,
                 'access_code' => $test->access_code, 'max_page_leaves' => $test->max_page_leaves, 'pass_mark' => $test->pass_mark,
                 'sections' => $test->sections->map(fn ($s) => $s->only('title', 'cbt_bank_id', 'topic', 'difficulty', 'question_count'))->values(),
                 'started' => $test->attempts()->exists(),
+                'has_candidates' => $test->candidates()->exists(),
             ] : null,
             // How many questions each bank has, by topic and difficulty, so the form can show what is available
             'banks' => $banks->map(fn (CbtBank $b) => [
@@ -233,12 +298,13 @@ class CbtTestController extends Controller
         ]);
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, ?CbtTest $test = null): array
     {
         $school = $request->user()->school_id;
         $data = $request->validate([
             'title' => 'required|string|max:150',
-            'class_id' => ['required', Rule::exists('classes', 'id')->where('school_id', $school)],
+            'audience' => ['nullable', Rule::in(['students', 'applicants'])],
+            'class_id' => [Rule::requiredIf($request->input('audience', 'students') === 'students'), 'nullable', Rule::exists('classes', 'id')->where('school_id', $school)],
             'subject_id' => ['nullable', Rule::exists('subjects', 'id')->where('school_id', $school)->where('class_id', $request->class_id)],
             'term_id' => ['nullable', Rule::exists('terms', 'id')->where('school_id', $school)],
             'instructions' => 'nullable|string|max:3000',
@@ -260,12 +326,22 @@ class CbtTestController extends Controller
         ], [
             'sections.required' => 'Add at least one section of questions.',
             'subject_id.exists' => 'Choose a subject of the chosen class.',
+            'class_id.required' => 'Choose the class that sits this test.',
             'closes_at.after' => 'The closing time must be after the opening time.',
             'access_code.alpha_num' => 'Use only letters and numbers for the start code.',
         ]);
 
+        $data['audience'] ??= 'students';
+        if ($test && $test->audience !== $data['audience'] && ($test->attempts()->exists() || $test->candidates()->exists())) {
+            throw ValidationException::withMessages(['audience' => 'People are already down for this test, so who sits it cannot be changed.']);
+        }
+        if ($data['audience'] === 'applicants') {
+            // An entrance exam is not for a class, so it has no class, subject or term results
+            $data = array_merge($data, ['class_id' => null, 'subject_id' => null, 'term_id' => null]);
+        }
+
         return [
-            'test' => collect($data)->except('sections')->all() + ['audience' => 'students'],
+            'test' => collect($data)->except('sections')->all(),
             'sections' => $data['sections'],
         ];
     }

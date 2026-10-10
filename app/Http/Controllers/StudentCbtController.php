@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ShowsCbtSitting;
 use App\Models\CbtAttempt;
 use App\Models\CbtTest;
 use App\Models\Student;
@@ -15,6 +16,8 @@ use Inertia\Response;
 /** Students taking computer-based tests in their portal */
 class StudentCbtController extends Controller
 {
+    use ShowsCbtSitting;
+
     public function __construct(private CbtService $cbt) {}
 
     public function index(Request $request): Response
@@ -56,18 +59,7 @@ class StudentCbtController extends Controller
         if ($attempt) {
             return redirect($attempt->isFinished() ? "/school/student/cbt/{$test->id}/done" : "/school/student/cbt/{$test->id}/exam");
         }
-        $test->load('sections', 'subject:id,name');
-
-        return Inertia::render('Student/Cbt/Start', [
-            'test' => [
-                'id' => $test->id, 'title' => $test->title, 'subject' => $test->subject?->name, 'instructions' => $test->instructions,
-                'duration_minutes' => $test->duration_minutes, 'questions' => $test->questionTotal(),
-                'sections' => $test->sections->map(fn ($s) => ['title' => $s->title, 'count' => $s->question_count]),
-                'needs_code' => (bool) $test->access_code, 'open' => $test->isOpen(),
-                'opens_at' => $test->opens_at->toIso8601String(), 'closes_at' => $test->closes_at?->toIso8601String(),
-                'max_page_leaves' => $test->max_page_leaves,
-            ],
-        ]);
+        return Inertia::render('Student/Cbt/Start', $this->startProps($test, "/school/student/cbt/{$test->id}"));
     }
 
     public function start(Request $request, CbtTest $test): RedirectResponse
@@ -84,17 +76,11 @@ class StudentCbtController extends Controller
         if ($attempt->isFinished()) {
             return redirect("/school/student/cbt/{$test->id}/done");
         }
-        $test->load('sections');
+        $s = $attempt->student;
 
-        return Inertia::render('Student/Cbt/Exam', [
-            'test' => ['id' => $test->id, 'title' => $test->title, 'sections' => $test->sections->pluck('title'), 'max_page_leaves' => $test->max_page_leaves],
-            'student' => $attempt->student?->only('first_name', 'last_name', 'admission_no'),
-            'questions' => $this->cbt->paper($attempt),
-            'answers' => (object) ($attempt->answers ?? []),
-            'flags' => $attempt->flags ?? [],
-            'secondsLeft' => $attempt->secondsLeft(),
-            'pageLeaves' => $attempt->page_leaves,
-        ]);
+        return Inertia::render('Student/Cbt/Exam', $this->examProps($test, $attempt, "/school/student/cbt/{$test->id}", [
+            'name' => $s ? trim($s->first_name.' '.$s->last_name) : '', 'number' => $s?->admission_no,
+        ]));
     }
 
     /** Saves one answer straight away; the exam page calls this on every click */
@@ -145,26 +131,7 @@ class StudentCbtController extends Controller
         if (! $attempt->isFinished()) {
             return redirect("/school/student/cbt/{$test->id}/exam");
         }
-        $test->load('sections');
-
-        return Inertia::render('Student/Cbt/Done', [
-            'test' => ['id' => $test->id, 'title' => $test->title, 'show_score' => $test->show_score],
-            'result' => [
-                'status' => $attempt->status, 'ended_reason' => $attempt->ended_reason,
-                'answered' => count($attempt->answers ?? []), 'questions' => count($attempt->paper),
-                'score' => $test->show_score ? $attempt->score : null, 'max_score' => $test->show_score ? $attempt->max_score : null,
-                'sections' => $test->show_score ? $test->sections->values()->map(fn ($s, $i) => [
-                    'title' => $s->title, 'score' => $attempt->section_scores[$i]['score'] ?? 0, 'max' => $attempt->section_scores[$i]['max'] ?? 0,
-                ]) : [],
-            ],
-        ]);
-    }
-
-    private function state(CbtAttempt $attempt): JsonResponse
-    {
-        $this->cbt->settle($attempt);
-
-        return response()->json(['finished' => $attempt->isFinished(), 'seconds_left' => $attempt->secondsLeft(), 'page_leaves' => $attempt->page_leaves]);
+        return Inertia::render('Student/Cbt/Done', $this->doneProps($test, $attempt, "/school/student/cbt/{$test->id}"));
     }
 
     private function student(Request $request): ?Student

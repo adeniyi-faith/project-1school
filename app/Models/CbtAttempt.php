@@ -14,7 +14,7 @@ class CbtAttempt extends Model
     /** Seconds allowed after the deadline for the last answer to arrive over a slow connection */
     public const GRACE_SECONDS = 30;
 
-    protected $fillable = ['school_id', 'cbt_test_id', 'student_id', 'started_at', 'deadline_at', 'extra_minutes', 'submitted_at', 'status', 'ended_reason',
+    protected $fillable = ['school_id', 'cbt_test_id', 'student_id', 'cbt_candidate_id', 'started_at', 'deadline_at', 'extra_minutes', 'submitted_at', 'status', 'ended_reason',
         'paper', 'answers', 'flags', 'page_leaves', 'marking', 'section_scores', 'score', 'max_score'];
 
     protected $casts = [
@@ -30,6 +30,11 @@ class CbtAttempt extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function candidate(): BelongsTo
+    {
+        return $this->belongsTo(CbtCandidate::class, 'cbt_candidate_id');
     }
 
     public function isFinished(): bool

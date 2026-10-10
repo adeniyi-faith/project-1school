@@ -9,7 +9,8 @@ import type { CbtPaperQuestion } from '@/Types';
 
 interface Props {
     test: { id: number; title: string; sections: string[]; max_page_leaves: number | null };
-    student: { first_name: string; last_name: string; admission_no: string | null } | null;
+    base: string;
+    person: { name: string; number: string | null };
     questions: CbtPaperQuestion[];
     answers: Record<string, number>;
     flags: number[];
@@ -22,9 +23,9 @@ interface Pending { question_id: number; option: number | null }
 const LETTERS = 'ABCDEF';
 
 /** The exam screen: one question at a time, a numbered grid, a server-kept timer, and every answer saved as it is clicked */
-export default function CbtExam({ test, student, questions, answers: saved, flags: savedFlags, secondsLeft, pageLeaves: savedLeaves }: Props) {
-    const base = `/school/student/cbt/${test.id}`;
-    const pendingKey = `cbt-pending-${test.id}`;
+export default function CbtExam({ base, test, person, questions, answers: saved, flags: savedFlags, secondsLeft, pageLeaves: savedLeaves }: Props) {
+    // Per person, so on a shared exam computer one applicant's unsent answers never reach the next
+    const pendingKey = `cbt-pending-${test.id}-${person.number ?? ''}`;
     const [index, setIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<number, number>>(() => {
         const start: Record<number, number> = {};
@@ -191,7 +192,7 @@ export default function CbtExam({ test, student, questions, answers: saved, flag
                 <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                         <p className="truncate font-semibold">{test.title}</p>
-                        <p className="text-xs text-slate-500">{student ? `${student.first_name} ${student.last_name}${student.admission_no ? ` · ${student.admission_no}` : ''}` : ''}</p>
+                        <p className="text-xs text-slate-500">{person.name}{person.number ? ` · ${person.number}` : ''}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <span title={online ? 'Connected: answers are saving' : 'No connection: answers will save when it returns'} className={online ? 'text-emerald-600' : 'text-red-600'}>

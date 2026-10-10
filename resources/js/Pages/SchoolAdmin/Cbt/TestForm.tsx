@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PageHeader, Panel } from '@/components/app/kit';
+import { PageHeader, Panel, Segmented } from '@/components/app/kit';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import type { CbtDifficulty } from '@/Types';
 
@@ -14,7 +14,7 @@ interface Section { title: string; cbt_bank_id: string; topic: string; difficult
 
 interface Props {
     test: null | {
-        id: number; title: string; class_id: number | null; subject_id: number | null; term_id: number | null; instructions: string | null;
+        id: number; title: string; audience: 'students' | 'applicants'; has_candidates: boolean; class_id: number | null; subject_id: number | null; term_id: number | null; instructions: string | null;
         duration_minutes: number; opens_at: string; closes_at: string | null; shuffle_questions: boolean; shuffle_options: boolean; show_score: boolean;
         access_code: string | null; max_page_leaves: number | null; pass_mark: number | null; started: boolean;
         sections: { title: string; cbt_bank_id: number; topic: string | null; difficulty: CbtDifficulty | null; question_count: number }[];
@@ -26,7 +26,7 @@ interface Props {
 }
 
 interface TestForm {
-    title: string; class_id: string; subject_id: string; term_id: string; instructions: string; duration_minutes: string; opens_at: string; closes_at: string;
+    title: string; audience: 'students' | 'applicants'; class_id: string; subject_id: string; term_id: string; instructions: string; duration_minutes: string; opens_at: string; closes_at: string;
     shuffle_questions: boolean; shuffle_options: boolean; show_score: boolean; access_code: string; max_page_leaves: string; pass_mark: string; sections: Section[];
 }
 
@@ -54,6 +54,7 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
     const current = terms.find(t => t.is_current);
     const form = useForm<TestForm>({
         title: test?.title ?? '',
+        audience: test?.audience ?? (new URLSearchParams(window.location.search).get('for') === 'applicants' ? 'applicants' : 'students'),
         class_id: test?.class_id ? String(test.class_id) : '',
         subject_id: test?.subject_id ? String(test.subject_id) : '',
         term_id: test?.term_id ? String(test.term_id) : current ? String(current.id) : '',
@@ -73,6 +74,7 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
     const d = form.data;
     const errors = form.errors as Record<string, string | undefined>;
     const locked = !!test?.started;
+    const applicants = d.audience === 'applicants';
     const classItems = classes.map(c => ({ value: String(c.id), label: c.name }));
     const subjectItems = [{ value: '', label: 'No subject' }, ...subjects.filter(s => String(s.class_id) === d.class_id).map(s => ({ value: String(s.id), label: s.name }))];
     const termItems = [{ value: '', label: 'No term' }, ...terms.map(t => ({ value: String(t.id), label: t.name }))];
@@ -92,7 +94,7 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
         e.preventDefault();
         form.transform(data => ({
             ...data,
-            subject_id: data.subject_id || null, term_id: data.term_id || null, opens_at: fromLocalInput(data.opens_at), closes_at: fromLocalInput(data.closes_at),
+            class_id: data.audience === 'applicants' ? null : data.class_id, subject_id: data.subject_id || null, term_id: data.term_id || null, opens_at: fromLocalInput(data.opens_at), closes_at: fromLocalInput(data.closes_at),
             access_code: data.access_code.trim() || null, max_page_leaves: data.max_page_leaves || null, pass_mark: data.pass_mark || null,
             sections: data.sections.map(s => ({ ...s, topic: s.topic || null, difficulty: s.difficulty || null })),
         }));
@@ -119,7 +121,17 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
 
                 <Panel title="The test">
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="sm:col-span-2">{field('title', 'Title', <Input id="title" value={d.title} onChange={e => form.setData('title', e.target.value)} placeholder="e.g. First CA test, Mathematics" maxLength={150} />)}</div>
+                        <div className="space-y-1.5 sm:col-span-2">
+                            <Segmented label="Who sits it" value={d.audience} onChange={v => form.setData('audience', v)} options={[
+                                { value: 'students', label: 'Students in a class' },
+                                { value: 'applicants', label: 'Applicants (entrance exam)' },
+                            ]} />
+                            {test && (test.started || test.has_candidates) && test.audience !== d.audience && <p className="text-xs text-amber-700">People are already down for this test, so this cannot be changed.</p>}
+                            {errors.audience && <p className="text-xs text-red-500">{errors.audience}</p>}
+                            {applicants && <p className="text-xs text-slate-500">After saving, add applicants from your admission inquiries and print their exam slips. They log in with the exam number and PIN on the slip, no account needed. Their score goes onto their admission record.</p>}
+                        </div>
+                        <div className="sm:col-span-2">{field('title', 'Title', <Input id="title" value={d.title} onChange={e => form.setData('title', e.target.value)} placeholder={applicants ? 'e.g. JSS1 entrance exam 2027' : 'e.g. First CA test, Mathematics'} maxLength={150} />)}</div>
+                        {!applicants && <>
                         {field('class_id', 'Class', (
                             <Select items={classItems} value={d.class_id} onValueChange={v => form.setData({ ...d, class_id: v ?? '', subject_id: '' })}>
                                 <SelectTrigger className="w-full"><SelectValue placeholder="Choose a class" /></SelectTrigger>
@@ -138,6 +150,7 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
                                 <SelectContent>{termItems.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                             </Select>
                         ))}
+                        </>}
                         {field('duration_minutes', 'Time allowed (minutes)', <Input id="duration_minutes" type="number" min={1} max={600} value={d.duration_minutes} onChange={e => form.setData('duration_minutes', e.target.value)} />)}
                         {field('opens_at', 'Opens', <Input id="opens_at" type="datetime-local" value={d.opens_at} onChange={e => form.setData('opens_at', e.target.value)} />)}
                         {field('closes_at', 'Closes (optional)', <Input id="closes_at" type="datetime-local" value={d.closes_at} onChange={e => form.setData('closes_at', e.target.value)} />,

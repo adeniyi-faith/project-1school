@@ -625,7 +625,13 @@ export interface CbtTestRow {
 export type CbtAttemptStatus = 'not_started' | 'in_progress' | 'submitted' | 'timed_out';
 
 export interface CbtResultRow {
-    student_id: number;
+    /** "s12" for a student, "c5" for an entrance-exam applicant */
+    key: string;
+    candidate_id: number | null;
+    inquiry_id?: number;
+    class_interested?: string | null;
+    /** Entrance exams: pending, passed, failed or absent, as on the admission record */
+    outcome: 'pending' | 'passed' | 'failed' | 'absent' | null;
     name: string;
     admission_no: string | null;
     status: CbtAttemptStatus;

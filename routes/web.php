@@ -48,6 +48,7 @@ use App\Http\Controllers\SchoolAdmin\CertificateDesignController;
 use App\Http\Controllers\SchoolAdmin\CbtBankController;
 use App\Http\Controllers\SchoolAdmin\CbtTestController;
 use App\Http\Controllers\StudentCbtController;
+use App\Http\Controllers\CandidateCbtController;
 use App\Http\Controllers\CbtImageController;
 use App\Http\Controllers\SchoolAdmin\CommentBankController;
 use App\Http\Controllers\SchoolAdmin\ReportCardController;
@@ -164,6 +165,10 @@ Route::middleware('auth')->group(function () {
             Route::post('cbt/tests/{test}/attempts/{attempt}/time',   [CbtTestController::class, 'addTime'])->middleware('permission:cbt.manage')->name('cbt.attempts.time');
             Route::delete('cbt/tests/{test}/attempts/{attempt}',      [CbtTestController::class, 'reset'])->middleware('permission:cbt.manage')->name('cbt.attempts.reset');
             Route::post('cbt/tests/{test}/copy-to-results',           [CbtTestController::class, 'copyToResults'])->middleware('permission:marks.entry')->name('cbt.tests.copy');
+            Route::post('cbt/tests/{test}/candidates',                [CbtTestController::class, 'addCandidates'])->middleware('permission:cbt.manage')->name('cbt.candidates.store');
+            Route::delete('cbt/tests/{test}/candidates/{candidate}',  [CbtTestController::class, 'removeCandidate'])->middleware('permission:cbt.manage')->name('cbt.candidates.destroy');
+            Route::post('cbt/tests/{test}/candidates/{candidate}/pin', [CbtTestController::class, 'newPin'])->middleware('permission:cbt.manage')->name('cbt.candidates.pin');
+            Route::get('cbt/tests/{test}/slips',                      [CbtTestController::class, 'slips'])->middleware('permission:cbt.view')->name('cbt.tests.slips');
 
             Route::get('certificates/designs',                 [CertificateDesignController::class, 'index'])->middleware('permission:students.certificates')->name('certificate-designs.index');
             Route::post('certificates/designs/{type}',         [CertificateDesignController::class, 'update'])->whereIn('type', ['testimonial', 'transfer'])->middleware('permission:settings.edit')->name('certificate-designs.update');
@@ -597,6 +602,23 @@ Route::middleware('auth')->group(function () {
 Route::post('/webhooks/vehicles/{vehicle}/location', [TransportController::class, 'trackingWebhook'])
     ->middleware('throttle:120,1')
     ->name('webhooks.vehicle-location');
+
+// Entrance exams on the computer: applicants log in with the exam number and PIN on their slip (no account)
+Route::prefix('exam')->name('exam.')->controller(CandidateCbtController::class)->group(function () {
+    Route::get('/', 'login')->name('login');
+    Route::post('login', 'signIn')->middleware('throttle:10,1')->name('sign-in');
+    Route::post('logout', 'signOut')->name('sign-out');
+    Route::get('start', 'show')->name('show');
+    Route::post('start', 'start')->middleware('throttle:20,1')->name('start');
+    Route::get('paper', 'exam')->name('paper');
+    Route::post('answer', 'answer')->middleware('throttle:240,1')->name('answer');
+    Route::post('flag', 'flag')->middleware('throttle:240,1')->name('flag');
+    Route::post('left', 'left')->middleware('throttle:60,1')->name('left');
+    Route::post('ping', 'ping')->middleware('throttle:60,1')->name('ping');
+    Route::post('submit', 'submit')->name('submit');
+    Route::get('done', 'done')->name('done');
+    Route::get('images/{question}', 'image')->whereNumber('question')->name('image');
+});
 
 // Public admission form (no auth)
 // Anyone can check that a testimonial or transfer certificate is genuine, using the code printed on it

@@ -19,6 +19,11 @@ export default function CbtTests({ tests, canManage, banks }: Props) {
                 <Library className="size-4" /> Question banks
             </Link>
             {canManage && (
+                <Link href="/school/cbt/tests/new?for=applicants" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+                    <Plus className="size-4" /> New entrance exam
+                </Link>
+            )}
+            {canManage && (
                 <Link href="/school/cbt/tests/new" className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-3.5 text-sm font-medium text-white hover:bg-indigo-700">
                     <Plus className="size-4" /> New test
                 </Link>
@@ -46,7 +51,7 @@ export default function CbtTests({ tests, canManage, banks }: Props) {
                                         <div className="min-w-0 space-y-0.5">
                                             <p className="font-medium text-slate-900 dark:text-white">{t.title}</p>
                                             <p className="text-sm text-slate-500">
-                                                {[t.class, t.subject].filter(Boolean).join(' · ')} · {t.questions} questions in {t.duration_minutes} min
+                                                {[t.audience === 'applicants' ? 'Entrance exam' : t.class, t.subject].filter(Boolean).join(' · ')} · {t.questions} questions in {t.duration_minutes} min
                                             </p>
                                             <p className="text-xs text-slate-500">Opens {examTime(t.opens_at)}{t.closes_at ? `, closes ${examTime(t.closes_at)}` : ''}</p>
                                         </div>
