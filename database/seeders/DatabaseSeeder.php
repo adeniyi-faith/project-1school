@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 // Seeders imported via namespace autoloading
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Services\LegacyFeeImporter;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -30,5 +31,8 @@ class DatabaseSeeder extends Seeder
             HRSeeder::class,
             LibrarySeeder::class,
         ]);
+
+        // The sample fees above are written the old way; turn them into invoices like a real deploy would
+        app(LegacyFeeImporter::class)->copy();
     }
 }

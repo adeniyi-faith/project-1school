@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\ResultSheet;
+use App\Services\LegacyFeeImporter;
 use App\Services\TermResultService;
 use App\Support\DemoSchool;
 use App\Support\SchoolDefaults;
@@ -60,6 +61,7 @@ class DemoSchoolSeeder extends Seeder
             $this->exams($classes, $subjects, $students, $scales);
             $this->termResults($classes);
             $this->fees($classes, $students);
+            app(LegacyFeeImporter::class)->copy($this->sid); // the fees above are written the old way
             $this->attendance($students, $teachers);
             $this->timetable($classes, $subjects, $teachers);
             $this->homework($classes, $subjects, $teachers);

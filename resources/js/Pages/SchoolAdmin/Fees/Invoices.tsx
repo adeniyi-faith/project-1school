@@ -34,6 +34,7 @@ interface Props {
 const ALL = 'all';
 const STATUS_ITEMS = [
     { value: ALL, label: 'Any status' },
+    { value: 'open', label: 'Still owing' },
     { value: 'unpaid', label: 'Unpaid' },
     { value: 'partial', label: 'Part paid' },
     { value: 'paid', label: 'Paid' },

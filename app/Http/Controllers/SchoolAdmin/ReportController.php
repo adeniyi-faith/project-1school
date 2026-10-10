@@ -5,8 +5,8 @@ namespace App\Http\Controllers\SchoolAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Exam;
-use App\Models\FeePayment;
 use App\Models\Homework;
+use App\Models\LedgerEntry;
 use App\Models\Mark;
 use App\Models\Payroll;
 use App\Models\School;
@@ -15,9 +15,9 @@ use App\Models\Section;
 use App\Models\Staff;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Services\FeeLedgerService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Spatie\Activitylog\Models\Activity;
 
@@ -51,27 +51,9 @@ class ReportController extends Controller
             ? round($todayAtt->where('status', 'present')->count() / $todayAtt->count() * 100, 1)
             : 0;
 
-        $monthFees = FeePayment::where('school_id', $sid)
-            ->whereMonth('payment_date', now()->month)
-            ->whereYear('payment_date', now()->year)
-            ->sum('amount_paid');
-
-        $pendingFees = FeePayment::where('school_id', $sid)
-            ->where('status', 'pending')
-            ->sum(DB::raw('amount_due - amount_paid'));
-
-        // Monthly fee collection for last 6 months
-        $feeChart = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $feeChart[] = [
-                'month'  => $month->format('M'),
-                'amount' => (float) FeePayment::where('school_id', $sid)
-                    ->whereMonth('payment_date', $month->month)
-                    ->whereYear('payment_date', $month->year)
-                    ->sum('amount_paid'),
-            ];
-        }
+        $monthFees   = FeeLedgerService::collected($sid, now()->startOfMonth()->toDateString(), now()->toDateString());
+        $pendingFees = FeeLedgerService::outstanding($sid);
+        $feeChart    = $this->monthlyCollection($sid);
 
         // Attendance trend last 7 days
         $attChart = [];
@@ -109,18 +91,10 @@ class ReportController extends Controller
 
     private function accountantDashboard(int $sid): array
     {
-        $todayCollection = FeePayment::where('school_id', $sid)->whereDate('payment_date', today())->sum('amount_paid');
-        $outstanding     = FeePayment::where('school_id', $sid)->where('status', 'pending')->sum(DB::raw('amount_due - amount_paid'));
-        $monthFees       = FeePayment::where('school_id', $sid)->whereMonth('payment_date', now()->month)->whereYear('payment_date', now()->year)->sum('amount_paid');
-
-        $feeChart = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $feeChart[] = [
-                'month'  => $month->format('M'),
-                'amount' => (float) FeePayment::where('school_id', $sid)->whereMonth('payment_date', $month->month)->whereYear('payment_date', $month->year)->sum('amount_paid'),
-            ];
-        }
+        $todayCollection = FeeLedgerService::collected($sid, today()->toDateString(), today()->toDateString());
+        $outstanding     = FeeLedgerService::outstanding($sid);
+        $monthFees       = FeeLedgerService::collected($sid, now()->startOfMonth()->toDateString(), now()->toDateString());
+        $feeChart        = $this->monthlyCollection($sid);
 
         return ['totalStudents' => 0, 'totalStaff' => 0, 'attendancePct' => 0, 'monthFees' => $monthFees, 'pendingFees' => $outstanding, 'todayCollection' => $todayCollection, 'feeChart' => $feeChart, 'attChart' => [], 'pendingHomework' => 0, 'recentActivity' => collect()];
     }
@@ -129,9 +103,57 @@ class ReportController extends Controller
     {
         $schools  = School::count();
         $students = Student::withoutGlobalScopes()->count();
-        $revenue  = FeePayment::sum('amount_paid');
+        $revenue  = FeeLedgerService::collected(null);
 
         return ['schools' => $schools, 'totalStudents' => $students, 'totalStaff' => 0, 'attendancePct' => 0, 'monthFees' => $revenue, 'pendingFees' => 0, 'feeChart' => [], 'attChart' => [], 'pendingHomework' => 0, 'recentActivity' => collect()];
+    }
+
+    /** Money received in each of the last six months, for the dashboard chart. */
+    private function monthlyCollection(int $sid): array
+    {
+        $chart = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->startOfMonth()->subMonths($i);
+            $chart[] = [
+                'month'  => $month->format('M'),
+                'amount' => FeeLedgerService::collected($sid, $month->toDateString(), $month->copy()->endOfMonth()->toDateString()),
+            ];
+        }
+
+        return $chart;
+    }
+
+    /** Payment lines (with student and fee) received between two dates, newest first. */
+    private function paymentLines(int $sid, string $from, string $to)
+    {
+        return LedgerEntry::with([
+            'student:id,first_name,last_name,admission_no',
+            'invoice:id,invoice_no,fee_structure_id,period',
+            'invoice.feeStructure:id,fee_category_id',
+            'invoice.feeStructure.feeCategory:id,name',
+            'reversedBy:id,reverses_id',
+        ])
+            ->where('school_id', $sid)
+            ->where('type', 'payment')
+            ->whereDate('entry_date', '>=', $from)
+            ->whereDate('entry_date', '<=', $to)
+            ->latest('entry_date')->latest('id');
+    }
+
+    private function paymentRow(LedgerEntry $e): array
+    {
+        return [
+            'id'           => $e->id,
+            'student'      => $e->student ? trim($e->student->first_name . ' ' . $e->student->last_name) : null,
+            'admission_no' => $e->student?->admission_no,
+            'invoice_id'   => $e->invoice_id,
+            'fee'          => trim(($e->invoice?->feeStructure?->feeCategory?->name ?? 'Fee') . ' · ' . ($e->invoice?->period ?? '')),
+            'receipt'      => $e->reference,
+            'method'       => $e->method,
+            'amount'       => -$e->amount,
+            'date'         => $e->entry_date?->toDateString(),
+            'reversed'     => $e->reversedBy !== null,
+        ];
     }
 
     // ── Attendance Report ─────────────────────────────────────────
@@ -265,33 +287,29 @@ class ReportController extends Controller
         $from = $request->from_date ?? now()->startOfMonth()->toDateString();
         $to   = $request->to_date   ?? now()->toDateString();
 
-        $collected = FeePayment::where('school_id', $sid)
-            ->whereBetween('payment_date', [$from, $to])
-            ->sum('amount_paid');
-
-        $outstanding = FeePayment::where('school_id', $sid)
-            ->where('status', 'pending')
-            ->sum(DB::raw('amount_due - amount_paid'));
+        $collected   = FeeLedgerService::collected($sid, $from, $to);
+        $outstanding = FeeLedgerService::outstanding($sid);
 
         $payroll = Payroll::where('school_id', $sid)
             ->where('month_year', now()->format('Y-m'))
             ->sum('net_salary');
 
         // Daily collection chart
-        $dailyChart = FeePayment::where('school_id', $sid)
-            ->whereBetween('payment_date', [$from, $to])
-            ->selectRaw('DATE(payment_date) as day, SUM(amount_paid) as amount')
-            ->groupBy('day')
-            ->orderBy('day')
-            ->get();
-
-        // Recent payments
-        $payments = FeePayment::with('student:id,first_name,last_name,admission_no')
+        $dailyChart = FeeLedgerService::moneyIn()
             ->where('school_id', $sid)
-            ->whereBetween('payment_date', [$from, $to])
-            ->latest('payment_date')
+            ->whereDate('entry_date', '>=', $from)
+            ->whereDate('entry_date', '<=', $to)
+            ->get(['entry_date', 'amount'])
+            ->groupBy(fn (LedgerEntry $e) => $e->entry_date->toDateString())
+            ->map(fn ($lines, $day) => ['day' => $day, 'amount' => round(-$lines->sum('amount'), 2)])
+            ->sortKeys()
+            ->values();
+
+        // Payments received in the period
+        $payments = $this->paymentLines($sid, $from, $to)
             ->paginate(30)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (LedgerEntry $e) => $this->paymentRow($e));
 
         return Inertia::render('SchoolAdmin/Reports/Finance', [
             'collected'   => $collected,
@@ -350,12 +368,9 @@ class ReportController extends Controller
                 ->with(['student:id,first_name,last_name,admission_no', 'subject:id,name', 'exam:id,name'])
                 ->limit(500)->get(),
 
-            'fees'       => FeePayment::where('school_id', $sid)
-                ->when($f['from_date'] ?? null, fn ($q) => $q->whereDate('payment_date', '>=', $f['from_date']))
-                ->when($f['to_date'] ?? null,   fn ($q) => $q->whereDate('payment_date', '<=', $f['to_date']))
-                ->when($f['status'] ?? null,    fn ($q) => $q->where('status', $f['status']))
-                ->with('student:id,first_name,last_name,admission_no')
-                ->latest('payment_date')->limit(500)->get(),
+            'fees'       => $this->paymentLines($sid, $f['from_date'] ?? '1900-01-01', $f['to_date'] ?? '2999-12-31')
+                ->limit(500)->get()
+                ->map(fn (LedgerEntry $e) => $this->paymentRow($e)),
 
             'staff'      => Staff::where('school_id', $sid)
                 ->when($f['status'] ?? null, fn ($q) => $q->where('status', $f['status']))
@@ -423,10 +438,7 @@ class ReportController extends Controller
         $sid      = $this->getSchoolId();
         $from     = $request->from_date ?? now()->startOfMonth()->toDateString();
         $to       = $request->to_date   ?? now()->toDateString();
-        $payments = FeePayment::with('student:id,first_name,last_name,admission_no')
-            ->where('school_id', $sid)
-            ->whereBetween('payment_date', [$from, $to])
-            ->latest('payment_date')->get();
+        $payments = $this->paymentLines($sid, $from, $to)->get()->map(fn (LedgerEntry $e) => $this->paymentRow($e));
 
         $pdf = Pdf::loadView('reports.finance', compact('payments', 'from', 'to'))->setPaper('a4', 'landscape');
         return $pdf->download('finance-report.pdf');

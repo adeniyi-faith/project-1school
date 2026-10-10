@@ -51,6 +51,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn () => session('success'),
                 'error'   => fn () => session('error'),
+                'info'    => fn () => session('info'),
             ],
             'faviconUrl' => fn () => once(function () {
                 $path = PlatformSetting::get('platform_favicon');

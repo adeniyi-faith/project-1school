@@ -30,7 +30,8 @@ class FeeInvoiceController extends Controller
             'feeStructure:id,fee_category_id,class_id',
             'feeStructure.feeCategory:id,name',
         ])
-            ->when($request->status, fn ($q) => $q->where('status', $request->status))
+            ->when($request->status === 'open', fn ($q) => $q->whereIn('status', ['unpaid', 'partial']))
+            ->when($request->status && $request->status !== 'open', fn ($q) => $q->where('status', $request->status))
             ->when($request->class_id, fn ($q) => $q->whereHas('student', fn ($s) => $s->where('class_id', $request->class_id)))
             ->when($request->term_id, fn ($q) => $q->where('term_id', $request->term_id))
             ->when($request->search, fn ($q) => $q->where(fn ($w) => $w

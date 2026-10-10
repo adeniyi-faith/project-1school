@@ -19,38 +19,37 @@
 <body>
 <h2>Finance Report — Fee Payments</h2>
 <p>Period: {{ \Carbon\Carbon::parse($from)->format('d M Y') }} to {{ \Carbon\Carbon::parse($to)->format('d M Y') }}
-   &nbsp;|&nbsp; Total collected: {{ number_format($payments->sum('amount_paid'), 2) }}</p>
+   &nbsp;|&nbsp; Total received: {{ number_format($payments->where('reversed', false)->sum('amount'), 2) }}</p>
 <table>
     <thead>
         <tr>
             <th>#</th>
             <th>Student</th>
             <th>Admission No</th>
-            <th>Total Amount</th>
-            <th>Amount Paid</th>
-            <th>Balance</th>
-            <th>Status</th>
-            <th>Paid At</th>
+            <th>Fee</th>
+            <th>Receipt</th>
+            <th>Method</th>
+            <th>Amount</th>
+            <th>Paid On</th>
         </tr>
     </thead>
     <tbody>
         @foreach($payments as $i => $p)
         <tr>
             <td>{{ $i + 1 }}</td>
-            <td>{{ $p->student?->first_name }} {{ $p->student?->last_name }}</td>
-            <td>{{ $p->student?->admission_no }}</td>
-            <td>{{ number_format($p->amount_due, 2) }}</td>
-            <td>{{ number_format($p->amount_paid, 2) }}</td>
-            <td>{{ number_format($p->amount_due - $p->amount_paid, 2) }}</td>
-            <td class="{{ $p->status }}">{{ ucfirst($p->status) }}</td>
-            <td>{{ $p->payment_date ? \Carbon\Carbon::parse($p->payment_date)->format('d M Y') : '—' }}</td>
+            <td>{{ $p['student'] }}</td>
+            <td>{{ $p['admission_no'] }}</td>
+            <td>{{ $p['fee'] }}</td>
+            <td>{{ $p['receipt'] }}</td>
+            <td>{{ ucwords(str_replace('_', ' ', (string) $p['method'])) }}</td>
+            <td>{{ number_format($p['amount'], 2) }}{{ $p['reversed'] ? ' (reversed)' : '' }}</td>
+            <td>{{ $p['date'] ? \Carbon\Carbon::parse($p['date'])->format('d M Y') : '—' }}</td>
         </tr>
         @endforeach
         <tr class="total-row">
-            <td colspan="4">Total</td>
-            <td>{{ number_format($payments->sum('amount_paid'), 2) }}</td>
-            <td>{{ number_format($payments->sum(fn($p) => $p->amount_due - $p->amount_paid), 2) }}</td>
-            <td colspan="2"></td>
+            <td colspan="6">Total received (reversed payments left out)</td>
+            <td>{{ number_format($payments->where('reversed', false)->sum('amount'), 2) }}</td>
+            <td></td>
         </tr>
     </tbody>
 </table>
