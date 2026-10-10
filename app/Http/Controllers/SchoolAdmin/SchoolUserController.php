@@ -85,6 +85,10 @@ class SchoolUserController extends Controller
 
         $user->assignRole($data['role']);
 
+        activity('users')->causedBy(auth()->user())->performedOn($user)
+            ->withProperties(['school_id' => $sid, 'role' => $data['role']])
+            ->log('Role assigned');
+
         return back()->with('success', 'User created successfully.');
     }
 
@@ -111,11 +115,18 @@ class SchoolUserController extends Controller
             'status' => $data['status'],
         ]);
 
-        if (!blank($data['password'])) {
+        if (!blank($data['password'] ?? null)) {
             $user->update(['password' => Hash::make($data['password'])]);
         }
 
+        $oldRole = $user->roles()->pluck('name')->first();
         $user->syncRoles([$data['role']]);
+
+        if ($oldRole !== $data['role']) {
+            activity('users')->causedBy(auth()->user())->performedOn($user)
+                ->withProperties(['school_id' => $user->school_id, 'old_role' => $oldRole, 'role' => $data['role']])
+                ->log('Role changed');
+        }
 
         return back()->with('success', 'User updated successfully.');
     }
