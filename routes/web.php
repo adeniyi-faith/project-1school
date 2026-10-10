@@ -49,6 +49,9 @@ use App\Http\Controllers\SchoolAdmin\CbtBankController;
 use App\Http\Controllers\SchoolAdmin\CbtTestController;
 use App\Http\Controllers\StudentCbtController;
 use App\Http\Controllers\CandidateCbtController;
+use App\Http\Controllers\ParentPaymentController;
+use App\Http\Controllers\PaystackWebhookController;
+use App\Http\Controllers\SchoolAdmin\OnlinePaymentController;
 use App\Http\Controllers\CbtImageController;
 use App\Http\Controllers\SchoolAdmin\CommentBankController;
 use App\Http\Controllers\SchoolAdmin\ReportCardController;
@@ -401,6 +404,9 @@ Route::middleware('auth')->group(function () {
             Route::post('fees/invoices/{invoice}/void',      [FeeInvoiceController::class, 'void'])->middleware('permission:fees.waiver')->name('fees.invoices.void');
 
             // Named scholarships and discounts, with who approved each one
+            Route::get('fees/online-payments',               [OnlinePaymentController::class, 'index'])->middleware('permission:fees.view')->name('fees.online.index');
+            Route::post('fees/online-payments/setup',        [OnlinePaymentController::class, 'saveSetup'])->middleware('permission:settings.edit')->name('fees.online.setup');
+            Route::post('fees/online-payments/{payment}/check', [OnlinePaymentController::class, 'check'])->middleware('permission:fees.collect')->name('fees.online.check');
             Route::get('fees/scholarships',                  [ScholarshipController::class, 'index'])->middleware('permission:fees.view')->name('fees.scholarships.index');
             Route::post('fees/scholarships',                 [ScholarshipController::class, 'store'])->middleware('permission:fees.waiver')->name('fees.scholarships.store');
             Route::put('fees/scholarships/{scholarship}',    [ScholarshipController::class, 'update'])->middleware('permission:fees.waiver')->name('fees.scholarships.update');
@@ -535,6 +541,8 @@ Route::middleware('auth')->group(function () {
         Route::get('report-cards/{student}/{sheet}',         [ReportCardPortalController::class, 'parentTerm'])->whereNumber(['student', 'sheet'])->name('report-cards.term');
         Route::get('report-cards/{student}/{sheet}/session', [ReportCardPortalController::class, 'parentSession'])->whereNumber(['student', 'sheet'])->name('report-cards.session');
         Route::get('fees',          [ParentPortalController::class, 'fees'])->name('fees');
+        Route::post('fees/invoices/{invoice}/pay', [ParentPaymentController::class, 'pay'])->middleware('throttle:10,1')->name('fees.pay');
+        Route::get('fees/paystack/return',  [ParentPaymentController::class, 'returned'])->name('fees.paystack.return');
         Route::get('announcements', [ParentPortalController::class, 'announcements'])->name('announcements');
     });
 
@@ -604,6 +612,9 @@ Route::middleware('auth')->group(function () {
 Route::post('/webhooks/vehicles/{vehicle}/location', [TransportController::class, 'trackingWebhook'])
     ->middleware('throttle:120,1')
     ->name('webhooks.vehicle-location');
+
+// Paystack tells the school about successful payments here. No login: each message is signed with the school's secret key.
+Route::post('/webhooks/paystack/{school}', PaystackWebhookController::class)->whereNumber('school')->middleware('throttle:120,1')->name('webhooks.paystack');
 
 // Entrance exams on the computer: applicants log in with the exam number and PIN on their slip (no account)
 Route::prefix('exam')->name('exam.')->controller(CandidateCbtController::class)->group(function () {
