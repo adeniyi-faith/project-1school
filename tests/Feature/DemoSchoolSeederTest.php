@@ -77,4 +77,23 @@ class DemoSchoolSeederTest extends TestCase
             $this->get(route($route), ['X-Inertia' => 'true'])->assertOk();
         }
     }
+
+    public function test_demo_fill_does_nothing_when_the_demo_is_off_and_only_fills_once_when_on(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+        config(['app.demo_email' => 'demo@schoolruns.demo', 'app.demo_enabled' => false]);
+
+        $this->artisan('demo:fill')->assertSuccessful();
+        $this->assertSame(0, DB::table('students')->count());
+
+        config(['app.demo_enabled' => true]);
+        $this->artisan('demo:fill')->assertSuccessful();
+        $first = DB::table('students')->count();
+        $this->assertGreaterThan(300, $first);
+
+        // a second run keeps the same data instead of rebuilding it
+        $firstId = DB::table('students')->min('id');
+        $this->artisan('demo:fill')->assertSuccessful();
+        $this->assertSame($firstId, DB::table('students')->min('id'));
+    }
 }
