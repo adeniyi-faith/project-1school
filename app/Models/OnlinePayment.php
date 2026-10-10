@@ -6,14 +6,14 @@ use App\Traits\BelongsToSchool;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/** One attempt by a parent to pay an invoice online. It becomes a ledger payment only after Paystack confirms the money. */
+/** One attempt by a parent to pay an invoice online. It becomes a ledger payment only after the provider confirms the money. */
 class OnlinePayment extends Model
 {
     use BelongsToSchool;
 
     public const STATUSES = ['pending', 'success', 'failed', 'needs_review'];
 
-    protected $fillable = ['school_id', 'invoice_id', 'student_id', 'paid_by', 'gateway', 'reference', 'amount', 'email', 'status', 'channel',
+    protected $fillable = ['school_id', 'invoice_id', 'student_id', 'paid_by', 'gateway', 'reference', 'gateway_reference', 'amount', 'email', 'status', 'channel',
         'problem', 'ledger_entry_id', 'paid_at', 'checked_at'];
 
     protected $casts = ['amount' => 'float', 'paid_at' => 'datetime', 'checked_at' => 'datetime'];

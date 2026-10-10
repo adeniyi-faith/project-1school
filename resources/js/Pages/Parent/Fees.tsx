@@ -120,10 +120,10 @@ function PayDialog({ child, row, onClose }: { child: string; row: Payment; onClo
                         <p className="text-xs text-slate-500">You can pay part now and the rest later.</p>
                         {form.errors.amount && <p className="text-xs text-red-500">{form.errors.amount}</p>}
                     </div>
-                    <p className="flex items-start gap-2 text-xs text-slate-500"><Lock className="mt-0.5 size-3.5 shrink-0" /> You will pay on Paystack's secure page by card, bank transfer or USSD, then come back here. The school never sees your card details.</p>
+                    <p className="flex items-start gap-2 text-xs text-slate-500"><Lock className="mt-0.5 size-3.5 shrink-0" /> You will pay on the school's secure payment page by card, bank transfer or USSD, then come back here. The school never sees your card details.</p>
                     <DialogFooter>
                         <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-                        <Button type="submit" disabled={form.processing} className="bg-emerald-600 text-white hover:bg-emerald-700">Continue to Paystack</Button>
+                        <Button type="submit" disabled={form.processing} className="bg-emerald-600 text-white hover:bg-emerald-700">Continue to payment</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

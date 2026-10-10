@@ -12,12 +12,12 @@ use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\User;
-use App\Services\PaystackService;
+use App\Services\OnlinePaymentService;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\Http;
 use Tests\Feature\Security\SecurityTestCase;
 
-/** Parents paying fees online through Paystack. Paystack itself is faked: no real calls or money. */
+/** Parents paying fees online through the school's chosen provider. The providers are faked: no real calls or money. */
 class OnlinePaymentTest extends SecurityTestCase
 {
     private School $school;
@@ -58,7 +58,7 @@ class OnlinePaymentTest extends SecurityTestCase
     {
         $this->fakePaystack(0);
         $this->actingAs($this->admin);
-        $this->post('/school/fees/online-payments/setup', ['public_key' => 'pk_test_abc123', 'secret_key' => 'sk_test_secret987', 'enabled' => true])->assertSessionHasNoErrors();
+        $this->post('/school/fees/online-payments/setup', ['provider' => 'paystack', 'keys' => ['public_key' => 'pk_test_abc123', 'secret_key' => 'sk_test_secret987'], 'enabled' => true])->assertSessionHasNoErrors();
     }
 
     /** Fake Paystack: starting a payment gives a page link; checking it says it was paid (or not). No real calls. */
@@ -95,7 +95,7 @@ class OnlinePaymentTest extends SecurityTestCase
             && $r->hasHeader('Authorization', 'Bearer sk_test_secret987'));
 
         // Back from Paystack: confirmed, so the invoice drops by ₦50,000
-        $this->get('/school/parent/fees/paystack/return?reference='.$payment->reference)->assertRedirect('/school/parent/fees')->assertSessionHas('success');
+        $this->get('/school/parent/fees/pay/'.$payment->reference.'/result')->assertRedirect('/school/parent/fees')->assertSessionHas('success');
         $payment->refresh();
         $this->assertSame('success', $payment->status);
         $this->assertSame(100000.0, $this->invoice->fresh()->balance);
@@ -105,7 +105,7 @@ class OnlinePaymentTest extends SecurityTestCase
 
         // The webhook arriving afterwards changes nothing
         $body = json_encode(['event' => 'charge.success', 'data' => ['reference' => $payment->reference]]);
-        $this->call('POST', "/webhooks/paystack/{$this->school->id}", [], [], [], ['HTTP_X_PAYSTACK_SIGNATURE' => hash_hmac('sha512', $body, 'sk_test_secret987'), 'CONTENT_TYPE' => 'application/json'], $body)->assertOk();
+        $this->call('POST', "/webhooks/payments/paystack/{$this->school->id}", [], [], [], ['HTTP_X_PAYSTACK_SIGNATURE' => hash_hmac('sha512', $body, 'sk_test_secret987'), 'CONTENT_TYPE' => 'application/json'], $body)->assertOk();
         $this->assertSame(100000.0, $this->invoice->fresh()->balance);
         $this->assertSame(1, $this->invoice->entries()->where('type', 'payment')->count());
     }
@@ -121,10 +121,10 @@ class OnlinePaymentTest extends SecurityTestCase
 
         // A forged message (wrong signature) is refused
         $body = json_encode(['event' => 'charge.success', 'data' => ['reference' => $payment->reference]]);
-        $this->call('POST', "/webhooks/paystack/{$this->school->id}", [], [], [], ['HTTP_X_PAYSTACK_SIGNATURE' => hash_hmac('sha512', $body, 'wrong'), 'CONTENT_TYPE' => 'application/json'], $body)->assertStatus(401);
+        $this->call('POST', "/webhooks/payments/paystack/{$this->school->id}", [], [], [], ['HTTP_X_PAYSTACK_SIGNATURE' => hash_hmac('sha512', $body, 'wrong'), 'CONTENT_TYPE' => 'application/json'], $body)->assertStatus(401);
         $this->assertSame('pending', $payment->fresh()->status);
 
-        $this->call('POST', "/webhooks/paystack/{$this->school->id}", [], [], [], ['HTTP_X_PAYSTACK_SIGNATURE' => hash_hmac('sha512', $body, 'sk_test_secret987'), 'CONTENT_TYPE' => 'application/json'], $body)->assertOk();
+        $this->call('POST', "/webhooks/payments/paystack/{$this->school->id}", [], [], [], ['HTTP_X_PAYSTACK_SIGNATURE' => hash_hmac('sha512', $body, 'sk_test_secret987'), 'CONTENT_TYPE' => 'application/json'], $body)->assertOk();
         $this->assertSame('success', $payment->fresh()->status);
         $this->assertSame('paid', $this->invoice->fresh()->status);
         $this->assertSame(0.0, $this->invoice->fresh()->balance);
@@ -138,14 +138,14 @@ class OnlinePaymentTest extends SecurityTestCase
         $this->fakePaystack(100);
         $this->actingAs($this->parentUser);
         $this->post("/school/parent/fees/invoices/{$this->invoice->id}/pay", ['amount' => 20000]);
-        $this->get('/school/parent/fees/paystack/return?reference='.OnlinePayment::latest('id')->first()->reference);
+        $this->get('/school/parent/fees/pay/'.OnlinePayment::latest('id')->first()->reference.'/result');
         $this->assertSame('needs_review', OnlinePayment::latest('id')->first()->status);
         $this->assertSame(150000.0, $this->invoice->fresh()->balance);
 
         // Declined card: failed
         $this->fakePaystack(2000000, 'failed');
         $this->post("/school/parent/fees/invoices/{$this->invoice->id}/pay", ['amount' => 20000]);
-        $this->get('/school/parent/fees/paystack/return?reference='.OnlinePayment::latest('id')->first()->reference)->assertSessionHas('error');
+        $this->get('/school/parent/fees/pay/'.OnlinePayment::latest('id')->first()->reference.'/result')->assertSessionHas('error');
         $this->assertSame('failed', OnlinePayment::latest('id')->first()->status);
 
         // Paid online, but the bursar took cash for the whole fee meanwhile: flagged, not overpaid
@@ -160,7 +160,7 @@ class OnlinePaymentTest extends SecurityTestCase
         $this->assertSame(0.0, $this->invoice->fresh()->balance);
 
         $this->get('/school/fees/online-payments')->assertOk()->assertInertia(fn ($p) => $p->has('payments.data', 3)->where('counts.needs_review', 2)
-            ->where('setup.secret_hint', '••••t987')->missing('setup.secret_key'));
+            ->where('setup.provider', 'paystack')->where('setup.providers.0.fields.1.saved_hint', '••••t987')->where('setup.providers.0.fields.1.value', ''));
     }
 
     public function test_parents_only_pay_their_own_childrens_open_invoices_and_only_when_switched_on(): void
@@ -188,15 +188,15 @@ class OnlinePaymentTest extends SecurityTestCase
         $this->actingAs($this->parentUser);
         $this->post("/school/parent/fees/invoices/{$this->invoice->id}/pay", ['amount' => 1000]);
         $this->actingAs($otherParent);
-        $this->get('/school/parent/fees/paystack/return?reference='.OnlinePayment::sole()->reference)->assertSessionHas('error');
+        $this->get('/school/parent/fees/pay/'.OnlinePayment::sole()->reference.'/result')->assertSessionHas('error');
         $this->assertSame('pending', OnlinePayment::sole()->status);
 
         // A key Paystack refuses is not switched on; teachers cannot change the set-up
         $this->keyOk = false;
         $this->actingAs($this->admin);
-        $this->post('/school/fees/online-payments/setup', ['public_key' => 'pk_test_abc', 'secret_key' => 'sk_test_bad', 'enabled' => true])->assertSessionHasErrors('secret_key');
-        $this->assertFalse(app(PaystackService::class)->enabled($this->school->id));
+        $this->post('/school/fees/online-payments/setup', ['provider' => 'paystack', 'keys' => ['public_key' => 'pk_test_abc', 'secret_key' => 'sk_test_bad'], 'enabled' => true])->assertSessionHasErrors('keys');
+        $this->assertFalse(app(OnlinePaymentService::class)->enabled($this->school->id));
         $this->actingAs($this->makeUser($this->school, 'teacher'));
-        $this->post('/school/fees/online-payments/setup', ['public_key' => 'pk_test_abc', 'secret_key' => 'sk_test_x'])->assertForbidden();
+        $this->post('/school/fees/online-payments/setup', ['provider' => 'paystack', 'keys' => ['public_key' => 'pk_test_abc', 'secret_key' => 'sk_test_x']])->assertForbidden();
     }
 }

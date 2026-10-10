@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/** Fee payments parents start online (Paystack). The money only counts once Paystack confirms it and a ledger line is written. */
+/** Fee payments parents start online (Paystack, Flutterwave, Monnify, Remita or Interswitch). The money only counts once Paystack confirms it and a ledger line is written. */
 return new class extends Migration
 {
     public function up(): void
@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('paid_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('gateway', 20)->default('paystack');
             $table->string('reference', 60)->unique();
+            $table->string('gateway_reference', 80)->nullable();   // the provider's own number, e.g. a Remita RRR
             $table->decimal('amount', 12, 2);
             $table->string('email');
             $table->string('status', 20)->default('pending');   // pending, success, failed, needs_review
