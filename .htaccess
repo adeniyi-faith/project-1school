@@ -1,0 +1,22 @@
+# Safety net for hosts (such as cPanel) where the domain's folder is the project
+# root instead of the "public" folder. Every request is sent into "public/", so
+# visitors can never browse or download the app's own files (.env, vendor/,
+# storage/logs, app/, config/ and so on).
+#
+# Best practice is still to point the domain's Document Root at the "public"
+# folder. Do that if your host allows it.
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Already inside public/? Leave it to public/.htaccess.
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# If mod_rewrite is missing, refuse to serve anything rather than expose files.
+<IfModule !mod_rewrite.c>
+    Require all denied
+</IfModule>
