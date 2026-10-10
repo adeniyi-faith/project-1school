@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Traits\BelongsToSchool;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FeePayment extends Model
 {
-    use BelongsToSchool, SoftDeletes;
+    use BelongsToSchool, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'school_id', 'student_id', 'fee_structure_id', 'receipt_no',
@@ -50,5 +52,15 @@ class FeePayment extends Model
     public function getBalanceAttribute(): float
     {
         return (float) $this->amount_due + (float) $this->fine - (float) $this->discount - (float) $this->amount_paid;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['student_id', 'fee_structure_id', 'receipt_no', 'amount_due', 'amount_paid', 'discount', 'fine', 'payment_date', 'method', 'status', 'note'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->useLogName('fees')
+            ->setDescriptionForEvent(fn (string $event) => "Fee payment {$event}");
     }
 }

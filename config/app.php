@@ -15,6 +15,20 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    // Show the one-click demo logins on the sign-in page. Off unless
+    // SHOW_DEMO_ACCOUNTS=true, so a real school never exposes them by accident.
+    'show_demo_accounts' => (bool) env('SHOW_DEMO_ACCOUNTS', false),
+
+    // How people sign in. "local": email and password are checked against
+    // this app's own database (MySQL on cPanel). "supabase": Supabase checks
+    // the password instead.
+    'login_driver' => env('LOGIN_DRIVER', 'local'),
+
+    // Public read-only demo: visitors click "Try the demo" and look around
+    // as a demo school's admin, without an account. Nothing can be changed.
+    'demo_enabled' => (bool) env('DEMO_ENABLED', true),
+    'demo_email' => env('DEMO_EMAIL', 'demo@schoolruns.demo'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

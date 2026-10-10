@@ -209,9 +209,27 @@ class StudentController extends Controller
 
     public function deleteDocument(StudentDocument $document): RedirectResponse
     {
+        abort_unless(
+            auth()->user()->hasRole('super-admin') || $document->school_id === auth()->user()->school_id,
+            403
+        );
+
         Storage::disk('private')->delete($document->file_path);
         $document->delete();
 
         return back()->with('success', 'Document deleted.');
+    }
+
+    public function downloadDocument(StudentDocument $document)
+    {
+        abort_unless(
+            auth()->user()->hasRole('super-admin') || $document->school_id === auth()->user()->school_id,
+            403
+        );
+        abort_unless(Storage::disk('private')->exists($document->file_path), 404);
+
+        $extension = pathinfo($document->file_path, PATHINFO_EXTENSION);
+
+        return Storage::disk('private')->download($document->file_path, str($document->title)->slug()->append('.'.$extension)->toString());
     }
 }

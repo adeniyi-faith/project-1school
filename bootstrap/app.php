@@ -13,7 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
+            \App\Http\Middleware\DemoReadOnly::class,
         ]);
+
+        // GPS devices can't send a CSRF token; they use their own secret instead
+        $middleware->preventRequestForgery(except: ['webhooks/*']);
 
         $middleware->alias([
             'role'       => \Spatie\Permission\Middleware\RoleMiddleware::class,

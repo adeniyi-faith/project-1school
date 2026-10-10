@@ -7,7 +7,11 @@ use App\Models\User;
 use App\Services\SupabaseAuthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,7 +19,7 @@ use Inertia\Response;
 class LoginController extends Controller
 {
     /**
-     * Demo accounts shown only on .test domains or xgenious.com
+     * Demo accounts, shown only when SHOW_DEMO_ACCOUNTS=true
      */
     private array $demoAccounts = [
         [
@@ -64,12 +68,12 @@ class LoginController extends Controller
 
     public function create(Request $request): Response
     {
-        $host = $request->getHost();
-        $showDemo = str_ends_with($host, '.test') || str_contains($host, 'xgenious.com');
+        $showDemo = (bool) config('app.show_demo_accounts');
 
         return Inertia::render('Auth/Login', [
             'showDemo' => $showDemo,
             'demoAccounts' => $showDemo ? $this->demoAccounts : [],
+            'demoEnabled' => (bool) config('app.demo_enabled'),
         ]);
     }
 
@@ -80,28 +84,31 @@ class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        // Supabase checks the password. Laravel never sees or stores it;
-        // it only decides, once Supabase confirms who's signing in,
-        // whether that person has an account here and what they can do.
-        $supabaseUser = $supabaseAuth->signIn($credentials['email'], $credentials['password']);
+        // Block password guessing: 5 wrong tries per email + IP, then wait.
+        $throttleKey = Str::transliterate(Str::lower($credentials['email']).'|'.$request->ip());
 
-        if (! $supabaseUser) {
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            event(new Lockout($request));
+            $seconds = RateLimiter::availableIn($throttleKey);
+
             throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
+                'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
             ]);
         }
 
-        $user = User::where('email', $credentials['email'])->first();
+        $user = config('app.login_driver') === 'supabase'
+            ? $this->checkWithSupabase($credentials, $supabaseAuth)
+            : $this->checkLocally($credentials);
 
         if (! $user) {
+            RateLimiter::hit($throttleKey, 60);
+
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
         }
 
-        if ($user->supabase_id !== $supabaseUser['id']) {
-            $user->supabase_id = $supabaseUser['id'];
-        }
+        RateLimiter::clear($throttleKey);
 
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
@@ -114,6 +121,49 @@ class LoginController extends Controller
             ->log('User logged in');
 
         return redirect()->route('dashboard');
+    }
+
+    /**
+     * Local sign-in: the password is checked against the hashed password
+     * stored in this app's own database.
+     */
+    private function checkLocally(array $credentials): ?User
+    {
+        $user = User::where('email', $credentials['email'])->first();
+
+        // Always hash-check, even for unknown emails, so the response time
+        // does not reveal which emails have accounts.
+        $hash = $user?->password ?? '$2y$10$YCWdLwYqB6O0Utp55QXmeuMimyCnuRbzU34zvj3HTU/Naaju.fxq2';
+
+        try {
+            $matches = Hash::check($credentials['password'], $hash);
+        } catch (\RuntimeException) {
+            // Stored value is not a real hash (e.g. a placeholder): never a match
+            $matches = false;
+        }
+
+        return $user && $matches ? $user : null;
+    }
+
+    /**
+     * Supabase sign-in: Supabase confirms the password; Laravel still
+     * decides whether that person has an account here.
+     */
+    private function checkWithSupabase(array $credentials, SupabaseAuthService $supabaseAuth): ?User
+    {
+        $supabaseUser = $supabaseAuth->signIn($credentials['email'], $credentials['password']);
+
+        if (! $supabaseUser) {
+            return null;
+        }
+
+        $user = User::where('email', $credentials['email'])->first();
+
+        if ($user && $user->supabase_id !== $supabaseUser['id']) {
+            $user->supabase_id = $supabaseUser['id'];
+        }
+
+        return $user;
     }
 
     public function destroy(Request $request): RedirectResponse
