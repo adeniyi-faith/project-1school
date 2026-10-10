@@ -99,6 +99,7 @@ class ResultController extends Controller
                     ->mapWithKeys(fn ($s) => [$s => $sheet->{"{$s}_at"}?->toIso8601String()]),
             ],
             'actions' => $sheet->availableActions($user),
+            'canPrint' => $user->can('reportcard.generate'),
             'canEnter' => $sheet->isEditable() && $user->can('marks.entry'),
             'tab' => in_array($request->tab, ['scores', 'behaviour', 'results'], true) ? $request->tab : 'scores',
             'subjects' => $subjects->map->only('id', 'name'),

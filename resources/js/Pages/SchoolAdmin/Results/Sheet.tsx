@@ -7,7 +7,7 @@ import { EmptyState, PageHeader, Panel } from '@/components/app/kit';
 import { ResultStatusPill } from '@/components/results/ResultStatus';
 import { ordinal } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, Check, ClipboardCheck } from 'lucide-react';
+import { ArrowLeft, Check, ClipboardCheck, FileText } from 'lucide-react';
 import type { AssessmentComponent, BehaviourTrait, PageProps, ResultAction, ResultStatus } from '@/Types';
 
 interface StudentRow { id: number; name: string; admission_no: string | null }
@@ -23,6 +23,7 @@ interface Props {
         term: string; class_name: string | null; steps: Record<'submitted' | 'approved' | 'published' | 'locked', string | null>;
     };
     actions: ResultAction[];
+    canPrint: boolean;
     canEnter: boolean;
     tab: 'scores' | 'behaviour' | 'results';
     subjects: { id: number; name: string }[];
@@ -66,6 +67,14 @@ export default function ResultSheet(props: Props) {
         router.post(`${base}/status`, { action }, { preserveScroll: true });
     }
 
+    const linkClass = 'inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200';
+    const headerActions = (
+        <div className="flex flex-wrap gap-2">
+            <Link href="/school/results" className={linkClass}><ArrowLeft className="size-4" /> All classes</Link>
+            {props.canPrint && <Link href={`${base}/report-cards`} className={linkClass}><FileText className="size-4" /> Report cards</Link>}
+        </div>
+    );
+
     const tabs = [
         { key: 'scores', label: 'Scores' },
         { key: 'behaviour', label: 'Behaviour & skills' },
@@ -78,12 +87,10 @@ export default function ResultSheet(props: Props) {
                 <PageHeader
                     title={`${sheet.class_name ?? 'Class'} results`}
                     description={sheet.term}
-                    actions={
-                        <Link href="/school/results" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
-                            <ArrowLeft className="size-4" /> All classes
-                        </Link>
-                    }
+                    actions={headerActions}
                 />
+                {/* The header hides its buttons on phones, so they are repeated here */}
+                <div className="md:hidden">{headerActions}</div>
 
                 <Panel>
                     <div className="flex flex-wrap items-center justify-between gap-4">

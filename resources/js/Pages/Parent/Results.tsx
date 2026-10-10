@@ -36,7 +36,7 @@ export default function ParentResults({ linked, children }: Props) {
                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">{child.full_name} — {child.class}</p>
                         {child.reports.length > 0 && (
                             <div className="mb-4 space-y-4">
-                                {child.reports.map(r => <TermReportCard key={r.id} report={r} />)}
+                                {child.reports.map(r => <TermReportCard key={r.id} report={r} downloadUrl={`/school/parent/report-cards/${child.id}/${r.id}`} />)}
                             </div>
                         )}
                         <Card>

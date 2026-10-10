@@ -47,7 +47,7 @@ export default function Results({ linked, student, exams, reports }: Props) {
                 {reports.length > 0 && (
                     <section className="space-y-4">
                         <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Term results</h2>
-                        {reports.map(r => <TermReportCard key={r.id} report={r} />)}
+                        {reports.map(r => <TermReportCard key={r.id} report={r} downloadUrl={`/school/student/report-cards/${r.id}`} />)}
                     </section>
                 )}
 

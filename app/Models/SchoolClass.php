@@ -16,7 +16,7 @@ class SchoolClass extends Model
 
     protected $fillable = [
         'school_id', 'name', 'numeric_name', 'capacity', 'class_teacher_id',
-        'assessment_scheme_id', 'grading_scheme_id',
+        'assessment_scheme_id', 'grading_scheme_id', 'report_card_design_id',
     ];
 
     public function sections(): HasMany
