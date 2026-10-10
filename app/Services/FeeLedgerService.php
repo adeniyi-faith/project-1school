@@ -9,6 +9,9 @@ use App\Models\Student;
 use App\Models\StudentScholarship;
 use App\Models\Term;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -221,6 +224,74 @@ class FeeLedgerService
             ->whereHas('reverses', fn ($q) => $q->where('type', 'payment'))->sum('amount');
 
         return round(-((float) $payments + (float) $reversed), 2);
+    }
+
+    /** Ledger lines that are money received: payments, plus reversals of payments (which take money back out). */
+    public static function moneyIn(): Builder
+    {
+        return LedgerEntry::query()->where(fn ($q) => $q
+            ->where('type', 'payment')
+            ->orWhere(fn ($r) => $r->where('type', 'reversal')->whereHas('reverses', fn ($p) => $p->where('type', 'payment'))));
+    }
+
+    /** Money actually received between two dates (both optional), after any payment reversals. */
+    public static function collected(?int $schoolId, ?string $from = null, ?string $to = null): float
+    {
+        return round(-(float) self::moneyIn()
+            ->when($schoolId, fn ($q) => $q->where('school_id', $schoolId))
+            ->when($from, fn ($q) => $q->whereDate('entry_date', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('entry_date', '<=', $to))
+            ->sum('amount'), 2);
+    }
+
+    /** What is still owed on open invoices. */
+    public static function outstanding(?int $schoolId): float
+    {
+        return round((float) Invoice::query()
+            ->when($schoolId, fn ($q) => $q->where('school_id', $schoolId))
+            ->whereIn('status', ['unpaid', 'partial'])
+            ->sum('balance'), 2);
+    }
+
+    /**
+     * A student's fees as parents and students see them: one row per invoice (cancelled ones left out),
+     * newest first, with what was charged after discounts and fines, what was paid, and what is left.
+     *
+     * @return array{total_due: float, total_paid: float, balance: float, rows: Collection}
+     */
+    public function familyAccount(Student $student): array
+    {
+        $invoices = Invoice::withoutGlobalScopes()
+            ->where('school_id', $student->school_id)
+            ->where('student_id', $student->id)
+            ->where('status', '!=', 'void')
+            ->with(['feeStructure.feeCategory:id,name', 'entries'])
+            ->orderByDesc('id')
+            ->get();
+
+        $rows = $invoices->map(function (Invoice $invoice) {
+            $payments = $invoice->entries->where('type', 'payment');
+            $paymentReversals = $invoice->entries->where('type', 'reversal')->whereIn('reverses_id', $payments->pluck('id'));
+            $paid = round(-($payments->sum('amount') + $paymentReversals->sum('amount')), 2);
+            $lastPaid = $payments->max('entry_date');
+
+            return [
+                'id' => $invoice->id,
+                'month' => trim(($invoice->feeStructure?->feeCategory?->name ?? 'Fee') . ' · ' . $invoice->period),
+                'due' => round($invoice->balance + $paid, 2),
+                'paid' => $paid,
+                'balance' => $invoice->balance,
+                'status' => $invoice->status,
+                'payment_date' => $lastPaid ? Carbon::parse($lastPaid)->format('d M Y') : null,
+            ];
+        });
+
+        return [
+            'total_due' => round($rows->sum('due'), 2),
+            'total_paid' => round($rows->sum('paid'), 2),
+            'balance' => round($rows->sum('balance'), 2),
+            'rows' => $rows,
+        ];
     }
 
     private function ensureOpen(Invoice $invoice): void

@@ -113,7 +113,7 @@ export default function CustomBuilder({ classes, subjects }: Props) {
                                     </div>
                                 </>
                             )}
-                            {(entity === 'attendance' || entity === 'fees' || entity === 'staff') && (
+                            {(entity === 'attendance' || entity === 'staff') && (
                                 <div>
                                     <Label className="text-xs mb-1 block">Status</Label>
                                     <Input value={status} onChange={e => setStatus(e.target.value)} placeholder="e.g. present, paid" />

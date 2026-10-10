@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Announcement;
 use App\Models\Attendance;
 use App\Models\Exam;
-use App\Models\FeePayment;
 use App\Models\Homework;
 use App\Models\Mark;
 use App\Models\Student;
 use App\Models\Timetable;
+use App\Services\FeeLedgerService;
 use App\Services\TermResultService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -96,32 +96,16 @@ class StudentPortalController extends Controller
                 'overdue' => $h->due_date < $today,
             ]);
 
-        /* ── Fee Summary ── */
-        $feeData   = FeePayment::where('school_id', $user->school_id)
-            ->where('student_id', $student->id)
-            ->select(DB::raw('SUM(amount_due) as total_due, SUM(amount_paid) as total_paid, SUM(amount_due - amount_paid) as balance'))
-            ->first();
-
-        $recentFees = FeePayment::where('school_id', $user->school_id)
-            ->where('student_id', $student->id)
-            ->orderByDesc('payment_date')
-            ->limit(5)
-            ->get(['id', 'amount_due', 'amount_paid', 'status', 'month_year', 'payment_date'])
-            ->map(fn ($f) => [
-                'id'        => $f->id,
-                'month'     => $f->month_year,
-                'due'       => (float) $f->amount_due,
-                'paid'      => (float) $f->amount_paid,
-                'balance'   => (float) ($f->amount_due - $f->amount_paid),
-                'status'    => $f->status,
-                'date'      => $f->payment_date ? Carbon::parse($f->payment_date)->format('d M Y') : null,
-            ]);
-
+        /* ── Fee Summary (from invoices) ── */
+        $account = app(FeeLedgerService::class)->familyAccount($student);
         $fees = [
-            'total_due'  => (float) ($feeData->total_due ?? 0),
-            'total_paid' => (float) ($feeData->total_paid ?? 0),
-            'balance'    => (float) ($feeData->balance ?? 0),
-            'recent'     => $recentFees,
+            'total_due'  => $account['total_due'],
+            'total_paid' => $account['total_paid'],
+            'balance'    => $account['balance'],
+            'recent'     => $account['rows']->take(5)->map(fn ($r) => [
+                'id' => $r['id'], 'month' => $r['month'], 'due' => $r['due'], 'paid' => $r['paid'],
+                'balance' => $r['balance'], 'status' => $r['status'], 'date' => $r['payment_date'],
+            ])->values(),
         ];
 
         /* ── Recent Exam Marks ── */
@@ -344,34 +328,17 @@ class StudentPortalController extends Controller
         $student = $this->resolveStudent();
         if (! $student) return $this->notLinked('Student/Fees');
 
-        $summary = FeePayment::where('school_id', $student->school_id)
-            ->where('student_id', $student->id)
-            ->selectRaw('SUM(amount_due) as total_due, SUM(amount_paid) as total_paid, SUM(amount_due - amount_paid) as balance')
-            ->first();
-
-        $payments = FeePayment::where('school_id', $student->school_id)
-            ->where('student_id', $student->id)
-            ->orderByDesc('payment_date')
-            ->get(['id', 'month_year', 'amount_due', 'amount_paid', 'status', 'payment_date'])
-            ->map(fn ($f) => [
-                'id'           => $f->id,
-                'month'        => $f->month_year,
-                'due'          => (float) $f->amount_due,
-                'paid'         => (float) $f->amount_paid,
-                'balance'      => (float) ($f->amount_due - $f->amount_paid),
-                'status'       => $f->status,
-                'payment_date' => $f->payment_date ? Carbon::parse($f->payment_date)->format('d M Y') : null,
-            ]);
+        $account = app(FeeLedgerService::class)->familyAccount($student);
 
         return Inertia::render('Student/Fees', [
             'linked'   => true,
             'student'  => ['full_name' => $student->full_name, 'class' => $student->schoolClass?->name],
             'summary'  => [
-                'total_due'  => (float) ($summary->total_due ?? 0),
-                'total_paid' => (float) ($summary->total_paid ?? 0),
-                'balance'    => (float) ($summary->balance ?? 0),
+                'total_due'  => $account['total_due'],
+                'total_paid' => $account['total_paid'],
+                'balance'    => $account['balance'],
             ],
-            'payments' => $payments,
+            'payments' => $account['rows'],
         ]);
     }
 
