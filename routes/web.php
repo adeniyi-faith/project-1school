@@ -13,6 +13,7 @@ use App\Http\Controllers\SchoolAdmin\FeeInvoiceController;
 use App\Http\Controllers\SchoolAdmin\FeePaymentController;
 use App\Http\Controllers\SchoolAdmin\FeeStructureController;
 use App\Http\Controllers\SchoolAdmin\CommunicationController;
+use App\Http\Controllers\SchoolAdmin\MessageLogController;
 use App\Http\Controllers\SchoolAdmin\IntegrationController;
 use App\Http\Controllers\SchoolAdmin\ReportController;
 use App\Http\Controllers\SchoolAdmin\HomeworkController;
@@ -385,6 +386,10 @@ Route::middleware('auth')->group(function () {
 
             Route::get('communication/blast',                                      [CommunicationController::class, 'blast'])->middleware('permission:sms.send|email.send')->name('communication.blast');
             Route::post('communication/blast',                                     [CommunicationController::class, 'sendBlast'])->middleware('permission:sms.send|email.send')->name('communication.blast.send');
+
+            Route::get('communication/sent',                                       [MessageLogController::class, 'index'])->middleware('permission:sms.send|email.send')->name('communication.sent');
+            Route::get('communication/sent/{batch}',                               [MessageLogController::class, 'show'])->middleware('permission:sms.send|email.send')->name('communication.sent.show');
+            Route::post('communication/sent/{batch}/retry',                        [MessageLogController::class, 'retry'])->middleware('permission:sms.send|email.send')->name('communication.sent.retry');
 
             Route::get('communication/email-templates',                            [CommunicationController::class, 'emailTemplates'])->middleware('permission:email.send')->name('communication.email-templates');
             Route::post('communication/email-templates',                           [CommunicationController::class, 'storeEmailTemplate'])->middleware('permission:email.send')->name('communication.email-templates.store');
