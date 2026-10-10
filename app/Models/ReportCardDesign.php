@@ -16,7 +16,7 @@ class ReportCardDesign extends Model
 {
     use BelongsToSchool, SoftDeletes;
 
-    public const TEMPLATES = ['classic', 'modern', 'compact'];
+    public const TEMPLATES = ['classic', 'modern', 'compact', 'banner', 'elegant'];
     public const FONT_SIZES = ['small', 'normal', 'large'];
     public const PAPERS = ['a4', 'letter'];
 

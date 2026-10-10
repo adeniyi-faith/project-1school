@@ -531,7 +531,7 @@ export interface ReportCardDesignRow {
     id: number;
     name: string;
     is_default: boolean;
-    template: 'classic' | 'modern' | 'compact';
+    template: 'classic' | 'modern' | 'compact' | 'banner' | 'elegant';
     primary_color: string;
     accent_color: string;
     font_size: 'small' | 'normal' | 'large';

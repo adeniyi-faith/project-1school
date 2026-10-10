@@ -220,7 +220,8 @@ function BrandingTab({ logoUrl, settings }: { logoUrl: string | null; settings: 
                                     onClick={() => logoRef.current?.click()}>
                                     <Upload className="w-3.5 h-3.5" /> Upload Logo
                                 </Button>
-                                <p className="text-xs text-slate-400 mt-1">PNG or SVG, max 2MB. Recommended 200×200px.</p>
+                                <p className="text-xs text-slate-400 mt-1">PNG or JPG, up to 10MB (big pictures are made smaller for you). Recommended 200×200px.</p>
+                                <p className="text-xs text-amber-700 dark:text-amber-300 mt-1 max-w-sm">Tip: use a logo with a <strong>transparent background</strong> (PNG) for the best look on report cards, certificates and the faint background mark.</p>
                             </div>
                         </div>
                     </div>

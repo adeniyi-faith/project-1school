@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { EmptyState, PageHeader, Panel } from '@/components/app/kit';
 import { ordinal } from '@/lib/format';
+import { LogoTip } from '@/components/app/LogoTip';
 import { ArrowLeft, Download, FileArchive, FileText, MessageSquareQuote, Palette, Wand2 } from 'lucide-react';
 import { fittingComments, renderComment } from '@/lib/commentBank';
 import type { CommentBankEntry, ReportCardStudent } from '@/Types';
@@ -83,6 +84,7 @@ export default function ReportCards({ sheet, design, signers, students, canDesig
                 />
                 {/* The header hides its buttons on phones, so they are repeated here */}
                 <div className="md:hidden">{headerActions}</div>
+                <LogoTip />
 
                 {writable.length > 0 && students.length > 0 && sheet.status !== 'locked' && (
                     <Panel>
