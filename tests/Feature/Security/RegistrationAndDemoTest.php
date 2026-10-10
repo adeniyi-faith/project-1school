@@ -10,6 +10,8 @@ class RegistrationAndDemoTest extends SecurityTestCase
 {
     private array $form = [
         'school_name' => 'Bright Future School',
+        'state' => 'Lagos',
+        'city' => 'Ikeja',
         'name' => 'Ada Obi',
         'email' => 'ada@brightfuture.test',
         'password' => 'a-strong-pass',
@@ -24,6 +26,12 @@ class RegistrationAndDemoTest extends SecurityTestCase
         $user = User::where('email', 'ada@brightfuture.test')->firstOrFail();
         $this->assertNull($user->supabase_id);
         $this->assertNotSame('a-strong-pass', $user->password);
+
+        // The new school is set up for Nigeria: naira and Lagos time
+        $school = School::findOrFail($user->school_id);
+        $this->assertSame('NGN', $school->currency);
+        $this->assertSame('Africa/Lagos', $school->timezone);
+        $this->assertSame('Lagos', $school->state);
 
         auth()->logout();
 
