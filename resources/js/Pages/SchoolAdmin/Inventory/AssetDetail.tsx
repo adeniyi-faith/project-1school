@@ -49,7 +49,7 @@ export default function AssetDetail({ asset }: { asset: Asset }) {
     return (
         <AppLayout title={`Asset — ${asset.name}`}>
             <div className="max-w-3xl mx-auto space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <Link href="/school/inventory/assets" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white">
                             <ArrowLeft className="w-4 h-4" /> Assets
@@ -142,7 +142,7 @@ export default function AssetDetail({ asset }: { asset: Asset }) {
                             <Label>Description <span className="text-red-500">*</span></Label>
                             <Input value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="What was done?" />
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Cost (₦)</Label>
                                 <Input type="number" min="0" value={form.cost} onChange={e => setForm(p => ({ ...p, cost: e.target.value }))} />
