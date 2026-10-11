@@ -44,8 +44,9 @@ class StudentCbtController extends Controller
                     'id' => $t->id, 'title' => $t->title, 'subject' => $t->subject?->name, 'duration_minutes' => $t->duration_minutes,
                     'questions' => $t->questionTotal(), 'opens_at' => $t->opens_at->toIso8601String(), 'closes_at' => $t->closes_at?->toIso8601String(),
                     'state' => $a ? ($a->isFinished() ? 'done' : 'writing') : ($t->isOpen() ? 'open' : ($t->opens_at->isFuture() && $t->status === 'published' ? 'soon' : 'missed')),
-                    'score' => $a && $a->isFinished() && $t->show_score ? $a->score : null,
-                    'max_score' => $a && $a->isFinished() && $t->show_score ? $a->max_score : null,
+                    'marking' => (bool) $a?->needs_marking,
+                    'score' => $a && $a->isFinished() && ! $a->needs_marking && $t->show_score ? $a->score : null,
+                    'max_score' => $a && $a->isFinished() && ! $a->needs_marking && $t->show_score ? $a->max_score : null,
                 ];
             })->values(),
         ]);
@@ -87,8 +88,13 @@ class StudentCbtController extends Controller
     public function answer(Request $request, CbtTest $test): JsonResponse
     {
         $attempt = $this->attempt($request, $test);
-        $data = $request->validate(['question_id' => 'required|integer', 'option' => 'nullable|integer|min:0']);
-        $this->cbt->answer($attempt, $data['question_id'], $data['option']);
+        $data = $request->validate(['question_id' => 'required|integer', 'option' => 'nullable|integer|min:0', 'text' => 'nullable|string|max:20000'],
+            ['text.max' => 'That answer is too long. Keep it under 20,000 characters.']);
+        if ($request->exists('text')) {
+            $this->cbt->write($attempt, $data['question_id'], $data['text'] ?? null);
+        } else {
+            $this->cbt->answer($attempt, $data['question_id'], $data['option'] ?? null);
+        }
 
         return $this->state($attempt);
     }

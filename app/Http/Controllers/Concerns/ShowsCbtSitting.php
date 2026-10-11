@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Concerns;
 
 use App\Models\CbtAttempt;
 use App\Models\CbtTest;
+use App\Services\CbtService;
 use Illuminate\Http\JsonResponse;
 
 /** The pages of a test sitting (before, during, after), shared by students and entrance-exam applicants */
@@ -32,10 +33,11 @@ trait ShowsCbtSitting
 
         return [
             'base' => $base,
-            'test' => ['id' => $test->id, 'title' => $test->title, 'sections' => $test->sections->pluck('title'), 'max_page_leaves' => $test->max_page_leaves],
+            'test' => ['id' => $test->id, 'title' => $test->title, 'sections' => $test->sections->pluck('title'), 'max_page_leaves' => $test->max_page_leaves, 'allow_calculator' => $test->allow_calculator],
             'person' => $person,
             'questions' => $this->cbt->paper($attempt, $images),
             'answers' => (object) ($attempt->answers ?? []),
+            'written' => (object) ($attempt->written ?? []),
             'flags' => $attempt->flags ?? [],
             'secondsLeft' => $attempt->secondsLeft(),
             'pageLeaves' => $attempt->page_leaves,
@@ -45,15 +47,19 @@ trait ShowsCbtSitting
     protected function doneProps(CbtTest $test, CbtAttempt $attempt, string $base): array
     {
         $test->load('sections');
+        // The score shows once every theory answer has been marked
+        $show = $test->show_score && ! $attempt->needs_marking;
 
         return [
             'base' => $base,
             'test' => ['id' => $test->id, 'title' => $test->title, 'show_score' => $test->show_score],
             'result' => [
                 'status' => $attempt->status, 'ended_reason' => $attempt->ended_reason,
-                'answered' => count($attempt->answers ?? []), 'questions' => count($attempt->paper),
-                'score' => $test->show_score ? $attempt->score : null, 'max_score' => $test->show_score ? $attempt->max_score : null,
-                'sections' => $test->show_score ? $test->sections->values()->map(fn ($s, $i) => [
+                'answered' => CbtService::answeredCount($attempt), 'questions' => count($attempt->paper),
+                // Theory answers still with the teacher: the score so far covers only what is marked
+                'needs_marking' => $attempt->needs_marking,
+                'score' => $show ? $attempt->score : null, 'max_score' => $show ? $attempt->max_score : null,
+                'sections' => $show ? $test->sections->values()->map(fn ($s, $i) => [
                     'title' => $s->title, 'score' => $attempt->section_scores[$i]['score'] ?? 0, 'max' => $attempt->section_scores[$i]['max'] ?? 0,
                 ]) : [],
             ],

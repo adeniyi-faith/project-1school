@@ -103,8 +103,13 @@ class CandidateCbtController extends Controller
     public function answer(Request $request): JsonResponse
     {
         $attempt = $this->sitting($this->mustHave($request));
-        $data = $request->validate(['question_id' => 'required|integer', 'option' => 'nullable|integer|min:0']);
-        $this->cbt->answer($attempt, $data['question_id'], $data['option']);
+        $data = $request->validate(['question_id' => 'required|integer', 'option' => 'nullable|integer|min:0', 'text' => 'nullable|string|max:20000'],
+            ['text.max' => 'That answer is too long. Keep it under 20,000 characters.']);
+        if ($request->exists('text')) {
+            $this->cbt->write($attempt, $data['question_id'], $data['text'] ?? null);
+        } else {
+            $this->cbt->answer($attempt, $data['question_id'], $data['option'] ?? null);
+        }
 
         return $this->state($attempt);
     }
