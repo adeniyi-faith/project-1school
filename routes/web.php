@@ -52,6 +52,7 @@ use App\Http\Controllers\SchoolAdmin\ExamPaperController;
 use App\Http\Controllers\StudentCbtController;
 use App\Http\Controllers\CandidateCbtController;
 use App\Http\Controllers\SchoolAdmin\AiSettingsController;
+use App\Http\Controllers\SchoolAdmin\SchoolTypeController;
 use App\Http\Controllers\SuperAdmin\AiController as SuperAdminAiController;
 use App\Http\Controllers\ParentPaymentController;
 use App\Http\Controllers\PaymentWebhookController;
@@ -561,6 +562,8 @@ Route::middleware('auth')->group(function () {
             Route::post('settings/notifications',               [SchoolSettingsController::class, 'saveNotifications'])->middleware('permission:settings.edit')->name('settings.notifications');
             Route::get('settings/ai',                           [AiSettingsController::class, 'index'])->middleware('permission:settings.view')->name('settings.ai');
             Route::post('settings/ai',                          [AiSettingsController::class, 'save'])->middleware('permission:settings.edit')->name('settings.ai.save');
+            Route::get('settings/school-type',                  [SchoolTypeController::class, 'index'])->middleware('permission:settings.view')->name('settings.school-type');
+            Route::post('settings/school-type',                 [SchoolTypeController::class, 'apply'])->middleware('permission:settings.edit')->name('settings.school-type.apply');
 
             // Integrations / Gateway Settings
             Route::get('settings/integrations',                 [IntegrationController::class, 'index'])->middleware('permission:settings.edit')->name('settings.integrations');
