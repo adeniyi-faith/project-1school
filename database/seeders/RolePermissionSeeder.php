@@ -150,17 +150,20 @@ class RolePermissionSeeder extends Seeder
 
         'driver' => [
             'leave.view', 'leave.apply',
+            'announcements.view',
             'transport.view', 'transport.attendance',
         ],
 
         'warden' => [
             'leave.view', 'leave.apply',
+            'announcements.view',
             'students.view',
             'hostel.view', 'hostel.attendance',
         ],
 
         'store-manager' => [
             'leave.view', 'leave.apply',
+            'announcements.view',
             'inventory.view', 'inventory.manage', 'inventory.issue',
         ],
 

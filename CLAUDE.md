@@ -73,7 +73,7 @@ Everything below exists as working screens unless a caveat says otherwise.
 
 | Area | Status | Caveats |
 |---|---|---|
-| Login, roles, permissions | Built | Password check via Supabase. No password reset, no self-sign-up, no 2FA. Accounts are created by admins |
+| Login, roles, permissions | Built | Password check via Supabase. No password reset, no self-sign-up, no 2FA. Accounts are created by admins. All ten staff roles can enter `/school`; what they open is decided by permissions. Staff without `reports.view` (receptionist, driver, warden, store manager) land on `/school/home` (`StaffHomeController`): front desk (visitors today, still inside, inquiries to follow up), bus routes with their students, hostel beds, and store items running low, each shown only with the matching permission, plus announcements for everyone or their role |
 | Multi-school (tenancy) | Built | `school_id` + `SchoolScope`. Super Admin manages schools, packages, subscriptions, module switches |
 | School setup | Built | Classes, sections, subjects, shifts, holidays, academic year, settings, branding, integrations |
 | Terms, score setups, grade scales | Built | Each school year has terms (3 by default, from the `terms_per_year` setting). Admins choose score parts (CA1, CA2, CA3, assignment, exam ... adding up to 100) and grade scales (WAEC A1–F9 default, simple A–F preset), per school, per class, and per subject for score parts. Pages: `/school/academics/terms`, `/school/academics/assessment` |
@@ -153,5 +153,5 @@ Phase 2 leftovers: old per-exam marks are not copied into term results.
 Phase 3 (rest): a real SMS provider (the log is ready for it), theory questions and a calculator in CBT, houses/clubs, shared table/form components.
 Phase 4: queue for PDFs, Redis, safe ID generation (admission numbers and employee IDs are
 made by counting rows, which can collide), splitting the fat controllers into services.
-Small open items: the Receptionist, Driver, Warden and Store Manager roles exist in the seeder but the `/school` route group only lets six roles in (Super Admin, School Admin, Principal, Teacher, Accountant, Librarian), so those four cannot reach any school screen yet; the side menu is chosen by role in the frontend, so it can show items a role
+Small open items: the side menu is chosen by role in the frontend, so it can show items a role
 can no longer open; a screen to show each vehicle's GPS token; no workflow runs the tests before a merge.
