@@ -49,6 +49,8 @@ use App\Http\Controllers\SchoolAdmin\CbtBankController;
 use App\Http\Controllers\SchoolAdmin\CbtTestController;
 use App\Http\Controllers\StudentCbtController;
 use App\Http\Controllers\CandidateCbtController;
+use App\Http\Controllers\SchoolAdmin\AiSettingsController;
+use App\Http\Controllers\SuperAdmin\AiController as SuperAdminAiController;
 use App\Http\Controllers\ParentPaymentController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SchoolAdmin\OnlinePaymentController;
@@ -301,6 +303,7 @@ Route::middleware('auth')->group(function () {
             Route::get('results/{sheet}/report-cards/session',   [ReportCardController::class, 'session'])->middleware('permission:reportcard.generate')->name('results.report-cards.session');
             // Who may write each comment is set on the signer (teachers or heads); the controller checks it
             Route::post('results/{sheet}/comments',              [ReportCardController::class, 'saveComments'])->middleware('permission:results.view')->name('results.comments');
+            Route::post('results/{sheet}/comments/ai',           [ReportCardController::class, 'aiComments'])->middleware(['permission:results.view', 'throttle:20,1'])->name('results.comments.ai');
             Route::post('results/{sheet}/comments/fill',         [ReportCardController::class, 'fillComments'])->middleware('permission:results.view')->name('results.comments.fill');
             Route::post('results/comment-bank',                  [CommentBankController::class, 'store'])->middleware('permission:results.view')->name('comment-bank.store');
             Route::post('results/comment-bank/starters',         [CommentBankController::class, 'starters'])->middleware('permission:results.view')->name('comment-bank.starters');
@@ -517,6 +520,8 @@ Route::middleware('auth')->group(function () {
             Route::post('settings/branding',                    [SchoolSettingsController::class, 'saveBranding'])->middleware('permission:settings.edit')->name('settings.branding');
             Route::post('settings/academic',                    [SchoolSettingsController::class, 'saveAcademic'])->middleware('permission:settings.edit')->name('settings.academic');
             Route::post('settings/notifications',               [SchoolSettingsController::class, 'saveNotifications'])->middleware('permission:settings.edit')->name('settings.notifications');
+            Route::get('settings/ai',                           [AiSettingsController::class, 'index'])->middleware('permission:settings.view')->name('settings.ai');
+            Route::post('settings/ai',                          [AiSettingsController::class, 'save'])->middleware('permission:settings.edit')->name('settings.ai.save');
 
             // Integrations / Gateway Settings
             Route::get('settings/integrations',                 [IntegrationController::class, 'index'])->middleware('permission:settings.edit')->name('settings.integrations');
@@ -633,6 +638,12 @@ Route::middleware('auth')->group(function () {
             Route::post('settings/storage',                 [SuperAdminSettingsController::class, 'saveStorage'])->name('settings.storage');
             Route::post('settings/templates',               [SuperAdminSettingsController::class, 'saveTemplate'])->name('settings.templates');
             Route::post('settings/audit',                   [SuperAdminSettingsController::class, 'saveAudit'])->name('settings.audit');
+
+            // AI (Gemini)
+            Route::get('ai',                                [SuperAdminAiController::class, 'index'])->name('ai.index');
+            Route::post('ai',                               [SuperAdminAiController::class, 'save'])->name('ai.save');
+            Route::post('ai/check',                         [SuperAdminAiController::class, 'check'])->name('ai.check');
+            Route::post('ai/schools/{school}',              [SuperAdminAiController::class, 'saveSchool'])->name('ai.school');
 
             Route::get('packages',              [PackageController::class, 'index'])->name('packages.index');
             Route::post('packages',             [PackageController::class, 'store'])->name('packages.store');
