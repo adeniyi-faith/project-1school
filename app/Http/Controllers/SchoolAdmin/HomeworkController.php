@@ -5,7 +5,6 @@ namespace App\Http\Controllers\SchoolAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Homework;
 use App\Models\HomeworkSubmission;
-use App\Models\LessonPlan;
 use App\Models\OnlineClass;
 use App\Models\SchoolClass;
 use App\Models\Staff;
@@ -104,71 +103,6 @@ class HomeworkController extends Controller
 
         $submission->update($data);
         return back()->with('success', 'Submission reviewed.');
-    }
-
-    // ── Lesson Plans ──────────────────────────────────────────────
-
-    public function lessonPlans(Request $request)
-    {
-        $sid = $this->getSchoolId();
-
-        $plans = LessonPlan::with(['schoolClass:id,name', 'subject:id,name', 'teacher:id,first_name,last_name'])
-            ->where('school_id', $sid)
-            ->when($request->status,    fn ($q) => $q->where('status', $request->status))
-            ->when($request->class_id,  fn ($q) => $q->where('class_id', $request->class_id))
-            ->latest('week_start')
-            ->paginate(20)
-            ->withQueryString();
-
-        return Inertia::render('SchoolAdmin/Homework/LessonPlans', [
-            'plans'    => $plans,
-            'classes'  => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->get(['id', 'name']),
-            'subjects' => Subject::where('school_id', $sid)->orderBy('name')->get(['id', 'name']),
-            'staff'    => Staff::where('school_id', $sid)->where('status', 'active')->orderBy('first_name')->get(['id', 'first_name', 'last_name']),
-            'filters'  => $request->only('status', 'class_id'),
-        ]);
-    }
-
-    public function storeLessonPlan(Request $request)
-    {
-        $data = $request->validate([
-            'class_id'         => 'required|exists:classes,id',
-            'subject_id'       => 'required|exists:subjects,id',
-            'teacher_id'       => 'nullable|exists:staff,id',
-            'title'            => 'required|string|max:255',
-            'objectives'       => 'nullable|string',
-            'content'          => 'nullable|string',
-            'teaching_methods' => 'nullable|string',
-            'resources'        => 'nullable|string',
-            'week_start'       => 'required|date',
-        ]);
-
-        LessonPlan::create(array_merge($data, ['school_id' => $this->getSchoolId()]));
-
-        return back()->with('success', 'Lesson plan created.');
-    }
-
-    public function reviewLessonPlan(Request $request, LessonPlan $lessonPlan)
-    {
-        $data = $request->validate([
-            'action'            => 'required|in:approved,rejected,submitted',
-            'reviewer_feedback' => 'nullable|string|max:1000',
-        ]);
-
-        $lessonPlan->update([
-            'status'            => $data['action'],
-            'reviewer_feedback' => $data['reviewer_feedback'] ?? null,
-            'reviewed_by'       => auth()->id(),
-            'reviewed_at'       => now(),
-        ]);
-
-        return back()->with('success', 'Lesson plan ' . $data['action'] . '.');
-    }
-
-    public function destroyLessonPlan(LessonPlan $lessonPlan)
-    {
-        $lessonPlan->delete();
-        return back()->with('success', 'Lesson plan deleted.');
     }
 
     // ── Syllabus ──────────────────────────────────────────────────

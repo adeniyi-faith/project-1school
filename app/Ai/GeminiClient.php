@@ -15,10 +15,14 @@ class GeminiClient
 
     /**
      * @param  array|null  $schema  When given, Gemini must answer with JSON in this shape (OpenAPI-style, types in capitals)
+     * @param  array<int, array{mime: string, data: string}>  $files  Documents sent with the prompt (raw bytes), such as a PDF
      * @return array{text: string, input_tokens: int, output_tokens: int, finish: ?string}
      */
-    public function generate(string $key, string $model, string $system, string $prompt, ?array $schema = null, int $maxTokens = 8192): array
+    public function generate(string $key, string $model, string $system, string $prompt, ?array $schema = null, int $maxTokens = 8192, array $files = []): array
     {
+        $parts = array_map(fn ($f) => ['inlineData' => ['mimeType' => $f['mime'], 'data' => base64_encode($f['data'])]], $files);
+        $parts[] = ['text' => $prompt];
+
         $config = ['maxOutputTokens' => $maxTokens, 'temperature' => 0.7];
         if ($schema) {
             $config += ['responseMimeType' => 'application/json', 'responseSchema' => $schema];
@@ -29,7 +33,7 @@ class GeminiClient
                 ->withHeaders(['x-goog-api-key' => $key])
                 ->post(self::ENDPOINT.'/'.rawurlencode($model).':generateContent', [
                     'systemInstruction' => ['parts' => [['text' => $system]]],
-                    'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],
+                    'contents' => [['role' => 'user', 'parts' => $parts]],
                     'generationConfig' => $config,
                 ]);
         } catch (ConnectionException) {
