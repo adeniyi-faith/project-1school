@@ -270,7 +270,7 @@ export default function Inquiry({ inquiry, assessments, matchingGuardians, class
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader><DialogTitle>{assess.data.type === 'exam' ? 'Entrance exam' : 'Interview'}</DialogTitle></DialogHeader>
                     <form onSubmit={saveAssessment} className="mt-2 space-y-4">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label htmlFor="as-when">Date and time</Label>
                                 <Input id="as-when" type="datetime-local" value={assess.data.scheduled_at} onChange={e => assess.setData('scheduled_at', e.target.value)} />
@@ -288,7 +288,7 @@ export default function Inquiry({ inquiry, assessments, matchingGuardians, class
                             </Select>
                         </div>
                         {assess.data.type === 'exam' && (
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div className="space-y-1.5">
                                     <Label htmlFor="as-score">Score (optional)</Label>
                                     <Input id="as-score" type="number" min="0" step="0.5" value={assess.data.score} onChange={e => assess.setData('score', e.target.value)} />
@@ -346,7 +346,7 @@ export default function Inquiry({ inquiry, assessments, matchingGuardians, class
                     <DialogHeader><DialogTitle>Enrol {inquiry.student_name}</DialogTitle></DialogHeader>
                     <form onSubmit={saveEnrol} className="mt-2 max-h-[70vh] space-y-4 overflow-y-auto pr-1">
                         <p className="text-sm text-slate-500">This creates the student record and gives the child an admission number. Details from the application are filled in for you.</p>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label htmlFor="en-first">First name</Label>
                                 <Input id="en-first" value={enrol.data.first_name} onChange={e => enrol.setData('first_name', e.target.value)} />
@@ -357,7 +357,7 @@ export default function Inquiry({ inquiry, assessments, matchingGuardians, class
                                 <Input id="en-last" value={enrol.data.last_name} onChange={e => enrol.setData('last_name', e.target.value)} />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Gender</Label>
                                 <Select items={genderItems} value={enrol.data.gender} onValueChange={v => enrol.setData('gender', v ?? '')}>
@@ -372,7 +372,7 @@ export default function Inquiry({ inquiry, assessments, matchingGuardians, class
                                 <ErrorText>{enrol.errors.date_of_birth}</ErrorText>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Class</Label>
                                 <Select items={classItems} value={enrol.data.class_id} onValueChange={v => { enrol.setData(d => ({ ...d, class_id: v ?? '', section_id: '' })); }}>
@@ -390,7 +390,7 @@ export default function Inquiry({ inquiry, assessments, matchingGuardians, class
                                 <ErrorText>{enrol.errors.section_id}</ErrorText>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label htmlFor="en-start">Start date</Label>
                                 <Input id="en-start" type="date" value={enrol.data.admission_date} onChange={e => enrol.setData('admission_date', e.target.value)} />
