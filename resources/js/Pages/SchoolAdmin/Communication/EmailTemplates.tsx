@@ -54,7 +54,7 @@ export default function EmailTemplates({ templates }: Props) {
     return (
         <AppLayout title="Email Templates">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Email Templates</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Manage reusable email templates with variable substitution</p>
@@ -99,7 +99,7 @@ export default function EmailTemplates({ templates }: Props) {
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader><DialogTitle>{editing ? 'Edit Template' : 'New Template'}</DialogTitle></DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Name *</Label>
                                 <Input value={data.name} onChange={e => setData('name', e.target.value)} placeholder="Fee Reminder" />

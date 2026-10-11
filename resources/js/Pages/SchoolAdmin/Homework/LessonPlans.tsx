@@ -92,7 +92,7 @@ export default function LessonPlans({ plans, classes, subjects, staff, filters }
     return (
         <AppLayout title="Lesson Plans">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Lesson Plans</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Create and review weekly lesson plans</p>
@@ -200,7 +200,7 @@ export default function LessonPlans({ plans, classes, subjects, staff, filters }
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader><DialogTitle>New Lesson Plan</DialogTitle></DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Class *</Label>
                                 <Select value={data.class_id} onValueChange={v => setData('class_id', v)}>
@@ -218,7 +218,7 @@ export default function LessonPlans({ plans, classes, subjects, staff, filters }
                                 {errors.subject_id && <p className="text-xs text-red-500 mt-1">{errors.subject_id}</p>}
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Teacher</Label>
                                 <Select value={data.teacher_id} onValueChange={v => setData('teacher_id', v)}>
@@ -248,7 +248,7 @@ export default function LessonPlans({ plans, classes, subjects, staff, filters }
                             <Label>Content</Label>
                             <Textarea value={data.content} onChange={e => setData('content', e.target.value)} rows={3} />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Teaching Methods</Label>
                                 <Textarea value={data.teaching_methods} onChange={e => setData('teaching_methods', e.target.value)} rows={2} />

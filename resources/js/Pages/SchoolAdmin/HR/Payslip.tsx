@@ -42,7 +42,7 @@ export default function Payslip({ payroll }: { payroll: Payroll }) {
                 }
             `}</style>
             <div className="max-w-xl mx-auto space-y-4">
-                <div className="flex items-center justify-between print:hidden">
+                <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
                     <div className="flex items-center gap-3">
                         <Link href="/school/hr/payroll" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white">
                             <ArrowLeft className="w-4 h-4" /> Payroll
