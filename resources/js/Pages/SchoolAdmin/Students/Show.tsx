@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Award, Pencil, FileUp, Trash2, FileText, User, GraduationCap, Users, Camera } from 'lucide-react';
+import { ArrowLeft, Award, Pencil, FileUp, Trash2, FileText, User, GraduationCap, Users, Camera, IdCard, Shield, Printer, RefreshCw } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,7 +13,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { CertificateList } from '@/components/certificates/CertificateList';
 import type { CertificateRow, ClassHistoryLine, PageProps, Student } from '@/Types';
 
-interface Props extends PageProps { student: Student; classHistory: ClassHistoryLine[]; canEdit: boolean; certificates: CertificateRow[]; canIssueCertificates: boolean }
+interface IdCardRow { id: number; card_no: string; state: 'valid' | 'expired' | 'replaced' | 'revoked'; expires_on: string | null; issued_on: string | null; issued_by: string | null; note: string | null; prints: number }
+type Props = PageProps & {
+    student: Student; classHistory: ClassHistoryLine[]; canEdit: boolean; certificates: CertificateRow[]; canIssueCertificates: boolean;
+    clubs: { id: number; name: string | null; role: string }[];
+    houses: { id: number; name: string; colour: string }[] | null;
+    idCards: IdCardRow[] | null;
+};
+
+const CARD_STATE: Record<IdCardRow['state'], string> = {
+    valid: 'bg-emerald-100 text-emerald-700', expired: 'bg-amber-100 text-amber-700', replaced: 'bg-slate-100 text-slate-600', revoked: 'bg-red-100 text-red-700',
+};
 
 const MOVE_LABELS: Record<ClassHistoryLine['outcome'], string> = { promoted: 'Moved up', repeated: 'Repeated', graduated: 'Graduated' };
 
@@ -31,9 +41,17 @@ const docSchema = z.object({
 type DocForm = z.infer<typeof docSchema>;
 
 export default function ShowStudent() {
-    const { student, classHistory, canEdit, certificates, canIssueCertificates } = usePage<Props>().props;
-    const [tab, setTab]       = useState<'personal' | 'guardian' | 'documents' | 'history' | 'certificates'>(() =>
-        typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'certificates' ? 'certificates' : 'personal');
+    const { student, classHistory, canEdit, certificates, canIssueCertificates, clubs, houses, idCards } = usePage<Props>().props;
+    type Tab = 'personal' | 'guardian' | 'documents' | 'history' | 'certificates' | 'id card';
+    const tabs: Tab[] = ['personal', 'guardian', 'documents', 'history', 'certificates', ...(idCards ? ['id card' as const] : [])];
+    const [tab, setTab]       = useState<Tab>(() => {
+        const asked = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+        return asked === 'certificates' ? 'certificates' : asked === 'id-card' && idCards ? 'id card' : 'personal';
+    });
+    const [replacing, setReplacing] = useState(false);
+    const [reason, setReason] = useState('');
+    const currentCard = idCards?.find(c => c.state === 'valid' || c.state === 'expired') ?? null;
+    const uploadPhoto = (f: File | undefined) => { if (f) router.post(`/school/students/${student.id}/photo`, { photo: f }, { forceFormData: true, preserveScroll: true }); };
     const [docOpen, setDocOpen] = useState(false);
 
     const { register, handleSubmit, reset, formState: { errors, isSubmitting } } =
@@ -68,17 +86,16 @@ export default function ShowStudent() {
                 <Button variant="ghost" size="icon" asChild className="-ml-2 shrink-0">
                     <Link href="/school/students" aria-label="Back to students"><ArrowLeft className="w-4 h-4" /></Link>
                 </Button>
-                <label className={`group relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/40 ${canEdit ? 'cursor-pointer' : ''}`}
+                <label className={`group relative flex h-24 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-indigo-50 text-2xl font-bold text-indigo-600 dark:bg-indigo-950/40 ${canEdit ? 'cursor-pointer' : ''}`}
                     title={canEdit ? 'Change photo (JPG or PNG, up to 2 MB)' : undefined}>
                     {student.photo_url
-                        ? <img src={student.photo_url} className="size-12 object-cover" alt="" />
+                        ? <img src={student.photo_url} className="h-24 w-20 object-cover" alt={`Photo of ${student.full_name}`} />
                         : student.first_name[0].toUpperCase()
                     }
                     {canEdit && (
                         <>
-                            <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"><Camera className="size-4 text-white" /></span>
-                            <input type="file" accept="image/png,image/jpeg" className="sr-only"
-                                onChange={e => { const f = e.target.files?.[0]; if (f) router.post(`/school/students/${student.id}/photo`, { photo: f }, { forceFormData: true, preserveScroll: true }); }} />
+                            <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"><Camera className="size-5 text-white" /></span>
+                            <input type="file" accept="image/png,image/jpeg" className="sr-only" onChange={e => uploadPhoto(e.target.files?.[0])} />
                         </>
                     )}
                 </label>
@@ -90,6 +107,13 @@ export default function ShowStudent() {
                             {student.status}
                         </span>
                     </div>
+                    {canEdit && (
+                        <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5">
+                            <Camera className="size-3.5" /> {student.photo_url ? 'Change photo' : 'Upload photo'}
+                            <input type="file" accept="image/png,image/jpeg" className="sr-only" onChange={e => uploadPhoto(e.target.files?.[0])} />
+                        </label>
+                    )}
+                    {canEdit && !student.photo_url && <p className="mt-1 text-xs text-slate-500">A passport photo on a plain background. It is printed on the ID card and report card.</p>}
                 </div>
                 <Button size="sm" asChild className="shrink-0 gap-2 bg-indigo-600 text-white hover:bg-indigo-700">
                     <Link href={`/school/students/${student.id}/edit`}>
@@ -99,10 +123,11 @@ export default function ShowStudent() {
             </div>
 
             {/* Quick stats */}
-            <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
                 {[
                     { icon: GraduationCap, label: 'Class', value: student.school_class?.name ?? '—' },
                     { icon: Users,         label: 'Section', value: student.section?.name ?? '—' },
+                    { icon: Shield,        label: 'House', value: student.house?.name ?? '—' },
                     { icon: FileText,      label: 'Documents', value: String(student.documents?.length ?? 0) },
                 ].map((s) => (
                     <Card key={s.label} className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
@@ -121,12 +146,12 @@ export default function ShowStudent() {
 
             {/* Tabs */}
             <div className="flex gap-1 mb-4 overflow-x-auto border-b border-slate-200 dark:border-slate-800">
-                {(['personal', 'guardian', 'documents', 'history', 'certificates'] as const).map((t) => (
+                {tabs.map((t) => (
                     <button
                         key={t}
                         onClick={() => setTab(t)}
                         className={`shrink-0 px-4 py-2 text-sm font-medium capitalize border-b-2 transition-colors ${tab === t ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                    >{t === 'history' ? 'Class history' : t}</button>
+                    >{t === 'history' ? 'Class history' : t === 'id card' ? 'ID card' : t}</button>
                 ))}
             </div>
 
@@ -147,6 +172,18 @@ export default function ShowStudent() {
                         <InfoRow label="Roll No"        value={student.roll_no} />
                         <InfoRow label="Admission Date" value={student.admission_date ? new Date(student.admission_date).toLocaleDateString() : null} />
                         <InfoRow label="Previous School" value={student.previous_school} />
+                        {houses ? (
+                            <div>
+                                <p className="text-xs text-slate-400 uppercase tracking-wide">House</p>
+                                <select aria-label="House" className="mt-0.5 w-full rounded-md border border-slate-200 bg-transparent px-2 py-1 text-sm dark:border-white/10"
+                                    value={student.house_id ?? ''}
+                                    onChange={e => router.post('/school/houses/assign', { houses: { [student.id]: e.target.value || null } }, { preserveScroll: true })}>
+                                    <option value="">No house</option>
+                                    {houses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+                                </select>
+                            </div>
+                        ) : <InfoRow label="House" value={student.house?.name} />}
+                        <InfoRow label="Clubs" value={clubs.map(c => (c.role !== 'Member' ? `${c.name} (${c.role})` : c.name)).join(', ')} />
                         {student.address && (
                             <div className="col-span-2 sm:col-span-3">
                                 <p className="text-xs text-slate-400 uppercase tracking-wide">Address</p>
@@ -252,10 +289,10 @@ export default function ShowStudent() {
                         <CardTitle className="text-sm">Certificates</CardTitle>
                         {canIssueCertificates && (
                             <div className="flex flex-wrap gap-2">
-                                <Link href={`/school/students/${student.id}/certificates/new?type=testimonial`} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700">
+                                <Link href={`/school/students/${student.id}/certificates/new?type=testimonial`} className="inline-flex h-7 items-center gap-1 rounded-lg bg-indigo-600 px-2.5 text-[0.8rem] font-medium max-md:h-9 text-white hover:bg-indigo-700">
                                     <Award className="size-3.5" /> Issue testimonial
                                 </Link>
-                                <Link href={`/school/students/${student.id}/certificates/new?type=transfer`} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200">
+                                <Link href={`/school/students/${student.id}/certificates/new?type=transfer`} className="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-[0.8rem] font-medium max-md:h-9 text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200">
                                     <Award className="size-3.5" /> Issue transfer certificate
                                 </Link>
                             </div>
@@ -270,6 +307,62 @@ export default function ShowStudent() {
                     </CardContent>
                 </Card>
             )}
+
+            {/* ID card tab */}
+            {tab === 'id card' && idCards && (
+                <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-3">
+                        <CardTitle className="text-sm">ID card</CardTitle>
+                        <div className="flex flex-wrap gap-2">
+                            {currentCard ? (
+                                <>
+                                    <a href={`/school/students/${student.id}/id-card`} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center gap-1 rounded-lg bg-indigo-600 px-2.5 text-[0.8rem] font-medium max-md:h-9 text-white hover:bg-indigo-700"><Printer className="size-3.5" /> Card (PDF)</a>
+                                    <a href={`/school/students/${student.id}/id-card?layout=sheet`} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-[0.8rem] font-medium max-md:h-9 text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200">On A4 paper</a>
+                                    <Button size="sm" variant="outline" onClick={() => { setReason(''); setReplacing(true); }}><RefreshCw className="size-3.5" /> Replace card</Button>
+                                </>
+                            ) : (
+                                <Button size="sm" onClick={() => router.post(`/school/students/${student.id}/id-card`, {}, { preserveScroll: true })} className="bg-indigo-600 text-white hover:bg-indigo-700"><IdCard className="size-3.5" /> Make card</Button>
+                            )}
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {!student.photo_url && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">This student has no photo yet, so the card will show their initials. Use "Upload photo" at the top first.</p>}
+                        {currentCard?.state === 'expired' && <p className="text-sm text-amber-700">The card has expired. Use "Replace card" to make a new one.</p>}
+                        {!idCards.length ? (
+                            <p className="text-sm text-slate-400">No card has been made for this student yet.</p>
+                        ) : (
+                            <ul className="divide-y divide-slate-100 text-sm dark:divide-white/[0.06]">
+                                {idCards.map(c => (
+                                    <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                                        <div>
+                                            <span className="font-mono">{c.card_no}</span>
+                                            <span className="block text-xs text-slate-500">Made {c.issued_on}{c.issued_by ? ` by ${c.issued_by}` : ''}{c.expires_on ? ` · valid until ${c.expires_on}` : ''} · printed {c.prints} time{c.prints === 1 ? '' : 's'}{c.note && c.state !== 'valid' ? ` · ${c.note}` : ''}</span>
+                                        </div>
+                                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${CARD_STATE[c.state]}`}>{c.state}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
+
+            <Dialog open={replacing} onOpenChange={setReplacing}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader><DialogTitle>Replace ID card</DialogTitle></DialogHeader>
+                    <form onSubmit={e => { e.preventDefault(); router.post(`/school/students/${student.id}/id-card`, { reason }, { preserveScroll: true, onSuccess: () => setReplacing(false) }); }} className="space-y-4 pt-2">
+                        <p className="text-sm text-slate-500">A new card number and QR code are made. The old card stops working when scanned, so a lost card cannot be used by someone else.</p>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="replace-reason">Why?</Label>
+                            <Input id="replace-reason" value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g. Lost, damaged, new class" />
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setReplacing(false)}>Cancel</Button>
+                            <Button type="submit" disabled={!reason.trim()} className="bg-indigo-600 hover:bg-indigo-700 text-white">Make new card</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             {/* Upload dialog */}
             <Dialog open={docOpen} onOpenChange={setDocOpen}>
