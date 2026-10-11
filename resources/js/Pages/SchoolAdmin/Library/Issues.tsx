@@ -73,7 +73,7 @@ export default function LibraryIssues({ issues, books, students, staffList, filt
     return (
         <AppLayout title="Library — Issue / Return">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <Link href="/school/library/books" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white">
                             <ArrowLeft className="w-4 h-4" /> Books
@@ -188,7 +188,7 @@ export default function LibraryIssues({ issues, books, students, staffList, filt
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Member Type <span className="text-red-500">*</span></Label>
                                 <Select value={issueForm.member_type} onValueChange={v => setIssueForm(p => ({ ...p, member_type: v, member_id: '' }))}>
@@ -213,7 +213,7 @@ export default function LibraryIssues({ issues, books, students, staffList, filt
                                 </Select>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Issue Date <span className="text-red-500">*</span></Label>
                                 <Input type="date" value={issueForm.issued_date} onChange={e => setIssueForm(p => ({ ...p, issued_date: e.target.value }))} />

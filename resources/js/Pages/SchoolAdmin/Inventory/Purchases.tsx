@@ -52,7 +52,7 @@ export default function InventoryPurchases({ purchases, items, filters }: Props)
     return (
         <AppLayout title="Inventory Purchases">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <Link href="/school/inventory/items" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white">
                             <ArrowLeft className="w-4 h-4" /> Items
@@ -131,7 +131,7 @@ export default function InventoryPurchases({ purchases, items, filters }: Props)
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Purchase Date <span className="text-red-500">*</span></Label>
                                 <Input type="date" value={form.purchase_date} onChange={e => setForm(p => ({ ...p, purchase_date: e.target.value }))} />
@@ -141,7 +141,7 @@ export default function InventoryPurchases({ purchases, items, filters }: Props)
                                 <Input value={form.vendor} onChange={e => setForm(p => ({ ...p, vendor: e.target.value }))} />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Quantity <span className="text-red-500">*</span></Label>
                                 <Input type="number" min="0.01" step="0.01" value={form.quantity} onChange={e => setForm(p => ({ ...p, quantity: e.target.value }))} />

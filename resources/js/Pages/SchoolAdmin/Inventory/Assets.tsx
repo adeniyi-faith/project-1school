@@ -84,7 +84,7 @@ export default function Assets({ assets, categories, filters, stats }: Props) {
     return (
         <AppLayout title="Assets">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Asset Register</h1>
                         <p className="text-sm text-slate-500 mt-0.5">{assets.meta?.total ?? 0} assets</p>
@@ -188,7 +188,7 @@ export default function Assets({ assets, categories, filters, stats }: Props) {
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader><DialogTitle>{editing ? 'Edit' : 'Register'} Asset</DialogTitle></DialogHeader>
                     <div className="space-y-4 mt-2 max-h-[70vh] overflow-y-auto pr-1">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5 col-span-2">
                                 <Label>Asset Name <span className="text-red-500">*</span></Label>
                                 <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />

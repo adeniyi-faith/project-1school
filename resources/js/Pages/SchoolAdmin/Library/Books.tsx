@@ -75,7 +75,7 @@ export default function LibraryBooks({ books, categories, filters, stats }: Prop
     return (
         <AppLayout title="Library — Books">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Library</h1>
                         <p className="text-sm text-slate-500 mt-0.5">{books.meta?.total ?? 0} titles in catalog</p>
@@ -203,7 +203,7 @@ export default function LibraryBooks({ books, categories, filters, stats }: Prop
                             <Input value={data.title} onChange={e => setData('title', e.target.value)} placeholder="Book title" />
                             {errors.title && <p className="text-xs text-red-500">{errors.title}</p>}
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Author <span className="text-red-500">*</span></Label>
                                 <Input value={data.author} onChange={e => setData('author', e.target.value)} placeholder="Author name" />
@@ -213,7 +213,7 @@ export default function LibraryBooks({ books, categories, filters, stats }: Prop
                                 <Input value={data.isbn} onChange={e => setData('isbn', e.target.value)} placeholder="978-..." />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Category</Label>
                                 <Input value={data.category} onChange={e => setData('category', e.target.value)} placeholder="e.g. Science" />
