@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, router } from '@inertiajs/react';
+import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { EmptyState, PageHeader, Panel } from '@/components/app/kit';
 import { ordinal } from '@/lib/format';
 import { LogoTip } from '@/components/app/LogoTip';
-import { ArrowLeft, Download, FileArchive, FileText, MessageSquareQuote, Palette, Wand2 } from 'lucide-react';
+import { ArrowLeft, Download, FileArchive, FileText, Loader2, MessageSquareQuote, Palette, Sparkles, Wand2 } from 'lucide-react';
 import { fittingComments, renderComment } from '@/lib/commentBank';
 import type { CommentBankEntry, ReportCardStudent } from '@/Types';
 
@@ -19,11 +20,13 @@ interface Props {
     students: ReportCardStudent[];
     canDesign: boolean;
     bank: CommentBankEntry[];
+    /** shown: the platform has AI at all. reason: why this school cannot use it now (null when it can) */
+    ai: { shown: boolean; reason: string | null };
 }
 
 const linkClass = 'inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200';
 
-export default function ReportCards({ sheet, design, signers, students, canDesign, bank }: Props) {
+export default function ReportCards({ sheet, design, signers, students, canDesign, bank, ai }: Props) {
     const base = `/school/results/${sheet.id}`;
     const released = sheet.status === 'published' || sheet.status === 'locked';
     // signer id → student id → comment
@@ -31,6 +34,8 @@ export default function ReportCards({ sheet, design, signers, students, canDesig
         signers.map(sg => [sg.id, Object.fromEntries(students.map(s => [s.id, s.remarks[sg.id] ?? '']))]),
     ));
     const [saving, setSaving] = useState<number | null>(null);
+    const [drafting, setDrafting] = useState<number | null>(null);
+    const [aiNote, setAiNote] = useState<{ tone: 'good' | 'bad'; text: string } | null>(null);
     const writable = signers.filter(s => s.can_write);
 
     // Typed but not saved yet: the server can't see these, so filling from the bank waits for a save
@@ -47,6 +52,29 @@ export default function ReportCards({ sheet, design, signers, students, canDesig
             },
             onFinish: () => setSaving(null),
         });
+    }
+
+    // The AI drafts comments into the boxes; nothing is saved until the teacher presses Save
+    async function draft(signer: Signer, everyone: boolean) {
+        const ids = students.filter(s => everyone || !(comments[signer.id]?.[s.id] ?? '').trim()).map(s => s.id);
+        if (ids.length === 0) {
+            setAiNote({ tone: 'bad', text: `Every ${signer.label}'s box already has a comment. Use "Redo all" to have the AI write new ones.` });
+            return;
+        }
+        if (everyone && !window.confirm(`Have the AI write new ${signer.label} comments for all ${ids.length} students? What is in the boxes now will be replaced (nothing is saved until you press Save).`)) return;
+        setDrafting(signer.id);
+        setAiNote(null);
+        try {
+            const { data } = await axios.post<{ comments: Record<string, string> }>(`${base}/comments/ai`, { signer_id: signer.id, student_ids: ids });
+            const got = Object.keys(data.comments).length;
+            setComments(c => ({ ...c, [signer.id]: { ...c[signer.id], ...Object.fromEntries(Object.entries(data.comments).map(([k, v]) => [Number(k), v])) } }));
+            setAiNote({ tone: 'good', text: `The AI drafted ${got} ${signer.label} comment${got === 1 ? '' : 's'}. Read each one, change what you want, then press Save.` });
+        } catch (e) {
+            const message = axios.isAxiosError(e) ? (e.response?.data?.errors?.ai?.[0] ?? e.response?.data?.message) : null;
+            setAiNote({ tone: 'bad', text: message || 'The AI could not write comments just now. Try again.' });
+        } finally {
+            setDrafting(null);
+        }
     }
 
     function edit(signerId: number, studentId: number, text: string) {
@@ -113,6 +141,33 @@ export default function ReportCards({ sheet, design, signers, students, canDesig
                                 ))}
                             </div>
                         </div>
+                    </Panel>
+                )}
+
+                {ai.shown && writable.length > 0 && students.length > 0 && sheet.status !== 'locked' && (
+                    <Panel>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="max-w-xl">
+                                <p className="flex items-center gap-1.5 font-medium text-slate-900 dark:text-white"><Sparkles className="size-4 text-violet-500" /> Write comments with AI</p>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    The AI reads each student's scores, grades and ratings and drafts a comment in the empty boxes. Names are not sent. Nothing is saved until you read the drafts and press Save.
+                                </p>
+                                {ai.reason && <p className="mt-2 text-sm text-amber-700 dark:text-amber-400">{ai.reason}</p>}
+                            </div>
+                            {!ai.reason && (
+                                <div className="flex flex-wrap gap-2">
+                                    {writable.map(sg => (
+                                        <div key={sg.id} className="flex flex-col items-end gap-1">
+                                            <Button variant="outline" disabled={drafting !== null || saving !== null} onClick={() => draft(sg, false)}>
+                                                {drafting === sg.id ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />} {drafting === sg.id ? 'Writing…' : `Draft ${sg.label}'s comments`}
+                                            </Button>
+                                            <button type="button" className="text-xs text-slate-500 hover:underline" disabled={drafting !== null} onClick={() => draft(sg, true)}>Redo all instead</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        {aiNote && <p className={`mt-3 text-sm ${aiNote.tone === 'good' ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600'}`}>{aiNote.text}</p>}
                     </Panel>
                 )}
 
