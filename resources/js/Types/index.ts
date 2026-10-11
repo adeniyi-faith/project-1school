@@ -684,3 +684,27 @@ export interface CbtPaperQuestion {
     /** Empty for theory questions */
     options: { value: number; text: string }[];
 }
+
+// ── Lesson notes and schemes of work ──
+export interface NoteSection { key: string; label: string; hint?: string }
+export interface SchemeWeek { week: number; topic: string; details: string }
+export interface LessonNoteFormat { id: number; name: string; sections: NoteSection[]; is_default: boolean; notes?: number }
+export interface LessonNoteRow {
+    id: number;
+    title: string;
+    class: string | null;
+    subject: string | null;
+    term: string | null;
+    week: number | null;
+    week_start: string | null;
+    teacher: string | null;
+    status: 'draft' | 'submitted' | 'approved' | 'rejected';
+    ai_drafted: boolean;
+}
+export interface SchemeRow { id: number; title: string; class: string | null; subject: string | null; term: string | null; weeks: number; notes: number; has_file: boolean }
+export interface LessonChoices {
+    classes: { id: number; name: string }[];
+    subjects: { id: number; name: string; class_id: number | null }[];
+    terms: { id: number; name: string; is_current: boolean }[];
+}
+export interface AiAvailability { shown: boolean; reason: string | null }
