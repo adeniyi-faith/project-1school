@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/** One objective question in a question bank */
+/** One question in a question bank: objective (choose an option, marked by the computer) or theory (typed answer, marked by a teacher) */
 class CbtQuestion extends Model
 {
     use BelongsToSchool, SoftDeletes;
@@ -16,9 +16,18 @@ class CbtQuestion extends Model
 
     public const DIFFICULTIES = ['easy', 'medium', 'hard'];
 
-    protected $fillable = ['school_id', 'cbt_bank_id', 'topic', 'difficulty', 'text', 'image_path', 'options', 'correct_option', 'explanation', 'marks', 'created_by'];
+    public const TYPES = ['objective', 'theory'];
+
+    protected $fillable = ['school_id', 'cbt_bank_id', 'type', 'topic', 'difficulty', 'text', 'image_path', 'options', 'correct_option', 'explanation', 'marking_guide', 'marks', 'created_by'];
 
     protected $casts = ['options' => 'array', 'correct_option' => 'integer', 'marks' => 'float'];
+
+    protected $attributes = ['type' => 'objective'];
+
+    public function isTheory(): bool
+    {
+        return $this->type === 'theory';
+    }
 
     public function bank(): BelongsTo
     {

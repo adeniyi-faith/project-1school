@@ -10,13 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EmptyState, PageHeader, Panel, Pill, Segmented } from '@/components/app/kit';
 import { ArrowLeft, Download, FileUp, ImagePlus, Pencil, Plus, Search, Settings2, Trash2, X } from 'lucide-react';
-import type { CbtDifficulty, CbtQuestionRow } from '@/Types';
+import type { CbtDifficulty, CbtQuestionRow, CbtQuestionType } from '@/Types';
 
 interface Props {
-    bank: { id: number; name: string; description: string | null; subject_id: number | null; total: number };
+    bank: { id: number; name: string; description: string | null; subject_id: number | null; total: number; theory: number };
     questions: { data: CbtQuestionRow[]; total: number; from: number | null; to: number | null; prev_page_url: string | null; next_page_url: string | null };
     topics: string[];
-    filters: { search: string; topic: string | null; difficulty: CbtDifficulty | null };
+    filters: { search: string; topic: string | null; difficulty: CbtDifficulty | null; type: CbtQuestionType | null };
     subjects: { id: number; name: string }[];
     canManage: boolean;
     maxOptions: number;
@@ -40,6 +40,7 @@ export default function CbtBank({ bank, questions, topics, filters, subjects, ca
             ...(f.search ? { search: f.search } : {}),
             ...(f.topic ? { topic: f.topic } : {}),
             ...(f.difficulty ? { difficulty: f.difficulty } : {}),
+            ...(f.type ? { type: f.type } : {}),
         }, { preserveState: true, preserveScroll: true });
     }
 
@@ -55,7 +56,7 @@ export default function CbtBank({ bank, questions, topics, filters, subjects, ca
         <AppLayout breadcrumbs={[{ label: 'CBT' }, { label: 'Question banks', href: '/school/cbt/banks' }, { label: bank.name }]}>
             <div className="mx-auto max-w-5xl space-y-6 pb-24 md:pb-0">
                 <Link href="/school/cbt/banks" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"><ArrowLeft className="size-4" /> All question banks</Link>
-                <PageHeader title={bank.name} description={`${bank.total} question${bank.total === 1 ? '' : 's'}${bank.description ? ` · ${bank.description}` : ''}`} actions={actions || undefined} />
+                <PageHeader title={bank.name} description={`${bank.total} question${bank.total === 1 ? '' : 's'}${bank.theory ? ` (${bank.theory} theory)` : ''}${bank.description ? ` · ${bank.description}` : ''}`} actions={actions || undefined} />
                 {actions && <div className="md:hidden">{actions}</div>}
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -73,13 +74,15 @@ export default function CbtBank({ bank, questions, topics, filters, subjects, ca
                     )}
                     <Segmented label="Difficulty" value={(filters.difficulty ?? 'all') as CbtDifficulty | 'all'} onChange={v => apply({ difficulty: v === 'all' ? null : v })}
                         options={[{ value: 'all', label: 'All' }, ...LEVELS]} />
+                    <Segmented label="Kind" value={(filters.type ?? 'all') as CbtQuestionType | 'all'} onChange={v => apply({ type: v === 'all' ? null : v })}
+                        options={[{ value: 'all', label: 'All kinds' }, { value: 'objective', label: 'Objective' }, { value: 'theory', label: 'Theory' }]} />
                 </div>
 
                 <Panel flush>
                     {questions.data.length === 0 ? (
                         <div className="px-5 pb-5">
                             <EmptyState icon={Plus} title={bank.total ? 'Nothing matches' : 'No questions yet'}
-                                text={bank.total ? 'Try another search or filter.' : 'Add questions one at a time, paste many at once, or upload the Excel template.'} />
+                                text={bank.total ? 'Try another search or filter.' : 'Add questions one at a time, paste many objective questions at once, or upload the Excel template.'} />
                         </div>
                     ) : (
                         <ol className="divide-y divide-slate-100 dark:divide-white/[0.06]">
@@ -97,14 +100,22 @@ export default function CbtBank({ bank, questions, topics, filters, subjects, ca
                                         )}
                                     </div>
                                     {q.image && <img src={q.image} alt="" className="max-h-40 rounded border border-slate-200 dark:border-white/10" />}
-                                    <ul className="grid gap-1 text-sm sm:grid-cols-2">
+                                    {q.type === 'theory' ? (
+                                        q.marking_guide && (
+                                            <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-200">
+                                                <p className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Marking guide</p>
+                                                <p className="whitespace-pre-line">{q.marking_guide}</p>
+                                            </div>
+                                        )
+                                    ) : <ul className="grid gap-1 text-sm sm:grid-cols-2">
                                         {q.options.map((o, i) => (
                                             <li key={i} className={i === q.correct_option ? 'font-medium text-emerald-700 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'}>
                                                 {LETTERS[i]}. {o}{i === q.correct_option ? ' ✓' : ''}
                                             </li>
                                         ))}
-                                    </ul>
+                                    </ul>}
                                     <div className="flex flex-wrap gap-1.5">
+                                        {q.type === 'theory' && <Pill tone="info">Theory</Pill>}
                                         <Pill tone={LEVEL_TONE[q.difficulty]}>{q.difficulty}</Pill>
                                         {q.topic && <Pill tone="neutral">{q.topic}</Pill>}
                                         {q.marks !== 1 && <Pill tone="neutral">{q.marks} marks</Pill>}
@@ -133,13 +144,15 @@ export default function CbtBank({ bank, questions, topics, filters, subjects, ca
 }
 
 interface QuestionForm {
+    type: CbtQuestionType; marking_guide: string;
     text: string; options: string[]; correct_option: number; topic: string; difficulty: CbtDifficulty; marks: string; explanation: string;
     image: File | null; remove_image: boolean;
 }
 
 function QuestionDialog({ url, question, topics, maxOptions, onClose }: { url: string; question: CbtQuestionRow | null; topics: string[]; maxOptions: number; onClose: () => void }) {
     const form = useForm<QuestionForm>({
-        text: question?.text ?? '', options: question?.options ?? ['', '', '', ''], correct_option: question?.correct_option ?? 0,
+        type: question?.type ?? 'objective', marking_guide: question?.marking_guide ?? '',
+        text: question?.text ?? '', options: question?.options.length ? question.options : ['', '', '', ''], correct_option: question?.correct_option ?? 0,
         topic: question?.topic ?? '', difficulty: question?.difficulty ?? 'medium', marks: String(question?.marks ?? 1), explanation: question?.explanation ?? '',
         image: null, remove_image: false,
     });
@@ -152,11 +165,16 @@ function QuestionDialog({ url, question, topics, maxOptions, onClose }: { url: s
     function removeOption(i: number) {
         form.setData({ ...d, options: d.options.filter((_, j) => j !== i), correct_option: d.correct_option === i ? 0 : d.correct_option > i ? d.correct_option - 1 : d.correct_option });
     }
+    const theory = d.type === 'theory';
+
     function save(e: React.FormEvent) {
         e.preventDefault();
+        form.transform(data => (data.type === 'theory'
+            ? { ...data, options: undefined, correct_option: undefined, explanation: undefined }
+            : { ...data, marking_guide: undefined }));
         form.post(question ? `${url}/questions/${question.id}` : `${url}/questions`, {
             forceFormData: true, preserveScroll: true,
-            onSuccess: () => (question ? onClose() : form.setData({ ...form.data, text: '', options: ['', '', '', ''], correct_option: 0, explanation: '', image: null })),
+            onSuccess: () => (question ? onClose() : form.setData({ ...form.data, text: '', options: ['', '', '', ''], correct_option: 0, explanation: '', marking_guide: '', image: null })),
         });
     }
 
@@ -165,6 +183,10 @@ function QuestionDialog({ url, question, topics, maxOptions, onClose }: { url: s
             <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
                 <DialogHeader><DialogTitle>{question ? 'Edit question' : 'Add a question'}</DialogTitle></DialogHeader>
                 <form onSubmit={save} className="space-y-4">
+                    {!question && (
+                        <Segmented label="Kind of question" value={d.type} onChange={v => form.setData('type', v)}
+                            options={[{ value: 'objective', label: 'Objective (choose an option)' }, { value: 'theory', label: 'Theory (typed answer)' }]} />
+                    )}
                     <div className="space-y-1.5">
                         <Label htmlFor="text">Question</Label>
                         <Textarea id="text" rows={3} value={d.text} onChange={e => form.setData('text', e.target.value)} maxLength={5000} autoFocus />
@@ -186,6 +208,15 @@ function QuestionDialog({ url, question, topics, maxOptions, onClose }: { url: s
                         {errors.image && <p className="text-xs text-red-500">{errors.image}</p>}
                     </div>
 
+                    {theory ? (
+                        <div className="space-y-1.5">
+                            <Label htmlFor="guide">Marking guide (for the teacher who marks it)</Label>
+                            <Textarea id="guide" rows={5} value={d.marking_guide} onChange={e => form.setData('marking_guide', e.target.value)} maxLength={5000}
+                                placeholder={'The points a full answer should make, and the marks for each. For example:\n- Defines photosynthesis (1 mark)\n- Names chlorophyll and sunlight (2 marks)\n- Gives the word equation (2 marks)'} />
+                            <p className="text-xs text-slate-500">Students type their answer. You mark it on the test's marking page, with this guide beside each answer.</p>
+                            {errors.marking_guide && <p className="text-xs text-red-500">{errors.marking_guide}</p>}
+                        </div>
+                    ) : (
                     <div className="space-y-2">
                         <Label>Options: tick the right answer</Label>
                         {d.options.map((o, i) => (
@@ -201,6 +232,8 @@ function QuestionDialog({ url, question, topics, maxOptions, onClose }: { url: s
                             <p className="text-xs text-red-500">{errors.options ?? errors.correct_option ?? errors[Object.keys(errors).find(k => k.startsWith('options.'))!]}</p>
                         )}
                     </div>
+                    )}
+                    {errors.type && <p className="text-xs text-red-500">{errors.type}</p>}
 
                     <div className="grid gap-4 sm:grid-cols-3">
                         <div className="space-y-1.5">
@@ -221,10 +254,12 @@ function QuestionDialog({ url, question, topics, maxOptions, onClose }: { url: s
                             {errors.marks && <p className="text-xs text-red-500">{errors.marks}</p>}
                         </div>
                     </div>
-                    <div className="space-y-1.5">
-                        <Label htmlFor="explanation">Why this is the answer (optional, for teachers)</Label>
-                        <Textarea id="explanation" rows={2} value={d.explanation} onChange={e => form.setData('explanation', e.target.value)} maxLength={2000} />
-                    </div>
+                    {!theory && (
+                        <div className="space-y-1.5">
+                            <Label htmlFor="explanation">Why this is the answer (optional, for teachers)</Label>
+                            <Textarea id="explanation" rows={2} value={d.explanation} onChange={e => form.setData('explanation', e.target.value)} maxLength={2000} />
+                        </div>
+                    )}
                     <DialogFooter>
                         <Button type="button" variant="ghost" onClick={onClose}>{question ? 'Cancel' : 'Done'}</Button>
                         <Button type="submit" disabled={form.processing} className="bg-indigo-600 text-white hover:bg-indigo-700">{question ? 'Save' : 'Add and write another'}</Button>
@@ -256,7 +291,7 @@ function ImportDialog({ url, topics, onClose }: { url: string; topics: string[];
                     {mode === 'paste' ? (
                         <>
                             <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 dark:bg-white/[0.04] dark:text-slate-300">
-                                <p className="mb-1 font-medium">Type or paste from Word like this. Put a * after the right answer, and leave an empty line between questions:</p>
+                                <p className="mb-1 font-medium">For objective questions. Type or paste from Word like this. Put a * after the right answer, and leave an empty line between questions:</p>
                                 <pre className="font-mono leading-relaxed">{'1. What is the capital of Nigeria?\nA. Lagos\nB. Abuja *\nC. Kano\n\n2. Water boils at\nA. 50°C\nB. 100°C\nAnswer: B'}</pre>
                             </div>
                             <Textarea rows={12} value={form.data.pasted} onChange={e => form.setData('pasted', e.target.value)} placeholder="Paste your questions here" className="min-h-64 font-mono text-sm" />

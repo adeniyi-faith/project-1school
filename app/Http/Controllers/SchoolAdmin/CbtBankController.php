@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -25,14 +26,15 @@ class CbtBankController extends Controller
     public function index(Request $request): Response
     {
         $banks = CbtBank::with('subject.schoolClass:id,name')->withCount('questions')->orderBy('name')->get();
-        $levels = CbtQuestion::whereIn('cbt_bank_id', $banks->pluck('id'))->get(['cbt_bank_id', 'difficulty'])
-            ->groupBy('cbt_bank_id')->map(fn ($rows) => $rows->countBy('difficulty'));
+        $rows = CbtQuestion::whereIn('cbt_bank_id', $banks->pluck('id'))->get(['cbt_bank_id', 'difficulty', 'type'])->groupBy('cbt_bank_id');
+        $levels = $rows->map(fn ($r) => $r->countBy('difficulty'));
 
         return Inertia::render('SchoolAdmin/Cbt/Banks', [
             'banks' => $banks->map(fn (CbtBank $b) => [
                 'id' => $b->id, 'name' => $b->name, 'description' => $b->description, 'subject_id' => $b->subject_id,
                 'subject' => $b->subject ? trim($b->subject->name.' ('.($b->subject->schoolClass?->name ?? '').')') : null,
                 'questions' => $b->questions_count,
+                'theory' => $rows->get($b->id)?->where('type', 'theory')->count() ?? 0,
                 'levels' => collect(CbtQuestion::DIFFICULTIES)->mapWithKeys(fn ($d) => [$d => (int) ($levels->get($b->id)?->get($d) ?? 0)]),
             ]),
             'subjects' => $this->subjects(),
@@ -70,16 +72,19 @@ class CbtBankController extends Controller
             'search' => (string) $request->search,
             'topic' => $request->topic ?: null,
             'difficulty' => in_array($request->difficulty, CbtQuestion::DIFFICULTIES, true) ? $request->difficulty : null,
+            'type' => in_array($request->type, CbtQuestion::TYPES, true) ? $request->type : null,
         ];
         $questions = $bank->questions()
             ->when($filters['search'], fn ($q, $s) => $q->where('text', 'like', "%{$s}%"))
             ->when($filters['topic'], fn ($q, $t) => $q->where('topic', $t))
             ->when($filters['difficulty'], fn ($q, $d) => $q->where('difficulty', $d))
+            ->when($filters['type'], fn ($q, $t) => $q->where('type', $t))
             ->orderByDesc('id')->paginate(25)->withQueryString()
             ->through(fn (CbtQuestion $q) => $this->questionRow($q));
 
         return Inertia::render('SchoolAdmin/Cbt/Bank', [
-            'bank' => ['id' => $bank->id, 'name' => $bank->name, 'description' => $bank->description, 'subject_id' => $bank->subject_id, 'total' => $bank->questions()->count()],
+            'bank' => ['id' => $bank->id, 'name' => $bank->name, 'description' => $bank->description, 'subject_id' => $bank->subject_id, 'total' => $bank->questions()->count(),
+                'theory' => $bank->questions()->where('type', 'theory')->count()],
             'questions' => $questions,
             'topics' => $bank->questions()->whereNotNull('topic')->distinct()->orderBy('topic')->pluck('topic'),
             'filters' => $filters,
@@ -91,7 +96,7 @@ class CbtBankController extends Controller
 
     public function storeQuestion(Request $request, CbtBank $bank): RedirectResponse
     {
-        $data = $this->validateQuestion($request);
+        $data = $this->validateQuestion($request, null);
         $question = $bank->questions()->create($data + ['school_id' => $bank->school_id, 'created_by' => $request->user()->id]);
         $this->saveImage($request, $question);
 
@@ -101,7 +106,7 @@ class CbtBankController extends Controller
     public function updateQuestion(Request $request, CbtBank $bank, CbtQuestion $question): RedirectResponse
     {
         abort_unless($question->cbt_bank_id === $bank->id, 404);
-        $question->update($this->validateQuestion($request));
+        $question->update($this->validateQuestion($request, $question));
         $this->saveImage($request, $question);
 
         return back()->with('success', 'Question saved. Tests already handed in keep their marks.');
@@ -175,7 +180,7 @@ class CbtBankController extends Controller
     public static function questionRow(CbtQuestion $q): array
     {
         return [
-            'id' => $q->id, 'text' => $q->text, 'options' => $q->options, 'correct_option' => $q->correct_option, 'topic' => $q->topic,
+            'id' => $q->id, 'type' => $q->type, 'text' => $q->text, 'options' => $q->options ?? [], 'marking_guide' => $q->marking_guide, 'correct_option' => $q->correct_option, 'topic' => $q->topic,
             'difficulty' => $q->difficulty, 'marks' => $q->marks, 'explanation' => $q->explanation,
             'image' => $q->image_path ? "/cbt/images/{$q->id}" : null,
         ];
@@ -197,26 +202,40 @@ class CbtBankController extends Controller
         ]);
     }
 
-    private function validateQuestion(Request $request): array
+    private function validateQuestion(Request $request, ?CbtQuestion $question): array
     {
-        $data = $request->validate([
+        $type = $question?->type ?? ($request->input('type') === 'theory' ? 'theory' : 'objective');
+        if ($question && $request->filled('type') && $request->input('type') !== $question->type) {
+            // Papers already given out rely on the kind of question
+            throw ValidationException::withMessages(['type' => 'An objective question cannot become a theory question, or the other way round. Add a new question instead.']);
+        }
+        $common = [
             'text' => 'required|string|max:5000',
-            'options' => 'required|array|min:2|max:'.CbtQuestion::MAX_OPTIONS,
-            'options.*' => 'required|string|max:1000',
-            'correct_option' => 'required|integer|min:0',
             'topic' => 'nullable|string|max:120',
             'difficulty' => ['required', Rule::in(CbtQuestion::DIFFICULTIES)],
             'marks' => 'required|numeric|min:0.5|max:100',
             'explanation' => 'nullable|string|max:2000',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'remove_image' => 'boolean',
+        ];
+
+        if ($type === 'theory') {
+            $data = $request->validate($common + ['marking_guide' => 'nullable|string|max:5000']);
+
+            return collect($data)->except('image', 'remove_image')->all() + ['type' => 'theory', 'options' => null, 'correct_option' => null];
+        }
+
+        $data = $request->validate($common + [
+            'options' => 'required|array|min:2|max:'.CbtQuestion::MAX_OPTIONS,
+            'options.*' => 'required|string|max:1000',
+            'correct_option' => 'required|integer|min:0',
         ], ['options.*.required' => 'Fill in every option, or remove the empty ones.', 'options.min' => 'Give at least two options.']);
 
         if ($data['correct_option'] >= count($data['options'])) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['correct_option' => 'Choose which option is right.']);
+            throw ValidationException::withMessages(['correct_option' => 'Choose which option is right.']);
         }
 
-        return collect($data)->except('image', 'remove_image')->all();
+        return collect($data)->except('image', 'remove_image')->all() + ['type' => 'objective', 'marking_guide' => null];
     }
 
     private function saveImage(Request $request, CbtQuestion $question): void

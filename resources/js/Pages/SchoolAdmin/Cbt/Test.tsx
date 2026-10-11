@@ -9,16 +9,20 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { EmptyState, PageHeader, Panel, Pill, Segmented, StatStrip } from '@/components/app/kit';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AttemptPill, CbtStatusPill, examTime } from '@/components/cbt/CbtParts';
-import { ArrowLeft, Clock, Download, KeyRound, Pencil, PlayCircle, Printer, RotateCcw, Send, StopCircle, Trash2, UserPlus, Users, X } from 'lucide-react';
+import { ArrowLeft, Calculator, Clock, Download, KeyRound, PenLine, Pencil, PlayCircle, Printer, RotateCcw, Send, StopCircle, Trash2, UserPlus, Users, X } from 'lucide-react';
 import type { CbtResultRow, CbtTestRow } from '@/Types';
 
-interface QuestionReport { id: number; text: string; topic: string | null; options: string[]; correct_option: number; seen: number; right: number; percent: number | null; picks: number[] }
+interface QuestionReport {
+    id: number; type: 'objective' | 'theory'; text: string; topic: string | null; options: string[]; correct_option: number | null; seen: number; right: number; percent: number | null; picks: number[];
+    /** Theory only */
+    marked?: number; average?: number | null; max?: number;
+}
 
 interface Props {
-    test: CbtTestRow & { instructions: string | null; access_code: string | null; sections: { title: string; bank: string | null; topic: string | null; difficulty: string | null; count: number }[] };
+    test: CbtTestRow & { instructions: string | null; access_code: string | null; sections: { title: string; bank: string | null; topic: string | null; difficulty: string | null; question_type: 'objective' | 'theory' | null; count: number }[] };
     problems: string[];
     results: CbtResultRow[];
-    summary: { expected: number; finished: number; writing: number; average: number | null; highest: number | null; lowest: number | null; passed: number | null };
+    summary: { expected: number; finished: number; writing: number; to_mark: number; average: number | null; highest: number | null; lowest: number | null; passed: number | null };
     questionReport: QuestionReport[];
     scoreParts: { id: number; label: string }[];
     canManage: boolean;
@@ -90,12 +94,13 @@ export default function CbtTestPage({ test, problems, results, summary, question
                         <div><dt className="text-slate-500">Start code</dt><dd className="mt-0.5 font-mono font-medium">{test.access_code ?? (test.has_code ? 'Set' : 'None')}</dd></div>
                         <div><dt className="text-slate-500">Leaving the page</dt><dd className="mt-0.5 font-medium">{test.max_page_leaves ? `Handed in after ${test.max_page_leaves} times` : 'Counted only'}</dd></div>
                         <div><dt className="text-slate-500">Pass mark</dt><dd className="mt-0.5 font-medium">{test.pass_mark != null ? `${test.pass_mark}%` : 'None'}</dd></div>
+                        <div><dt className="text-slate-500">Calculator</dt><dd className="mt-0.5 font-medium">{test.allow_calculator ? <span className="inline-flex items-center gap-1"><Calculator className="size-4" /> On screen</span> : 'None'}</dd></div>
                     </dl>
                     <div className="mt-4 border-t border-slate-100 pt-3 text-sm dark:border-white/[0.06]">
                         <p className="mb-1 text-slate-500">Questions</p>
                         <ul className="space-y-0.5">
                             {test.sections.map((s, i) => (
-                                <li key={i}><span className="font-medium">{s.title}:</span> {s.count} from {s.bank ?? 'a deleted bank'}{s.topic ? `, topic ${s.topic}` : ''}{s.difficulty ? `, ${s.difficulty}` : ''}</li>
+                                <li key={i}><span className="font-medium">{s.title}:</span> {s.count} from {s.bank ?? 'a deleted bank'}{s.topic ? `, topic ${s.topic}` : ''}{s.difficulty ? `, ${s.difficulty}` : ''}{s.question_type ? `, ${s.question_type} only` : ''}</li>
                             ))}
                         </ul>
                     </div>
@@ -105,7 +110,7 @@ export default function CbtTestPage({ test, problems, results, summary, question
                 </Panel>
 
                 <StatStrip items={[
-                    { label: 'Handed in', value: `${summary.finished} of ${summary.expected}`, hint: summary.writing ? `${summary.writing} writing now` : undefined },
+                    { label: 'Handed in', value: `${summary.finished} of ${summary.expected}`, hint: [summary.writing ? `${summary.writing} writing now` : '', summary.to_mark ? `${summary.to_mark} to mark` : ''].filter(Boolean).join(' · ') || undefined },
                     { label: 'Average', value: summary.average != null ? `${summary.average}%` : '–' },
                     { label: 'Highest / lowest', value: summary.highest != null ? `${summary.highest}% / ${summary.lowest}%` : '–' },
                     { label: 'Passed', value: summary.passed != null ? `${summary.passed} of ${summary.finished}` : '–', hint: test.pass_mark != null ? `Pass mark ${test.pass_mark}%` : 'No pass mark set' },
@@ -113,6 +118,11 @@ export default function CbtTestPage({ test, problems, results, summary, question
 
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <Segmented label="Show" value={tab} onChange={setTab} options={[{ value: 'people', label: entrance ? 'Applicants' : 'Students' }, { value: 'questions', label: 'Questions, hardest first' }]} />
+                    {canManage && (summary.to_mark > 0 || questionReport.some(q => q.type === 'theory')) && (
+                        <Link href={`${url}/marking`} className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-3.5 text-sm font-medium text-white hover:bg-indigo-700">
+                            <PenLine className="size-4" /> Mark theory answers{summary.to_mark ? ` (${summary.to_mark} waiting)` : ''}
+                        </Link>
+                    )}
                     {entrance && canManage && test.status !== 'closed' && <Button variant="outline" onClick={() => setAdding(true)}><UserPlus className="size-4" /> Add applicants</Button>}
                     {canCopy && scoreParts.length > 0 && summary.finished > 0 && (
                         <Button variant="outline" onClick={() => setCopying(true)}><Send className="size-4" /> Send scores to term results</Button>
@@ -152,7 +162,9 @@ export default function CbtTestPage({ test, problems, results, summary, question
                                                 <td className="px-3 py-2.5"><AttemptPill status={r.status} /></td>
                                                 {entrance && <td className="px-3 py-2.5">{r.outcome && <Pill tone={OUTCOME[r.outcome].tone}>{OUTCOME[r.outcome].label}</Pill>}</td>}
                                                 <td className="px-3 py-2.5 text-right tabular-nums">
-                                                    {r.percent != null ? <><span className={test.pass_mark != null && r.percent < test.pass_mark ? 'text-red-600' : 'font-medium'}>{r.percent}%</span> <span className="text-xs text-slate-500">({r.score}/{r.max_score})</span></> : '–'}
+                                                    {r.percent != null
+                                                        ? <><span className={test.pass_mark != null && r.percent < test.pass_mark ? 'text-red-600' : 'font-medium'}>{r.percent}%</span> <span className="text-xs text-slate-500">({r.score}/{r.max_score})</span></>
+                                                        : r.needs_marking ? <span className="text-xs text-amber-700 dark:text-amber-400" title="Marks so far, before the theory answers are marked">To mark · {r.score} so far</span> : '–'}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-right tabular-nums">{r.questions ? `${r.answered}/${r.questions}` : '–'}</td>
                                                 <td className={`px-3 py-2.5 text-right tabular-nums ${r.page_leaves ? 'text-amber-700 dark:text-amber-400' : ''}`}>{r.attempt_id ? r.page_leaves : '–'}</td>
@@ -194,15 +206,18 @@ export default function CbtTestPage({ test, problems, results, summary, question
                                 {questionReport.map(q => (
                                     <li key={q.id} className="space-y-2 px-5 py-3.5 text-sm">
                                         <div className="flex items-start justify-between gap-3">
-                                            <p className="whitespace-pre-line font-medium text-slate-900 dark:text-white">{q.text}</p>
-                                            <span className={`shrink-0 font-semibold tabular-nums ${(q.percent ?? 100) < 40 ? 'text-red-600' : 'text-slate-700 dark:text-slate-200'}`}>{q.percent ?? '–'}% right</span>
+                                            <p className="whitespace-pre-line font-medium text-slate-900 dark:text-white">{q.type === 'theory' && <Pill tone="info">Theory</Pill>} {q.text}</p>
+                                            <span className={`shrink-0 font-semibold tabular-nums ${(q.percent ?? 100) < 40 ? 'text-red-600' : 'text-slate-700 dark:text-slate-200'}`}>
+                                                {q.type === 'theory' ? (q.average != null ? `average ${q.average} / ${q.max}` : 'not marked yet') : `${q.percent ?? '–'}% right`}
+                                            </span>
                                         </div>
+                                        {q.type === 'theory' && <p className="text-xs text-slate-500">{q.marked} of {q.seen} answers marked</p>}
                                         <div className="space-y-1">
                                             {q.options.map((o, i) => {
                                                 const share = q.seen ? Math.round((q.picks[i] / q.seen) * 100) : 0;
                                                 return (
                                                     <div key={i} className="flex items-center gap-2">
-                                                        <span className={`w-48 truncate sm:w-72 ${i === q.correct_option ? 'font-medium text-emerald-700 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'}`}>{LETTERS[i]}. {o}</span>
+                                                        <span className={`w-28 truncate sm:w-72 ${i === q.correct_option ? 'font-medium text-emerald-700 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'}`}>{LETTERS[i]}. {o}</span>
                                                         <div className="h-2 flex-1 rounded bg-slate-100 dark:bg-white/[0.06]">
                                                             <div className={`h-2 rounded ${i === q.correct_option ? 'bg-emerald-500' : 'bg-slate-400'}`} style={{ width: `${share}%` }} />
                                                         </div>
