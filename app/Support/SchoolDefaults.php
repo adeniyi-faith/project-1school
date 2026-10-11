@@ -32,6 +32,18 @@ class SchoolDefaults
             'name' => 'Tests + Assignment + Exam (40/60)',
             'components' => [['First CA', 'CA1', 10], ['Second CA', 'CA2', 10], ['Third CA', 'CA3', 10], ['Assignment', 'Assign', 10], ['Examination', 'Exam', 60]],
         ],
+        'uk_style' => [
+            'name' => 'Classwork + Assessment + Exam (20/20/60)',
+            'components' => [['Classwork', 'Class', 20], ['Assessment', 'Test', 20], ['Examination', 'Exam', 60]],
+        ],
+        'us_style' => [
+            'name' => 'Homework + Quizzes + Tests + Final exam (10/20/30/40)',
+            'components' => [['Homework', 'HW', 10], ['Quizzes', 'Quiz', 20], ['Tests', 'Test', 30], ['Final exam', 'Final', 40]],
+        ],
+        'observation' => [
+            'name' => 'Teacher observation (100)',
+            'components' => [['Teacher observation', 'Obs', 100]],
+        ],
         'single_ca' => [
             'name' => 'CA + Exam (30/70)',
             'components' => [['Continuous Assessment', 'CA', 30], ['Examination', 'Exam', 70]],
@@ -52,6 +64,34 @@ class SchoolDefaults
                 ['D7', 45, 49, 'Pass', 2.00],
                 ['E8', 40, 44, 'Pass', 1.00],
                 ['F9', 0, 39, 'Fail', 0.00],
+            ],
+        ],
+        'gcse' => [
+            'name' => 'GCSE / IGCSE (9 – 1)',
+            'bands' => [
+                ['9', 90, 100, 'Outstanding', 4.00], ['8', 80, 89, 'Excellent', 3.75], ['7', 70, 79, 'Very good', 3.50],
+                ['6', 60, 69, 'Good', 3.00], ['5', 50, 59, 'Strong pass', 2.50], ['4', 40, 49, 'Standard pass', 2.00],
+                ['3', 30, 39, 'Below standard', 1.50], ['2', 20, 29, 'Weak', 1.00], ['1', 10, 19, 'Very weak', 0.50], ['U', 0, 9, 'Ungraded', 0.00],
+            ],
+        ],
+        'alevel' => [
+            'name' => 'A-level (A* – U)',
+            'bands' => [
+                ['A*', 90, 100, 'Outstanding', 4.00], ['A', 80, 89, 'Excellent', 4.00], ['B', 70, 79, 'Very good', 3.00],
+                ['C', 60, 69, 'Good', 2.00], ['D', 50, 59, 'Satisfactory', 1.00], ['E', 40, 49, 'Pass', 0.50], ['U', 0, 39, 'Ungraded', 0.00],
+            ],
+        ],
+        'us_letter' => [
+            'name' => 'US letter grades (A – F, GPA 4.0)',
+            'bands' => [
+                ['A', 90, 100, 'Excellent', 4.00], ['B', 80, 89, 'Good', 3.00], ['C', 70, 79, 'Satisfactory', 2.00],
+                ['D', 60, 69, 'Needs improvement', 1.00], ['F', 0, 59, 'Failing', 0.00],
+            ],
+        ],
+        'montessori' => [
+            'name' => 'Montessori progress (Introduced, Practising, Mastered)',
+            'bands' => [
+                ['Mastered', 80, 100, 'Has mastered the work', 3.00], ['Practising', 50, 79, 'Practising and growing in confidence', 2.00], ['Introduced', 0, 49, 'Has been introduced to the work', 1.00],
             ],
         ],
         'simple' => [
@@ -111,16 +151,25 @@ class SchoolDefaults
         $count = (int) (DB::table('school_settings')->where('school_id', $schoolId)->where('key', 'terms_per_year')->value('value') ?: 3);
         $count = max(1, min(4, $count));
         $now = now();
+        $names = self::termNames($schoolId);
 
         DB::table('terms')->insert(array_map(fn ($i) => [
             'school_id' => $schoolId,
             'academic_year_id' => $academicYearId,
-            'name' => self::TERM_NAMES[$i],
+            'name' => $names[$i] ?? self::TERM_NAMES[$i],
             'sequence' => $i + 1,
             'is_current' => false,
             'created_at' => $now,
             'updated_at' => $now,
         ], range(0, $count - 1)));
+    }
+
+    /** The names this school gives its terms (First Term ..., or Autumn Term ..., or Quarter 1 ...) */
+    public static function termNames(int $schoolId): array
+    {
+        $saved = json_decode((string) DB::table('school_settings')->where('school_id', $schoolId)->where('key', 'term_names')->value('value'), true);
+
+        return is_array($saved) && $saved ? array_values($saved) : self::TERM_NAMES;
     }
 
     public static function ensureAssessmentScheme(int $schoolId): void
