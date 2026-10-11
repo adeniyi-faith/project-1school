@@ -66,7 +66,7 @@ export default function StaffAttendanceIndex({ staffList, existing, departments,
     return (
         <AppLayout title="Staff Attendance">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <Link href="/school/attendance" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white">
                             <ArrowLeft className="w-4 h-4" /> Student Attendance
