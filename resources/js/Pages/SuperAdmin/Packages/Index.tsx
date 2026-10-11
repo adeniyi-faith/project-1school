@@ -66,7 +66,7 @@ export default function PackagesIndex({ packages, availableModules }: Props) {
     return (
         <AppLayout title="Packages">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Subscription Packages</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Define plans, pricing, and module access</p>
@@ -144,7 +144,7 @@ export default function PackagesIndex({ packages, availableModules }: Props) {
                             <Label>Description</Label>
                             <Input value={form.data.description} onChange={e => form.setData('description', e.target.value)} placeholder="Brief description" />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Monthly Price ($) *</Label>
                                 <Input type="number" step="0.01" value={form.data.price_monthly} onChange={e => form.setData('price_monthly', e.target.value)} />
