@@ -15,6 +15,7 @@ import { Plus, Trash2, CalendarDays, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/react';
 import type { SchoolClass, Section, Subject, Staff, Timetable, TimeSlot, DayOfWeek, PageProps } from '@/Types';
+import { useCan } from '@/lib/can';
 
 interface Props {
     classes: SchoolClass[];
@@ -56,6 +57,7 @@ function fmt12(time: string) {
 }
 
 export default function TimetableIndex({ classes, sections, subjects, teachers, grid, days, defaultSlots, filters }: Props) {
+    const can = useCan();
     const { flash } = usePage<PageProps>().props;
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState<{ day: DayOfWeek; start: string; end: string } | null>(null);
@@ -126,6 +128,8 @@ export default function TimetableIndex({ classes, sections, subjects, teachers, 
 
     const PeriodCell = ({ day, slot, period, compact }: { day: DayOfWeek; slot: TimeSlot; period?: Timetable; compact?: boolean }) => {
         if (!period) {
+            // Without permission to change the timetable an empty slot is simply empty
+            if (!can('timetable.manage')) return <div className={cn('rounded-lg border border-dashed border-slate-100 dark:border-white/5', compact ? 'h-12' : 'h-[3.75rem]')} />;
             return (
                 <button
                     type="button"
@@ -143,19 +147,19 @@ export default function TimetableIndex({ classes, sections, subjects, teachers, 
         const color = subjectColorMap[period.subject_id] ?? SUBJECT_COLORS[0];
         return (
             <div className={cn('group relative rounded-lg p-2.5 ring-1 ring-inset transition-shadow hover:shadow-sm', color)}>
-                <button type="button" onClick={() => openSlot(day, slot)} className="block w-full text-left outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-indigo-400">
+                <button type="button" onClick={() => can('timetable.manage') && openSlot(day, slot)} className="block w-full text-left outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-indigo-400">
                     <span className="block truncate text-[13px] font-semibold leading-tight">{period.subject?.name ?? '—'}</span>
                     {period.teacher && <span className="mt-0.5 block truncate text-[11px] opacity-75">{period.teacher.first_name} {period.teacher.last_name}</span>}
                     {period.room && <span className="block truncate text-[11px] opacity-60">Room {period.room}</span>}
                 </button>
-                <button
+                {can('timetable.manage') && <button
                     type="button"
                     onClick={() => handleDelete(period)}
                     aria-label={`Remove ${period.subject?.name ?? 'period'}`}
                     className="absolute right-1.5 top-1.5 z-10 rounded p-1 opacity-0 outline-none transition-opacity hover:text-red-600 focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-60"
                 >
                     <Trash2 className="size-3" />
-                </button>
+                </button>}
             </div>
         );
     };

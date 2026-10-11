@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PageProps, SchoolClass } from '@/Types';
+import { useCan } from '@/lib/can';
 
 interface Props extends PageProps { classes: SchoolClass[]; levels: Record<string, string> }
 
@@ -25,6 +26,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function ClassesIndex() {
+    const can = useCan();
     const { classes, levels } = usePage<Props>().props;
     const levelItems = [{ value: '', label: 'Not set' }, ...Object.entries(levels).map(([value, label]) => ({ value, label }))];
     const [open, setOpen]     = useState(false);
@@ -57,9 +59,11 @@ export default function ClassesIndex() {
                     <h1 className="text-xl font-bold text-slate-900 dark:text-white">Classes</h1>
                     <p className="text-sm text-slate-500 mt-0.5">{classes.length} class{classes.length !== 1 ? 'es' : ''} configured</p>
                 </div>
-                <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
-                    <Plus className="w-4 h-4" /> Add Class
-                </Button>
+                {can('settings.edit') && (
+                    <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Add Class
+                    </Button>
+                )}
             </div>
 
             <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
@@ -93,14 +97,16 @@ export default function ClassesIndex() {
                                     <TableCell className="text-sm text-slate-500">{c.subjects_count ?? 0}</TableCell>
                                     <TableCell className="text-sm text-slate-500">{c.capacity || '—'}</TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)}>
-                                                <Pencil className="w-3.5 h-3.5" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => destroy(c)}>
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </Button>
-                                        </div>
+                                        {can('settings.edit') && (
+                                            <div className="flex items-center gap-1">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)} aria-label={`Change ${c.name}`}>
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => destroy(c)} aria-label={`Delete ${c.name}`}>
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </Button>
+                                            </div>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))}

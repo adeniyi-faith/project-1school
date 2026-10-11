@@ -4,7 +4,38 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-const Select = SelectPrimitive.Root
+/** Plain text of a node, so an option made of an icon plus words still gives its words */
+function textOf(node: React.ReactNode): string {
+  if (node == null || typeof node === "boolean") return ""
+  if (typeof node === "string" || typeof node === "number") return String(node)
+  if (Array.isArray(node)) return node.map(textOf).join("")
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) return textOf(node.props.children)
+  return ""
+}
+
+/** The value/label pairs of every SelectItem written inside `children` */
+function collectItems(node: React.ReactNode, out: { value: unknown; label: string }[] = []) {
+  React.Children.forEach(node, (child) => {
+    if (!React.isValidElement<{ value?: unknown; children?: React.ReactNode }>(child)) return
+    if (child.type === SelectItem) {
+      out.push({ value: child.props.value, label: textOf(child.props.children) })
+    } else if (child.props.children) {
+      collectItems(child.props.children, out)
+    }
+  })
+  return out
+}
+
+/**
+ * The select box. Base UI shows the raw value (an id like 12, or unit_test) in the closed box unless it is
+ * told the labels, so when no `items` are given they are read from the SelectItems inside.
+ */
+function Select<Value = unknown, Multiple extends boolean | undefined = false>(props: SelectPrimitive.Root.Props<Value, Multiple>) {
+  const { items, children } = props
+  const found = React.useMemo(() => (items ? undefined : collectItems(children)), [items, children])
+
+  return <SelectPrimitive.Root {...props} items={items ?? (found && found.length > 0 ? (found as never) : undefined)} />
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (

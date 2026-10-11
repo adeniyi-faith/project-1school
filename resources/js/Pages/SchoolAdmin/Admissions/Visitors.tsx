@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Trash2, LogOut, Users } from 'lucide-react';
+import { useCan } from '@/lib/can';
 
 interface Visitor {
     id: number; name: string; phone: string; purpose: string;
@@ -24,6 +25,7 @@ function formatDate(dt: string) {
 }
 
 export default function Visitors({ visitors, filters }: Props) {
+    const can = useCan();
     const [showModal, setShowModal] = useState(false);
     const [delItem,   setDelItem]   = useState<Visitor | null>(null);
 
@@ -57,9 +59,9 @@ export default function Visitors({ visitors, filters }: Props) {
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Visitor Log</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Track visitor check-in and check-out</p>
                     </div>
-                    <Button onClick={() => { form.reset(); form.clearErrors(); setShowModal(true); }} className="gap-2">
+                    {can('students.create') && <Button onClick={() => { form.reset(); form.clearErrors(); setShowModal(true); }} className="gap-2">
                         <Plus className="w-4 h-4" /> Check In Visitor
-                    </Button>
+                    </Button>}
                 </div>
 
                 {/* Filters */}
@@ -131,16 +133,18 @@ export default function Visitors({ visitors, filters }: Props) {
                                             </td>
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center justify-end gap-1">
-                                                    {!v.time_out && (
+                                                    {!v.time_out && can('students.create') && (
                                                         <button onClick={() => checkout(v.id)}
                                                             className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-green-600" title="Check out">
                                                             <LogOut className="w-3.5 h-3.5" />
                                                         </button>
                                                     )}
-                                                    <button onClick={() => setDelItem(v)}
-                                                        className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-red-600">
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </button>
+                                                    {can('students.edit') && (
+                                                        <button onClick={() => setDelItem(v)}
+                                                            className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-red-600" aria-label="Delete visitor">
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
