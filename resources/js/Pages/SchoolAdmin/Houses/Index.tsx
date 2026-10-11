@@ -85,7 +85,7 @@ export default function HousesIndex({ houses, recent, unassigned, staff, classes
         <AppLayout title="Houses">
             <div className="space-y-6">
                 <PageHeader title="Houses" description="Sports houses, who is in each one, and the points table for inter-house sports and competitions." actions={actions} />
-                <div className="md:hidden">{actions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>
 
                 {houses.length === 0 ? (
                     <Panel>

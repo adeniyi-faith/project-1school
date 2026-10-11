@@ -232,6 +232,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('cbt/tests/{test}',                         [CbtTestController::class, 'destroy'])->middleware('permission:cbt.manage')->name('cbt.tests.destroy');
             Route::post('cbt/tests/{test}/status',                    [CbtTestController::class, 'status'])->middleware('permission:cbt.manage')->name('cbt.tests.status');
             Route::get('cbt/tests/{test}/export',                     [CbtTestController::class, 'export'])->middleware('permission:cbt.view')->name('cbt.tests.export');
+            Route::get('cbt/tests/{test}/attempts/{attempt}',         [CbtTestController::class, 'attempt'])->middleware('permission:cbt.view')->whereNumber(['test','attempt'])->name('cbt.attempts.show');
             Route::post('cbt/tests/{test}/attempts/{attempt}/time',   [CbtTestController::class, 'addTime'])->middleware('permission:cbt.manage')->name('cbt.attempts.time');
             Route::delete('cbt/tests/{test}/attempts/{attempt}',      [CbtTestController::class, 'reset'])->middleware('permission:cbt.manage')->name('cbt.attempts.reset');
             Route::get('cbt/tests/{test}/marking',                    [CbtTestController::class, 'marking'])->middleware('permission:cbt.manage')->name('cbt.tests.marking');

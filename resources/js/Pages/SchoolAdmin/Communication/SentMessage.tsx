@@ -51,7 +51,7 @@ export default function SentMessage({ batch, deliveries, filters, canRetry }: Pr
                     description={`${sms ? 'SMS' : 'Email'} to ${batch.audience.toLowerCase()}, ${sentDate(batch.created_at)}${batch.sent_by ? ` by ${batch.sent_by}` : ''}.`}
                     actions={backLink}
                 />
-                <div className="md:hidden">{backLink}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{backLink}</div>
 
                 <StatStrip items={[
                     { label: 'Sent', value: c.sent, tone: 'good' },

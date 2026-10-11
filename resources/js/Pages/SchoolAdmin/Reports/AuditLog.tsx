@@ -129,7 +129,7 @@ export default function AuditLog({ logs, users, filters }: Props) {
                 </Card>
 
                 {logs.last_page > 1 && (
-                    <div className="flex justify-center gap-1">
+                    <div className="flex flex-wrap justify-center gap-1">
                         {logs.links.map((link, i) => (
                             <Button key={i} size="sm" variant={link.active ? 'default' : 'outline'} disabled={!link.url}
                                 onClick={() => link.url && router.visit(link.url)}

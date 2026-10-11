@@ -244,4 +244,42 @@ class CbtTheoryTest extends SecurityTestCase
         $this->post("/school/cbt/tests/{$test->id}/marking", ['question_id' => $this->essay->id, 'marks' => [$attempt->id => ['marks' => 5]]])->assertNotFound();
         $this->assertTrue($attempt->fresh()->needs_marking);
     }
+
+    public function test_staff_can_open_a_sitting_to_see_what_the_student_did(): void
+    {
+        $test = $this->makeTest();
+        $attempt = $this->sit($test, 'Length times breadth, for example 5 x 3 = 15 cm2.');
+
+        $this->actingAs($this->teacher);
+        $this->get("/school/cbt/tests/{$test->id}/attempts/{$attempt->id}")->assertOk()->assertInertia(fn ($p) => $p
+            ->component('SchoolAdmin/Cbt/Attempt', false)
+            ->where('attempt.name', 'Ada Obi')
+            ->where('attempt.needs_marking', true)
+            ->where('counts.right', 2)->where('counts.theory', 1)->where('counts.theory_waiting', 1)
+            ->has('lines', 3)
+            ->where('lines.0.type', 'objective')->where('lines.0.result', 'right')->where('lines.0.marks', 2)
+            ->where('lines.2.type', 'theory')->where('lines.2.written', 'Length times breadth, for example 5 x 3 = 15 cm2.')
+            ->where('lines.2.marking_guide', 'Length times breadth (2), example (2), units (1)')->where('lines.2.marks', null));
+
+        // After marking, the marks and the teacher's comment show up
+        $this->post("/school/cbt/tests/{$test->id}/marking", ['question_id' => $this->essay->id, 'marks' => [$attempt->id => ['marks' => 4, 'comment' => 'Add the units']]])->assertSessionHasNoErrors();
+        $this->get("/school/cbt/tests/{$test->id}/attempts/{$attempt->id}")->assertInertia(fn ($p) => $p
+            ->where('lines.2.marks', 4)->where('lines.2.comment', 'Add the units')->where('counts.theory_waiting', 0)->where('attempt.percent', 88.9));
+    }
+
+    public function test_a_sitting_cannot_be_opened_through_another_test_or_another_school(): void
+    {
+        $test = $this->makeTest();
+        $attempt = $this->sit($test, 'Answer');
+        $other = $this->makeTest(['title' => 'Second test']);
+
+        $this->actingAs($this->teacher);
+        $this->get("/school/cbt/tests/{$other->id}/attempts/{$attempt->id}")->assertNotFound();
+
+        $rival = $this->makeUser($this->makeSchool('Rival School'), 'teacher');
+        $this->actingAs($rival)->get("/school/cbt/tests/{$test->id}/attempts/{$attempt->id}")->assertNotFound();
+
+        // A student cannot open it
+        $this->actingAs($this->adaUser)->get("/school/cbt/tests/{$test->id}/attempts/{$attempt->id}")->assertForbidden();
+    }
 }
