@@ -525,6 +525,7 @@ Route::middleware('auth')->group(function () {
             Route::put('communication/email-templates/{emailTemplate}',            [CommunicationController::class, 'updateEmailTemplate'])->middleware('permission:email.send')->name('communication.email-templates.update');
 
             Route::get('communication/notifications',                              [CommunicationController::class, 'notifications'])->name('communication.notifications');
+            Route::get('communication/notifications/feed',                         [\App\Http\Controllers\NotificationFeedController::class, 'index'])->name('communication.notifications.feed');
             Route::put('communication/notifications/{notification}/read',          [CommunicationController::class, 'markNotificationRead'])->name('communication.notifications.read');
             Route::put('communication/notifications/read-all',                     [CommunicationController::class, 'markAllNotificationsRead'])->name('communication.notifications.read-all');
 
@@ -621,6 +622,7 @@ Route::middleware('auth')->group(function () {
         Route::get('homework',      [StudentPortalController::class, 'homework'])->name('homework');
         Route::get('fees',          [StudentPortalController::class, 'fees'])->name('fees');
         Route::get('announcements', [StudentPortalController::class, 'announcements'])->name('announcements');
+        Route::get('notifications/feed', [\App\Http\Controllers\NotificationFeedController::class, 'index'])->name('notifications.feed');
     });
 
     Route::middleware('role:parent')->prefix('school/parent')->name('parent.')->group(function () {
@@ -634,6 +636,7 @@ Route::middleware('auth')->group(function () {
         Route::get('fees/pay/{reference}/go',     [ParentPaymentController::class, 'go'])->name('fees.pay.go');
         Route::get('fees/pay/{reference}/result', [ParentPaymentController::class, 'result'])->name('fees.pay.result');
         Route::get('announcements', [ParentPortalController::class, 'announcements'])->name('announcements');
+        Route::get('notifications/feed', [\App\Http\Controllers\NotificationFeedController::class, 'index'])->name('notifications.feed');
     });
 
     /*
