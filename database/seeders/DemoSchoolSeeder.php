@@ -263,16 +263,18 @@ class DemoSchoolSeeder extends Seeder
                 ['Social Habits', 'SOC'], ['Creative Arts & Colouring', 'ART', 'practical'], ['Bible Stories / Islamic Studies', 'REL'], ['Basic Computer Skills', 'ICT', 'practical'],
             ],
             'primary' => [
-                ['English Studies', 'ENG'], ['Mathematics', 'MTH'], ['Basic Science & Technology', 'BST'], ['Social Studies', 'SST'],
-                ['Civic Education', 'CIV'], ['Verbal Reasoning', 'VRB'], ['Quantitative Reasoning', 'QNT'], ['Religious Studies (CRS/IRS)', 'REL'],
-                ['Computer Studies', 'ICT', 'practical'], ['Yoruba Language', 'YOR'], ['Cultural & Creative Arts', 'CCA', 'practical'], ['Physical & Health Education', 'PHE', 'practical'],
-                ['Agricultural Science', 'AGR'], ['Home Economics', 'HEC', 'practical'],
+                ['English Language', 'ENG'], ['Mathematics', 'MTH'], ['Basic Science & Technology', 'BST'], ['Social Studies', 'SST'],
+                ['Civic Education', 'CIV'], ['Verbal Reasoning', 'VRB'], ['Quantitative Reasoning', 'QNT'], ['Christian Religious Studies', 'CRS'],
+                ['Pre-vocational Studies', 'PVS', 'practical'], ['Home Economics', 'HEC', 'practical'], ['Basic Digital Literacy', 'BDL', 'practical'],
+                ['Phonics', 'PHO'], ['Handwriting', 'HWR', 'practical'], ['Dictation', 'DIC'], ['Literature', 'LIT'], ['History', 'HIS'],
+                ['Yoruba Language', 'YOR'], ['French', 'FRE'], ['Cultural & Creative Arts', 'CCA', 'practical'], ['Physical & Health Education', 'PHE', 'practical'],
+                ['Fellowship', 'FEL', 'practical'], ['Agricultural Science', 'AGR'],
             ],
             'junior' => [
-                ['English Language', 'ENG'], ['Mathematics', 'MTH'], ['Basic Science', 'BSC'], ['Basic Technology', 'BTE', 'practical'],
-                ['Social Studies', 'SST'], ['Civic Education', 'CIV'], ['Business Studies', 'BUS'], ['Religious Studies (CRS/IRS)', 'REL'],
-                ['Computer Studies', 'ICT', 'practical'], ['Yoruba Language', 'YOR'], ['French', 'FRE'], ['Agricultural Science', 'AGR'],
-                ['Home Economics', 'HEC', 'practical'], ['Cultural & Creative Arts', 'CCA', 'practical'], ['Physical & Health Education', 'PHE', 'practical'],
+                ['English Language', 'ENG'], ['Mathematics', 'MTH'], ['Intermediate Science', 'ISC'], ['Basic Technology', 'BTE', 'practical'],
+                ['Digital Technologies', 'DGT', 'practical'], ['Social and Citizenship Studies', 'SCS'], ['History', 'HIS'], ['Business Studies', 'BUS'],
+                ['Christian Religious Studies', 'CRS'], ['Trade Subject (Entrepreneurship)', 'TRD', 'practical'], ['Yoruba Language', 'YOR'], ['French', 'FRE'],
+                ['Agricultural Science', 'AGR'], ['Home Economics', 'HEC', 'practical'], ['Cultural & Creative Arts', 'CCA', 'practical'], ['Physical & Health Education', 'PHE', 'practical'],
             ],
             // third item = type, fourth = which SS tracks take it (null = everyone)
             'senior' => [
@@ -343,7 +345,7 @@ class DemoSchoolSeeder extends Seeder
         };
 
         $early = ['Number Work', 'Letter Work & Phonics', 'Rhymes & Songs', 'Health Habits', 'Social Habits', 'Creative Arts & Colouring', 'Bible Stories / Islamic Studies', 'Basic Computer Skills'];
-        $primaryCore = ['English Studies', 'Mathematics', 'Basic Science & Technology', 'Social Studies', 'Civic Education', 'Verbal Reasoning', 'Quantitative Reasoning'];
+        $primaryCore = ['English Language', 'Mathematics', 'Basic Science & Technology', 'Social Studies', 'Civic Education', 'Verbal Reasoning', 'Quantitative Reasoning'];
 
         // [role, department, level, specialties, count, salary range, gender hint]
         $plan = [
@@ -359,17 +361,17 @@ class DemoSchoolSeeder extends Seeder
             ['ICT Officer', 'SUP', null, [], 1, [200000, 200000], 'male'],
             ['Guidance Counsellor', 'SUP', null, [], 1, [210000, 210000], 'any'],
             ['Early Years Teacher', 'EYR', 'early', $early, 9, [110000, 160000], 'female'],
-            ['Primary Teacher', 'PRI', 'primary', array_merge($primaryCore, ['Religious Studies (CRS/IRS)']), 13, [130000, 210000], 'any'],
-            ['Computer Teacher', 'PRI', 'primary', ['Computer Studies'], 2, [150000, 190000], 'male'],
+            ['Primary Teacher', 'PRI', 'primary', array_merge($primaryCore, ['Christian Religious Studies', 'Phonics', 'Handwriting', 'Dictation', 'Literature', 'History', 'Fellowship']), 13, [130000, 210000], 'any'],
+            ['Computer Teacher', 'PRI', 'primary', ['Basic Digital Literacy', 'Pre-vocational Studies'], 2, [150000, 190000], 'male'],
             ['Creative Arts & PHE Teacher', 'PRI', 'primary', ['Cultural & Creative Arts', 'Physical & Health Education', 'Home Economics'], 2, [130000, 170000], 'any'],
-            ['Language & Agric Teacher', 'PRI', 'primary', ['Yoruba Language', 'Agricultural Science', 'Religious Studies (CRS/IRS)'], 2, [130000, 170000], 'any'],
+            ['Language & Agric Teacher', 'PRI', 'primary', ['Yoruba Language', 'French', 'Agricultural Science'], 2, [130000, 170000], 'any'],
             ['English Teacher', 'JSS', 'junior', ['English Language'], 3, [190000, 280000], 'any'],
             ['Mathematics Teacher', 'JSS', 'junior', ['Mathematics'], 3, [190000, 280000], 'male'],
-            ['Basic Science Teacher', 'JSS', 'junior', ['Basic Science'], 2, [190000, 260000], 'any'],
+            ['Intermediate Science Teacher', 'JSS', 'junior', ['Intermediate Science'], 2, [190000, 260000], 'any'],
             ['Basic Technology Teacher', 'JSS', 'junior', ['Basic Technology'], 2, [190000, 250000], 'male'],
-            ['Humanities Teacher', 'JSS', 'junior', ['Social Studies', 'Civic Education', 'Business Studies'], 2, [180000, 250000], 'any'],
-            ['Religious Studies & Arts Teacher', 'JSS', 'junior', ['Religious Studies (CRS/IRS)', 'Cultural & Creative Arts'], 2, [170000, 240000], 'any'],
-            ['Computer & French Teacher', 'JSS', 'junior', ['Computer Studies', 'French'], 2, [190000, 260000], 'any'],
+            ['Humanities Teacher', 'JSS', 'junior', ['Social and Citizenship Studies', 'History', 'Business Studies'], 2, [180000, 250000], 'any'],
+            ['Religious Studies & Arts Teacher', 'JSS', 'junior', ['Christian Religious Studies', 'Cultural & Creative Arts'], 2, [170000, 240000], 'any'],
+            ['Digital & French Teacher', 'JSS', 'junior', ['Digital Technologies', 'French', 'Trade Subject (Entrepreneurship)'], 2, [190000, 260000], 'any'],
             ['Yoruba & Home Economics Teacher', 'JSS', 'junior', ['Yoruba Language', 'Home Economics', 'Agricultural Science'], 2, [170000, 230000], 'female'],
             ['PHE Teacher', 'JSS', 'junior', ['Physical & Health Education'], 2, [160000, 220000], 'male'],
             ['English Teacher', 'SSS', 'senior', ['English Language'], 2, [230000, 330000], 'any'],
@@ -617,7 +619,7 @@ class DemoSchoolSeeder extends Seeder
         }
 
         // A few subjects are harder than others, so results look natural
-        $bias = ['Mathematics' => -6, 'Further Mathematics' => -8, 'Physics' => -5, 'Chemistry' => -4, 'English Language' => -2, 'Physical & Health Education' => 9, 'Cultural & Creative Arts' => 8, 'Computer Studies' => 5, 'Creative Arts & Colouring' => 9, 'Religious Studies (CRS/IRS)' => 6];
+        $bias = ['Mathematics' => -6, 'Further Mathematics' => -8, 'Physics' => -5, 'Chemistry' => -4, 'English Language' => -2, 'Physical & Health Education' => 9, 'Cultural & Creative Arts' => 8, 'Digital Technologies' => 5, 'Basic Digital Literacy' => 5, 'Creative Arts & Colouring' => 9, 'Christian Religious Studies' => 6];
 
         // [year, term number] each exam belongs to
         $termId = fn (string $year, int $seq) => DB::table('terms')->where('school_id', $this->sid)->where('sequence', $seq)
@@ -905,7 +907,7 @@ class DemoSchoolSeeder extends Seeder
             foreach ($class['sections'] as $sectionName => $sectionId) {
                 $own = array_values($this->subjectsFor($subjects[$class['id']], $sectionName, $class['level']));
                 // English and Mathematics come up most days
-                $sequence = array_merge($own, array_filter($own, fn ($s) => in_array($s['name'], ['English Language', 'English Studies', 'Mathematics', 'Number Work'], true)));
+                $sequence = array_merge($own, array_filter($own, fn ($s) => in_array($s['name'], ['English Language', 'Mathematics', 'Number Work'], true)));
                 $sequence = array_values($sequence);
                 $n = count($sequence);
 
@@ -948,14 +950,13 @@ class DemoSchoolSeeder extends Seeder
             'Number Work' => ['Count and write the numbers 1 to 20 in your notebook.', 'Add the pictures and write the answers (page 14).'],
             'Letter Work & Phonics' => ['Trace and colour the letters A to E and say one word for each.', 'Practise the sounds s, a, t, p at home.'],
             'Rhymes & Songs' => ['Learn the rhyme "Twinkle, Twinkle, Little Star" for Friday.'],
-            'English Studies' => ['Write five sentences about "My Family" and underline the nouns.', 'Read "The Tortoise and the Hare" and answer questions 1 to 5.'],
             'Mathematics' => ['Solve questions 1 to 10 on page 38 and show your working.', 'Learn the 7 and 8 times tables and be ready for a quiz.'],
             'Basic Science & Technology' => ['Draw and label the parts of a flowering plant.', 'List five sources of water in your community.'],
             'Social Studies' => ['Name the six geo-political zones of Nigeria and one state in each.'],
             'Civic Education' => ['Write a short note on "Why we must obey school rules".'],
             'Yoruba Language' => ['Ka ìtàn "Ìjàpá àti Ọ̀kẹ́rẹ́" kí o sì dáhùn àwọn ìbéèrè márùn-ún.'],
-            'English Language' => ['Write a formal letter to your Principal requesting a school library period (250 words).', 'Read Chapter 3 of your literature text and summarise it in one page.'],
-            'Basic Science' => ['Explain the difference between a mixture and a compound with two examples each.'],
+            'English Language' => ['Write five sentences about "My Family" and underline the nouns.', 'Write a formal letter to your Principal requesting a school library period (250 words).', 'Read Chapter 3 of your literature text and summarise it in one page.'],
+            'Intermediate Science' => ['Explain the difference between a mixture and a compound with two examples each.'],
             'Business Studies' => ['Prepare a simple cash book for a provision store for one week.'],
             'Physics' => ['Solve problems 1 to 8 on motion in a straight line, page 52.'],
             'Chemistry' => ['Balance the ten chemical equations on the worksheet and submit on Monday.'],
@@ -966,7 +967,11 @@ class DemoSchoolSeeder extends Seeder
             'Economics' => ['Draw a demand curve for garri using the data in your note and explain its shape.'],
             'Financial Accounting' => ['Prepare a trial balance from the ledger balances given in class.'],
             'Commerce' => ['Write a note on the functions of the Central Bank of Nigeria.'],
-            'Computer Studies' => ['Write down five parts of a computer and what each does.'],
+            'Basic Digital Literacy' => ['Write down five parts of a computer and what each does.'],
+            'Digital Technologies' => ['List four ways a school can keep its computers safe from viruses.'],
+            'Phonics' => ['Practise the sounds sh, ch, th and write two words for each.'],
+            'Social and Citizenship Studies' => ['Write a short note on the rights and duties of a good citizen.'],
+            'History' => ['Write three sentences on how your community began.'],
             'Computer Studies (ICT)' => ['Create a spreadsheet of your class test scores and calculate the average.'],
         ];
 
