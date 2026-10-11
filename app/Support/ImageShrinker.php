@@ -46,8 +46,10 @@ class ImageShrinker
             if ($file->getSize() <= self::KEEP_BYTES && max($width, $height) <= $maxSide) {
                 return null;
             }
-            // a huge picture would not fit in memory when opened: keep it rather than crash
-            if ($width * $height > 40_000_000) {
+            // Opening a picture takes about 4 bytes per pixel, and we hold up to three copies at once
+            // (original, turned, smaller). A fatal "out of memory" cannot be caught, so check first and
+            // keep the original when the server does not have the room.
+            if (! self::hasRoomFor($width * $height * 4 * 3 + 8 * 1024 * 1024)) {
                 return null;
             }
 
@@ -85,6 +87,7 @@ class ImageShrinker
                 imagefill($target, 0, 0, imagecolorallocate($target, 255, 255, 255));
             }
             imagecopyresampled($target, $source, 0, 0, 0, 0, $newWidth, $newHeight, imagesx($source), imagesy($source));
+            unset($source);
 
             ob_start();
             $isPng ? imagepng($target, null, 7) : imagejpeg($target, null, 82);
@@ -99,5 +102,36 @@ class ImageShrinker
         } catch (Throwable) {
             return null;
         }
+    }
+
+    /** Is there enough spare memory for this much work? Tries to raise the limit a little first. */
+    private static function hasRoomFor(int $bytes): bool
+    {
+        $limit = self::toBytes((string) ini_get('memory_limit'));
+        if ($limit === -1) {
+            return true;
+        }
+        if ($limit - memory_get_usage(true) < $bytes) {
+            @ini_set('memory_limit', (string) max($limit, memory_get_usage(true) + $bytes + 16 * 1024 * 1024));
+            $limit = self::toBytes((string) ini_get('memory_limit'));
+        }
+
+        return $limit === -1 || $limit - memory_get_usage(true) >= $bytes;
+    }
+
+    private static function toBytes(string $value): int
+    {
+        $value = trim($value);
+        if ($value === '' || $value === '-1') {
+            return -1;
+        }
+        $number = (int) $value;
+
+        return match (strtolower(substr($value, -1))) {
+            'g' => $number * 1024 ** 3,
+            'm' => $number * 1024 ** 2,
+            'k' => $number * 1024,
+            default => $number,
+        };
     }
 }
