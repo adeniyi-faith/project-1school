@@ -5,10 +5,14 @@ namespace App\Http\Controllers\SchoolAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\CbtBank;
 use App\Models\CbtQuestion;
+use App\Models\SchemeOfWork;
 use App\Models\Subject;
+use App\Services\AiService;
 use App\Services\CbtService;
+use App\Services\QuestionWriterService;
 use App\Support\SimpleXlsx;
 use App\Support\SimpleXlsxReader;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -66,7 +70,7 @@ class CbtBankController extends Controller
         return redirect('/school/cbt/banks')->with('success', 'Question bank deleted.');
     }
 
-    public function show(Request $request, CbtBank $bank): Response
+    public function show(Request $request, CbtBank $bank, AiService $ai): Response
     {
         $filters = [
             'search' => (string) $request->search,
@@ -91,7 +95,81 @@ class CbtBankController extends Controller
             'subjects' => $this->subjects(),
             'canManage' => $request->user()->can('cbt.manage'),
             'maxOptions' => CbtQuestion::MAX_OPTIONS,
+            'ai' => [
+                'shown' => $ai->schoolState($bank->school_id)['platform_ready'],
+                'reason' => $ai->unavailable($bank->school_id, 'questions'),
+                'level' => $bank->subject?->schoolClass?->name,
+                // Topics from the subject's schemes of work, offered when asking the AI
+                'topics' => $bank->subject_id
+                    ? SchemeOfWork::where('school_id', $bank->school_id)->where('subject_id', $bank->subject_id)->get(['weeks'])
+                        ->flatMap(fn ($s) => collect($s->weeks ?? [])->pluck('topic'))->filter()->unique()->values()
+                    : [],
+            ],
         ]);
+    }
+
+    /** Questions drafted by the AI, returned for the teacher to check. Nothing is saved. */
+    public function aiDraft(Request $request, CbtBank $bank, QuestionWriterService $writer): JsonResponse
+    {
+        $data = $request->validate([
+            'type' => ['required', Rule::in(CbtQuestion::TYPES)],
+            'count' => 'required|integer|min:1|max:'.($request->input('type') === 'theory' ? QuestionWriterService::MAX_THEORY : QuestionWriterService::MAX_OBJECTIVE),
+            'topic' => 'required|string|max:120',
+            'difficulty' => ['required', Rule::in([...CbtQuestion::DIFFICULTIES, 'mixed'])],
+            'level' => 'nullable|string|max:60',
+            'parts' => 'nullable|integer|min:0|max:'.QuestionWriterService::MAX_PARTS,
+            'marks' => 'nullable|numeric|min:1|max:100',
+            'instructions' => 'nullable|string|max:1500',
+        ], ['topic.required' => 'Type the topic the questions are about.', 'count.max' => 'Ask for at most :max at a time.']);
+
+        return response()->json(['questions' => $writer->draft($bank, $request->user(), $data)]);
+    }
+
+    /** The questions a teacher kept from the AI's drafts, checked like any other question and saved together */
+    public function storeMany(Request $request, CbtBank $bank): RedirectResponse
+    {
+        $request->validate([
+            'questions' => 'required|array|min:1|max:'.QuestionWriterService::MAX_OBJECTIVE,
+            'questions.*.type' => ['required', Rule::in(CbtQuestion::TYPES)],
+            'questions.*.text' => 'required|string|max:5000',
+            'questions.*.topic' => 'nullable|string|max:120',
+            'questions.*.difficulty' => ['required', Rule::in(CbtQuestion::DIFFICULTIES)],
+            'questions.*.marks' => 'required|numeric|min:0.5|max:100',
+            'questions.*.explanation' => 'nullable|string|max:2000',
+            'questions.*.marking_guide' => 'nullable|string|max:5000',
+            'questions.*.options' => 'array|max:'.CbtQuestion::MAX_OPTIONS,
+            'questions.*.options.*' => 'required|string|max:1000',
+            'questions.*.correct_option' => 'nullable|integer|min:0',
+        ], [
+            'questions.required' => 'Tick at least one question to keep.',
+            'questions.*.text.required' => 'A question has no text.',
+            'questions.*.options.*.required' => 'Fill in every option, or remove the empty ones.',
+        ]);
+
+        $rows = [];
+        foreach ($request->input('questions') as $i => $q) {
+            if ($q['type'] === 'objective') {
+                $options = array_values($q['options'] ?? []);
+                if (count($options) < 2) {
+                    throw ValidationException::withMessages(["questions.{$i}.options" => 'Question '.($i + 1).' needs at least two options.']);
+                }
+                if (! isset($q['correct_option']) || (int) $q['correct_option'] >= count($options)) {
+                    throw ValidationException::withMessages(["questions.{$i}.correct_option" => 'Choose the right option for question '.($i + 1).'.']);
+                }
+                $rows[] = ['type' => 'objective', 'options' => $options, 'correct_option' => (int) $q['correct_option'], 'marking_guide' => null, 'explanation' => $q['explanation'] ?? null];
+            } else {
+                $rows[] = ['type' => 'theory', 'options' => null, 'correct_option' => null, 'marking_guide' => $q['marking_guide'] ?? null, 'explanation' => null];
+            }
+            $rows[$i] += ['text' => $q['text'], 'topic' => ($q['topic'] ?? null) ?: null, 'difficulty' => $q['difficulty'], 'marks' => $q['marks']];
+        }
+
+        DB::transaction(function () use ($rows, $bank, $request) {
+            foreach ($rows as $row) {
+                $bank->questions()->create($row + ['school_id' => $bank->school_id, 'created_by' => $request->user()->id]);
+            }
+        });
+
+        return back()->with('success', count($rows).' question'.(count($rows) === 1 ? '' : 's').' added to the bank.');
     }
 
     public function storeQuestion(Request $request, CbtBank $bank): RedirectResponse
