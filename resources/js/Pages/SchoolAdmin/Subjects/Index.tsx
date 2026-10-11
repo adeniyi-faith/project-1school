@@ -118,7 +118,7 @@ export default function SubjectsIndex() {
                     </DialogHeader>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="space-y-1.5 col-span-2">
+                            <div className="space-y-1.5 sm:col-span-2">
                                 <Label>Subject Name <span className="text-red-500">*</span></Label>
                                 <Input placeholder="Mathematics" {...register('name')} />
                                 {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
@@ -137,7 +137,7 @@ export default function SubjectsIndex() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-1.5 col-span-2">
+                            <div className="space-y-1.5 sm:col-span-2">
                                 <Label>Class <span className="text-red-500">*</span></Label>
                                 <Select defaultValue={editing ? String(editing.class_id) : undefined} onValueChange={(v) => setValue('class_id', Number(v))}>
                                     <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
