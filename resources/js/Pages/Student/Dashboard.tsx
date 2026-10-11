@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import ExpandableText from '@/components/ExpandableText';
 import {
     GraduationCap, ClipboardList, BookOpen, Banknote,
     Bell, Calendar, CheckCircle, XCircle, Clock, AlertTriangle,
@@ -361,7 +362,7 @@ export default function StudentDashboard({ linked, student, attendance, exams, h
                                                     </div>
                                                 )}
                                                 <p className={cn('text-sm font-semibold', a.pinned ? 'text-amber-900 dark:text-amber-200' : 'text-slate-800 dark:text-slate-200')}>{a.title}</p>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">{a.body}</p>
+                                                <ExpandableText text={a.body} className="text-xs text-slate-500 dark:text-slate-400 mt-0.5" />
                                                 {a.date && <p className="text-[11px] text-slate-400 mt-1">{a.date}</p>}
                                             </li>
                                         ))}

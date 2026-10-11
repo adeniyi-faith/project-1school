@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { EmptyState, PageHeader, Panel, PersonAvatar, Pill } from '@/components/app/kit';
 import { naira } from '@/lib/format';
 import { Bell, Users } from 'lucide-react';
+import ExpandableText from '@/components/ExpandableText';
 
 interface Guardian { id: number; name: string; phone: string; email: string | null; }
 interface ChildAttendance { total: number; present: number; absent: number; percentage: number; }
@@ -160,7 +161,7 @@ export default function ParentDashboard({ linked, guardian, children, announceme
                                         <p className="text-sm font-medium text-slate-900 dark:text-white">{a.title}</p>
                                         {a.pinned && <Pill tone="info">Pinned</Pill>}
                                     </div>
-                                    <p className="mt-0.5 line-clamp-2 text-sm text-slate-500">{a.body}</p>
+                                    <ExpandableText text={a.body} className="mt-0.5 text-sm text-slate-500" />
                                     {a.date && <p className="mt-1 text-xs text-slate-400">{a.date}</p>}
                                 </li>
                             ))}
