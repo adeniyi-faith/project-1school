@@ -36,6 +36,7 @@ class CommunicationController extends Controller
             'announcements' => $announcements,
             'classes'       => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->get(['id', 'name']),
             'filters'       => $request->only('audience'),
+            'can'           => ['create' => $request->user()->can('announcements.create'), 'delete' => $request->user()->can('announcements.delete')],
         ]);
     }
 

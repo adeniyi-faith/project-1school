@@ -36,6 +36,7 @@ interface Props {
     announcements: PaginatedAnnouncements;
     classes:       SchoolClass[];
     filters:       { audience?: string };
+    can?:          { create: boolean; delete: boolean };
 }
 
 const emptyForm = {
@@ -47,7 +48,7 @@ const audienceColor: Record<string, 'default' | 'secondary'> = {
     all: 'default', class: 'secondary', role: 'secondary',
 };
 
-export default function Announcements({ announcements, classes, filters }: Props) {
+export default function Announcements({ announcements, classes, filters, can = { create: false, delete: false } }: Props) {
     const [open, setOpen]       = useState(false);
     const [editing, setEditing] = useState<Announcement | null>(null);
     const [filterAudience, setFilterAudience] = useState(filters.audience ?? '');
@@ -89,7 +90,7 @@ export default function Announcements({ announcements, classes, filters }: Props
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Announcements</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Post school-wide and class-specific announcements</p>
                     </div>
-                    <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> New Announcement</Button>
+                    {can.create && <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> New Announcement</Button>}
                 </div>
 
                 {/* Filters */}
@@ -136,8 +137,8 @@ export default function Announcements({ announcements, classes, filters }: Props
                                         </p>
                                     </div>
                                     <div className="flex gap-1 shrink-0">
-                                        <Button size="sm" variant="outline" onClick={() => openEdit(a)}><Pencil className="w-3.5 h-3.5" /></Button>
-                                        <Button size="sm" variant="destructive" onClick={() => destroy(a.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                                        {can.create && <Button size="sm" variant="outline" onClick={() => openEdit(a)}><Pencil className="w-3.5 h-3.5" /></Button>}
+                                        {can.delete && <Button size="sm" variant="destructive" onClick={() => destroy(a.id)}><Trash2 className="w-3.5 h-3.5" /></Button>}
                                     </div>
                                 </div>
                             </CardContent>

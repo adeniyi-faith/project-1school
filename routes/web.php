@@ -53,6 +53,7 @@ use App\Http\Controllers\ParentPaymentController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SchoolAdmin\OnlinePaymentController;
 use App\Http\Controllers\SchoolAdmin\PaymentPlanController;
+use App\Http\Controllers\SchoolAdmin\StaffHomeController;
 use App\Http\Controllers\CbtImageController;
 use App\Http\Controllers\SchoolAdmin\CommentBankController;
 use App\Http\Controllers\SchoolAdmin\ReportCardController;
@@ -112,7 +113,9 @@ Route::middleware('auth')->group(function () {
             $user->hasRole('teacher')                                        => redirect()->route('school.reports.dashboard'),
             $user->hasRole('student')                                        => redirect()->route('student.dashboard'),
             $user->hasRole('parent')                                         => redirect()->route('parent.dashboard'),
-            default                                                          => redirect()->route('school.reports.dashboard'),
+            $user->can('reports.view')                                       => redirect()->route('school.reports.dashboard'),
+            // Front desk, drivers, wardens and store keepers get a home page made of their own work
+            default                                                          => redirect()->route('school.home'),
         };
     })->name('dashboard');
 
@@ -125,10 +128,13 @@ Route::middleware('auth')->group(function () {
     | School Admin routes (school-admin, principal)
     |--------------------------------------------------------------------------
     */
-    Route::middleware('role:super-admin|school-admin|principal|teacher|accountant|librarian')
+    Route::middleware('role:super-admin|school-admin|principal|teacher|accountant|librarian|receptionist|driver|warden|store-manager')
         ->prefix('school')
         ->name('school.')
         ->group(function () {
+            // Home page for staff without the school dashboard; every staff role can apply for leave, so all have leave.view
+            Route::get('home', StaffHomeController::class)->middleware('permission:leave.view')->name('home');
+
             // School setup: anyone on staff can look; changing needs settings.edit
             foreach ([
                 'classes'  => ClassController::class,

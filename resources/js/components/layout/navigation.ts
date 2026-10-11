@@ -27,6 +27,7 @@ export const navGroups: NavGroup[] = [
         title: 'System',
         items: [
             { label: 'Dashboard',   href: '/school/reports/dashboard',  icon: LayoutDashboard, roles: ['school-admin','principal','teacher','accountant','librarian'] },
+            { label: 'Home',        href: '/school/home',               icon: LayoutDashboard, roles: ['receptionist','driver','warden','store-manager'] },
             { label: 'Dashboard',   href: '/super-admin/dashboard',     icon: LayoutDashboard, roles: ['super-admin'], exact: true },
             { label: 'My Dashboard',href: '/school/student/dashboard',  icon: LayoutDashboard, roles: ['student'] },
             { label: 'My Dashboard',href: '/school/parent/dashboard',   icon: LayoutDashboard, roles: ['parent'] },
@@ -143,12 +144,12 @@ export const navGroups: NavGroup[] = [
     {
         title: 'Communication',
         items: [
-            { label: 'Announcements',    href: '/school/communication/announcements',   icon: Megaphone,     roles: ['super-admin','school-admin','principal','teacher'] },
-            { label: 'Messages',         href: '/school/communication/messages',         icon: MessageSquare, roles: ['super-admin','school-admin','principal','teacher','accountant','librarian'] },
+            { label: 'Announcements',    href: '/school/communication/announcements',   icon: Megaphone,     roles: ['super-admin','school-admin','principal','teacher','receptionist','driver','warden','store-manager'] },
+            { label: 'Messages',         href: '/school/communication/messages',         icon: MessageSquare, roles: ['super-admin','school-admin','principal','teacher','accountant','librarian','receptionist'] },
             { label: 'SMS/Email Blast',  href: '/school/communication/blast',            icon: Send,          roles: ['super-admin','school-admin','principal'] },
             { label: 'Sent Messages',    href: '/school/communication/sent',             icon: History,       roles: ['super-admin','school-admin','principal'] },
             { label: 'Email Templates',  href: '/school/communication/email-templates',  icon: Mail,          roles: ['super-admin','school-admin'] },
-            { label: 'Notifications',    href: '/school/communication/notifications',    icon: Bell,          roles: ['super-admin','school-admin','principal','teacher','accountant','librarian'] },
+            { label: 'Notifications',    href: '/school/communication/notifications',    icon: Bell,          roles: ['super-admin','school-admin','principal','teacher','accountant','librarian','receptionist','driver','warden','store-manager'] },
         ],
     },
     {
@@ -216,6 +217,30 @@ export const bottomTabs: Record<string, BottomTab[]> = {
         { label: 'Library',    href: '/school/library/books',     icon: Library },
         { label: 'Messages',   href: '/school/communication/messages', icon: MessageSquare },
         { label: 'Alerts',     href: '/school/communication/notifications', icon: Bell },
+    ],
+    receptionist: [
+        { label: 'Home',       href: '/school/home',                 icon: LayoutDashboard },
+        { label: 'Visitors',   href: '/school/admissions/visitors',  icon: Users },
+        { label: 'Inquiries',  href: '/school/admissions/inquiries', icon: ClipboardList },
+        { label: 'Students',   href: '/school/students',             icon: GraduationCap },
+    ],
+    driver: [
+        { label: 'Home',       href: '/school/home',                 icon: LayoutDashboard },
+        { label: 'Routes',     href: '/school/transport/routes',     icon: Bus },
+        { label: 'Vehicles',   href: '/school/transport/vehicles',   icon: Bus },
+        { label: 'Notices',    href: '/school/communication/announcements', icon: Megaphone },
+    ],
+    warden: [
+        { label: 'Home',       href: '/school/home',                 icon: LayoutDashboard },
+        { label: 'Hostels',    href: '/school/hostel',               icon: Home },
+        { label: 'Rooms',      href: '/school/hostel/allocations',   icon: ClipboardList },
+        { label: 'Notices',    href: '/school/communication/announcements', icon: Megaphone },
+    ],
+    'store-manager': [
+        { label: 'Home',       href: '/school/home',                 icon: LayoutDashboard },
+        { label: 'Items',      href: '/school/inventory/items',      icon: Package },
+        { label: 'Issues',     href: '/school/inventory/issues',     icon: ClipboardList },
+        { label: 'Assets',     href: '/school/inventory/assets',     icon: Layers },
     ],
     parent: [
         { label: 'Home',       href: '/school/parent/dashboard',  icon: LayoutDashboard },
