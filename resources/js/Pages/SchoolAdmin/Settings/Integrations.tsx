@@ -91,7 +91,7 @@ export default function Integrations({ smtp, sms }: Props) {
                             </CardHeader>
                             <CardContent>
                                 <form onSubmit={submitSmtp} className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         <div>
                                             <Label>SMTP Host *</Label>
                                             <Input value={smtpForm.data.host} onChange={e => smtpForm.setData('host', e.target.value)} placeholder="smtp.gmail.com" />
@@ -102,7 +102,7 @@ export default function Integrations({ smtp, sms }: Props) {
                                             <Input type="number" value={smtpForm.data.port} onChange={e => smtpForm.setData('port', e.target.value)} placeholder="587" />
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         <div>
                                             <Label>Username *</Label>
                                             <Input value={smtpForm.data.username} onChange={e => smtpForm.setData('username', e.target.value)} placeholder="your@email.com" />
@@ -112,7 +112,7 @@ export default function Integrations({ smtp, sms }: Props) {
                                             <Input type="password" value={smtpForm.data.password} onChange={e => smtpForm.setData('password', e.target.value)} placeholder="Leave blank to keep existing" />
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         <div>
                                             <Label>Encryption *</Label>
                                             <Select value={smtpForm.data.encryption} onValueChange={v => smtpForm.setData('encryption', v)}>
@@ -188,7 +188,7 @@ export default function Integrations({ smtp, sms }: Props) {
 
                                     {smsForm.data.provider === 'twilio' && (
                                         <>
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                                 <div>
                                                     <Label>Account SID</Label>
                                                     <Input value={smsForm.data.account_sid} onChange={e => smsForm.setData('account_sid', e.target.value)} placeholder="ACxxxxxxxxxxxxxxxx" />
@@ -207,7 +207,7 @@ export default function Integrations({ smtp, sms }: Props) {
 
                                     {smsForm.data.provider === 'vonage' && (
                                         <>
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                                 <div>
                                                     <Label>API Key</Label>
                                                     <Input value={smsForm.data.api_key} onChange={e => smsForm.setData('api_key', e.target.value)} placeholder="Vonage API Key" />

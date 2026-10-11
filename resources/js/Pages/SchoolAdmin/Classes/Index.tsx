@@ -49,7 +49,7 @@ export default function ClassesIndex() {
         <AppLayout breadcrumbs={[{ label: 'School Setup' }, { label: 'Classes' }]}>
             <Head title="Classes" />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div>
                     <h1 className="text-xl font-bold text-slate-900 dark:text-white">Classes</h1>
                     <p className="text-sm text-slate-500 mt-0.5">{classes.length} class{classes.length !== 1 ? 'es' : ''} configured</p>
@@ -115,7 +115,7 @@ export default function ClassesIndex() {
                             <Input placeholder="e.g. Grade 1 or Class 10" {...register('name')} />
                             {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Order (numeric)</Label>
                                 <Input type="number" placeholder="1" {...register('numeric_name')} />
