@@ -41,7 +41,7 @@ export default function ParentAnnouncements({ linked, announcements }: Props) {
                                                 {a.pinned && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Pinned</span>}
                                                 <h3 className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{a.title}</h3>
                                             </div>
-                                            <p className="text-sm text-slate-600 dark:text-slate-400">{a.body}</p>
+                                            <p className="whitespace-pre-line text-sm text-slate-600 dark:text-slate-400">{a.body}</p>
                                             {a.date && <p className="text-xs text-slate-400 mt-2">{a.date}</p>}
                                         </div>
                                     </div>

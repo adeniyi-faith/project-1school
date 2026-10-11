@@ -97,7 +97,7 @@ class ParentPortalController extends Controller
 
         /* Announcements for parents */
         $announcements = Announcement::where('school_id', $user->school_id)
-            ->where(fn ($q) => $q->where('audience', 'all')->orWhere('audience', 'parents'))
+            ->where(fn ($q) => $q->where('audience', 'all')->orWhere(fn ($q2) => $q2->where('audience', 'role')->where('target_role', 'parent')))
             ->orderByDesc('published_at')
             ->limit(5)
             ->get()
