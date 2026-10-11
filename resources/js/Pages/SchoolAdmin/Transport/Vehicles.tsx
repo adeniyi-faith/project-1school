@@ -69,7 +69,7 @@ export default function Vehicles({ vehicles, filters, stats }: Props) {
     return (
         <AppLayout title="Fleet Management">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Fleet Management</h1>
                         <p className="text-sm text-slate-500 mt-0.5">{vehicles.meta?.total ?? 0} vehicles</p>
@@ -171,7 +171,7 @@ export default function Vehicles({ vehicles, filters, stats }: Props) {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader><DialogTitle>{editing ? 'Edit' : 'Add'} Vehicle</DialogTitle></DialogHeader>
                     <div className="space-y-4 mt-2">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Registration No. <span className="text-red-500">*</span></Label>
                                 <Input value={form.registration_no} onChange={e => setForm(p => ({ ...p, registration_no: e.target.value }))} placeholder="DHAKA-METRO-XX-XXXX" />
@@ -181,7 +181,7 @@ export default function Vehicles({ vehicles, filters, stats }: Props) {
                                 <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Bus 01" />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Type <span className="text-red-500">*</span></Label>
                                 <Select value={form.type} onValueChange={v => setForm(p => ({ ...p, type: v }))}>
@@ -198,7 +198,7 @@ export default function Vehicles({ vehicles, filters, stats }: Props) {
                                 <Input type="number" min="1" value={form.capacity} onChange={e => setForm(p => ({ ...p, capacity: e.target.value }))} />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Driver Name</Label>
                                 <Input value={form.driver_name} onChange={e => setForm(p => ({ ...p, driver_name: e.target.value }))} />

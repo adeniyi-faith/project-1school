@@ -67,7 +67,7 @@ export default function TransportRoutes({ routes, vehicles, filters }: Props) {
     return (
         <AppLayout title="Transport Routes">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Transport Routes</h1>
                         <p className="text-sm text-slate-500 mt-0.5">{routes.meta?.total ?? 0} routes</p>
@@ -161,7 +161,7 @@ export default function TransportRoutes({ routes, vehicles, filters }: Props) {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Start Point</Label>
                                 <Input value={form.start_point} onChange={e => setForm(p => ({ ...p, start_point: e.target.value }))} />

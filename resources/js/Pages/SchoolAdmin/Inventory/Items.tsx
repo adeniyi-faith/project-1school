@@ -65,7 +65,7 @@ export default function InventoryItems({ items, categories, filters, stats }: Pr
     return (
         <AppLayout title="Inventory Items">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Inventory Items</h1>
                         <p className="text-sm text-slate-500 mt-0.5">{items.meta?.total ?? 0} items</p>
@@ -197,7 +197,7 @@ export default function InventoryItems({ items, categories, filters, stats }: Pr
                             <Label>Item Name <span className="text-red-500">*</span></Label>
                             <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Unit <span className="text-red-500">*</span></Label>
                                 <Select value={form.unit} onValueChange={v => setForm(p => ({ ...p, unit: v }))}>

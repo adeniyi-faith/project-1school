@@ -44,7 +44,7 @@ export default function InventoryCategories({ categories }: Props) {
     return (
         <AppLayout title="Inventory Categories">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Inventory Categories</h1>
                         <p className="text-sm text-slate-500 mt-0.5">{categories.length} categories</p>

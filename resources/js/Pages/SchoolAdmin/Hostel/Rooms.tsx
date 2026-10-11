@@ -60,7 +60,7 @@ export default function HostelRooms({ hostel, rooms }: Props) {
     return (
         <AppLayout title={`Rooms — ${hostel.name}`}>
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <Link href="/school/hostel" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white">
                             <ArrowLeft className="w-4 h-4" /> Hostels
@@ -127,7 +127,7 @@ export default function HostelRooms({ hostel, rooms }: Props) {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader><DialogTitle>{editing ? 'Edit' : 'Add'} Room</DialogTitle></DialogHeader>
                     <div className="space-y-4 mt-2">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Room No. <span className="text-red-500">*</span></Label>
                                 <Input value={form.room_no} onChange={e => setForm(p => ({ ...p, room_no: e.target.value }))} placeholder="e.g. 101" />
@@ -137,7 +137,7 @@ export default function HostelRooms({ hostel, rooms }: Props) {
                                 <Input value={form.floor} onChange={e => setForm(p => ({ ...p, floor: e.target.value }))} placeholder="e.g. Ground, 1st" />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Room Type <span className="text-red-500">*</span></Label>
                                 <Select value={form.type} onValueChange={v => setForm(p => ({ ...p, type: v }))}>
@@ -154,7 +154,7 @@ export default function HostelRooms({ hostel, rooms }: Props) {
                                 <Input type="number" min="1" value={form.capacity} onChange={e => setForm(p => ({ ...p, capacity: e.target.value }))} />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Monthly Fee (₦)</Label>
                                 <Input type="number" min="0" value={form.monthly_fee} onChange={e => setForm(p => ({ ...p, monthly_fee: e.target.value }))} />
