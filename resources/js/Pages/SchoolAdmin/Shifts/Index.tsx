@@ -45,7 +45,7 @@ export default function ShiftsIndex() {
         <AppLayout breadcrumbs={[{ label: 'School Setup' }, { label: 'Shifts' }]}>
             <Head title="Shifts" />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div>
                     <h1 className="text-xl font-bold text-slate-900 dark:text-white">Shifts</h1>
                     <p className="text-sm text-slate-500 mt-0.5">{shifts.length} shift{shifts.length !== 1 ? 's' : ''} configured</p>
@@ -103,7 +103,7 @@ export default function ShiftsIndex() {
                             <Input placeholder="Morning" {...register('name')} />
                             {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Start Time <span className="text-red-500">*</span></Label>
                                 <Input type="time" {...register('start_time')} />

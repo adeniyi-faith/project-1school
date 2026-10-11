@@ -85,7 +85,7 @@ export default function Inquiries({ inquiries, filters }: Props) {
     return (
         <AppLayout title="Admission Inquiries">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Admission Inquiries</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Open an inquiry to book an entrance exam or interview, offer a place, and enrol the child.</p>
@@ -215,7 +215,7 @@ export default function Inquiries({ inquiries, filters }: Props) {
                 <DialogContent className="max-w-lg">
                     <DialogHeader><DialogTitle>{editItem ? 'Edit Inquiry' : 'New Inquiry'}</DialogTitle></DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Student Name *</Label>
                                 <Input value={form.data.student_name} onChange={e => form.setData('student_name', e.target.value)} />
@@ -227,7 +227,7 @@ export default function Inquiries({ inquiries, filters }: Props) {
                                 {form.errors.class_interested && <p className="text-xs text-red-500 mt-1">{form.errors.class_interested}</p>}
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Guardian Name *</Label>
                                 <Input value={form.data.guardian_name} onChange={e => form.setData('guardian_name', e.target.value)} />
@@ -243,7 +243,7 @@ export default function Inquiries({ inquiries, filters }: Props) {
                             <Label>Guardian Email</Label>
                             <Input type="email" value={form.data.guardian_email} onChange={e => form.setData('guardian_email', e.target.value)} />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Status</Label>
                                 {editItem && (editItem.status === 'accepted' || editItem.status === 'admitted') ? (

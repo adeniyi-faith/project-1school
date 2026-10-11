@@ -52,7 +52,7 @@ export default function Visitors({ visitors, filters }: Props) {
     return (
         <AppLayout title="Visitor Log">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Visitor Log</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Track visitor check-in and check-out</p>
@@ -168,7 +168,7 @@ export default function Visitors({ visitors, filters }: Props) {
                 <DialogContent className="max-w-md">
                     <DialogHeader><DialogTitle>Check In Visitor</DialogTitle></DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Visitor Name *</Label>
                                 <Input value={form.data.name} onChange={e => form.setData('name', e.target.value)} />

@@ -45,7 +45,7 @@ export default function HolidaysIndex() {
         <AppLayout breadcrumbs={[{ label: 'School Setup' }, { label: 'Holidays' }]}>
             <Head title="Holidays" />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div>
                     <h1 className="text-xl font-bold text-slate-900 dark:text-white">Holidays</h1>
                     <p className="text-sm text-slate-500 mt-0.5">{holidays.length} holiday{holidays.length !== 1 ? 's' : ''} defined</p>
