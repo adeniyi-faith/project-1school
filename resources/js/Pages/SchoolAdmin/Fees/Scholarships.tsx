@@ -96,7 +96,7 @@ export default function Scholarships({ scholarships, awards, categories, can }: 
                     actions={headerActions}
                 />
                 {/* The header hides its buttons on phones, so they are repeated here */}
-                <div className="md:hidden">{headerActions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{headerActions}</div>
 
                 <Panel title="Scholarships" flush>
                     {scholarships.length === 0 ? (

@@ -194,7 +194,7 @@ export default function HomeworkIndex({ homework, classes, subjects, staff, filt
 
                 {/* Pagination */}
                 {homework.last_page > 1 && (
-                    <div className="flex justify-center gap-1">
+                    <div className="flex flex-wrap justify-center gap-1">
                         {homework.links.map((link, i) => (
                             <Button
                                 key={i}

@@ -123,6 +123,7 @@ class StudentController extends Controller
         return Inertia::render('SchoolAdmin/Students/Show', [
             'student' => $student,
             'classHistory' => PromotionController::historyFor($student),
+            'activity' => app(\App\Services\StudentActivityService::class)->for($student, $user),
             'canEdit' => auth()->user()->can('students.edit'),
             'certificates' => StudentCertificate::with('issuer:id,name')->where('student_id', $student->id)->latest('id')->get()
                 ->map(fn (StudentCertificate $c) => CertificateController::row($c)),

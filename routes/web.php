@@ -232,6 +232,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('cbt/tests/{test}',                         [CbtTestController::class, 'destroy'])->middleware('permission:cbt.manage')->name('cbt.tests.destroy');
             Route::post('cbt/tests/{test}/status',                    [CbtTestController::class, 'status'])->middleware('permission:cbt.manage')->name('cbt.tests.status');
             Route::get('cbt/tests/{test}/export',                     [CbtTestController::class, 'export'])->middleware('permission:cbt.view')->name('cbt.tests.export');
+            Route::get('cbt/tests/{test}/attempts/{attempt}',         [CbtTestController::class, 'attempt'])->middleware('permission:cbt.view')->whereNumber(['test','attempt'])->name('cbt.attempts.show');
             Route::post('cbt/tests/{test}/attempts/{attempt}/time',   [CbtTestController::class, 'addTime'])->middleware('permission:cbt.manage')->name('cbt.attempts.time');
             Route::delete('cbt/tests/{test}/attempts/{attempt}',      [CbtTestController::class, 'reset'])->middleware('permission:cbt.manage')->name('cbt.attempts.reset');
             Route::get('cbt/tests/{test}/marking',                    [CbtTestController::class, 'marking'])->middleware('permission:cbt.manage')->name('cbt.tests.marking');
@@ -411,6 +412,8 @@ Route::middleware('auth')->group(function () {
 
             Route::get('hostel/allocations',                              [HostelController::class, 'allocations'])->middleware('permission:hostel.view')->name('hostel.allocations');
             Route::post('hostel/allocations',                             [HostelController::class, 'storeAllocation'])->middleware('permission:hostel.manage')->name('hostel.allocations.store');
+            Route::put('hostel/allocations/{allocation}',                 [HostelController::class, 'updateAllocation'])->middleware('permission:hostel.manage')->name('hostel.allocations.update');
+            Route::get('hostel/student-search',                           [HostelController::class, 'studentSearch'])->middleware('permission:hostel.view')->name('hostel.student-search');
             Route::put('hostel/allocations/{allocation}/vacate',          [HostelController::class, 'vacate'])->middleware('permission:hostel.manage')->name('hostel.vacate');
 
             // Transport Management
@@ -479,6 +482,7 @@ Route::middleware('auth')->group(function () {
 
             Route::get('fees/structures',                    [FeeStructureController::class, 'index'])->middleware('permission:fees.view')->name('fees.structures.index');
             Route::post('fees/structures',                   [FeeStructureController::class, 'store'])->middleware('permission:fees.structure')->name('fees.structures.store');
+            Route::post('fees/structures/many',              [FeeStructureController::class, 'storeMany'])->middleware('permission:fees.structure')->name('fees.structures.many');
             Route::put('fees/structures/{feeStructure}',     [FeeStructureController::class, 'update'])->middleware('permission:fees.structure')->name('fees.structures.update');
             Route::delete('fees/structures/{feeStructure}',  [FeeStructureController::class, 'destroy'])->middleware('permission:fees.structure')->name('fees.structures.destroy');
 

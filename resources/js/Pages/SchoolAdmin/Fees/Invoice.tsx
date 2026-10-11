@@ -100,7 +100,7 @@ export default function Invoice({ invoice, entries, plans, can }: Props) {
                     actions={headerActions}
                 />
                 {/* The header hides its buttons on phones, so they are repeated here */}
-                <div className="md:hidden">{headerActions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{headerActions}</div>
 
                 {invoice.status === 'void' && (
                     <p className="rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">

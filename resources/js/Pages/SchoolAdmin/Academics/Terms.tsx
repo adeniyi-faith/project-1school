@@ -60,7 +60,7 @@ export default function Terms({ years, canEdit }: Props) {
                     description="Each school year is split into terms. Exams and results belong to a term."
                     actions={addYearButton}
                 />
-                {canEdit && <div className="md:hidden">{addYearButton}</div>}
+                {canEdit && <div className="flex flex-wrap gap-2 md:hidden">{addYearButton}</div>}
 
                 {years.length === 0 && (
                     <Panel>

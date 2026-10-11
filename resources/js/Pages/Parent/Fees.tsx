@@ -67,7 +67,7 @@ export default function ParentFees({ linked, children, payOnline = false }: Prop
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="text-xs text-slate-500 border-b dark:border-slate-700 text-left">
-                                                <th className="px-4 py-2 font-medium">Month</th>
+                                                <th className="px-4 py-2 font-medium">For</th>
                                                 <th className="px-4 py-2 font-medium text-right">Due</th>
                                                 <th className="px-4 py-2 font-medium text-right">Paid</th>
                                                 <th className="px-4 py-2 font-medium text-center">Status</th>

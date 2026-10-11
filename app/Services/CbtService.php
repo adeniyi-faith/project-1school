@@ -382,6 +382,55 @@ class CbtService
         return collect($marking)->contains(fn ($m) => ($m['type'] ?? null) === 'theory');
     }
 
+    /**
+     * Everything one sitting shows to staff: each question in the order the student saw it, what they chose or typed,
+     * the right answer and the marks. Built from the saved paper and marking, so later edits to a question text do not
+     * change who got what (the question text itself is shown as it is now).
+     */
+    public function review(CbtAttempt $attempt, string $images = '/cbt/images'): array
+    {
+        $questions = $this->questionsOf($attempt);
+        $marking = $attempt->marking ?? [];
+        $letters = range('A', 'Z');
+
+        $lines = collect($attempt->paper)->values()->map(function (array $line, int $i) use ($questions, $marking, $attempt, $letters, $images) {
+            $q = $questions->get($line['q']);
+            if (! $q) {
+                return null;
+            }
+            $m = $marking[$line['q']] ?? null;
+            $base = ['number' => $i + 1, 'id' => $q->id, 'text' => $q->text, 'image' => $q->image_path ? "{$images}/{$q->id}" : null, 'section' => $line['s'] ?? null, 'max' => (float) $q->marks, 'flagged' => in_array($q->id, $attempt->flags ?? []), 'explanation' => $q->explanation];
+
+            if (self::isTheoryLine($line)) {
+                $written = trim((string) ($attempt->written[$q->id] ?? ''));
+
+                return $base + [
+                    'type' => 'theory', 'written' => $written === '' ? null : $written, 'marking_guide' => $q->marking_guide,
+                    'marks' => $m['marks'] ?? null, 'comment' => $m['comment'] ?? null, 'options' => [], 'chosen' => null, 'correct' => null, 'result' => null,
+                ];
+            }
+
+            $chosen = array_key_exists($q->id, $attempt->answers ?? []) ? (int) $attempt->answers[$q->id] : null;
+            $options = collect($line['o'] ?? array_keys($q->options ?? []))->values()->map(fn ($orig, $pos) => [
+                'letter' => $letters[$pos] ?? '?', 'text' => $q->options[$orig] ?? '', 'chosen' => $chosen === (int) $orig, 'correct' => $q->correct_option === (int) $orig,
+            ]);
+
+            return $base + [
+                'type' => 'objective', 'options' => $options, 'chosen' => $chosen === null ? null : $options->search(fn ($o) => $o['chosen']), 'correct' => $options->search(fn ($o) => $o['correct']),
+                'result' => $chosen === null ? 'blank' : ($chosen === $q->correct_option ? 'right' : 'wrong'),
+                'marks' => $m['marks'] ?? 0, 'written' => null, 'marking_guide' => null, 'comment' => null,
+            ];
+        })->filter()->values();
+
+        return [
+            'lines' => $lines,
+            'counts' => [
+                'right' => $lines->where('result', 'right')->count(), 'wrong' => $lines->where('result', 'wrong')->count(), 'blank' => $lines->where('result', 'blank')->count(),
+                'theory' => $lines->where('type', 'theory')->count(), 'theory_waiting' => $lines->where('type', 'theory')->filter(fn ($l) => $l['marks'] === null)->count(),
+            ],
+        ];
+    }
+
     private function questionsOf(CbtAttempt $attempt): Collection
     {
         return CbtQuestion::withTrashed()->whereIn('id', collect($attempt->paper)->pluck('q'))->get()->keyBy('id');

@@ -196,7 +196,7 @@ export default function OnlineClasses({ onlineClasses, classes, subjects, staff,
                 </Card>
 
                 {onlineClasses.last_page > 1 && (
-                    <div className="flex justify-center gap-1">
+                    <div className="flex flex-wrap justify-center gap-1">
                         {onlineClasses.links.map((link, i) => (
                             <Button key={i} size="sm" variant={link.active ? 'default' : 'outline'} disabled={!link.url}
                                 onClick={() => link.url && router.visit(link.url)}

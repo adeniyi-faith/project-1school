@@ -163,7 +163,7 @@ export default function Inquiry({ inquiry, assessments, matchingGuardians, class
                     actions={headerActions}
                 />
                 {/* The header hides its buttons on phones, so they are repeated here */}
-                <div className="md:hidden">{headerActions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{headerActions}</div>
 
                 {/* Where this application is */}
                 {inquiry.status !== 'dropped' && (

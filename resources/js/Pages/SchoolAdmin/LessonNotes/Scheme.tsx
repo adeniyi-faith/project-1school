@@ -109,7 +109,7 @@ export default function Scheme({ scheme, classes, subjects, terms, currentTerm, 
         <AppLayout breadcrumbs={[{ label: 'Lesson notes', href: '/school/lesson-notes' }, { label: 'Schemes of work', href: '/school/lesson-notes/schemes' }, { label: scheme ? scheme.title : 'New scheme' }]}>
             <form onSubmit={save} className="mx-auto max-w-4xl space-y-5 pb-28 md:pb-10">
                 <PageHeader title={scheme ? scheme.title : 'Add a scheme of work'} description="One subject, one class, one term. Upload the file you already have, or type or paste the weeks." actions={actions} />
-                <div className="md:hidden">{actions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>
 
                 <Panel title="Which subject and class">
                     <div className="grid gap-4 sm:grid-cols-3">

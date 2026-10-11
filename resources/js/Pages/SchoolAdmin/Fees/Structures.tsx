@@ -29,26 +29,41 @@ interface Props {
 }
 
 const FREQ_LABELS: Record<string, string> = {
-    monthly: 'Monthly', quarterly: 'Quarterly', annual: 'Annual', one_time: 'One-Time',
+    per_term: 'Every term', annual: 'Once a year', one_time: 'One-time', monthly: 'Monthly (old)', quarterly: 'Quarterly (old)',
 };
 const FREQ_COLORS: Record<string, string> = {
-    monthly: 'bg-blue-100 text-blue-700', quarterly: 'bg-purple-100 text-purple-700',
-    annual: 'bg-teal-100 text-teal-700', one_time: 'bg-amber-100 text-amber-700',
+    per_term: 'bg-purple-100 text-purple-700', annual: 'bg-teal-100 text-teal-700', one_time: 'bg-amber-100 text-amber-700',
+    monthly: 'bg-slate-100 text-slate-600', quarterly: 'bg-slate-100 text-slate-600',
 };
 
-const emptyForm = { class_id: '', fee_category_id: '', academic_year: '2025-2026', amount: '', due_date: '', frequency: 'monthly', description: '', is_active: true };
+const emptyForm = { class_id: '', fee_category_id: '', academic_year: '', amount: '', due_date: '', frequency: 'per_term', description: '', is_active: true };
 
 export default function FeeStructures({ structures, classes, categories, filters, currentYear }: Props) {
     const { flash } = usePage<PageProps>().props;
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<FeeStructure | null>(null);
     const { data, setData, post, put, processing, errors, reset } = useForm(emptyForm as any);
+    const [manyOpen, setManyOpen] = useState(false);
+    const [many, setMany] = useState({ fee_category_id: '', academic_year: currentYear, frequency: 'per_term', due_date: '', description: '' });
+    const [amounts, setAmounts] = useState<Record<number, string>>({});
+    const [manyError, setManyError] = useState<string | null>(null);
+    const [savingMany, setSavingMany] = useState(false);
+
+    function saveMany() {
+        setSavingMany(true);
+        setManyError(null);
+        router.post('/school/fees/structures/many', { ...many, rows: classes.map(c => ({ class_id: c.id, amount: amounts[c.id] ?? '' })) }, {
+            preserveScroll: true,
+            onSuccess: () => { setManyOpen(false); setAmounts({}); setSavingMany(false); },
+            onError: errs => { setManyError(Object.values(errs)[0] ?? 'Could not save.'); setSavingMany(false); },
+        });
+    }
 
     function applyFilter(key: string, value: string) {
         router.get('/school/fees/structures', { ...filters, [key]: value || undefined }, { preserveScroll: true });
     }
 
-    function openCreate() { reset(); setEditing(null); setOpen(true); }
+    function openCreate() { reset(); setData('academic_year', currentYear); setEditing(null); setOpen(true); }
     function openEdit(s: FeeStructure) {
         setData({
             class_id: String(s.class_id), fee_category_id: String(s.fee_category_id),
@@ -87,10 +102,11 @@ export default function FeeStructures({ structures, classes, categories, filters
                             <p className="text-sm text-slate-500">{structures.meta?.total ?? 0} structures configured</p>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <Link href="/school/fees/categories">
                             <Button variant="outline" className="inline-flex items-center gap-2"><Settings2 className="w-4 h-4" /> Categories</Button>
                         </Link>
+                        <Button variant="outline" onClick={() => { setMany(m => ({ ...m, academic_year: currentYear })); setManyOpen(true); }}>Set for many classes</Button>
                         <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
                             <Plus className="w-4 h-4" /> Add Structure
                         </Button>
@@ -221,14 +237,14 @@ export default function FeeStructures({ structures, classes, categories, filters
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
-                                <Label>Frequency <span className="text-red-500">*</span></Label>
+                                <Label>Charged <span className="text-red-500">*</span></Label>
                                 <Select value={data.frequency} onValueChange={v => setData('frequency', v)}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="monthly">Monthly</SelectItem>
-                                        <SelectItem value="quarterly">Quarterly</SelectItem>
-                                        <SelectItem value="annual">Annual</SelectItem>
-                                        <SelectItem value="one_time">One-Time</SelectItem>
+                                        <SelectItem value="per_term">Every term</SelectItem>
+                                        <SelectItem value="annual">Once a year</SelectItem>
+                                        <SelectItem value="one_time">One-time</SelectItem>
+                                        {(data.frequency === 'monthly' || data.frequency === 'quarterly') && <SelectItem value={data.frequency}>{FREQ_LABELS[data.frequency]}</SelectItem>}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -252,6 +268,62 @@ export default function FeeStructures({ structures, classes, categories, filters
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={manyOpen} onOpenChange={setManyOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader><DialogTitle>Set a fee for many classes</DialogTitle></DialogHeader>
+                    <div className="space-y-3">
+                        <p className="text-sm text-slate-500">Give each class its own amount. Leave a class blank to skip it. A class that already has this fee for the year gets the new amount.</p>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="space-y-1.5">
+                                <Label>Fee type</Label>
+                                <Select value={many.fee_category_id} onValueChange={v => setMany(m => ({ ...m, fee_category_id: v }))}>
+                                    <SelectTrigger><SelectValue placeholder="Choose" /></SelectTrigger>
+                                    <SelectContent>{categories.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>School year</Label>
+                                <Input value={many.academic_year} onChange={e => setMany(m => ({ ...m, academic_year: e.target.value }))} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Charged</Label>
+                                <Select value={many.frequency} onValueChange={v => setMany(m => ({ ...m, frequency: v }))}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="per_term">Every term</SelectItem>
+                                        <SelectItem value="annual">Once a year</SelectItem>
+                                        <SelectItem value="one_time">One-time</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Due date</Label>
+                                <Input type="date" value={many.due_date} onChange={e => setMany(m => ({ ...m, due_date: e.target.value }))} />
+                            </div>
+                        </div>
+                        <div className="flex items-end gap-2">
+                            <div className="flex-1 space-y-1.5">
+                                <Label>Same amount for every class (optional)</Label>
+                                <Input type="number" min="0" id="fill-all" placeholder="₦" onChange={e => setAmounts(Object.fromEntries(classes.map(c => [c.id, e.target.value])))} />
+                            </div>
+                        </div>
+                        <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-slate-200 p-3 dark:border-white/10">
+                            {classes.map(c => (
+                                <div key={c.id} className="flex items-center justify-between gap-3">
+                                    <span className="min-w-0 truncate text-sm">{c.name}</span>
+                                    <Input type="number" min="0" step="0.01" className="w-36" placeholder="₦ amount" value={amounts[c.id] ?? ''} onChange={e => setAmounts(a => ({ ...a, [c.id]: e.target.value }))} />
+                                </div>
+                            ))}
+                        </div>
+                        {manyError && <p className="text-sm text-red-600">{manyError}</p>}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setManyOpen(false)}>Cancel</Button>
+                        <Button onClick={saveMany} disabled={savingMany || !many.fee_category_id || !many.academic_year} className="bg-indigo-600 text-white hover:bg-indigo-700">{savingMany ? 'Saving...' : 'Save fees'}</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </AppLayout>

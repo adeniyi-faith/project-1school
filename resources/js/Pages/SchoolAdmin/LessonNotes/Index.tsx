@@ -40,7 +40,7 @@ export default function LessonNotesIndex({ notes, counts, classes, subjects, ter
                     description={canApprove ? 'Teachers write their notes here and send them for approval. Approve them or send them back with a comment.' : 'Write your lesson notes week by week, print them, and send them for approval.'}
                     actions={actions}
                 />
-                {actions && <div className="md:hidden">{actions}</div>}
+                {actions && <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>}
                 <LessonTabs current="notes" />
 
                 <div className="flex flex-wrap gap-1.5" role="group" aria-label="Status">
