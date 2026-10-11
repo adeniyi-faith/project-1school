@@ -93,7 +93,7 @@ export default function TransportRoutes({ routes, vehicles, filters }: Props) {
                                 <TableHead>Route</TableHead>
                                 <TableHead>Vehicle</TableHead>
                                 <TableHead>Stops</TableHead>
-                                <TableHead className="text-right">Monthly Fee</TableHead>
+                                <TableHead className="text-right">Fee per term</TableHead>
                                 <TableHead className="text-center">Students</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="w-28"></TableHead>
@@ -172,7 +172,7 @@ export default function TransportRoutes({ routes, vehicles, filters }: Props) {
                             </div>
                         </div>
                         <div className="space-y-1.5">
-                            <Label>Monthly Fee (₦)</Label>
+                            <Label>Fee per term (₦)</Label>
                             <Input type="number" min="0" value={form.monthly_fee} onChange={e => setForm(p => ({ ...p, monthly_fee: e.target.value }))} />
                         </div>
 

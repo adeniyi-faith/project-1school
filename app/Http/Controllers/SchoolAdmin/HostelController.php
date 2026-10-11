@@ -215,6 +215,65 @@ class HostelController extends Controller
         return back()->with('success', 'Student allocated to hostel room.');
     }
 
+    /** Change a saved allocation: move to another room or bed, fix the joining date or the notes */
+    public function updateAllocation(Request $request, HostelAllocation $allocation)
+    {
+        if ($allocation->status !== 'active') {
+            return back()->with('error', 'This student has already left, so the allocation cannot be changed.');
+        }
+
+        $data = $request->validate([
+            'hostel_id'    => 'required|exists:hostels,id',
+            'room_id'      => 'required|exists:hostel_rooms,id',
+            'bed_no'       => 'nullable|string|max:20',
+            'joining_date' => 'required|date',
+            'fee_linked'   => 'boolean',
+            'notes'        => 'nullable|string',
+        ]);
+
+        $newRoom = HostelRoom::findOrFail($data['room_id']);
+        if ($newRoom->hostel_id !== (int) $data['hostel_id']) {
+            return back()->withErrors(['room_id' => 'That room is not in the chosen hostel.']);
+        }
+
+        $moving = $newRoom->id !== $allocation->room_id;
+        if ($moving && $newRoom->occupied >= $newRoom->capacity) {
+            return back()->withErrors(['room_id' => 'That room is full.']);
+        }
+
+        DB::transaction(function () use ($allocation, $data, $newRoom, $moving) {
+            if ($moving) {
+                $old = $allocation->room;
+                $old->decrement('occupied');
+                if ($old->status === 'full') {
+                    $old->update(['status' => 'available']);
+                }
+                $newRoom->increment('occupied');
+                if ($newRoom->fresh()->occupied >= $newRoom->capacity) {
+                    $newRoom->update(['status' => 'full']);
+                }
+            }
+            $allocation->update($data);
+        });
+
+        return back()->with('success', $moving ? 'Student moved to the new room.' : 'Allocation updated.');
+    }
+
+    /** Find students by name or admission number for the allocation form */
+    public function studentSearch(Request $request)
+    {
+        $q = trim((string) $request->query('q'));
+        if (mb_strlen($q) < 2) {
+            return response()->json(['data' => []]);
+        }
+
+        $taken = HostelAllocation::where('status', 'active')->pluck('student_id');
+
+        return response()->json(['data' => Student::where('status', 'active')->whereNotIn('id', $taken)
+            ->where(fn ($w) => $w->where('first_name', 'like', "%{$q}%")->orWhere('last_name', 'like', "%{$q}%")->orWhere('admission_no', 'like', "%{$q}%"))
+            ->orderBy('first_name')->limit(20)->get(['id', 'first_name', 'last_name', 'admission_no'])]);
+    }
+
     public function vacate(Request $request, HostelAllocation $allocation)
     {
         $data = $request->validate([
@@ -239,10 +298,10 @@ class HostelController extends Controller
 
     // ── Rooms for a hostel (AJAX / select) ────────────────────────
 
-    public function hostelRooms(Hostel $hostel)
+    public function hostelRooms(Request $request, Hostel $hostel)
     {
         $rooms = HostelRoom::where('hostel_id', $hostel->id)
-            ->where('status', 'available')
+            ->where(fn ($q) => $q->where('status', 'available')->orWhere('id', $request->integer('include')))
             ->get(['id', 'room_no', 'floor', 'type', 'capacity', 'occupied', 'monthly_fee', 'ac']);
 
         return response()->json($rooms);

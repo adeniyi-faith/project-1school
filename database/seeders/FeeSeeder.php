@@ -46,7 +46,7 @@ class FeeSeeder extends Seeder
 
             $structures[$class->id]['tuition'] = FeeStructure::firstOrCreate(
                 ['school_id' => $sid, 'class_id' => $class->id, 'fee_category_id' => $categories['tuition']->id, 'academic_year' => '2025-2026'],
-                ['amount' => $tuition, 'frequency' => 'monthly', 'due_date' => '2026-01-10', 'is_active' => true]
+                ['amount' => $tuition, 'frequency' => 'per_term', 'due_date' => '2026-01-10', 'is_active' => true]
             );
 
             $structures[$class->id]['exam'] = FeeStructure::firstOrCreate(
