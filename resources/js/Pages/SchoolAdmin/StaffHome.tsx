@@ -3,6 +3,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { PageHeader, Panel, Pill, StatStrip } from '@/components/app/kit';
 import { Bus, ClipboardList, Home, Megaphone, Package, Users } from 'lucide-react';
+import ExpandableText from '@/components/ExpandableText';
 
 interface FrontDesk {
     visitors_today: number; still_inside: number; open_inquiries: number;
@@ -120,7 +121,7 @@ export default function StaffHome({ name, panels, announcements }: Props) {
                             {announcements.map(a => (
                                 <li key={a.id}>
                                     <p className="text-sm font-medium text-slate-900 dark:text-white">{a.title} <span className="text-xs font-normal text-slate-400">{a.date}</span></p>
-                                    <p className="line-clamp-2 text-sm text-slate-600 dark:text-slate-300">{a.body}</p>
+                                    <ExpandableText text={a.body} className="text-sm text-slate-600 dark:text-slate-300" />
                                 </li>
                             ))}
                         </ul>

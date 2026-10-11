@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Pencil, Trash2, Pin } from 'lucide-react';
+import ExpandableText from '@/components/ExpandableText';
 
 interface SchoolClass  { id: number; name: string; }
 interface Author       { id: number; name: string; }
@@ -131,7 +132,7 @@ export default function Announcements({ announcements, classes, filters, can = {
                                                 {a.audience === 'all' ? 'School-wide' : a.audience === 'class' ? (a.school_class?.name ?? 'Class') : (a.target_role ?? 'Role')}
                                             </Badge>
                                         </div>
-                                        <p className="text-sm text-slate-500 mt-1 line-clamp-2">{a.body}</p>
+                                        <ExpandableText text={a.body} className="text-sm text-slate-500 mt-1" />
                                         <p className="text-xs text-slate-400 mt-1">
                                             By {a.author?.name ?? 'Unknown'} · {a.published_at ? new Date(a.published_at).toLocaleDateString() : 'Draft'}
                                         </p>
