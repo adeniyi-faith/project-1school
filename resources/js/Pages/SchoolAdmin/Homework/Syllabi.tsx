@@ -91,7 +91,7 @@ export default function Syllabi({ syllabi, classes, subjects, filters }: Props) 
     return (
         <AppLayout title="Syllabus">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Syllabus</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Track topic-wise syllabus completion</p>
@@ -187,7 +187,7 @@ export default function Syllabi({ syllabi, classes, subjects, filters }: Props) 
                     <DialogHeader><DialogTitle>{editing ? 'Edit Syllabus' : 'New Syllabus'}</DialogTitle></DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
                         {!editing && (
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <Label>Class *</Label>
                                     <Select value={data.class_id} onValueChange={v => setData('class_id', v)}>
@@ -206,7 +206,7 @@ export default function Syllabi({ syllabi, classes, subjects, filters }: Props) 
                                 </div>
                             </div>
                         )}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Title *</Label>
                                 <Input value={data.title} onChange={e => setData('title', e.target.value)} />

@@ -85,7 +85,7 @@ export default function Announcements({ announcements, classes, filters, can = {
     return (
         <AppLayout title="Announcements">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Announcements</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Post school-wide and class-specific announcements</p>
@@ -172,7 +172,7 @@ export default function Announcements({ announcements, classes, filters, can = {
                             <Textarea value={data.body} onChange={e => setData('body', e.target.value)} rows={4} />
                             {errors.body && <p className="text-xs text-red-500 mt-1">{errors.body}</p>}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Audience *</Label>
                                 <Select value={data.audience} onValueChange={v => setData('audience', v)}>
