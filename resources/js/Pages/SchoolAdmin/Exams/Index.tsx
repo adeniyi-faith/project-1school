@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, MoreHorizontal, Pencil, Trash2, ClipboardList, BarChart3, BookOpen, FileText, Settings, ArrowRightLeft } from 'lucide-react';
 import type { SchoolClass, PageProps, PaginatedResponse, TermOption } from '@/Types';
+import { useCan } from '@/lib/can';
 
 interface Exam {
     id: number; name: string; type: string; class_id: number; term_id: number | null;
@@ -44,6 +45,7 @@ const TYPE_LABELS: Record<string, string> = {
 const emptyForm = { name: '', type: 'mid_term', class_id: '', term_id: '', start_date: '', end_date: '', status: 'draft', description: '' };
 
 export default function ExamsIndex({ exams, classes, terms, filters, stats, parts = [] }: Props) {
+    const can = useCan();
     // Copy an exam's marks into one score part of the term results
     const [copying, setCopying] = useState<Exam | null>(null);
     const copy = useForm({ term_id: '', part: '', replace: false });
@@ -112,9 +114,11 @@ export default function ExamsIndex({ exams, classes, terms, filters, stats, part
                         <Link href="/school/academics/assessment">
                             <Button variant="outline" className="inline-flex items-center gap-2"><Settings className="w-4 h-4" /> Scores &amp; Grades</Button>
                         </Link>
-                        <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
-                            <Plus className="w-4 h-4" /> Add Exam
-                        </Button>
+                        {can('exams.create') && (
+                            <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
+                                <Plus className="w-4 h-4" /> Add Exam
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -201,9 +205,9 @@ export default function ExamsIndex({ exams, classes, terms, filters, stats, part
                                                     <Button variant="ghost" size="icon" className="w-8 h-8"><MoreHorizontal className="w-4 h-4" /></Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => openEdit(exam)} className="flex items-center gap-2 text-sm"><Pencil className="w-4 h-4" /> Edit</DropdownMenuItem>
-                                                    {parts.length > 0 && <DropdownMenuItem onClick={() => openCopy(exam)} className="flex items-center gap-2 text-sm"><ArrowRightLeft className="w-4 h-4" /> Copy into term results</DropdownMenuItem>}
-                                                    <DropdownMenuItem onClick={() => handleDelete(exam)} className="flex items-center gap-2 text-sm text-red-600 focus:text-red-600"><Trash2 className="w-4 h-4" /> Delete</DropdownMenuItem>
+                                                    {can('exams.edit') && <DropdownMenuItem onClick={() => openEdit(exam)} className="flex items-center gap-2 text-sm"><Pencil className="w-4 h-4" /> Edit</DropdownMenuItem>}
+                                                    {can('marks.entry') && parts.length > 0 && <DropdownMenuItem onClick={() => openCopy(exam)} className="flex items-center gap-2 text-sm"><ArrowRightLeft className="w-4 h-4" /> Copy into term results</DropdownMenuItem>}
+                                                    {can('exams.delete') && <DropdownMenuItem onClick={() => handleDelete(exam)} className="flex items-center gap-2 text-sm text-red-600 focus:text-red-600"><Trash2 className="w-4 h-4" /> Delete</DropdownMenuItem>}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </div>

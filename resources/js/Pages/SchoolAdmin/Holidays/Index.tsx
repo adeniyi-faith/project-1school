@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PageProps, Holiday } from '@/Types';
+import { useCan } from '@/lib/can';
 
 interface Props extends PageProps { holidays: Holiday[] }
 
@@ -23,6 +24,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function HolidaysIndex() {
+    const can = useCan();
     const { holidays } = usePage<Props>().props;
     const [open, setOpen]       = useState(false);
     const [editing, setEditing] = useState<Holiday | null>(null);
@@ -50,9 +52,11 @@ export default function HolidaysIndex() {
                     <h1 className="text-xl font-bold text-slate-900 dark:text-white">Holidays</h1>
                     <p className="text-sm text-slate-500 mt-0.5">{holidays.length} holiday{holidays.length !== 1 ? 's' : ''} defined</p>
                 </div>
-                <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
-                    <Plus className="w-4 h-4" /> Add Holiday
-                </Button>
+                {can('settings.edit') && (
+                    <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Add Holiday
+                    </Button>
+                )}
             </div>
 
             <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
@@ -82,7 +86,7 @@ export default function HolidaysIndex() {
                                     <TableCell className="text-sm text-slate-700 dark:text-slate-300">{h.name}</TableCell>
                                     <TableCell className="text-sm text-slate-500">{h.description ?? '—'}</TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-1">
+                                        <div className={`flex items-center gap-1 ${can('settings.edit') ? '' : 'hidden'}`}>
                                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(h)}><Pencil className="w-3.5 h-3.5" /></Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => { if (confirm(`Delete "${h.name}"?`)) router.delete(`/school/holidays/${h.id}`); }}><Trash2 className="w-3.5 h-3.5" /></Button>
                                         </div>

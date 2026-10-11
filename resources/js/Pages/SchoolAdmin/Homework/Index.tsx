@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2, Eye, Filter } from 'lucide-react';
+import { useCan } from '@/lib/can';
 
 interface SchoolClass { id: number; name: string; }
 interface Subject     { id: number; name: string; }
@@ -48,6 +49,7 @@ interface Props {
 const empty = { class_id: '', subject_id: '', teacher_id: '', title: '', description: '', due_date: '' };
 
 export default function HomeworkIndex({ homework, classes, subjects, staff, filters }: Props) {
+    const can = useCan();
     const [open, setOpen]       = useState(false);
     const [editing, setEditing] = useState<Homework | null>(null);
     const [filterClass, setFilterClass]     = useState(filters.class_id ?? '');
@@ -94,9 +96,11 @@ export default function HomeworkIndex({ homework, classes, subjects, staff, filt
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Homework</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Manage and track homework assignments</p>
                     </div>
-                    <Button onClick={openCreate} className="gap-2">
-                        <Plus className="w-4 h-4" /> Assign Homework
-                    </Button>
+                    {can('homework.create') && (
+                        <Button onClick={openCreate} className="gap-2">
+                            <Plus className="w-4 h-4" /> Assign Homework
+                        </Button>
+                    )}
                 </div>
 
                 {/* Filters */}
@@ -170,12 +174,16 @@ export default function HomeworkIndex({ homework, classes, subjects, staff, filt
                                             <Button size="sm" variant="outline" onClick={() => router.visit(`/school/homework/${hw.id}/submissions`)}>
                                                 <Eye className="w-3.5 h-3.5" />
                                             </Button>
-                                            <Button size="sm" variant="outline" onClick={() => openEdit(hw)}>
-                                                <Pencil className="w-3.5 h-3.5" />
-                                            </Button>
-                                            <Button size="sm" variant="destructive" onClick={() => destroy(hw.id)}>
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </Button>
+                                            {can('homework.create') && (
+                                                <Button size="sm" variant="outline" onClick={() => openEdit(hw)}>
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </Button>
+                                            )}
+                                            {can('homework.create') && (
+                                                <Button size="sm" variant="destructive" onClick={() => destroy(hw.id)}>
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </Button>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))}

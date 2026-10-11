@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PageProps, Shift } from '@/Types';
+import { useCan } from '@/lib/can';
 
 interface Props extends PageProps { shifts: Shift[] }
 
@@ -23,6 +24,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function ShiftsIndex() {
+    const can = useCan();
     const { shifts } = usePage<Props>().props;
     const [open, setOpen]       = useState(false);
     const [editing, setEditing] = useState<Shift | null>(null);
@@ -50,9 +52,11 @@ export default function ShiftsIndex() {
                     <h1 className="text-xl font-bold text-slate-900 dark:text-white">Shifts</h1>
                     <p className="text-sm text-slate-500 mt-0.5">{shifts.length} shift{shifts.length !== 1 ? 's' : ''} configured</p>
                 </div>
-                <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
-                    <Plus className="w-4 h-4" /> Add Shift
-                </Button>
+                {can('settings.edit') && (
+                    <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Add Shift
+                    </Button>
+                )}
             </div>
 
             <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
@@ -80,7 +84,7 @@ export default function ShiftsIndex() {
                                     <TableCell className="text-sm text-slate-500">{s.start_time.slice(0, 5)}</TableCell>
                                     <TableCell className="text-sm text-slate-500">{s.end_time.slice(0, 5)}</TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-1">
+                                        <div className={`flex items-center gap-1 ${can('settings.edit') ? '' : 'hidden'}`}>
                                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(s)}><Pencil className="w-3.5 h-3.5" /></Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => { if (confirm(`Delete "${s.name}"?`)) router.delete(`/school/shifts/${s.id}`); }}><Trash2 className="w-3.5 h-3.5" /></Button>
                                         </div>

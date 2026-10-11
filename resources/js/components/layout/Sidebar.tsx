@@ -57,7 +57,7 @@ export default function Sidebar({ drawer = false, onNavigate }: SidebarProps) {
     const collapsed = drawer ? false : sidebarCollapsed;
     const role = auth.user?.role ?? '';
     const roleLabel = role.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    const groups = navGroupsForRole(role);
+    const groups = navGroupsForRole(role, auth.paths);
 
     return (
         <TooltipProvider delayDuration={0}>
