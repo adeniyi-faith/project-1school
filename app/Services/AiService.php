@@ -22,6 +22,7 @@ class AiService
     /** The AI tools, as schools see them. Later tools are added here. */
     public const FEATURES = [
         'result_comments' => 'Report card comments',
+        'lesson_notes' => 'Lesson notes and schemes of work',
     ];
 
     /** Two kinds of model: one for long careful writing, one for short quick jobs */
@@ -141,7 +142,7 @@ class AiService
      * Ask the AI. $tier picks the model ('writing' or 'quick'). With a $schema the answer is decoded JSON, otherwise text.
      * Refuses (as a form error on "ai") when the school may not use the tool, and logs every request it sends.
      */
-    public function ask(int $schoolId, ?int $userId, string $feature, string $tier, string $system, string $prompt, ?array $schema = null, int $maxTokens = 8192): mixed
+    public function ask(int $schoolId, ?int $userId, string $feature, string $tier, string $system, string $prompt, ?array $schema = null, int $maxTokens = 8192, array $files = []): mixed
     {
         if ($why = $this->unavailable($schoolId, $feature)) {
             throw ValidationException::withMessages(['ai' => $why]);
@@ -156,7 +157,7 @@ class AiService
         ]);
 
         try {
-            $answer = $this->gemini->generate((string) $this->key(), $model, $system, $prompt, $schema, $maxTokens);
+            $answer = $this->gemini->generate((string) $this->key(), $model, $system, $prompt, $schema, $maxTokens, $files);
         } catch (AiFailure $e) {
             $log($e->tokens, $e->getMessage());
             throw ValidationException::withMessages(['ai' => $e->getMessage()]);
