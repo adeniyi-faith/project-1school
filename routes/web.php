@@ -249,6 +249,7 @@ Route::middleware('auth')->group(function () {
             Route::get('exams/{exam}/marks',                 [ExamController::class, 'marks'])->middleware('permission:marks.view')->name('exams.marks');
             Route::post('exams/{exam}/marks',                [ExamController::class, 'saveMarks'])->middleware('permission:marks.entry')->name('exams.marks.save');
             Route::get('exams/{exam}/results',               [ExamController::class, 'results'])->middleware('permission:results.view')->name('exams.results');
+            Route::post('exams/{exam}/copy-to-results',      [ExamController::class, 'copyToResults'])->middleware('permission:marks.entry')->name('exams.copy-to-results');
             // School years, terms, score setups and grade scales
             Route::get('academics/terms',                      [AcademicSetupController::class, 'terms'])->middleware('permission:exams.view')->name('academics.terms');
             Route::post('academics/years',                     [AcademicSetupController::class, 'storeYear'])->middleware('permission:exams.edit')->name('academics.years.store');

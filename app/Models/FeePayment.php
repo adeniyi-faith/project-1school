@@ -31,10 +31,9 @@ class FeePayment extends Model
     {
         static::creating(function (FeePayment $payment) {
             if (empty($payment->receipt_no)) {
-                $payment->receipt_no = 'RCP-' . date('Y') . '-' . str_pad(
-                    (FeePayment::withoutGlobalScopes()->where('school_id', $payment->school_id)->count() + 1),
-                    5, '0', STR_PAD_LEFT
-                );
+                // receipt_no is unique across all schools, so the free-number check looks at every school
+                $payment->receipt_no = NumberSequence::next($payment->school_id, 'RCP-'.date('Y').'-', 5,
+                    FeePayment::withoutGlobalScopes(), 'receipt_no');
             }
         });
     }
