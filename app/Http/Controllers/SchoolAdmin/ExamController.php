@@ -11,6 +11,7 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Services\GradingService;
+use App\Services\OldMarksService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,8 @@ class ExamController extends Controller
                 ->map(fn (Term $t) => ['id' => $t->id, 'label' => trim(($t->academicYear?->name ?? '') . ' · ' . $t->name, ' ·'), 'is_current' => $t->is_current])
                 ->values(),
             'filters' => $request->only('class_id', 'status'),
+            // for "Copy into term results"
+            'parts'   => $request->user()->can('marks.entry') ? OldMarksService::partNames() : [],
             'stats'   => [
                 'total'     => Exam::count(),
                 'draft'     => Exam::where('status', 'draft')->count(),
@@ -246,5 +249,32 @@ class ExamController extends Controller
             'gradeScale' => GradingService::forClass($exam->school_id, $exam->class_id)->scales(),
             'filters'    => ['section_id' => $sectionId],
         ]);
+    }
+
+    /** Copy this exam's marks into one score part of the term results */
+    public function copyToResults(Request $request, Exam $exam, OldMarksService $marks): RedirectResponse
+    {
+        $data = $request->validate([
+            'term_id' => ['required', Rule::exists('terms', 'id')->where('school_id', $exam->school_id)],
+            'part'    => 'required|string|max:50',
+            'replace' => 'boolean',
+        ]);
+        $r = $marks->copy($exam, (int) $data['term_id'], $data['part'], (bool) ($data['replace'] ?? false));
+
+        $message = "{$r['copied']} mark".($r['copied'] === 1 ? '' : 's')." copied into the term results ({$data['part']}).";
+        if ($r['kept']) {
+            $message .= " {$r['kept']} left as they were because a score was already there.";
+        }
+        if ($r['absent']) {
+            $message .= " {$r['absent']} absent or blank.";
+        }
+        if ($r['missing_part']) {
+            $message .= ' Skipped '.implode(', ', $r['missing_part'])." because its score setup has no part called {$data['part']}.";
+        }
+        if ($r['no_full_marks']) {
+            $message .= ' Skipped '.implode(', ', $r['no_full_marks']).' because the subject has no full marks set.';
+        }
+
+        return back()->with($r['copied'] ? 'success' : 'error', $message);
     }
 }

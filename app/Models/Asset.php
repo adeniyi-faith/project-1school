@@ -36,9 +36,8 @@ class Asset extends Model
 
         static::creating(function (Asset $asset) {
             if (empty($asset->asset_code)) {
-                $year  = now()->format('Y');
-                $count = static::withoutGlobalScopes()->where('school_id', $asset->school_id)->count() + 1;
-                $asset->asset_code = 'AST-' . $year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+                $asset->asset_code = NumberSequence::next($asset->school_id, 'AST-'.now()->format('Y').'-', 4,
+                    static::withoutGlobalScopes()->where('school_id', $asset->school_id), 'asset_code');
             }
             if ($asset->current_value == 0) {
                 $asset->current_value = $asset->purchase_price;
