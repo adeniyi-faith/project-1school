@@ -65,7 +65,7 @@ export default function Formats({ formats, canManage }: Props) {
         <AppLayout breadcrumbs={[{ label: 'Lesson notes', href: '/school/lesson-notes' }, { label: 'Formats' }]}>
             <div className="mx-auto max-w-5xl space-y-5 pb-24 md:pb-0">
                 <PageHeader title="Lesson note formats" description="The headings a lesson note is written under. The default format is used for new notes; teachers can pick another. The AI writes under the same headings." actions={actions} />
-                {actions && <div className="md:hidden">{actions}</div>}
+                {actions && <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>}
                 <LessonTabs current="formats" />
 
                 <div className="grid gap-3 md:grid-cols-2">

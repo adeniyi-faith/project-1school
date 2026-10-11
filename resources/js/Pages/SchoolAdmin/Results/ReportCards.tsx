@@ -111,7 +111,7 @@ export default function ReportCards({ sheet, design, signers, students, canDesig
                     actions={headerActions}
                 />
                 {/* The header hides its buttons on phones, so they are repeated here */}
-                <div className="md:hidden">{headerActions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{headerActions}</div>
                 <LogoTip />
 
                 {writable.length > 0 && students.length > 0 && sheet.status !== 'locked' && (

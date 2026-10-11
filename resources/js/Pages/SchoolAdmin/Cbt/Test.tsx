@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { EmptyState, PageHeader, Panel, Pill, Segmented, StatStrip } from '@/components/app/kit';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AttemptPill, CbtStatusPill, examTime } from '@/components/cbt/CbtParts';
-import { ArrowLeft, Calculator, Clock, Download, KeyRound, PenLine, Pencil, PlayCircle, Printer, RotateCcw, Send, StopCircle, Trash2, UserPlus, Users, X } from 'lucide-react';
+import { ArrowLeft, Calculator, Clock, Download, Eye, KeyRound, PenLine, Pencil, PlayCircle, Printer, RotateCcw, Send, StopCircle, Trash2, UserPlus, Users, X } from 'lucide-react';
 import type { CbtResultRow, CbtTestRow } from '@/Types';
 
 interface QuestionReport {
@@ -72,7 +72,7 @@ export default function CbtTestPage({ test, problems, results, summary, question
             <div className="mx-auto max-w-5xl space-y-6 pb-24 md:pb-0">
                 <Link href="/school/cbt/tests" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"><ArrowLeft className="size-4" /> All tests</Link>
                 <PageHeader title={test.title} description={`${[entrance ? 'Entrance exam' : test.class, test.subject, test.term].filter(Boolean).join(' · ')} · ${test.questions} questions in ${test.duration_minutes} minutes`} actions={actions} />
-                <div className="md:hidden">{actions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>
 
                 {(problems.length > 0 || statusProblems.length > 0) && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
@@ -155,7 +155,7 @@ export default function CbtTestPage({ test, problems, results, summary, question
                                             <tr key={r.key}>
                                                 <td className="px-5 py-2.5">
                                                     <p className="font-medium text-slate-900 dark:text-white">
-                                                        {entrance && r.inquiry_id ? <Link href={`/school/admissions/inquiries/${r.inquiry_id}`} className="hover:underline">{r.name}</Link> : r.name}
+                                                        {r.attempt_id ? <Link href={`${url}/attempts/${r.attempt_id}`} className="hover:underline" title="See what they did">{r.name}</Link> : entrance && r.inquiry_id ? <Link href={`/school/admissions/inquiries/${r.inquiry_id}`} className="hover:underline">{r.name}</Link> : r.name}
                                                     </p>
                                                     <p className="text-xs text-slate-500">{entrance ? `Exam no. ${r.admission_no}${r.class_interested ? ` · for ${r.class_interested}` : ''}` : r.admission_no}</p>
                                                 </td>
@@ -182,6 +182,7 @@ export default function CbtTestPage({ test, problems, results, summary, question
                                                         )}
                                                         {r.attempt_id && (
                                                             <>
+                                                                <Link href={`${url}/attempts/${r.attempt_id}`} title="See their answers" className="inline-flex h-8 items-center px-2.5 text-slate-600 hover:text-slate-900 dark:text-slate-300"><Eye className="size-4" /></Link>
                                                                 <Button variant="ghost" size="sm" onClick={() => setTimeFor(r)} title="Give more time"><Clock className="size-4" /></Button>
                                                                 <Button variant="ghost" size="sm" title="Let them start again" onClick={() => confirm(`Remove ${r.name}'s sitting so they can start again with new questions? Their answers will be lost.`) && router.delete(`${url}/attempts/${r.attempt_id}`, { preserveScroll: true })}>
                                                                     <RotateCcw className="size-4" />

@@ -34,7 +34,7 @@ export default function Schemes({ schemes, classes, subjects, terms, filters, ca
         <AppLayout breadcrumbs={[{ label: 'Lesson notes', href: '/school/lesson-notes' }, { label: 'Schemes of work' }]}>
             <div className="mx-auto max-w-5xl space-y-5 pb-24 md:pb-0">
                 <PageHeader title="Schemes of work" description="Upload each subject's scheme of work for the term, or type it in. Teachers then pick a week when writing a lesson note, and the topic fills in." actions={actions} />
-                {actions && <div className="md:hidden">{actions}</div>}
+                {actions && <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>}
                 <LessonTabs current="schemes" />
 
                 <div className="grid gap-2 sm:grid-cols-3">

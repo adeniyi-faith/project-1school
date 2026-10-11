@@ -108,7 +108,7 @@ export default function SubjectsIndex({ subjects, classes, levels, departments }
                 <PageHeader title="Subjects"
                     description="Each subject is made once and ticked for every class that offers it, so Mathematics is one subject from Primary 1 to SS 3. In senior classes a subject can be kept to some departments, such as Physics for Science arms."
                     actions={actions} />
-                <div className="md:hidden">{actions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>
 
                 <div className="grid gap-2 sm:grid-cols-2">
                     <div className="relative">

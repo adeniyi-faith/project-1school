@@ -19,7 +19,7 @@ export default function ClubsIndex({ clubs, staff, can }: Props) {
         <AppLayout title="Clubs">
             <div className="space-y-6">
                 <PageHeader title="Clubs and societies" description="Each club's members, their roles (president, secretary ...) and the teacher in charge. Members show on each student's page." actions={add} />
-                {add && <div className="md:hidden">{add}</div>}
+                {add && <div className="flex flex-wrap gap-2 md:hidden">{add}</div>}
 
                 {clubs.length === 0 ? (
                     <Panel>

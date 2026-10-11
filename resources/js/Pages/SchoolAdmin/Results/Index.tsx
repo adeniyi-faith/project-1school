@@ -51,7 +51,7 @@ export default function ResultsIndex({ terms, termId, sheets }: Props) {
                     actions={headerActions}
                 />
                 {/* The header hides its buttons on phones, so they are repeated here */}
-                <div className="md:hidden">{headerActions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{headerActions}</div>
 
                 {terms.length === 0 ? (
                     <Panel>

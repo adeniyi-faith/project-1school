@@ -48,7 +48,7 @@ export default function CertificatesIndex({ certificates, filters, types, canIss
                     description="Every testimonial and transfer certificate the school has issued. To issue one, open the student's page and choose the Certificates tab."
                     actions={designLink}
                 />
-                <div className="md:hidden">{designLink}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{designLink}</div>
 
                 <div className="flex flex-wrap gap-2">
                     <form onSubmit={e => { e.preventDefault(); apply({ search }); }} className="relative min-w-60 flex-1">
