@@ -172,7 +172,7 @@ export default function EditStudent() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="col-span-2 space-y-1.5">
+                            <div className="sm:col-span-2 space-y-1.5">
                                 <Label className="text-sm font-medium">Address</Label>
                                 <Textarea rows={2} className="resize-none" {...register('address')} />
                             </div>
@@ -226,7 +226,7 @@ export default function EditStudent() {
                             <Field name="guardian.phone"      label="Phone" />
                             <Field name="guardian.email"      label="Email" type="email" />
                             <Field name="guardian.occupation" label="Occupation" />
-                            <div className="col-span-2 space-y-1.5">
+                            <div className="sm:col-span-2 space-y-1.5">
                                 <Label className="text-sm font-medium">Guardian Address</Label>
                                 <Textarea rows={2} className="resize-none" {...register('guardian.address')} />
                             </div>
