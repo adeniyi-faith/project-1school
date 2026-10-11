@@ -122,13 +122,45 @@ class RegistrationAndDemoTest extends SecurityTestCase
         config(['app.demo_enabled' => false]);
 
         $this->get('/demo')->assertNotFound();
+        $this->post('/demo/admin')->assertNotFound();
+    }
+
+    public function test_parent_and_student_demos_wait_for_sample_pupils_and_other_types_are_refused(): void
+    {
+        config(['app.demo_enabled' => true, 'app.demo_email' => 'demo@schoolruns.demo']);
+
+        $this->get('/demo')->assertInertia(fn ($page) => $page->where('accounts.5.key', 'student')->where('accounts.5.available', false));
+        $this->post('/demo/student')->assertRedirect(route('demo'))->assertSessionHas('error');
+        $this->assertGuest();
+
+        $this->post('/demo/super-admin')->assertNotFound();
+        $this->assertGuest();
+
+        $this->post('/demo/teacher')->assertRedirect(route('dashboard'));
+        $this->assertTrue(auth()->user()->hasRole('teacher'));
+        $this->assertSame('demo-teacher@schoolruns.demo', auth()->user()->email);
+    }
+
+    public function test_a_real_account_is_never_swapped_for_a_demo_one(): void
+    {
+        config(['app.demo_enabled' => true, 'app.demo_email' => 'demo@schoolruns.demo']);
+        $school = $this->makeSchool('Real School');
+        $admin = $this->makeUser($school, 'school-admin');
+
+        $this->actingAs($admin)->get('/demo')->assertRedirect(route('dashboard'));
+        $this->actingAs($admin)->post('/demo/teacher')->assertRedirect(route('dashboard'));
+        $this->assertSame($admin->id, auth()->id());
     }
 
     public function test_the_demo_signs_a_visitor_in_but_cannot_change_anything(): void
     {
         config(['app.demo_enabled' => true, 'app.demo_email' => 'demo@schoolruns.demo']);
 
-        $this->get('/demo')->assertRedirect(route('dashboard'));
+        // The demo first asks which account type to try
+        $this->get('/demo')->assertOk()->assertInertia(fn ($page) => $page->component('Auth/DemoPick', false));
+        $this->assertGuest();
+
+        $this->post('/demo/admin')->assertRedirect(route('dashboard'));
         $this->assertAuthenticated();
         $this->assertSame('demo@schoolruns.demo', auth()->user()->email);
 
@@ -143,7 +175,7 @@ class RegistrationAndDemoTest extends SecurityTestCase
     public function test_the_demo_can_try_designs_with_pictures_because_nothing_is_saved(): void
     {
         config(['app.demo_enabled' => true, 'app.demo_email' => 'demo@schoolruns.demo']);
-        $this->get('/demo');
+        $this->post('/demo/admin');
 
         $this->post('/school/certificates/designs/testimonial/try', [
             'title' => 'Demo Try', 'signature' => \Illuminate\Http\UploadedFile::fake()->image('s.png', 20, 20),
