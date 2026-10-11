@@ -139,4 +139,33 @@ class DemoSchoolSeederTest extends TestCase
         $this->artisan('demo:fill')->assertSuccessful();
         $this->assertSame($firstId, DB::table('students')->min('id'));
     }
+
+    public function test_demo_fill_also_fills_the_side_departments_and_every_bell_has_notices(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+        config(['app.demo_email' => 'demo@schoolruns.demo', 'app.demo_enabled' => true]);
+
+        $this->artisan('demo:fill')->assertSuccessful();
+
+        foreach (['hostels', 'hostel_allocations', 'vehicles', 'routes', 'student_route', 'book_issues', 'inventory_items', 'assets', 'visitor_logs', 'admission_inquiries'] as $table) {
+            $this->assertGreaterThan(0, DB::table($table)->count(), "{$table} is empty");
+        }
+        $this->assertGreaterThan(0, DB::table('inventory_items')->whereColumn('current_stock', '<=', 'minimum_stock')->count());
+        $this->assertSame(4, DB::table('vehicles')->count());
+
+        // running it again (as every deploy does) does not double anything
+        $this->artisan('demo:fill')->assertSuccessful();
+        $this->assertSame(4, DB::table('vehicles')->count());
+
+        foreach (array_keys(\App\Support\DemoSchool::ACCOUNTS) as $key) {
+            $this->post("/demo/{$key}")->assertRedirect(route('dashboard'));
+            $url = match ($key) {
+                'student' => '/school/student/notifications/feed',
+                'parent' => '/school/parent/notifications/feed',
+                default => '/school/communication/notifications/feed',
+            };
+            $items = $this->getJson($url)->assertOk()->json('items');
+            $this->assertNotEmpty($items, "{$key} has an empty bell");
+        }
+    }
 }

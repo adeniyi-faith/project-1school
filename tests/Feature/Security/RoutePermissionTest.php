@@ -16,7 +16,7 @@ class RoutePermissionTest extends SecurityTestCase
             'school.classes.index', 'school.sections.index', 'school.subjects.index',
             'school.shifts.index', 'school.holidays.index',
             'school.communication.notifications', 'school.communication.notifications.read',
-            'school.communication.notifications.read-all',
+            'school.communication.notifications.read-all', 'school.communication.notifications.feed',
         ];
 
         $unguarded = collect(Route::getRoutes()->getRoutes())

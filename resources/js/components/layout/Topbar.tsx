@@ -1,11 +1,12 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { Bell, ChevronDown, KeyRound, LogOut, Moon, PanelLeft, Sun, User } from 'lucide-react';
+import { ChevronDown, KeyRound, LogOut, Moon, PanelLeft, Sun, User } from 'lucide-react';
 import { useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
     DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import NotificationBell from '@/components/layout/NotificationBell';
 import { LogoMark, initialsOf } from '@/components/layout/Logo';
 import { useAuthStore } from '@/Stores/useAuthStore';
 import { useUIStore } from '@/Stores/useUIStore';
@@ -19,6 +20,11 @@ interface TopbarProps {
 const NOTIFY_HREF: Record<string, string> = {
     parent: '/school/parent/announcements',
     student: '/school/student/announcements',
+};
+
+const FEED_URL: Record<string, string> = {
+    parent: '/school/parent/notifications/feed',
+    student: '/school/student/notifications/feed',
 };
 
 const iconButton =
@@ -75,9 +81,7 @@ export default function Topbar({ title, breadcrumbs }: TopbarProps) {
                     {isDark ? <Sun className="size-[18px]" strokeWidth={1.75} /> : <Moon className="size-[18px]" strokeWidth={1.75} />}
                 </button>
                 {notifyHref && (
-                    <Link href={notifyHref} className={iconButton} aria-label="Notifications">
-                        <Bell className="size-[18px]" strokeWidth={1.75} />
-                    </Link>
+                    <NotificationBell feedUrl={FEED_URL[role] ?? '/school/communication/notifications/feed'} allHref={notifyHref} buttonClass={iconButton} />
                 )}
 
                 <DropdownMenu>

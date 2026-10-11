@@ -81,21 +81,23 @@ export default function StudentDashboard({ linked, student, attendance, exams, h
             <div className="space-y-6">
 
                 {/* Profile Banner */}
-                <div className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white flex items-center gap-5">
-                    <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center overflow-hidden shrink-0">
+                <div className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 p-4 sm:p-6 text-white flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-5">
+                    <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-5">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/20 flex items-center justify-center overflow-hidden shrink-0">
                         {student.photo_url
                             ? <img src={student.photo_url} alt={student.full_name} className="w-full h-full object-cover" />
                             : <User className="w-8 h-8 text-white/80" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h1 className="text-xl font-bold">{student.full_name}</h1>
+                        <h1 className="!text-base sm:!text-xl font-bold leading-tight">{student.full_name}</h1>
                         <p className="text-white/80 text-sm">{student.class} — {student.section} · Adm# {student.admission_no}</p>
                         {student.guardian && (
                             <p className="text-white/70 text-xs mt-0.5">Guardian: {student.guardian.name} · {student.guardian.phone}</p>
                         )}
                     </div>
+                    </div>
                     {/* Today's attendance badge */}
-                    <div className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium', attColor[attendance.today])}>
+                    <div className={cn('flex items-center gap-1.5 px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium', attColor[attendance.today])}>
                         {attIcon[attendance.today]}
                         <span className="capitalize">{attendance.today.replace('-', ' ')}</span>
                     </div>

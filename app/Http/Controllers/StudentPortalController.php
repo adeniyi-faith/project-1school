@@ -143,7 +143,7 @@ class StudentPortalController extends Controller
         /* ── Announcements ── */
         $announcements = Announcement::where('school_id', $user->school_id)
             ->where(fn ($q) => $q->where('audience', 'all')
-                ->orWhere('audience', 'students')
+                ->orWhere(fn ($q3) => $q3->where('audience', 'role')->where('target_role', 'student'))
                 ->orWhere(fn ($q2) => $q2->where('audience', 'class')->where('class_id', $student->class_id))
             )
             ->orderByDesc('published_at')
