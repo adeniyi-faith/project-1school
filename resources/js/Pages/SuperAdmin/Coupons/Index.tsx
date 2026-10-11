@@ -52,7 +52,7 @@ export default function CouponsIndex({ coupons }: Props) {
     return (
         <AppLayout title="Coupons">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Discount Coupons</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Create and manage subscription discount codes</p>
@@ -127,7 +127,7 @@ export default function CouponsIndex({ coupons }: Props) {
                             <Input value={form.data.code} onChange={e => form.setData('code', e.target.value.toUpperCase())} placeholder="SUMMER25" className="font-mono" />
                             {form.errors.code && <p className="text-xs text-red-500 mt-1">{form.errors.code}</p>}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Discount Type *</Label>
                                 <Select value={form.data.type} onValueChange={v => form.setData('type', v as 'percent' | 'fixed')}>
@@ -144,7 +144,7 @@ export default function CouponsIndex({ coupons }: Props) {
                                 {form.errors.value && <p className="text-xs text-red-500 mt-1">{form.errors.value}</p>}
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Max Uses (0 = unlimited)</Label>
                                 <Input type="number" value={form.data.max_uses} onChange={e => form.setData('max_uses', e.target.value)} />

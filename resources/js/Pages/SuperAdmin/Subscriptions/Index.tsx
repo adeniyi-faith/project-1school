@@ -79,7 +79,7 @@ export default function SubscriptionsIndex({ subscriptions, schools, packages, c
     return (
         <AppLayout title="Subscriptions">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Subscriptions</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Manage school subscriptions and billing</p>
@@ -214,7 +214,7 @@ export default function SubscriptionsIndex({ subscriptions, schools, packages, c
                             </Select>
                             {form.errors.package_id && <p className="text-xs text-red-500 mt-1">{form.errors.package_id}</p>}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Start Date *</Label>
                                 <Input type="date" value={form.data.start_date} onChange={e => form.setData('start_date', e.target.value)} />
@@ -226,7 +226,7 @@ export default function SubscriptionsIndex({ subscriptions, schools, packages, c
                                 {form.errors.end_date && <p className="text-xs text-red-500 mt-1">{form.errors.end_date}</p>}
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Status *</Label>
                                 <Select value={form.data.status} onValueChange={v => form.setData('status', v)}>
@@ -241,7 +241,7 @@ export default function SubscriptionsIndex({ subscriptions, schools, packages, c
                                 <Input type="number" step="0.01" value={form.data.amount_paid} onChange={e => form.setData('amount_paid', e.target.value)} />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Payment Method</Label>
                                 <Input value={form.data.payment_method} onChange={e => form.setData('payment_method', e.target.value)} placeholder="cash, card, bank transfer..." />
