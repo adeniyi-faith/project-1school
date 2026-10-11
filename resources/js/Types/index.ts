@@ -83,6 +83,8 @@ export interface Student {
     school_id: number;
     class_id: number;
     section_id: number | null;
+    house_id?: number | null;
+    house?: { id: number; name: string; colour: string } | null;
     guardian_id: number | null;
     admission_no: string;
     roll_no: string | null;

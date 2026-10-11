@@ -13,7 +13,7 @@ class Student extends Model
     use BelongsToSchool, SoftDeletes;
 
     protected $fillable = [
-        'school_id', 'user_id', 'class_id', 'section_id', 'guardian_id',
+        'school_id', 'user_id', 'class_id', 'section_id', 'house_id', 'guardian_id',
         'admission_no', 'roll_no', 'first_name', 'last_name',
         'gender', 'date_of_birth', 'blood_group', 'religion',
         'nationality', 'phone', 'email', 'address', 'photo',
@@ -41,6 +41,22 @@ class Student extends Model
     public function schoolClass(): BelongsTo
     {
         return $this->belongsTo(SchoolClass::class, 'class_id');
+    }
+
+    public function house(): BelongsTo
+    {
+        return $this->belongsTo(House::class)->withTrashed();
+    }
+
+    public function clubMemberships(): HasMany
+    {
+        return $this->hasMany(ClubMember::class);
+    }
+
+    /** The student's ID cards, newest first */
+    public function idCards(): HasMany
+    {
+        return $this->hasMany(StudentIdCard::class)->latest('id');
     }
 
     public function section(): BelongsTo

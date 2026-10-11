@@ -43,6 +43,9 @@ class RolePermissionSeeder extends Seeder
         // Computer-based tests: view tests and results; manage question banks and tests
         'cbt.view', 'cbt.manage',
 
+        // Sports houses (with house points) and clubs
+        'houses.view', 'houses.manage', 'houses.points', 'clubs.view', 'clubs.manage',
+
         // Fees
         'fees.view', 'fees.collect', 'fees.structure', 'fees.reports', 'fees.waiver',
         'fees.online', 'expenses.view', 'expenses.create',
@@ -89,7 +92,7 @@ class RolePermissionSeeder extends Seeder
             'academic-years.*', 'users.view', 'users.create', 'users.edit', 'users.delete',
             'students.*', 'admissions.*', 'staff.*',
             'attendance.*', 'timetable.*',
-            'exams.*', 'marks.*', 'results.*', 'reportcard.*', 'cbt.*',
+            'exams.*', 'marks.*', 'results.*', 'reportcard.*', 'cbt.*', 'houses.*', 'clubs.*',
             'fees.*', 'expenses.*',
             'payroll.*', 'payslip.*', 'leave.*', 'staff.performance',
             'library.*', 'transport.*', 'hostel.*', 'inventory.*',
@@ -105,6 +108,7 @@ class RolePermissionSeeder extends Seeder
             'attendance.view', 'attendance.report', 'attendance.export',
             'timetable.view',
             'exams.view', 'marks.view', 'results.view', 'results.publish', 'results.lock', 'reportcard.generate', 'cbt.view',
+            'houses.view', 'houses.manage', 'houses.points', 'clubs.view', 'clubs.manage',
             'fees.view', 'fees.reports',
             'leave.view', 'leave.apply', 'leave.approve',
             'homework.view', 'lessons.view', 'lessons.approve', 'syllabus.view',
@@ -119,6 +123,7 @@ class RolePermissionSeeder extends Seeder
             'timetable.view',
             'exams.view', 'marks.view', 'marks.entry',
             'results.view', 'reportcard.generate', 'cbt.view', 'cbt.manage',
+            'houses.view', 'houses.points', 'clubs.view', 'clubs.manage',
             'homework.view', 'homework.create', 'homework.grade',
             'lessons.view', 'lessons.create', 'syllabus.view',
             'announcements.view', 'messages.view', 'messages.send',
