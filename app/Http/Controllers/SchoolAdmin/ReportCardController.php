@@ -9,9 +9,12 @@ use App\Models\ReportCardRemark;
 use App\Models\ReportCardSigner;
 use App\Models\ResultSheet;
 use App\Models\TermResultSummary;
+use App\Services\AiCommentWriter;
+use App\Services\AiService;
 use App\Services\ReportCardCommentService;
 use App\Services\ReportCardService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -67,6 +70,11 @@ class ReportCardController extends Controller
                     'remarks' => (object) ($remarks[$s->student_id] ?? collect())->pluck('comment', 'report_card_signer_id')->all(),
                 ])->values(),
             'canDesign' => $user->can('settings.edit'),
+            // Whether the AI can draft comments here, and why not; hidden altogether while the platform has no AI
+            'ai' => [
+                'shown' => app(AiService::class)->schoolState($sheet->school_id)['platform_ready'],
+                'reason' => app(AiService::class)->unavailable($sheet->school_id, 'result_comments'),
+            ],
             // Saved comments for the boxes this person may write, to pick from per student
             'bank' => ReportCardCommentBank::whereIn('writer_permission', $signers->filter(fn ($s) => $s->canWrite($user))->pluck('writer_permission')->unique())
                 ->orderByDesc('min_average')->orderBy('id')->get(['id', 'writer_permission', 'min_average', 'max_average', 'comment']),
@@ -96,6 +104,27 @@ class ReportCardController extends Controller
         return $written
             ? back()->with('success', "{$written} {$signer->label} ".str('comment')->plural($written).' filled in. Check them and change any you want.')
             : back()->with('info', 'No comments were filled in. Every student may already have one, or no saved comment fits their averages. Add comments on the Comment Bank page.');
+    }
+
+    /**
+     * Comments drafted by the AI for one signer: for the students whose box is empty, or for everyone.
+     * Nothing is saved: the drafts go into the boxes and the teacher saves them after reading.
+     */
+    public function aiComments(Request $request, ResultSheet $sheet, AiCommentWriter $writer): JsonResponse
+    {
+        if ($sheet->status === 'locked') {
+            throw ValidationException::withMessages(['ai' => 'These results are locked, so comments can no longer be changed.']);
+        }
+        $data = $request->validate([
+            'signer_id' => 'required|integer',
+            'student_ids' => 'required|array|min:1|max:200',
+            'student_ids.*' => 'integer',
+        ]);
+        $design = ReportCardDesign::forClass($sheet->school_id, $sheet->class_id);
+        $signer = ReportCardSigner::where('report_card_design_id', $design->id)->findOrFail($data['signer_id']);
+        abort_unless($signer->canWrite($request->user()), 403);
+
+        return response()->json(['comments' => (object) $writer->draft($sheet, $signer, $data['student_ids'], $request->user())]);
     }
 
     /** One signer's comments for the class. Who may write is set on the signer (teachers or heads). */
