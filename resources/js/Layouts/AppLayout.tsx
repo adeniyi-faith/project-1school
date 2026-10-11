@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
@@ -16,7 +16,7 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children, title, breadcrumbs }: AppLayoutProps) {
-    const { flash, faviconUrl, demo } = usePage<PageProps>().props;
+    const { flash, faviconUrl, demo, acting_school } = usePage<PageProps>().props;
     const theme = useAuthStore((s) => s.theme);
 
     // Favicon sync
@@ -65,6 +65,12 @@ export default function AppLayout({ children, title, breadcrumbs }: AppLayoutPro
                     <div className="flex items-center justify-between gap-3 bg-indigo-600 px-3 py-1 text-[12px] leading-tight text-white sm:justify-center sm:px-4 sm:py-1.5 sm:text-[13px]">
                         <span className="min-w-0 truncate">Demo as <b className="font-semibold">{demo.label}</b><span className="hidden sm:inline">. Nothing can be changed.</span></span>
                         <a href="/demo" className="shrink-0 font-semibold underline underline-offset-2 hover:text-indigo-100">Switch<span className="hidden sm:inline"> account type</span></a>
+                    </div>
+                )}
+                {acting_school && (
+                    <div className="flex items-center justify-between gap-3 bg-amber-500 px-3 py-1 text-[12px] leading-tight text-amber-950 sm:justify-center sm:px-4 sm:py-1.5 sm:text-[13px]">
+                        <span className="min-w-0 truncate">Working inside <b className="font-semibold">{acting_school.name}</b> as Super Admin</span>
+                        <button type="button" onClick={() => router.post('/super-admin/leave-school')} className="shrink-0 font-semibold underline underline-offset-2 hover:text-amber-900">Back to platform</button>
                     </div>
                 )}
                 <Topbar title={title} breadcrumbs={breadcrumbs} />

@@ -55,6 +55,8 @@ export interface PageProps {
         info?: string;
     };
     faviconUrl: string | null;
+    /** Set while the platform owner is working inside one school */
+    acting_school?: { id: number; name: string } | null;
     /** Set while someone looks around the public demo, with the account type they chose */
     demo?: { label: string } | null;
     errors: Record<string, string>;
