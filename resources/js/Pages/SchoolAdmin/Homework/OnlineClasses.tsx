@@ -92,7 +92,7 @@ export default function OnlineClasses({ onlineClasses, classes, subjects, staff,
     return (
         <AppLayout title="Online Classes">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Online Classes</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Schedule and manage virtual classroom sessions</p>
@@ -211,7 +211,7 @@ export default function OnlineClasses({ onlineClasses, classes, subjects, staff,
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader><DialogTitle>Schedule Online Class</DialogTitle></DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Class *</Label>
                                 <Select value={data.class_id} onValueChange={v => setData('class_id', v)}>
@@ -229,7 +229,7 @@ export default function OnlineClasses({ onlineClasses, classes, subjects, staff,
                                 {errors.subject_id && <p className="text-xs text-red-500 mt-1">{errors.subject_id}</p>}
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Teacher</Label>
                                 <Select value={data.teacher_id} onValueChange={v => setData('teacher_id', v)}>
@@ -264,7 +264,7 @@ export default function OnlineClasses({ onlineClasses, classes, subjects, staff,
                             <Input type="url" value={data.meeting_url} onChange={e => setData('meeting_url', e.target.value)} placeholder="https://zoom.us/j/..." />
                             {errors.meeting_url && <p className="text-xs text-red-500 mt-1">{errors.meeting_url}</p>}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Meeting ID</Label>
                                 <Input value={data.meeting_id} onChange={e => setData('meeting_id', e.target.value)} placeholder="Optional" />
@@ -274,7 +274,7 @@ export default function OnlineClasses({ onlineClasses, classes, subjects, staff,
                                 <Input value={data.passcode} onChange={e => setData('passcode', e.target.value)} placeholder="Optional" />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Scheduled At *</Label>
                                 <Input type="datetime-local" value={data.scheduled_at} onChange={e => setData('scheduled_at', e.target.value)} />

@@ -56,7 +56,7 @@ export default function Messages({ inbox, sent, users }: Props) {
     return (
         <AppLayout title="Messages">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Messages</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Internal messaging between staff members</p>
