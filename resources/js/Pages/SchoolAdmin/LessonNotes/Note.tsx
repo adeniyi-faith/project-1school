@@ -153,7 +153,7 @@ export default function LessonNote({ note, values, classes, subjects, terms, for
         <AppLayout breadcrumbs={[{ label: 'Lesson notes', href: '/school/lesson-notes' }, { label: note ? d.title || 'Lesson note' : 'New lesson note' }]}>
             <div className="mx-auto max-w-4xl space-y-5 pb-28 md:pb-10">
                 <PageHeader title={note ? 'Lesson note' : 'New lesson note'} description={note ? <span className="inline-flex items-center gap-2"><Pill tone={status.tone}>{status.label}</Pill>{values.ai_drafted && <span className="text-xs text-violet-600 dark:text-violet-300">Started by the AI</span>}</span> : 'Pick the week from your scheme of work, or type the topic. Then write the note, or let the AI draft it for you to check.'} actions={headerActions} />
-                <div className="md:hidden">{headerActions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{headerActions}</div>
 
                 {values.status === 'rejected' && note?.reviewer_feedback && (
                     <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">

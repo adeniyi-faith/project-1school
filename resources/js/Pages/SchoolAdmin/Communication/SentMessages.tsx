@@ -23,7 +23,7 @@ export default function SentMessages({ batches, filters }: Props) {
         <AppLayout breadcrumbs={[{ label: 'Communication' }, { label: 'Sent messages' }]}>
             <div className="mx-auto max-w-5xl space-y-6 pb-24 md:pb-0">
                 <PageHeader title="Sent messages" description="Every SMS and email blast, and for each one who it reached, who it failed for, and who has no phone number or email on record." actions={newLink} />
-                <div className="md:hidden">{newLink}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{newLink}</div>
 
                 <Segmented label="Show" value={channel} onChange={v => router.get('/school/communication/sent', v === 'all' ? {} : { channel: v }, { preserveState: true })}
                     options={[{ value: 'all', label: 'All' }, { value: 'sms', label: 'SMS' }, { value: 'email', label: 'Email' }]} />

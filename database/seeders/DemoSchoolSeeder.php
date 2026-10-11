@@ -761,12 +761,12 @@ class DemoSchoolSeeder extends Seeder
         foreach ($classes as $i => $class) {
             $examFee = [$class['level'] === 'senior' ? 25000 : ($class['level'] === 'junior' ? 18000 : ($class['level'] === 'primary' ? 14000 : 10000))][0];
             $defs = [
-                'tuition' => [$tuition[$i], 'quarterly', '2026-09-21', 'First term fees 2026/2027'],
+                'tuition' => [$tuition[$i], 'per_term', '2026-09-21', 'First term fees 2026/2027'],
                 'exam' => [$examFee, 'one_time', '2026-10-05', 'First term examination and CA fee'],
                 'other' => [50000, 'annual', '2026-09-21', 'Development levy 2026/2027'],
                 'library' => [8000, 'annual', '2026-10-05', null],
                 'sports' => [10000, 'annual', '2026-10-05', null],
-                'transport' => [95000, 'quarterly', '2026-09-21', 'Lekki, Ikeja and Mainland routes'],
+                'transport' => [95000, 'per_term', '2026-09-21', 'Lekki, Ikeja and Mainland routes'],
             ];
             foreach ($defs as $type => [$amount, $freq, $due, $desc]) {
                 $structures[$class['id']][$type] = [

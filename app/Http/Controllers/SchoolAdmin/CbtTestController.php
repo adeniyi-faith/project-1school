@@ -260,6 +260,29 @@ class CbtTestController extends Controller
     }
 
     /** Mark typed (theory) answers: one question at a time, every student's answer to it */
+    /** One student's (or applicant's) sitting: every question, what they answered, the right answer and the marks */
+    public function attempt(Request $request, CbtTest $test, CbtAttempt $attempt): Response
+    {
+        abort_unless($attempt->cbt_test_id === $test->id, 404);
+        $this->cbt->settle($attempt);
+        $attempt->refresh()->load('student:id,first_name,last_name,admission_no', 'candidate:id,exam_number,inquiry_id', 'candidate.inquiry:id,student_name');
+
+        $name = $attempt->student ? trim($attempt->student->first_name.' '.$attempt->student->last_name) : ($attempt->candidate?->inquiry?->student_name ?? 'Removed applicant');
+        $minutes = $attempt->isFinished() ? (int) ceil($attempt->started_at->diffInSeconds($attempt->submitted_at ?? $attempt->deadline_at) / 60) : null;
+
+        return Inertia::render('SchoolAdmin/Cbt/Attempt', [
+            'test' => ['id' => $test->id, 'title' => $test->title, 'pass_mark' => $test->pass_mark, 'show_score' => (bool) ($test->show_score ?? true)],
+            'attempt' => [
+                'id' => $attempt->id, 'name' => $name, 'number' => $attempt->student?->admission_no ?? $attempt->candidate?->exam_number,
+                'status' => $attempt->status, 'score' => $attempt->score, 'max_score' => $attempt->max_score,
+                'percent' => $attempt->max_score && ! $attempt->needs_marking ? round($attempt->score / $attempt->max_score * 100, 1) : null,
+                'needs_marking' => (bool) $attempt->needs_marking, 'page_leaves' => (int) $attempt->page_leaves, 'minutes' => $minutes,
+                'started_at' => $attempt->started_at?->toIso8601String(), 'submitted_at' => $attempt->submitted_at?->toIso8601String(),
+            ],
+            'canManage' => $request->user()->can('cbt.manage'),
+        ] + $this->cbt->review($attempt));
+    }
+
     public function marking(Request $request, CbtTest $test): Response
     {
         $sheet = $this->cbt->markingSheet($test, $request->integer('question') ?: null);

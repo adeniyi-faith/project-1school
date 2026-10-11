@@ -96,7 +96,7 @@ export default function Invoices({ invoices, stats, classes, terms, structures, 
     }
 
     const headerActions = (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
             <Link href="/school/fees/scholarships"><Button variant="outline"><Gift className="size-4" /> Scholarships</Button></Link>
             <Link href="/school/fees/payment-plans"><Button variant="outline"><CalendarClock className="size-4" /> Payment plans</Button></Link>
             {can.issue && (
@@ -119,7 +119,7 @@ export default function Invoices({ invoices, stats, classes, terms, structures, 
                     actions={headerActions}
                 />
                 {/* The header hides its buttons on phones, so they are repeated here */}
-                <div className="md:hidden">{headerActions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{headerActions}</div>
 
                 <StatStrip items={[
                     { label: 'Still owed', value: naira(stats.outstanding), tone: stats.outstanding > 0 ? 'bad' : 'default' },

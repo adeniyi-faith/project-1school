@@ -74,7 +74,7 @@ export default function IdCardsIndex({ students, stats, classes, designs, filter
         <AppLayout title="ID cards">
             <div className="space-y-6">
                 <PageHeader title="Student ID cards" description="Make cards for the whole school at once, then again for new students. Each card has the student's photo and a QR code that staff scan to check the card, mark attendance or see fees owed." actions={actions} />
-                <div className="md:hidden">{actions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>
 
                 <StatStrip items={[
                     { label: 'Active students', value: stats.students },

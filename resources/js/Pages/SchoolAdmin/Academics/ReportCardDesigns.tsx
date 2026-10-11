@@ -301,10 +301,10 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
                                 <label className="flex items-center gap-2">
                                     <Checkbox checked={s.has_comment} disabled={disabled} onCheckedChange={v => setSigner(i, { has_comment: !!v })} /> Writes a comment
                                 </label>
-                                <div className="flex items-center gap-2">
+                                <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
                                     <span className="text-slate-500">Signature:</span>
                                     {s.has_signature && !s.remove_signature && !s.signature && <Pill tone="good">Uploaded</Pill>}
-                                    {!disabled && <input type="file" accept="image/png,image/jpeg" className="text-xs" onChange={e => setSigner(i, { signature: e.target.files?.[0] ?? null, remove_signature: false })} />}
+                                    {!disabled && <input type="file" accept="image/png,image/jpeg" className="w-full max-w-full text-xs sm:w-auto" onChange={e => setSigner(i, { signature: e.target.files?.[0] ?? null, remove_signature: false })} />}
                                     {s.has_signature && !s.remove_signature && !disabled && <Button type="button" variant="ghost" size="sm" onClick={() => setSigner(i, { remove_signature: true, signature: null })}>Remove</Button>}
                                 </div>
                                 {err(`signers.${i}.signature`) && <p className="text-xs text-red-500">{err(`signers.${i}.signature`)}</p>}

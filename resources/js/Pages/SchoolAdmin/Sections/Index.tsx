@@ -78,7 +78,7 @@ export default function ArmsIndex({ classes, departments }: Props) {
                 <PageHeader title="Arms"
                     description="The groups each class is split into, such as JSS 1A and JSS 1B, or JSS 1 Emerald. In senior classes, give an arm its department (Science, Arts, Commercial) so its students only get that department's subjects."
                     actions={actions} />
-                <div className="md:hidden">{actions}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>
 
                 {classes.length === 0 ? (
                     <Panel><EmptyState icon={Layers} title="No classes yet" text="Add classes first, under School Setup, Classes." /></Panel>
@@ -91,7 +91,7 @@ export default function ArmsIndex({ classes, departments }: Props) {
                                 {cls.sections.length > 0 && (
                                     <ul className="-my-1 divide-y divide-slate-100 dark:divide-white/[0.06]">
                                         {cls.sections.map(s => (
-                                            <li key={s.id} className="flex items-center gap-2 py-1.5">
+                                            <li key={s.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 py-1.5">
                                                 <span className="font-medium text-slate-800 dark:text-slate-100">{s.name}</span>
                                                 {s.department && <Pill tone="info">{s.department}</Pill>}
                                                 <span className="ml-auto text-xs text-slate-500">

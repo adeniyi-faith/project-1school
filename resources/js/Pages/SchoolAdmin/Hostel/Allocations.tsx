@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Plus, LogOut } from 'lucide-react';
+import { ArrowLeft, Plus, LogOut, Pencil } from 'lucide-react';
 import type { PageProps, PaginatedResponse } from '@/Types';
 
 interface HostelOption { id: number; name: string; type: string; }
@@ -18,6 +18,7 @@ interface Allocation {
     student?: { id: number; first_name: string; last_name: string | null; admission_no: string; school_class?: { name: string } };
     hostel?: { id: number; name: string; type: string };
     room?: { id: number; room_no: string; floor: string | null; type: string };
+    hostel_id: number; room_id: number; notes: string | null;
 }
 interface Props {
     allocations: PaginatedResponse<Allocation>;
@@ -31,6 +32,10 @@ export default function HostelAllocations({ allocations, hostels, filters }: Pro
     const { flash } = usePage<PageProps>().props;
     const [open, setOpen]         = useState(false);
     const [vacateOpen, setVacateOpen] = useState<Allocation | null>(null);
+    const [editing, setEditing]   = useState<Allocation | null>(null);
+    const [editForm, setEditForm] = useState<Record<string, string>>({});
+    const [editRooms, setEditRooms] = useState<RoomOption[]>([]);
+    const [editError, setEditError] = useState<string | null>(null);
     const [form, setForm]         = useState<Record<string, string>>(aDefault);
     const [rooms, setRooms]       = useState<RoomOption[]>([]);
     const [students, setStudents] = useState<{ id: number; first_name: string; last_name: string | null; admission_no: string }[]>([]);
@@ -52,7 +57,7 @@ export default function HostelAllocations({ allocations, hostels, filters }: Pro
     function searchStudents(q: string) {
         setForm(p => ({ ...p, student_search: q }));
         if (q.length < 2) { setStudents([]); return; }
-        fetch(`/api/v1/students/search?q=${encodeURIComponent(q)}`)
+        fetch(`/school/hostel/student-search?q=${encodeURIComponent(q)}`, { headers: { Accept: 'application/json' } })
             .then(r => r.json())
             .then(d => setStudents(d.data ?? []));
     }
@@ -63,6 +68,29 @@ export default function HostelAllocations({ allocations, hostels, filters }: Pro
             preserveScroll: true,
             onSuccess: () => { setOpen(false); setForm(aDefault); setRooms([]); setStudents([]); setSaving(false); },
             onError:   () => setSaving(false),
+        });
+    }
+
+    async function loadEditRooms(hostelId: string, current?: number) {
+        const res = await fetch(`/school/hostel/${hostelId}/available-rooms?include=${current ?? ''}`, { headers: { Accept: 'application/json' } });
+        setEditRooms(await res.json());
+    }
+
+    function startEdit(a: Allocation) {
+        setEditing(a);
+        setEditError(null);
+        setEditForm({ hostel_id: String(a.hostel_id), room_id: String(a.room_id), bed_no: a.bed_no ?? '', joining_date: a.joining_date.slice(0, 10), notes: a.notes ?? '' });
+        setEditRooms([]);
+        loadEditRooms(String(a.hostel_id), a.room_id);
+    }
+
+    function handleEdit() {
+        if (!editing) return;
+        setSaving(true);
+        router.put(`/school/hostel/allocations/${editing.id}`, editForm, {
+            preserveScroll: true,
+            onSuccess: () => { setEditing(null); setSaving(false); },
+            onError:   errs => { setEditError(Object.values(errs)[0] ?? 'Could not save the change.'); setSaving(false); },
         });
     }
 
@@ -130,7 +158,7 @@ export default function HostelAllocations({ allocations, hostels, filters }: Pro
                                 <TableHead>Joining</TableHead>
                                 <TableHead>Leaving</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead className="w-16"></TableHead>
+                                <TableHead className="w-24"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -153,6 +181,9 @@ export default function HostelAllocations({ allocations, hostels, filters }: Pro
                                         <Badge className={`border-0 text-xs capitalize ${a.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{a.status}</Badge>
                                     </TableCell>
                                     <TableCell>
+                                        {a.status === 'active' && (
+                                            <Button size="sm" variant="ghost" title="Change room, bed or date" aria-label="Change allocation" onClick={() => startEdit(a)}><Pencil className="w-3.5 h-3.5" /></Button>
+                                        )}
                                         {a.status === 'active' && (
                                             <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700 inline-flex items-center gap-1"
                                                 onClick={() => { setVacateOpen(a); setVacateDate(new Date().toISOString().split('T')[0]); }}>
@@ -189,7 +220,7 @@ export default function HostelAllocations({ allocations, hostels, filters }: Pro
                                     <SelectContent>
                                         {rooms.map(r => (
                                             <SelectItem key={r.id} value={String(r.id)}>
-                                                Room {r.room_no} {r.floor ? `(${r.floor})` : ''} — {r.type}{r.ac ? ' AC' : ''} · {r.capacity - r.occupied} beds left · ₦{Number(r.monthly_fee).toLocaleString()}/mo
+                                                Room {r.room_no} {r.floor ? `(${r.floor})` : ''} — {r.type}{r.ac ? ' AC' : ''} · {r.capacity - r.occupied} beds left · ₦{Number(r.monthly_fee).toLocaleString()}/term
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -238,6 +269,58 @@ export default function HostelAllocations({ allocations, hostels, filters }: Pro
                         <Button onClick={handleAllocate} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white">
                             {saving ? 'Allocating...' : 'Allocate'}
                         </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Dialog */}
+            <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader><DialogTitle>Change Allocation</DialogTitle></DialogHeader>
+                    <div className="space-y-4 mt-2">
+                        <div className="rounded-lg bg-slate-50 dark:bg-slate-900 p-3 text-sm">
+                            <p className="font-medium">{editing?.student?.first_name} {editing?.student?.last_name}</p>
+                            <p className="text-slate-500">{editing?.student?.admission_no}</p>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Hostel</Label>
+                            <Select value={editForm.hostel_id ?? ''} onValueChange={v => { setEditForm(p => ({ ...p, hostel_id: v, room_id: '' })); setEditRooms([]); loadEditRooms(v); }}>
+                                <SelectTrigger><SelectValue placeholder="Select hostel" /></SelectTrigger>
+                                <SelectContent>{hostels.map(h => <SelectItem key={h.id} value={String(h.id)}>{h.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Room</Label>
+                            <Select value={editForm.room_id ?? ''} onValueChange={v => setEditForm(p => ({ ...p, room_id: v }))}>
+                                <SelectTrigger><SelectValue placeholder="Select room" /></SelectTrigger>
+                                <SelectContent>
+                                    {editRooms.map(r => (
+                                        <SelectItem key={r.id} value={String(r.id)}>
+                                            Room {r.room_no} {r.floor ? `(${r.floor})` : ''} · {r.capacity - r.occupied} beds left{r.id === editing?.room_id ? ' · current' : ''}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="space-y-1.5">
+                                <Label>Bed No.</Label>
+                                <Input value={editForm.bed_no ?? ''} onChange={e => setEditForm(p => ({ ...p, bed_no: e.target.value }))} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Joining Date</Label>
+                                <Input type="date" value={editForm.joining_date ?? ''} onChange={e => setEditForm(p => ({ ...p, joining_date: e.target.value }))} />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Notes</Label>
+                            <Input value={editForm.notes ?? ''} onChange={e => setEditForm(p => ({ ...p, notes: e.target.value }))} />
+                        </div>
+                        {editError && <p className="text-sm text-red-600">{editError}</p>}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
+                        <Button onClick={handleEdit} disabled={saving || !editForm.room_id} className="bg-indigo-600 hover:bg-indigo-700 text-white">{saving ? 'Saving...' : 'Save changes'}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

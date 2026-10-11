@@ -43,7 +43,7 @@ export default function Blast({ classes, audiences, canSms, canEmail, smsReady }
         <AppLayout title="SMS / Email Blast">
             <div className="mx-auto max-w-2xl space-y-6 pb-24 md:pb-0">
                 <PageHeader title="SMS / Email Blast" description="Send one message to many parents, students or staff. Afterwards you can see who it reached." actions={logLink} />
-                <div className="md:hidden">{logLink}</div>
+                <div className="flex flex-wrap gap-2 md:hidden">{logLink}</div>
 
                 <form onSubmit={submit}>
                     <Panel>
