@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, MoreHorizontal, Pencil, Trash2, ClipboardList, BarChart3, BookOpen, FileText, Settings } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, ClipboardList, BarChart3, BookOpen, FileText, Settings, ArrowRightLeft } from 'lucide-react';
 import type { SchoolClass, PageProps, PaginatedResponse, TermOption } from '@/Types';
 
 interface Exam {
@@ -29,6 +29,7 @@ interface Props {
     terms: TermOption[];
     filters: { class_id?: string; status?: string };
     stats: { total: number; draft: number; published: number; completed: number };
+    parts: { value: string; label: string }[];
 }
 
 const STATUS_STYLE = {
@@ -42,7 +43,22 @@ const TYPE_LABELS: Record<string, string> = {
 
 const emptyForm = { name: '', type: 'mid_term', class_id: '', term_id: '', start_date: '', end_date: '', status: 'draft', description: '' };
 
-export default function ExamsIndex({ exams, classes, terms, filters, stats }: Props) {
+export default function ExamsIndex({ exams, classes, terms, filters, stats, parts = [] }: Props) {
+    // Copy an exam's marks into one score part of the term results
+    const [copying, setCopying] = useState<Exam | null>(null);
+    const copy = useForm({ term_id: '', part: '', replace: false });
+    function openCopy(exam: Exam) {
+        const examPart = parts.find(p => /exam/i.test(p.value) || /exam/i.test(p.label));
+        copy.clearErrors();
+        copy.setData({
+            term_id: String(exam.term_id ?? terms.find(t => t.is_current)?.id ?? ''),
+            // an end-of-term exam usually goes into the Exam part, a test into the first CA
+            part: (exam.type === 'final' ? examPart : parts.find(p => p !== examPart))?.value ?? parts[0]?.value ?? '',
+            replace: false,
+        });
+        setCopying(exam);
+    }
+
     const { flash } = usePage<PageProps>().props;
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<Exam | null>(null);
@@ -186,6 +202,7 @@ export default function ExamsIndex({ exams, classes, terms, filters, stats }: Pr
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => openEdit(exam)} className="flex items-center gap-2 text-sm"><Pencil className="w-4 h-4" /> Edit</DropdownMenuItem>
+                                                    {parts.length > 0 && <DropdownMenuItem onClick={() => openCopy(exam)} className="flex items-center gap-2 text-sm"><ArrowRightLeft className="w-4 h-4" /> Copy into term results</DropdownMenuItem>}
                                                     <DropdownMenuItem onClick={() => handleDelete(exam)} className="flex items-center gap-2 text-sm text-red-600 focus:text-red-600"><Trash2 className="w-4 h-4" /> Delete</DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -271,6 +288,39 @@ export default function ExamsIndex({ exams, classes, terms, filters, stats }: Pr
                             <Button type="submit" disabled={processing} className="bg-indigo-600 hover:bg-indigo-700 text-white">
                                 {processing ? 'Saving...' : editing ? 'Update' : 'Create'}
                             </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={copying !== null} onOpenChange={o => !o && setCopying(null)}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader><DialogTitle>Copy marks into term results</DialogTitle></DialogHeader>
+                    <form onSubmit={e => { e.preventDefault(); if (copying) copy.post(`/school/exams/${copying.id}/copy-to-results`, { preserveScroll: true, onSuccess: () => setCopying(null) }); }} className="space-y-4 pt-2">
+                        <p className="text-sm text-slate-500">
+                            The marks for <span className="font-medium text-slate-700 dark:text-slate-200">{copying?.name}</span> are put into one score part of the term results, so they count on report cards. Each mark is scaled to that part: 45 out of 50 into a part worth 60 becomes 54. The marks here stay as they are.
+                        </p>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="copy-term">Term</Label>
+                            <select id="copy-term" className="h-9 w-full rounded-lg border border-slate-200 bg-transparent px-2 text-sm dark:border-white/10 dark:bg-slate-900" value={copy.data.term_id} onChange={e => copy.setData('term_id', e.target.value)}>
+                                <option value="">Choose a term</option>
+                                {terms.map(t => <option key={t.id} value={t.id}>{t.label}{t.is_current ? ' (current)' : ''}</option>)}
+                            </select>
+                            {copy.errors.term_id && <p className="text-xs text-red-500">{copy.errors.term_id}</p>}
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="copy-part">Score part</Label>
+                            <select id="copy-part" className="h-9 w-full rounded-lg border border-slate-200 bg-transparent px-2 text-sm dark:border-white/10 dark:bg-slate-900" value={copy.data.part} onChange={e => copy.setData('part', e.target.value)}>
+                                {parts.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                            </select>
+                            {copy.errors.part && <p className="text-xs text-red-500">{copy.errors.part}</p>}
+                        </div>
+                        <label className="flex items-start gap-2 text-sm">
+                            <input type="checkbox" className="mt-0.5" checked={copy.data.replace} onChange={e => copy.setData('replace', e.target.checked)} />
+                            <span>Replace scores already typed in that part <span className="block text-xs text-slate-500">Leave this off to fill only the empty boxes.</span></span>
+                        </label>
+                        <DialogFooter>
+                            <Button type="button" variant="ghost" onClick={() => setCopying(null)}>Cancel</Button>
+                            <Button type="submit" disabled={copy.processing || !copy.data.term_id || !copy.data.part} className="bg-indigo-600 hover:bg-indigo-700 text-white">Copy marks</Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
