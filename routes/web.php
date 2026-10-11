@@ -54,6 +54,10 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SchoolAdmin\OnlinePaymentController;
 use App\Http\Controllers\SchoolAdmin\PaymentPlanController;
 use App\Http\Controllers\SchoolAdmin\StaffHomeController;
+use App\Http\Controllers\SchoolAdmin\HouseController;
+use App\Http\Controllers\SchoolAdmin\ClubController;
+use App\Http\Controllers\SchoolAdmin\IdCardController;
+use App\Http\Controllers\IdCardCheckController;
 use App\Http\Controllers\CbtImageController;
 use App\Http\Controllers\SchoolAdmin\CommentBankController;
 use App\Http\Controllers\SchoolAdmin\ReportCardController;
@@ -134,6 +138,42 @@ Route::middleware('auth')->group(function () {
         ->group(function () {
             // Home page for staff without the school dashboard; every staff role can apply for leave, so all have leave.view
             Route::get('home', StaffHomeController::class)->middleware('permission:leave.view')->name('home');
+
+            // Sports houses and house points
+            Route::get('houses',                         [HouseController::class, 'index'])->middleware('permission:houses.view')->name('houses.index');
+            Route::post('houses',                        [HouseController::class, 'store'])->middleware('permission:houses.manage')->name('houses.store');
+            Route::get('houses/assign',                  [HouseController::class, 'members'])->middleware('permission:houses.manage')->name('houses.assign');
+            Route::post('houses/assign',                 [HouseController::class, 'saveMembers'])->middleware('permission:houses.manage')->name('houses.assign.save');
+            Route::post('houses/share',                  [HouseController::class, 'share'])->middleware('permission:houses.manage')->name('houses.share');
+            Route::post('houses/points',                 [HouseController::class, 'award'])->middleware('permission:houses.points')->name('houses.points');
+            Route::post('houses/points/{point}/undo',    [HouseController::class, 'undo'])->middleware('permission:houses.manage')->name('houses.points.undo');
+            Route::put('houses/{house}',                 [HouseController::class, 'update'])->middleware('permission:houses.manage')->name('houses.update');
+            Route::delete('houses/{house}',              [HouseController::class, 'destroy'])->middleware('permission:houses.manage')->name('houses.destroy');
+
+            // Clubs and societies
+            Route::get('clubs',                          [ClubController::class, 'index'])->middleware('permission:clubs.view')->name('clubs.index');
+            Route::post('clubs',                         [ClubController::class, 'store'])->middleware('permission:clubs.manage')->name('clubs.store');
+            Route::get('clubs/{club}',                   [ClubController::class, 'show'])->middleware('permission:clubs.view')->name('clubs.show');
+            Route::put('clubs/{club}',                   [ClubController::class, 'update'])->middleware('permission:clubs.manage')->name('clubs.update');
+            Route::delete('clubs/{club}',                [ClubController::class, 'destroy'])->middleware('permission:clubs.manage')->name('clubs.destroy');
+            Route::post('clubs/{club}/members',          [ClubController::class, 'addMembers'])->middleware('permission:clubs.manage')->name('clubs.members.add');
+            Route::put('clubs/{club}/members/{member}',  [ClubController::class, 'updateMember'])->middleware('permission:clubs.manage')->name('clubs.members.update');
+            Route::delete('clubs/{club}/members/{member}', [ClubController::class, 'removeMember'])->middleware('permission:clubs.manage')->name('clubs.members.remove');
+
+            // Student ID cards: register, printing, designs and the scan screen
+            Route::get('id-cards',                       [IdCardController::class, 'index'])->middleware('permission:students.idcard')->name('id-cards.index');
+            Route::post('id-cards/issue-missing',        [IdCardController::class, 'issueMissing'])->middleware('permission:students.idcard')->name('id-cards.issue-missing');
+            Route::get('id-cards/print',                 [IdCardController::class, 'print'])->middleware('permission:students.idcard')->name('id-cards.print');
+            Route::get('id-cards/designs',               [IdCardController::class, 'designs'])->middleware('permission:students.idcard')->name('id-cards.designs');
+            Route::post('id-cards/designs',              [IdCardController::class, 'saveDesign'])->middleware('permission:settings.edit')->name('id-cards.designs.store');
+            Route::post('id-cards/designs/try',          [IdCardController::class, 'tryDesign'])->middleware('permission:students.idcard')->name('id-cards.designs.try');
+            Route::put('id-cards/designs/{design}',      [IdCardController::class, 'saveDesign'])->middleware('permission:settings.edit')->name('id-cards.designs.update');
+            Route::delete('id-cards/designs/{design}',   [IdCardController::class, 'deleteDesign'])->middleware('permission:settings.edit')->name('id-cards.designs.destroy');
+            Route::get('id-cards/scan',                  [IdCardController::class, 'scanPage'])->middleware('permission:students.view')->name('id-cards.scan');
+            Route::post('id-cards/lookup',               [IdCardController::class, 'lookup'])->middleware(['permission:students.view', 'throttle:120,1'])->name('id-cards.lookup');
+            Route::post('id-cards/{card}/revoke',        [IdCardController::class, 'revoke'])->middleware('permission:students.idcard')->name('id-cards.revoke');
+            Route::post('students/{student}/id-card',    [IdCardController::class, 'issue'])->middleware('permission:students.idcard')->name('students.id-card.issue');
+            Route::get('students/{student}/id-card',     [IdCardController::class, 'studentCard'])->middleware('permission:students.idcard')->name('students.id-card');
 
             // School setup: anyone on staff can look; changing needs settings.edit
             foreach ([
@@ -656,6 +696,8 @@ Route::prefix('exam')->name('exam.')->controller(CandidateCbtController::class)-
 
 // Public admission form (no auth)
 // Anyone can check that a testimonial or transfer certificate is genuine, using the code printed on it
+// What a student ID card's QR opens: staff of the school go to the scan screen, anyone else sees if the card is valid
+Route::get('/id/{token}', IdCardCheckController::class)->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:60,1')->name('id-cards.check');
 Route::get('/verify/{code}', [CertificateVerifyController::class, 'show'])->where('code', '[A-Za-z0-9]{6,16}')->middleware('throttle:30,1')->name('certificates.verify');
 Route::get('/apply/{school}',  [PublicAdmissionController::class, 'show'])->name('public.admission.show');
 Route::post('/apply/{school}', [PublicAdmissionController::class, 'submit'])->name('public.admission.submit');
