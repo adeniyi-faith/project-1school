@@ -606,14 +606,22 @@ export interface CbtBankRow {
     subject_id: number | null;
     subject: string | null;
     questions: number;
+    /** How many of the questions are theory (typed answers) */
+    theory: number;
     levels: Record<CbtDifficulty, number>;
 }
 
+export type CbtQuestionType = 'objective' | 'theory';
+
 export interface CbtQuestionRow {
     id: number;
+    type: CbtQuestionType;
     text: string;
+    /** Empty for theory questions */
     options: string[];
-    correct_option: number;
+    correct_option: number | null;
+    /** Theory only: what a full answer should contain, for the teacher who marks it */
+    marking_guide: string | null;
     topic: string | null;
     difficulty: CbtDifficulty;
     marks: number;
@@ -637,6 +645,7 @@ export interface CbtTestRow {
     has_code: boolean;
     show_score: boolean;
     max_page_leaves: number | null;
+    allow_calculator: boolean;
 }
 
 export type CbtAttemptStatus = 'not_started' | 'in_progress' | 'submitted' | 'timed_out';
@@ -657,6 +666,8 @@ export interface CbtResultRow {
     percent: number | null;
     answered: number;
     questions: number;
+    /** Handed in, but theory answers still to be marked (percent is null until then) */
+    needs_marking: boolean;
     minutes: number | null;
     attempt_id?: number | null;
     page_leaves?: number;
@@ -667,5 +678,7 @@ export interface CbtPaperQuestion {
     section: number;
     text: string;
     image: string | null;
+    type: CbtQuestionType;
+    /** Empty for theory questions */
     options: { value: number; text: string }[];
 }

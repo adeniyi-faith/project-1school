@@ -15,11 +15,11 @@ class CbtAttempt extends Model
     public const GRACE_SECONDS = 30;
 
     protected $fillable = ['school_id', 'cbt_test_id', 'student_id', 'cbt_candidate_id', 'started_at', 'deadline_at', 'extra_minutes', 'submitted_at', 'status', 'ended_reason',
-        'paper', 'answers', 'flags', 'page_leaves', 'marking', 'section_scores', 'score', 'max_score'];
+        'paper', 'answers', 'written', 'flags', 'page_leaves', 'marking', 'needs_marking', 'marked_at', 'section_scores', 'score', 'max_score'];
 
     protected $casts = [
-        'started_at' => 'datetime', 'deadline_at' => 'datetime', 'submitted_at' => 'datetime', 'extra_minutes' => 'integer', 'page_leaves' => 'integer',
-        'paper' => 'array', 'answers' => 'array', 'flags' => 'array', 'marking' => 'array', 'section_scores' => 'array', 'score' => 'float', 'max_score' => 'float',
+        'started_at' => 'datetime', 'deadline_at' => 'datetime', 'submitted_at' => 'datetime', 'marked_at' => 'datetime', 'needs_marking' => 'boolean', 'extra_minutes' => 'integer', 'page_leaves' => 'integer',
+        'paper' => 'array', 'answers' => 'array', 'written' => 'array', 'flags' => 'array', 'marking' => 'array', 'section_scores' => 'array', 'score' => 'float', 'max_score' => 'float',
     ];
 
     public function test(): BelongsTo

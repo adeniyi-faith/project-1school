@@ -132,7 +132,7 @@ class CbtTestController extends Controller
             'test' => $this->row($test) + [
                 'instructions' => $test->instructions,
                 'access_code' => $request->user()->can('cbt.manage') ? $test->access_code : null,
-                'sections' => $test->sections->map(fn ($s) => ['title' => $s->title, 'bank' => $s->bank?->name, 'topic' => $s->topic, 'difficulty' => $s->difficulty, 'count' => $s->question_count]),
+                'sections' => $test->sections->map(fn ($s) => ['title' => $s->title, 'bank' => $s->bank?->name, 'topic' => $s->topic, 'difficulty' => $s->difficulty, 'question_type' => $s->question_type, 'count' => $s->question_count]),
             ],
             'problems' => $test->status === 'draft' ? $this->cbt->problems($test) : [],
             'results' => $results->values(),
@@ -140,7 +140,8 @@ class CbtTestController extends Controller
                 'expected' => $results->count(),
                 'finished' => $finished->count(),
                 'writing' => $results->where('status', 'in_progress')->count(),
-                'average' => $finished->count() ? round($finished->avg('percent'), 1) : null,
+                'to_mark' => $results->where('needs_marking', true)->count(),
+                'average' => $finished->whereNotNull('percent')->count() ? round($finished->whereNotNull('percent')->avg('percent'), 1) : null,
                 'highest' => $finished->max('percent'),
                 'lowest' => $finished->min('percent'),
                 'passed' => $test->pass_mark !== null ? $finished->where('percent', '>=', $test->pass_mark)->count() : null,
@@ -217,7 +218,7 @@ class CbtTestController extends Controller
         foreach ($results as $r) {
             $a = $r['attempt_id'] ? $attempts->get($r['attempt_id']) : null;
             $sections = array_map(fn ($i) => isset($a?->section_scores[$i]) ? $a->section_scores[$i]['score'].' / '.$a->section_scores[$i]['max'] : '', array_keys($titles));
-            $rows[] = array_merge([$r['admission_no'], $r['name'], self::STATUS_WORDS[$r['status']], $r['score'], $r['max_score'], $r['percent']], $sections,
+            $rows[] = array_merge([$r['admission_no'], $r['name'], self::STATUS_WORDS[$r['status']].($r['needs_marking'] ? ' (theory to mark)' : ''), $r['score'], $r['max_score'], $r['percent']], $sections,
                 [$r['answered'].' of '.$r['questions'], $a?->page_leaves ?? '', $r['minutes']], $applicants ? [ucfirst((string) $r['outcome'])] : []);
         }
         $bytes = (new SimpleXlsx())->sheet('Results', $rows)->bytes();
@@ -252,8 +253,33 @@ class CbtTestController extends Controller
     {
         $id = (int) $request->validate(['component_id' => 'required|integer'])['component_id'];
         $count = $this->cbt->copyToResults($test->load('subject'), $id);
+        $waiting = $test->attempts()->where('needs_marking', true)->count();
 
-        return back()->with('success', "{$count} score(s) were put into the term results.");
+        return back()->with('success', "{$count} score(s) were put into the term results."
+            .($waiting ? " {$waiting} student(s) still have theory answers to mark; send the scores again once they are marked." : ''));
+    }
+
+    /** Mark typed (theory) answers: one question at a time, every student's answer to it */
+    public function marking(Request $request, CbtTest $test): Response
+    {
+        $sheet = $this->cbt->markingSheet($test, $request->integer('question') ?: null);
+
+        return Inertia::render('SchoolAdmin/Cbt/Marking', $sheet + [
+            'test' => ['id' => $test->id, 'title' => $test->title, 'audience' => $test->audience],
+        ]);
+    }
+
+    public function saveMarks(Request $request, CbtTest $test): RedirectResponse
+    {
+        $data = $request->validate([
+            'question_id' => 'required|integer',
+            'marks' => 'required|array|min:1|max:1000',
+            'marks.*.marks' => 'required|numeric|min:0|max:100',
+            'marks.*.comment' => 'nullable|string|max:500',
+        ], ['marks.*.marks.required' => 'Give a mark for every answer you are saving.']);
+        $saved = $this->cbt->markTheory($test, $data['question_id'], $data['marks']);
+
+        return back()->with('success', "{$saved} answer(s) marked.");
     }
 
     public const STATUS_WORDS = ['not_started' => 'Not started', 'in_progress' => 'Writing', 'submitted' => 'Handed in', 'timed_out' => 'Time ran out'];
@@ -265,7 +291,7 @@ class CbtTestController extends Controller
             'class' => $t->schoolClass?->name, 'subject' => $t->subject?->name, 'term' => $t->term?->name,
             'duration_minutes' => $t->duration_minutes, 'questions' => $t->questionTotal(),
             'opens_at' => $t->opens_at?->toIso8601String(), 'closes_at' => $t->closes_at?->toIso8601String(),
-            'pass_mark' => $t->pass_mark, 'has_code' => (bool) $t->access_code, 'show_score' => $t->show_score,
+            'pass_mark' => $t->pass_mark, 'has_code' => (bool) $t->access_code, 'show_score' => $t->show_score, 'allow_calculator' => $t->allow_calculator,
             'max_page_leaves' => $t->max_page_leaves,
         ];
     }
@@ -273,7 +299,7 @@ class CbtTestController extends Controller
     private function form(?CbtTest $test): Response
     {
         $banks = CbtBank::orderBy('name')->get(['id', 'name']);
-        $questions = CbtQuestion::whereIn('cbt_bank_id', $banks->pluck('id'))->get(['cbt_bank_id', 'topic', 'difficulty']);
+        $questions = CbtQuestion::whereIn('cbt_bank_id', $banks->pluck('id'))->get(['cbt_bank_id', 'topic', 'difficulty', 'type']);
 
         return Inertia::render('SchoolAdmin/Cbt/TestForm', [
             'test' => $test ? [
@@ -281,15 +307,15 @@ class CbtTestController extends Controller
                 'instructions' => $test->instructions, 'duration_minutes' => $test->duration_minutes,
                 'opens_at' => $test->opens_at->toIso8601String(), 'closes_at' => $test->closes_at?->toIso8601String(),
                 'shuffle_questions' => $test->shuffle_questions, 'shuffle_options' => $test->shuffle_options, 'show_score' => $test->show_score,
-                'access_code' => $test->access_code, 'max_page_leaves' => $test->max_page_leaves, 'pass_mark' => $test->pass_mark,
-                'sections' => $test->sections->map(fn ($s) => $s->only('title', 'cbt_bank_id', 'topic', 'difficulty', 'question_count'))->values(),
+                'allow_calculator' => $test->allow_calculator, 'access_code' => $test->access_code, 'max_page_leaves' => $test->max_page_leaves, 'pass_mark' => $test->pass_mark,
+                'sections' => $test->sections->map(fn ($s) => $s->only('title', 'cbt_bank_id', 'topic', 'difficulty', 'question_type', 'question_count'))->values(),
                 'started' => $test->attempts()->exists(),
                 'has_candidates' => $test->candidates()->exists(),
             ] : null,
             // How many questions each bank has, by topic and difficulty, so the form can show what is available
             'banks' => $banks->map(fn (CbtBank $b) => [
                 'id' => $b->id, 'name' => $b->name,
-                'counts' => $questions->where('cbt_bank_id', $b->id)->map(fn ($q) => ['topic' => $q->topic, 'difficulty' => $q->difficulty])->values(),
+                'counts' => $questions->where('cbt_bank_id', $b->id)->map(fn ($q) => ['topic' => $q->topic, 'difficulty' => $q->difficulty, 'type' => $q->type])->values(),
             ]),
             'classes' => SchoolClass::orderBy('numeric_name')->get(['id', 'name']),
             'subjects' => Subject::get(['id', 'name', 'class_id']),
@@ -314,6 +340,7 @@ class CbtTestController extends Controller
             'shuffle_questions' => 'boolean',
             'shuffle_options' => 'boolean',
             'show_score' => 'boolean',
+            'allow_calculator' => 'boolean',
             'access_code' => 'nullable|string|max:12|alpha_num',
             'max_page_leaves' => 'nullable|integer|min:1|max:50',
             'pass_mark' => 'nullable|numeric|min:0|max:100',
@@ -322,6 +349,7 @@ class CbtTestController extends Controller
             'sections.*.cbt_bank_id' => ['required', Rule::exists('cbt_banks', 'id')->where('school_id', $school)->whereNull('deleted_at')],
             'sections.*.topic' => 'nullable|string|max:120',
             'sections.*.difficulty' => ['nullable', Rule::in(CbtQuestion::DIFFICULTIES)],
+            'sections.*.question_type' => ['nullable', Rule::in(CbtQuestion::TYPES)],
             'sections.*.question_count' => 'required|integer|min:1|max:500',
         ], [
             'sections.required' => 'Add at least one section of questions.',

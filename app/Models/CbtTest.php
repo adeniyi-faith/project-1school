@@ -16,11 +16,11 @@ class CbtTest extends Model
     public const STATUSES = ['draft', 'published', 'closed'];
 
     protected $fillable = ['school_id', 'title', 'audience', 'class_id', 'subject_id', 'term_id', 'instructions', 'duration_minutes', 'opens_at', 'closes_at',
-        'shuffle_questions', 'shuffle_options', 'show_score', 'access_code', 'max_page_leaves', 'pass_mark', 'status', 'created_by'];
+        'shuffle_questions', 'shuffle_options', 'show_score', 'allow_calculator', 'access_code', 'max_page_leaves', 'pass_mark', 'status', 'created_by'];
 
     protected $casts = [
         'opens_at' => 'datetime', 'closes_at' => 'datetime', 'duration_minutes' => 'integer', 'max_page_leaves' => 'integer', 'pass_mark' => 'float',
-        'shuffle_questions' => 'boolean', 'shuffle_options' => 'boolean', 'show_score' => 'boolean',
+        'shuffle_questions' => 'boolean', 'shuffle_options' => 'boolean', 'show_score' => 'boolean', 'allow_calculator' => 'boolean',
     ];
 
     protected $hidden = ['access_code'];

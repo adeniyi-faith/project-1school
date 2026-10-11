@@ -4,26 +4,30 @@ import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { clock } from '@/components/cbt/CbtParts';
-import { ChevronLeft, ChevronRight, Flag, Wifi, WifiOff } from 'lucide-react';
+import Calculator from '@/components/cbt/Calculator';
+import { Calculator as CalculatorIcon, ChevronLeft, ChevronRight, Flag, Wifi, WifiOff } from 'lucide-react';
 import type { CbtPaperQuestion } from '@/Types';
 
 interface Props {
-    test: { id: number; title: string; sections: string[]; max_page_leaves: number | null };
+    test: { id: number; title: string; sections: string[]; max_page_leaves: number | null; allow_calculator: boolean };
     base: string;
     person: { name: string; number: string | null };
     questions: CbtPaperQuestion[];
     answers: Record<string, number>;
+    /** Typed answers to theory questions */
+    written: Record<string, string>;
     flags: number[];
     secondsLeft: number;
     pageLeaves: number;
 }
 
-interface Pending { question_id: number; option: number | null }
+/** A change waiting to reach the server: an option chosen (or cleared), or a typed answer */
+type Pending = { question_id: number; option: number | null } | { question_id: number; text: string };
 
 const LETTERS = 'ABCDEF';
 
 /** The exam screen: one question at a time, a numbered grid, a server-kept timer, and every answer saved as it is clicked */
-export default function CbtExam({ base, test, person, questions, answers: saved, flags: savedFlags, secondsLeft, pageLeaves: savedLeaves }: Props) {
+export default function CbtExam({ base, test, person, questions, answers: saved, written: savedWritten, flags: savedFlags, secondsLeft, pageLeaves: savedLeaves }: Props) {
     // Per person, so on a shared exam computer one applicant's unsent answers never reach the next
     const pendingKey = `cbt-pending-${test.id}-${person.number ?? ''}`;
     const [index, setIndex] = useState(0);
@@ -33,10 +37,21 @@ export default function CbtExam({ base, test, person, questions, answers: saved,
         // Answers clicked while offline before a reload
         try {
             const kept: Pending[] = JSON.parse(localStorage.getItem(pendingKey) ?? '[]');
-            kept.forEach(p => (p.option === null ? delete start[p.question_id] : (start[p.question_id] = p.option)));
+            kept.forEach(p => { if ('option' in p) (p.option === null ? delete start[p.question_id] : (start[p.question_id] = p.option)); });
         } catch { /* storage unavailable */ }
         return start;
     });
+    const [written, setWritten] = useState<Record<number, string>>(() => {
+        const start: Record<number, string> = {};
+        Object.entries(savedWritten).forEach(([k, v]) => (start[Number(k)] = v));
+        try {
+            const kept: Pending[] = JSON.parse(localStorage.getItem(pendingKey) ?? '[]');
+            kept.forEach(p => { if ('text' in p) start[p.question_id] = p.text; });
+        } catch { /* storage unavailable */ }
+        return start;
+    });
+    const [calculator, setCalculator] = useState(false);
+    const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [flags, setFlags] = useState<number[]>(savedFlags);
     const [left, setLeft] = useState(secondsLeft);
     const [online, setOnline] = useState(true);
@@ -49,7 +64,8 @@ export default function CbtExam({ base, test, person, questions, answers: saved,
     const sending = useRef(false);
 
     const q = questions[index];
-    const unanswered = questions.filter(x => answers[x.id] === undefined).length;
+    const isAnswered = (id: number) => answers[id] !== undefined || (written[id] ?? '').trim() !== '';
+    const unanswered = questions.filter(x => !isAnswered(x.id)).length;
 
     const finish = useCallback(() => {
         if (finishing.current) return;
@@ -110,6 +126,22 @@ export default function CbtExam({ base, test, person, questions, answers: saved,
         flush();
     }
 
+    // Typed answers are kept on this computer at once and sent after a short pause in typing
+    function type(text: string) {
+        if (!q || finishing.current) return;
+        setWritten(w => ({ ...w, [q.id]: text }));
+        pending.current = [...pending.current.filter(p => p.question_id !== q.id), { question_id: q.id, text }];
+        keepPending();
+        if (typingTimer.current) clearTimeout(typingTimer.current);
+        typingTimer.current = setTimeout(() => flush(), 1500);
+    }
+
+    function go(n: number) {
+        // Moving to another question sends what was just typed
+        if (typingTimer.current) { clearTimeout(typingTimer.current); flush(); }
+        setIndex(n);
+    }
+
     function toggleFlag() {
         if (!q) return;
         const on = !flags.includes(q.id);
@@ -166,17 +198,18 @@ export default function CbtExam({ base, test, person, questions, answers: saved,
     // Keyboard: A–F choose, N or → next, P or ← previous, F flag
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            if (confirming || warning || e.ctrlKey || e.metaKey || e.altKey) return;
+            const target = e.target as HTMLElement | null;
+            if (confirming || warning || e.ctrlKey || e.metaKey || e.altKey || target?.closest('textarea, input, [role="dialog"]')) return;
             const key = e.key.toUpperCase();
             const i = LETTERS.indexOf(key);
             if (key === 'F') {
                 toggleFlag();
-            } else if (i >= 0 && q && i < q.options.length) {
+            } else if (i >= 0 && q && q.type !== 'theory' && i < q.options.length) {
                 choose(q.options[i].value);
             } else if (key === 'N' || e.key === 'ArrowRight') {
-                setIndex(n => Math.min(questions.length - 1, n + 1));
+                go(Math.min(questions.length - 1, index + 1));
             } else if (key === 'P' || e.key === 'ArrowLeft') {
-                setIndex(n => Math.max(0, n - 1));
+                go(Math.max(0, index - 1));
             }
         };
         window.addEventListener('keydown', onKey);
@@ -198,6 +231,11 @@ export default function CbtExam({ base, test, person, questions, answers: saved,
                         <span title={online ? 'Connected: answers are saving' : 'No connection: answers will save when it returns'} className={online ? 'text-emerald-600' : 'text-red-600'}>
                             {online ? <Wifi className="size-5" /> : <WifiOff className="size-5" />}
                         </span>
+                        {test.allow_calculator && (
+                            <Button variant="outline" size="sm" onClick={() => setCalculator(c => !c)} aria-pressed={calculator} title="Calculator">
+                                <CalculatorIcon className="size-4" /> <span className="hidden sm:inline">Calculator</span>
+                            </Button>
+                        )}
                         <span aria-live="polite" className={`rounded-lg px-3 py-1 font-mono text-lg font-semibold tabular-nums ${low ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300' : 'bg-slate-100 dark:bg-white/10'}`}>
                             {clock(left)}
                         </span>
@@ -218,6 +256,15 @@ export default function CbtExam({ base, test, person, questions, answers: saved,
                         </div>
                         <p className="whitespace-pre-line text-lg leading-relaxed">{q.text}</p>
                         {q.image && <img src={q.image} alt="" className="max-h-72 rounded-lg border border-slate-200 bg-white dark:border-white/10" draggable={false} />}
+                        {q.type === 'theory' ? (
+                            <div className="space-y-1.5">
+                                <label htmlFor={`answer-${q.id}`} className="text-sm font-medium text-slate-600 dark:text-slate-300">Type your answer</label>
+                                <textarea id={`answer-${q.id}`} key={q.id} value={written[q.id] ?? ''} onChange={e => type(e.target.value)} maxLength={20000} rows={12}
+                                    onPaste={e => e.preventDefault()} onDrop={e => e.preventDefault()} spellCheck={false} autoComplete="off"
+                                    className="w-full select-text rounded-xl border-2 border-slate-200 bg-white p-3.5 text-base leading-relaxed outline-none focus:border-indigo-600 dark:border-white/10 dark:bg-slate-900" />
+                                <p className="text-xs text-slate-500">Your answer saves by itself as you type. Your teacher marks it after you hand in.</p>
+                            </div>
+                        ) : (
                         <div className="space-y-2.5" role="radiogroup" aria-label={`Question ${index + 1}`}>
                             {q.options.map((o, i) => {
                                 const on = answers[q.id] === o.value;
@@ -230,10 +277,11 @@ export default function CbtExam({ base, test, person, questions, answers: saved,
                                 );
                             })}
                         </div>
+                        )}
                         <div className="flex justify-between gap-2 pt-2">
-                            <Button variant="outline" disabled={index === 0} onClick={() => setIndex(index - 1)}><ChevronLeft className="size-4" /> Previous</Button>
+                            <Button variant="outline" disabled={index === 0} onClick={() => go(index - 1)}><ChevronLeft className="size-4" /> Previous</Button>
                             {index < questions.length - 1
-                                ? <Button onClick={() => setIndex(index + 1)} className="bg-indigo-600 text-white hover:bg-indigo-700">Next <ChevronRight className="size-4" /></Button>
+                                ? <Button onClick={() => go(index + 1)} className="bg-indigo-600 text-white hover:bg-indigo-700">Next <ChevronRight className="size-4" /></Button>
                                 : <Button onClick={() => setConfirming(true)} className="bg-indigo-600 text-white hover:bg-indigo-700">Finish</Button>}
                         </div>
                         <p className="hidden text-xs text-slate-400 sm:block">Keys: A–E choose · N next · P previous · F mark for review</p>
@@ -244,10 +292,10 @@ export default function CbtExam({ base, test, person, questions, answers: saved,
                     <p className="text-sm font-medium">{questions.length - unanswered} of {questions.length} answered</p>
                     <div className="grid grid-cols-8 gap-1.5 lg:grid-cols-5">
                         {questions.map((x, i) => {
-                            const done = answers[x.id] !== undefined;
+                            const done = isAnswered(x.id);
                             const flagged = flags.includes(x.id);
                             return (
-                                <button key={x.id} type="button" onClick={() => setIndex(i)} aria-label={`Question ${i + 1}${done ? ', answered' : ''}${flagged ? ', marked for review' : ''}`}
+                                <button key={x.id} type="button" onClick={() => go(i)} aria-label={`Question ${i + 1}${done ? ', answered' : ''}${flagged ? ', marked for review' : ''}`}
                                     className={`h-9 rounded-md text-sm font-medium tabular-nums ${done ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-200'} ${flagged ? 'ring-2 ring-amber-500' : 'border border-slate-200 dark:border-white/10'} ${i === index ? 'outline outline-2 outline-offset-1 outline-slate-900 dark:outline-white' : ''}`}>
                                     {i + 1}
                                 </button>
@@ -261,6 +309,8 @@ export default function CbtExam({ base, test, person, questions, answers: saved,
                     </div>
                 </aside>
             </main>
+
+            {calculator && <Calculator onClose={() => setCalculator(false)} />}
 
             <Dialog open={confirming} onOpenChange={setConfirming}>
                 <DialogContent className="sm:max-w-md">

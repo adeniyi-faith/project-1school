@@ -8,7 +8,7 @@ interface Props {
     person?: { name: string; number: string | null };
     test: { id: number; title: string; show_score: boolean };
     result: {
-        status: 'submitted' | 'timed_out'; ended_reason: string | null; answered: number; questions: number;
+        status: 'submitted' | 'timed_out'; ended_reason: string | null; answered: number; questions: number; needs_marking: boolean;
         score: number | null; max_score: number | null; sections: { title: string; score: number; max: number }[];
     };
 }
@@ -33,7 +33,11 @@ export default function StudentCbtDone({ person, test, result }: Props) {
                                 {percent != null && <span className="ml-2 text-lg font-medium text-slate-500">({percent}%)</span>}
                             </p>
                         ) : (
-                            <p className="mt-5 text-sm text-slate-600 dark:text-slate-300">{person ? 'The school will share the results.' : 'Your teacher will share the results.'}</p>
+                            <p className="mt-5 text-sm text-slate-600 dark:text-slate-300">
+                                {result.needs_marking && test.show_score && !person
+                                    ? 'Your written answers are being marked by your teacher. Your score shows here once they are marked.'
+                                    : person ? 'The school will share the results.' : 'Your teacher will share the results.'}
+                            </p>
                         )}
                     </div>
                     {result.sections.length > 1 && (

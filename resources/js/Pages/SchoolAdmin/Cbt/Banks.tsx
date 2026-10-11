@@ -52,7 +52,7 @@ export default function CbtBanks({ banks, subjects, canManage }: Props) {
                                 <p className="font-semibold text-slate-900 dark:text-white">{b.name}</p>
                                 <p className="text-sm text-slate-500">{b.subject ?? 'Not linked to a subject'}</p>
                                 <p className="mt-3 text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">{b.questions} <span className="text-sm font-normal text-slate-500">questions</span></p>
-                                <p className="mt-1 text-xs text-slate-500">{b.levels.easy} easy · {b.levels.medium} medium · {b.levels.hard} hard</p>
+                                <p className="mt-1 text-xs text-slate-500">{b.levels.easy} easy · {b.levels.medium} medium · {b.levels.hard} hard{b.theory ? ` · ${b.theory} theory` : ''}</p>
                             </Link>
                         ))}
                     </div>
