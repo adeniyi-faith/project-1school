@@ -117,7 +117,8 @@ class StudentController extends Controller
 
     public function show(Student $student): Response
     {
-        $student->load(['schoolClass', 'section', 'guardian', 'documents']);
+        $student->load(['schoolClass', 'section', 'guardian', 'documents', 'house:id,name,colour', 'clubMemberships.club:id,name', 'idCards.issuer:id,name']);
+        $user = auth()->user();
 
         return Inertia::render('SchoolAdmin/Students/Show', [
             'student' => $student,
@@ -126,6 +127,12 @@ class StudentController extends Controller
             'certificates' => StudentCertificate::with('issuer:id,name')->where('student_id', $student->id)->latest('id')->get()
                 ->map(fn (StudentCertificate $c) => CertificateController::row($c)),
             'canIssueCertificates' => auth()->user()->can('students.certificates'),
+            'clubs' => $student->clubMemberships->map(fn ($m) => ['id' => $m->club_id, 'name' => $m->club?->name, 'role' => $m->role])->values(),
+            'houses' => $user->can('houses.manage') ? \App\Models\House::where('is_active', true)->orderBy('name')->get(['id', 'name', 'colour']) : null,
+            'idCards' => $user->can('students.idcard') ? $student->idCards->map(fn (\App\Models\StudentIdCard $c) => [
+                'id' => $c->id, 'card_no' => $c->card_no, 'state' => $c->state(), 'expires_on' => $c->expires_on?->toDateString(),
+                'issued_on' => $c->created_at?->toDateString(), 'issued_by' => $c->issuer?->name, 'note' => $c->note, 'prints' => $c->prints,
+            ])->values() : null,
         ]);
     }
 

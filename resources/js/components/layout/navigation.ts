@@ -1,12 +1,6 @@
 import type { ElementType } from 'react';
 import {
-    LayoutDashboard, School, Users, GraduationCap, UserCog,
-    CalendarDays, BookOpen, ClipboardList, Banknote,
-    Library, Bus, Home, Package, MessageSquare, BarChart3,
-    Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff,
-    Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell,
-    PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug,
-    CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock,
+    LayoutDashboard, School, Users, GraduationCap, UserCog, CalendarDays, BookOpen, ClipboardList, Banknote, Library, Bus, Home, Package, MessageSquare, BarChart3, Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff, Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell, PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug, CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock, IdCard, ScanLine, Medal, Shapes,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -54,6 +48,10 @@ export const navGroups: NavGroup[] = [
             { label: 'Examinations',href: '/school/exams',    icon: BookOpen,       roles: ['super-admin','school-admin','principal','teacher','accountant'] },
             { label: 'Move Students Up', href: '/school/promotions',     icon: ArrowUpRight,   roles: ['super-admin','school-admin'] },
             { label: 'Certificates', href: '/school/certificates',       icon: Award,          roles: ['super-admin','school-admin','principal'] },
+            { label: 'ID Cards',    href: '/school/id-cards',             icon: IdCard,         roles: ['super-admin','school-admin','principal'], exact: true },
+            { label: 'Scan ID Card', href: '/school/id-cards/scan',       icon: ScanLine,       roles: ['super-admin','school-admin','principal','teacher','receptionist','warden','accountant'] },
+            { label: 'Houses',      href: '/school/houses',               icon: Medal,          roles: ['super-admin','school-admin','principal','teacher'] },
+            { label: 'Clubs',       href: '/school/clubs',                icon: Shapes,         roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Term Results', href: '/school/results',             icon: ClipboardCheck, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Terms',       href: '/school/academics/terms',      icon: CalendarRange, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Scores & Grades', href: '/school/academics/assessment', icon: SlidersHorizontal, roles: ['super-admin','school-admin','principal'] },
@@ -221,7 +219,7 @@ export const bottomTabs: Record<string, BottomTab[]> = {
     receptionist: [
         { label: 'Home',       href: '/school/home',                 icon: LayoutDashboard },
         { label: 'Visitors',   href: '/school/admissions/visitors',  icon: Users },
-        { label: 'Inquiries',  href: '/school/admissions/inquiries', icon: ClipboardList },
+        { label: 'Scan card',  href: '/school/id-cards/scan',        icon: ScanLine },
         { label: 'Students',   href: '/school/students',             icon: GraduationCap },
     ],
     driver: [
