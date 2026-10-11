@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus, Edit, Trash2, MessageSquare, ChevronDown, ChevronUp, ClipboardList } from 'lucide-react';
 import { InquiryStatusPill, INQUIRY_STATUS_LABELS } from '@/components/admissions/InquiryStatus';
 import type { AssessmentOutcome, InquiryStatus } from '@/Types';
+import { useCan } from '@/lib/can';
 
 interface Followup { id: number; note: string; next_date: string | null; created_at: string; staff: { name: string } | null; }
 interface Inquiry {
@@ -30,6 +31,7 @@ type EditableStatus = 'new' | 'follow_up' | 'dropped';
 const OUTCOME_SHORT: Record<AssessmentOutcome, string> = { pending: 'booked', passed: 'passed', failed: 'did not pass', absent: 'absent' };
 
 export default function Inquiries({ inquiries, filters }: Props) {
+    const can = useCan();
     const [showModal,  setShowModal]  = useState(false);
     const [editItem,   setEditItem]   = useState<Inquiry | null>(null);
     const [delItem,    setDelItem]    = useState<Inquiry | null>(null);
@@ -90,7 +92,7 @@ export default function Inquiries({ inquiries, filters }: Props) {
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Admission Inquiries</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Open an inquiry to book an entrance exam or interview, offer a place, and enrol the child.</p>
                     </div>
-                    <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> New Inquiry</Button>
+                    {can('students.create') && <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> New Inquiry</Button>}
                 </div>
 
                 {/* Filters */}
@@ -156,18 +158,22 @@ export default function Inquiries({ inquiries, filters }: Props) {
                                             )}
                                         </div>
                                         <div className="flex items-center gap-1 shrink-0">
-                                            <button onClick={() => setFollowupId(i.id)}
+                                            {can('students.create') && <button onClick={() => setFollowupId(i.id)}
                                                 className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-600" title="Add followup">
                                                 <MessageSquare className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button onClick={() => openEdit(i)}
-                                                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-600">
-                                                <Edit className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button onClick={() => setDelItem(i)}
-                                                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-red-600">
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
+                                            </button>}
+                                            {can('students.create') && (
+                                                <button onClick={() => openEdit(i)}
+                                                    className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-600" aria-label="Change inquiry">
+                                                    <Edit className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                            {can('students.edit') && (
+                                                <button onClick={() => setDelItem(i)}
+                                                    className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-red-600" aria-label="Delete inquiry">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
                                             {i.followups.length > 0 && (
                                                 <button onClick={() => setExpandedId(expandedId === i.id ? null : i.id)}
                                                     className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 flex items-center gap-1 text-xs">

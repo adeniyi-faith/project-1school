@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Plus, MoreHorizontal, Pencil, Trash2, Building2 } from 'lucide-react';
 import type { Department, PageProps } from '@/Types';
+import { useCan } from '@/lib/can';
 
 interface Props {
     departments: Department[];
@@ -25,6 +26,7 @@ interface Props {
 const emptyForm = { name: '', code: '', description: '' };
 
 export default function DepartmentsIndex({ departments }: Props) {
+    const can = useCan();
     const { flash } = usePage<PageProps>().props;
     const [open, setOpen]       = useState(false);
     const [editing, setEditing] = useState<Department | null>(null);
@@ -69,10 +71,12 @@ export default function DepartmentsIndex({ departments }: Props) {
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Departments</h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{departments.length} departments</p>
                     </div>
-                    <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
-                        <Plus className="w-4 h-4" />
-                        Add Department
-                    </Button>
+                    {can('staff.edit') && (
+                        <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
+                            <Plus className="w-4 h-4" />
+                            Add Department
+                        </Button>
+                    )}
                 </div>
 
                 {flash?.success && (
@@ -115,7 +119,7 @@ export default function DepartmentsIndex({ departments }: Props) {
                                         {dept.description ?? '—'}
                                     </TableCell>
                                     <TableCell>
-                                        <DropdownMenu>
+                                        {can('staff.edit') && <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="w-8 h-8">
                                                     <MoreHorizontal className="w-4 h-4" />
@@ -129,7 +133,7 @@ export default function DepartmentsIndex({ departments }: Props) {
                                                     <Trash2 className="w-4 h-4" /> Delete
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        </DropdownMenu>}
                                     </TableCell>
                                 </TableRow>
                             ))}

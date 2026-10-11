@@ -43,6 +43,10 @@ export interface AcademicYear {
 export interface PageProps {
     auth: {
         user: User | null;
+        /** Permission names this person holds; ['*'] for the platform owner */
+        permissions: string[];
+        /** Page addresses this person may open (decided by the server from the route rules) */
+        paths: string[];
     };
     school: School | null;
     flash: {

@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\PlatformSetting;
 use App\Support\DemoSchool;
+use App\Support\NavAccess;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -48,6 +49,9 @@ class HandleInertiaRequests extends Middleware
                     'role'      => $request->user()->roles()->first()?->name ?? null,
                     'school_id' => $request->user()->school_id ?? null,
                 ] : null,
+                // What this person may do: page buttons check `permissions`, the menu checks `paths`
+                'permissions' => fn () => $request->user() ? NavAccess::permissions($request->user()) : [],
+                'paths' => fn () => $request->user() ? NavAccess::paths($request->user()) : [],
             ],
             // Set while someone is looking around the public demo: the bar on top offers to switch account type
             'demo' => fn () => DemoSchool::isDemoUser($request->user())

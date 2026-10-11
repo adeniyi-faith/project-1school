@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import type { Staff, Department, Designation, PaginatedResponse, PageProps } from '@/Types';
 import { useState } from 'react';
+import { useCan } from '@/lib/can';
 
 interface Props {
     staff: PaginatedResponse<Staff>;
@@ -50,6 +51,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function StaffIndex({ staff, filters, departments, designations, stats }: Props) {
+    const can = useCan();
     const { flash } = usePage<PageProps>().props;
     const [search, setSearch] = useState(filters.search ?? '');
 
@@ -83,12 +85,14 @@ export default function StaffIndex({ staff, filters, departments, designations, 
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Staff</h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{stats.total} staff members registered</p>
                     </div>
-                    <Link href="/school/staff/create">
-                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
-                            <Plus className="w-4 h-4" />
-                            Add Staff
-                        </Button>
-                    </Link>
+                    {can('staff.create') && (
+                        <Link href="/school/staff/create">
+                            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
+                                <Plus className="w-4 h-4" />
+                                Add Staff
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 {flash?.success && (
@@ -222,14 +226,18 @@ export default function StaffIndex({ staff, filters, departments, designations, 
                                                         <Eye className="w-4 h-4" /> View
                                                     </Link>
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem asChild>
-                                                    <Link href={`/school/staff/${s.id}/edit`} className="flex items-center gap-2 text-sm">
-                                                        <Pencil className="w-4 h-4" /> Edit
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDelete(s)} className="flex items-center gap-2 text-sm text-red-600 focus:text-red-600">
-                                                    <Trash2 className="w-4 h-4" /> Delete
-                                                </DropdownMenuItem>
+                                                {can('staff.edit') && (
+                                                    <DropdownMenuItem asChild>
+                                                        <Link href={`/school/staff/${s.id}/edit`} className="flex items-center gap-2 text-sm">
+                                                            <Pencil className="w-4 h-4" /> Edit
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {can('staff.delete') && (
+                                                    <DropdownMenuItem onClick={() => handleDelete(s)} className="flex items-center gap-2 text-sm text-red-600 focus:text-red-600">
+                                                        <Trash2 className="w-4 h-4" /> Delete
+                                                    </DropdownMenuItem>
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>

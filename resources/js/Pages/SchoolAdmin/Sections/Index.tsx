@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EmptyState, PageHeader, Panel, Pill } from '@/components/app/kit';
 import type { PageProps, SchoolClass, Section } from '@/Types';
+import { useCan } from '@/lib/can';
 
 interface Props extends PageProps {
     classes: (Pick<SchoolClass, 'id' | 'name' | 'level'> & { sections: Section[] })[];
@@ -21,6 +22,7 @@ const quick = ['A, B', 'A, B, C', 'A, B, C, D'];
 
 /** Arms of each class (JSS 1 A, JSS 1 B ... or JSS 1 Emerald). Senior arms can carry a department. */
 export default function ArmsIndex({ classes, departments }: Props) {
+    const can = useCan();
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<Section | null>(null);
     const form = useForm<FormData>(empty);
@@ -62,11 +64,12 @@ export default function ArmsIndex({ classes, departments }: Props) {
 
     const classItems = classes.map(c => ({ value: String(c.id), label: c.name }));
     const deptItems = [{ value: '', label: 'No department' }, ...departments.map(x => ({ value: x, label: x }))];
-    const actions = (
+    const canEdit = can('settings.edit');
+    const actions = canEdit ? (
         <Button onClick={() => openCreate()} disabled={classes.length === 0} className="bg-indigo-600 text-white hover:bg-indigo-700">
             <Plus className="size-4" /> Add arms
         </Button>
-    );
+    ) : null;
 
     return (
         <AppLayout breadcrumbs={[{ label: 'School Setup' }, { label: 'Arms' }]}>
@@ -84,7 +87,7 @@ export default function ArmsIndex({ classes, departments }: Props) {
                         {classes.map(cls => (
                             <Panel key={cls.id} title={cls.name}
                                 description={cls.sections.length ? `${cls.sections.length} arm${cls.sections.length === 1 ? '' : 's'}, ${cls.sections.reduce((n, s) => n + (s.students_count ?? 0), 0)} students` : 'No arms: the class is taught as one group'}
-                                action={<button type="button" onClick={() => openCreate(cls.id)} className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Add</button>}>
+                                action={canEdit ? <button type="button" onClick={() => openCreate(cls.id)} className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Add</button> : undefined}>
                                 {cls.sections.length > 0 && (
                                     <ul className="-my-1 divide-y divide-slate-100 dark:divide-white/[0.06]">
                                         {cls.sections.map(s => (
@@ -94,8 +97,8 @@ export default function ArmsIndex({ classes, departments }: Props) {
                                                 <span className="ml-auto text-xs text-slate-500">
                                                     {s.students_count ?? 0}{s.capacity > 0 ? ` of ${s.capacity}` : ''} student{(s.students_count ?? 0) === 1 && !s.capacity ? '' : 's'}
                                                 </span>
-                                                <Button variant="ghost" size="sm" onClick={() => openEdit(s)} aria-label={`Change ${cls.name} ${s.name}`}><Pencil className="size-3.5" /></Button>
-                                                <Button variant="ghost" size="sm" onClick={() => destroy(s, cls.name)} aria-label={`Delete ${cls.name} ${s.name}`} className="text-red-600 hover:text-red-700"><Trash2 className="size-3.5" /></Button>
+                                                {canEdit && <Button variant="ghost" size="sm" onClick={() => openEdit(s)} aria-label={`Change ${cls.name} ${s.name}`}><Pencil className="size-3.5" /></Button>}
+                                                {canEdit && <Button variant="ghost" size="sm" onClick={() => destroy(s, cls.name)} aria-label={`Delete ${cls.name} ${s.name}`} className="text-red-600 hover:text-red-700"><Trash2 className="size-3.5" /></Button>}
                                             </li>
                                         ))}
                                     </ul>
