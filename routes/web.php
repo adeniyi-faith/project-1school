@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\SchoolAdmin\AcademicSetupController;
 use App\Http\Controllers\SchoolAdmin\AttendanceController;
 use App\Http\Controllers\SchoolAdmin\ExamController;
+use App\Http\Controllers\SchoolAdmin\LessonNoteController;
 use App\Http\Controllers\SchoolAdmin\ResultController;
 use App\Http\Controllers\SchoolAdmin\ScholarshipController;
 use App\Http\Controllers\SchoolAdmin\FeeCategoryController;
@@ -422,10 +423,31 @@ Route::middleware('auth')->group(function () {
             Route::get('homework/{homework}/submissions',             [HomeworkController::class, 'submissions'])->middleware('permission:homework.view')->name('homework.submissions');
             Route::put('homework/submissions/{submission}/review',    [HomeworkController::class, 'reviewSubmission'])->middleware('permission:homework.grade')->name('homework.submissions.review');
 
-            Route::get('homework/lesson-plans',                       [HomeworkController::class, 'lessonPlans'])->middleware('permission:lessons.view')->name('homework.lesson-plans.index');
-            Route::post('homework/lesson-plans',                      [HomeworkController::class, 'storeLessonPlan'])->middleware('permission:lessons.create')->name('homework.lesson-plans.store');
-            Route::put('homework/lesson-plans/{lessonPlan}/review',   [HomeworkController::class, 'reviewLessonPlan'])->middleware('permission:lessons.approve')->name('homework.lesson-plans.review');
-            Route::delete('homework/lesson-plans/{lessonPlan}',       [HomeworkController::class, 'destroyLessonPlan'])->middleware('permission:lessons.create')->name('homework.lesson-plans.destroy');
+            // Lesson plans became lesson notes; the old address still works
+            Route::get('homework/lesson-plans', fn () => redirect()->route('school.lesson-notes.index'))->middleware('permission:lessons.view')->name('homework.lesson-plans.index');
+
+            // Lesson notes, schemes of work and note formats
+            Route::get('lesson-notes',                                [LessonNoteController::class, 'index'])->middleware('permission:lessons.view')->name('lesson-notes.index');
+            Route::get('lesson-notes/new',                            [LessonNoteController::class, 'create'])->middleware('permission:lessons.create')->name('lesson-notes.create');
+            Route::post('lesson-notes',                               [LessonNoteController::class, 'store'])->middleware('permission:lessons.create')->name('lesson-notes.store');
+            Route::post('lesson-notes/ai',                            [LessonNoteController::class, 'aiDraft'])->middleware(['permission:lessons.create', 'throttle:20,1'])->name('lesson-notes.ai');
+            Route::get('lesson-notes/schemes',                        [LessonNoteController::class, 'schemes'])->middleware('permission:lessons.view')->name('lesson-notes.schemes');
+            Route::get('lesson-notes/schemes/new',                    [LessonNoteController::class, 'scheme'])->middleware('permission:lessons.create')->name('lesson-notes.schemes.create');
+            Route::post('lesson-notes/schemes',                       [LessonNoteController::class, 'storeScheme'])->middleware('permission:lessons.create')->name('lesson-notes.schemes.store');
+            Route::post('lesson-notes/schemes/read',                  [LessonNoteController::class, 'readScheme'])->middleware(['permission:lessons.create', 'throttle:20,1'])->name('lesson-notes.schemes.read');
+            Route::get('lesson-notes/schemes/{scheme}',               [LessonNoteController::class, 'scheme'])->middleware('permission:lessons.view')->name('lesson-notes.schemes.show');
+            Route::post('lesson-notes/schemes/{scheme}',              [LessonNoteController::class, 'updateScheme'])->middleware('permission:lessons.create')->name('lesson-notes.schemes.update');
+            Route::delete('lesson-notes/schemes/{scheme}',            [LessonNoteController::class, 'destroyScheme'])->middleware('permission:lessons.create')->name('lesson-notes.schemes.destroy');
+            Route::get('lesson-notes/schemes/{scheme}/file',          [LessonNoteController::class, 'schemeFile'])->middleware('permission:lessons.view')->name('lesson-notes.schemes.file');
+            Route::get('lesson-notes/formats',                        [LessonNoteController::class, 'formats'])->middleware('permission:lessons.view')->name('lesson-notes.formats');
+            Route::post('lesson-notes/formats',                       [LessonNoteController::class, 'storeFormat'])->middleware('permission:lessons.approve')->name('lesson-notes.formats.store');
+            Route::put('lesson-notes/formats/{format}',               [LessonNoteController::class, 'updateFormat'])->middleware('permission:lessons.approve')->name('lesson-notes.formats.update');
+            Route::delete('lesson-notes/formats/{format}',            [LessonNoteController::class, 'destroyFormat'])->middleware('permission:lessons.approve')->name('lesson-notes.formats.destroy');
+            Route::get('lesson-notes/{note}',                         [LessonNoteController::class, 'edit'])->middleware('permission:lessons.view')->name('lesson-notes.edit');
+            Route::put('lesson-notes/{note}',                         [LessonNoteController::class, 'update'])->middleware('permission:lessons.create')->name('lesson-notes.update');
+            Route::put('lesson-notes/{note}/review',                  [LessonNoteController::class, 'review'])->middleware('permission:lessons.approve')->name('lesson-notes.review');
+            Route::delete('lesson-notes/{note}',                      [LessonNoteController::class, 'destroy'])->middleware('permission:lessons.create')->name('lesson-notes.destroy');
+            Route::get('lesson-notes/{note}/pdf',                     [LessonNoteController::class, 'pdf'])->middleware('permission:lessons.view')->name('lesson-notes.pdf');
 
             Route::get('homework/syllabi',                            [HomeworkController::class, 'syllabi'])->middleware('permission:syllabus.view')->name('homework.syllabi.index');
             Route::post('homework/syllabi',                           [HomeworkController::class, 'storeSyllabus'])->middleware('permission:syllabus.manage')->name('homework.syllabi.store');
