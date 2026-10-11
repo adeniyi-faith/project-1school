@@ -72,7 +72,7 @@ export default function InventoryIssues({ issues, items, staffList, filters }: P
     return (
         <AppLayout title="Inventory Issues">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <Link href="/school/inventory/items" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white">
                             <ArrowLeft className="w-4 h-4" /> Items
@@ -184,7 +184,7 @@ export default function InventoryIssues({ issues, items, staffList, filters }: P
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Quantity <span className="text-red-500">*</span></Label>
                                 <Input type="number" min="0.01" step="0.01" value={form.quantity} onChange={e => setForm(p => ({ ...p, quantity: e.target.value }))} />
