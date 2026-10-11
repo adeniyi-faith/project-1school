@@ -56,7 +56,7 @@ export default function SubjectsIndex() {
         <AppLayout breadcrumbs={[{ label: 'School Setup' }, { label: 'Subjects' }]}>
             <Head title="Subjects" />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div>
                     <h1 className="text-xl font-bold text-slate-900 dark:text-white">Subjects</h1>
                     <p className="text-sm text-slate-500 mt-0.5">{subjects.length} subject{subjects.length !== 1 ? 's' : ''} configured</p>
@@ -117,7 +117,7 @@ export default function SubjectsIndex() {
                         <DialogTitle>{editing ? 'Edit Subject' : 'Add Subject'}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div className="space-y-1.5 col-span-2">
                                 <Label>Subject Name <span className="text-red-500">*</span></Label>
                                 <Input placeholder="Mathematics" {...register('name')} />

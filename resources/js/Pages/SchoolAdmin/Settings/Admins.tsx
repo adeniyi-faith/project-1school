@@ -96,7 +96,7 @@ export default function Admins({ users, roles, filters }: Props) {
     return (
         <AppLayout title="User Management">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">User Management</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Manage staff accounts and roles within your school</p>
@@ -230,7 +230,7 @@ export default function Admins({ users, roles, filters }: Props) {
                         <DialogTitle>{editUser ? 'Edit User' : 'Add User'}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={submitForm} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Name *</Label>
                                 <Input value={form.data.name} onChange={e => form.setData('name', e.target.value)} />
@@ -242,7 +242,7 @@ export default function Admins({ users, roles, filters }: Props) {
                                 {form.errors.email && <p className="text-xs text-red-500 mt-1">{form.errors.email}</p>}
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Phone</Label>
                                 <Input value={form.data.phone} onChange={e => form.setData('phone', e.target.value)} placeholder="+1234567890" />
@@ -255,7 +255,7 @@ export default function Admins({ users, roles, filters }: Props) {
                                 {form.errors.password && <p className="text-xs text-red-500 mt-1">{form.errors.password}</p>}
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Role *</Label>
                                 <Select value={form.data.role} onValueChange={v => form.setData('role', v)}>

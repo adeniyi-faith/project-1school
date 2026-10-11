@@ -49,7 +49,7 @@ export default function SectionsIndex() {
         <AppLayout breadcrumbs={[{ label: 'School Setup' }, { label: 'Sections' }]}>
             <Head title="Sections" />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div>
                     <h1 className="text-xl font-bold text-slate-900 dark:text-white">Sections</h1>
                     <p className="text-sm text-slate-500 mt-0.5">Sections grouped by class</p>
@@ -112,7 +112,7 @@ export default function SectionsIndex() {
                             </Select>
                             {errors.class_id && <p className="text-xs text-red-500">{errors.class_id.message}</p>}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Section Name <span className="text-red-500">*</span></Label>
                                 <Input placeholder="A, B, Science…" {...register('name')} />
