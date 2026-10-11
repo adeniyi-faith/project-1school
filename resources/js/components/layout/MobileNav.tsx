@@ -9,10 +9,10 @@ import type { PageProps } from '@/Types';
 
 /** Phone tab bar plus the full-menu drawer behind its "More" tab. Hidden from tablet width up. */
 export default function MobileNav() {
-    const { auth } = usePage<PageProps>().props;
+    const { auth, acting_school } = usePage<PageProps>().props;
     const { url } = usePage();
     const { mobileNavOpen, setMobileNavOpen } = useUIStore();
-    const tabs = tabsForRole(auth.user?.role ?? '', auth.paths);
+    const tabs = tabsForRole(auth.user?.role ?? '', auth.paths, !!acting_school);
     const onTab = tabs.some((t) => isNavActive(url, t.href, t.exact));
 
     useEffect(() => { setMobileNavOpen(false); }, [url, setMobileNavOpen]);

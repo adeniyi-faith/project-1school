@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SuperAdmin\SchoolRequest;
 use App\Models\School;
+use App\Support\ActingSchool;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -48,6 +49,22 @@ class SchoolController extends Controller
                 'suspended' => School::where('status', 'suspended')->count(),
             ],
         ]);
+    }
+
+    /** Step inside a school and work there with full access */
+    public function enter(School $school): RedirectResponse
+    {
+        ActingSchool::enter($school);
+
+        return redirect('/school/reports/dashboard')->with('success', "You are now working inside {$school->name}.");
+    }
+
+    /** Step back out to the platform */
+    public function leave(): RedirectResponse
+    {
+        ActingSchool::leave();
+
+        return redirect()->route('super-admin.schools.index');
     }
 
     public function create(): Response

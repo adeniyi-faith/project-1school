@@ -83,10 +83,10 @@ class IntegrationController extends Controller
                 'mail.from.name'                => $settings['smtp_from_name']  ?? config('mail.from.name'),
             ]);
 
-            Mail::raw('This is a test email from Genius SMS to verify your SMTP configuration.', function ($msg) use ($request, $settings) {
+            Mail::raw('This is a test email from SchoolRuns to verify your SMTP configuration.', function ($msg) use ($request, $settings) {
                 $msg->to($request->test_email)
-                    ->subject('Genius SMS — SMTP Test')
-                    ->from($settings['smtp_from_email'] ?? config('mail.from.address'), $settings['smtp_from_name'] ?? 'Genius SMS');
+                    ->subject('SchoolRuns — SMTP Test')
+                    ->from($settings['smtp_from_email'] ?? config('mail.from.address'), $settings['smtp_from_name'] ?? 'SchoolRuns');
             });
 
             return back()->with('success', 'Test email sent to ' . $request->test_email);
@@ -130,7 +130,7 @@ class IntegrationController extends Controller
             if ($provider === 'twilio') {
                 // Stub: would use Twilio SDK
                 // $client = new \Twilio\Rest\Client($settings['sms_account_sid'], $settings['sms_auth_token']);
-                // $client->messages->create($request->test_phone, ['from' => $settings['sms_from_number'], 'body' => 'Test SMS from Genius SMS.']);
+                // $client->messages->create($request->test_phone, ['from' => $settings['sms_from_number'], 'body' => 'Test SMS from SchoolRuns.']);
                 throw new \RuntimeException('Twilio SDK not installed. Add twilio/sdk to composer.json.');
             } else {
                 // Stub: would use Vonage SDK

@@ -83,7 +83,7 @@ export default function AdmissionForm({ school }: Props) {
                 )}
 
                 <p className="text-center text-xs text-slate-400 mt-6">
-                    Powered by <span className="font-medium text-slate-500">Genius SMS</span>
+                    Powered by <span className="font-medium text-slate-500">SchoolRuns</span>
                 </p>
             </div>
         </div>
