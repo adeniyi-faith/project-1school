@@ -92,7 +92,7 @@ export default function EditSchool() {
                             <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">Basic Information</CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="col-span-2"><Field name="name" label="School Name" required /></div>
+                            <div className="sm:col-span-2"><Field name="name" label="School Name" required /></div>
                             <Field name="slug" label="Slug" />
                             <Field name="email" label="Email" type="email" />
                             <Field name="phone" label="Phone" />
@@ -115,7 +115,7 @@ export default function EditSchool() {
                             <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">Location</CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="col-span-2">
+                            <div className="sm:col-span-2">
                                 <div className="space-y-1.5">
                                     <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Address</Label>
                                     <Textarea className="resize-none" rows={2} {...register('address')} />

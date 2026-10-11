@@ -189,7 +189,7 @@ export default function Assets({ assets, categories, filters, stats }: Props) {
                     <DialogHeader><DialogTitle>{editing ? 'Edit' : 'Register'} Asset</DialogTitle></DialogHeader>
                     <div className="space-y-4 mt-2 max-h-[70vh] overflow-y-auto pr-1">
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <div className="space-y-1.5 col-span-2">
+                            <div className="space-y-1.5 sm:col-span-2">
                                 <Label>Asset Name <span className="text-red-500">*</span></Label>
                                 <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
                             </div>
@@ -251,7 +251,7 @@ export default function Assets({ assets, categories, filters, stats }: Props) {
                                     </Select>
                                 </div>
                             )}
-                            <div className="space-y-1.5 col-span-2">
+                            <div className="space-y-1.5 sm:col-span-2">
                                 <Label>Description</Label>
                                 <Input value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />
                             </div>

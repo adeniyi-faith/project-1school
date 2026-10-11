@@ -76,7 +76,7 @@ export default function PackagesIndex({ packages, availableModules }: Props) {
 
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                     {packages.length === 0 && (
-                        <Card className="col-span-3"><CardContent className="py-12 text-center text-slate-400">No packages yet. Create your first package.</CardContent></Card>
+                        <Card className="col-span-full"><CardContent className="py-12 text-center text-slate-400">No packages yet. Create your first package.</CardContent></Card>
                     )}
                     {packages.map(p => (
                         <Card key={p.id} className={!p.is_active ? 'opacity-60' : ''}>

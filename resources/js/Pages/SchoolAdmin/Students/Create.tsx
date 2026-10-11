@@ -167,7 +167,7 @@ export default function CreateStudent() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="col-span-2 space-y-1.5">
+                                <div className="sm:col-span-2 space-y-1.5">
                                     <Label className="text-sm font-medium">Address</Label>
                                     <Textarea rows={2} className="resize-none" placeholder="House, Road, Area…" {...register('address')} />
                                 </div>
@@ -201,7 +201,7 @@ export default function CreateStudent() {
                                 </div>
                                 <Field name="roll_no"         label="Roll No"       placeholder="01" />
                                 <Field name="admission_date"  label="Admission Date" type="date" />
-                                <div className="col-span-2">
+                                <div className="sm:col-span-2">
                                     <Field name="previous_school" label="Previous School" placeholder="XYZ School" />
                                 </div>
                             </CardContent>
@@ -228,7 +228,7 @@ export default function CreateStudent() {
                                 <Field name="guardian.phone"      label="Phone"      placeholder="+8801700000000" />
                                 <Field name="guardian.email"      label="Email"      type="email" />
                                 <Field name="guardian.occupation" label="Occupation" placeholder="Business" />
-                                <div className="col-span-2 space-y-1.5">
+                                <div className="sm:col-span-2 space-y-1.5">
                                     <Label className="text-sm font-medium">Address</Label>
                                     <Textarea rows={2} className="resize-none" {...register('guardian.address')} />
                                 </div>
