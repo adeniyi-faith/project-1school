@@ -13,7 +13,8 @@ class SettingsController extends Controller
 {
     public function index()
     {
-        $s = PlatformSetting::allFor();
+        // AI settings (and the Gemini key) live on their own page and never go to the browser from here
+        $s = collect(PlatformSetting::allFor())->reject(fn ($v, $k) => str_starts_with($k, 'ai_'))->all();
 
         return Inertia::render('SuperAdmin/Settings/Index', [
             'settings' => $s,
