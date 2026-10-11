@@ -26,13 +26,20 @@ class DemoFill extends Command
         $hasData = DB::table('students')->where('school_id', $school->id)->exists();
 
         if ($hasData && ! $this->option('fresh')) {
-            $this->info('The demo school already has its students; refreshing the extras (hostels, buses, store, front desk, notices).');
+            $this->info('The demo school already has its students; refreshing the extras (hostels, buses, store, front desk, notices, lessons, tests, houses and clubs).');
 
-            return $this->call('db:seed', ['--class' => \Database\Seeders\DemoExtrasSeeder::class, '--force' => true]);
+            return $this->extras();
         }
 
         $code = $this->call('db:seed', ['--class' => \Database\Seeders\DemoSchoolSeeder::class, '--force' => true]);
 
-        return $code ?: $this->call('db:seed', ['--class' => \Database\Seeders\DemoExtrasSeeder::class, '--force' => true]);
+        return $code ?: $this->extras();
+    }
+
+    /** The side departments first, then the richer screens (lessons, tests, houses ...) that sit on top of them */
+    private function extras(): int
+    {
+        return $this->call('db:seed', ['--class' => \Database\Seeders\DemoExtrasSeeder::class, '--force' => true])
+            ?: $this->call('db:seed', ['--class' => \Database\Seeders\DemoRichSeeder::class, '--force' => true]);
     }
 }
