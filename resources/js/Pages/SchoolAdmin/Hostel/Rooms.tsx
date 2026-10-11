@@ -90,7 +90,7 @@ export default function HostelRooms({ hostel, rooms }: Props) {
                                 <TableHead className="text-center">Capacity</TableHead>
                                 <TableHead className="text-center">Occupied</TableHead>
                                 <TableHead>AC</TableHead>
-                                <TableHead className="text-right">Fee/month</TableHead>
+                                <TableHead className="text-right">Fee/term</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="w-20"></TableHead>
                             </TableRow>
@@ -156,7 +156,7 @@ export default function HostelRooms({ hostel, rooms }: Props) {
                         </div>
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
-                                <Label>Monthly Fee (₦)</Label>
+                                <Label>Fee per term (₦)</Label>
                                 <Input type="number" min="0" value={form.monthly_fee} onChange={e => setForm(p => ({ ...p, monthly_fee: e.target.value }))} />
                             </div>
                             <div className="space-y-1.5">

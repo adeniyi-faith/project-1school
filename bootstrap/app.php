@@ -26,5 +26,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // "Not allowed" shows as a plain page inside the app instead of Inertia's blank white pop-up (which
+        // is what it draws for any error page it cannot read). The 403 status is kept, so nothing else changes.
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            $denied = $e instanceof \Illuminate\Auth\Access\AuthorizationException
+                || ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface && $e->getStatusCode() === 403);
+
+            if (! $denied || $request->expectsJson() && ! $request->header('X-Inertia') || ! $request->user()) {
+                return null;
+            }
+
+            return \Inertia\Inertia::render('Error', ['message' => 'You do not have permission to do that.'])
+                ->toResponse($request)->setStatusCode(403);
+        });
     })->create();

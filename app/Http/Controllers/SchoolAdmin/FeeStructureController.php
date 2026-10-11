@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
 use App\Models\FeeCategory;
 use App\Models\FeeStructure;
 use App\Models\SchoolClass;
@@ -29,7 +30,7 @@ class FeeStructureController extends Controller
             'classes'      => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->get(['id', 'name']),
             'categories'   => FeeCategory::where('school_id', $sid)->where('is_active', true)->orderBy('name')->get(['id', 'name', 'type']),
             'filters'      => $request->only('class_id', 'category_id', 'academic_year'),
-            'currentYear'  => '2025-2026',
+            'currentYear'  => AcademicYear::where('school_id', $sid)->where('is_current', true)->value('name') ?? (now()->year.'/'.(now()->year + 1)),
         ]);
     }
 
@@ -41,7 +42,7 @@ class FeeStructureController extends Controller
             'academic_year'   => 'required|string|max:20',
             'amount'          => 'required|numeric|min:0',
             'due_date'        => 'nullable|date',
-            'frequency'       => 'required|in:monthly,quarterly,annual,one_time',
+            'frequency'       => 'required|in:per_term,annual,one_time,monthly,quarterly',
             'description'     => 'nullable|string|max:255',
             'is_active'       => 'boolean',
         ]);
@@ -54,6 +55,47 @@ class FeeStructureController extends Controller
         return back()->with('success', 'Fee structure created.');
     }
 
+    /**
+     * Set one fee for many classes at once, each class with its own amount. Classes left blank are skipped, and a class
+     * that already has this fee for the year has its amount changed instead of getting a second line.
+     */
+    public function storeMany(Request $request)
+    {
+        $data = $request->validate([
+            'fee_category_id'    => 'required|exists:fee_categories,id',
+            'academic_year'      => 'required|string|max:20',
+            'frequency'          => 'required|in:per_term,annual,one_time',
+            'due_date'           => 'nullable|date',
+            'description'        => 'nullable|string|max:255',
+            'rows'               => 'required|array|min:1',
+            'rows.*.class_id'    => 'required|exists:classes,id',
+            'rows.*.amount'      => 'nullable|numeric|min:0',
+        ]);
+
+        $made = 0;
+        $changed = 0;
+        foreach ($data['rows'] as $row) {
+            if (($row['amount'] ?? '') === '' || $row['amount'] === null) {
+                continue;
+            }
+            $structure = FeeStructure::firstOrNew([
+                'school_id' => $this->getSchoolId(), 'class_id' => $row['class_id'],
+                'fee_category_id' => $data['fee_category_id'], 'academic_year' => $data['academic_year'],
+            ]);
+            $structure->exists ? $changed++ : $made++;
+            $structure->fill([
+                'amount' => $row['amount'], 'frequency' => $data['frequency'], 'due_date' => $data['due_date'] ?? $structure->due_date,
+                'description' => $data['description'] ?? $structure->description, 'is_active' => true,
+            ])->save();
+        }
+
+        if ($made + $changed === 0) {
+            return back()->withErrors(['rows' => 'Type an amount for at least one class.']);
+        }
+
+        return back()->with('success', "{$made} fee".($made === 1 ? '' : 's').' added'.($changed ? ", {$changed} updated" : '').'.');
+    }
+
     public function update(Request $request, FeeStructure $feeStructure)
     {
         $data = $request->validate([
@@ -62,7 +104,7 @@ class FeeStructureController extends Controller
             'academic_year'   => 'required|string|max:20',
             'amount'          => 'required|numeric|min:0',
             'due_date'        => 'nullable|date',
-            'frequency'       => 'required|in:monthly,quarterly,annual,one_time',
+            'frequency'       => 'required|in:per_term,annual,one_time,monthly,quarterly',
             'description'     => 'nullable|string|max:255',
             'is_active'       => 'boolean',
         ]);

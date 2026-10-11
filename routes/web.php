@@ -412,6 +412,8 @@ Route::middleware('auth')->group(function () {
 
             Route::get('hostel/allocations',                              [HostelController::class, 'allocations'])->middleware('permission:hostel.view')->name('hostel.allocations');
             Route::post('hostel/allocations',                             [HostelController::class, 'storeAllocation'])->middleware('permission:hostel.manage')->name('hostel.allocations.store');
+            Route::put('hostel/allocations/{allocation}',                 [HostelController::class, 'updateAllocation'])->middleware('permission:hostel.manage')->name('hostel.allocations.update');
+            Route::get('hostel/student-search',                           [HostelController::class, 'studentSearch'])->middleware('permission:hostel.view')->name('hostel.student-search');
             Route::put('hostel/allocations/{allocation}/vacate',          [HostelController::class, 'vacate'])->middleware('permission:hostel.manage')->name('hostel.vacate');
 
             // Transport Management
@@ -480,6 +482,7 @@ Route::middleware('auth')->group(function () {
 
             Route::get('fees/structures',                    [FeeStructureController::class, 'index'])->middleware('permission:fees.view')->name('fees.structures.index');
             Route::post('fees/structures',                   [FeeStructureController::class, 'store'])->middleware('permission:fees.structure')->name('fees.structures.store');
+            Route::post('fees/structures/many',              [FeeStructureController::class, 'storeMany'])->middleware('permission:fees.structure')->name('fees.structures.many');
             Route::put('fees/structures/{feeStructure}',     [FeeStructureController::class, 'update'])->middleware('permission:fees.structure')->name('fees.structures.update');
             Route::delete('fees/structures/{feeStructure}',  [FeeStructureController::class, 'destroy'])->middleware('permission:fees.structure')->name('fees.structures.destroy');
 

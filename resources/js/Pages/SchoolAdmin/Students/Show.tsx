@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { CertificateList } from '@/components/certificates/CertificateList';
+import { ACTIVITY_LABELS, StudentActivityPanel, type ActivityKey, type StudentActivity } from '@/components/students/StudentActivity';
 import type { CertificateRow, ClassHistoryLine, PageProps, Student } from '@/Types';
 
 interface IdCardRow { id: number; card_no: string; state: 'valid' | 'expired' | 'replaced' | 'revoked'; expires_on: string | null; issued_on: string | null; issued_by: string | null; note: string | null; prints: number }
@@ -19,6 +20,7 @@ type Props = PageProps & {
     clubs: { id: number; name: string | null; role: string }[];
     houses: { id: number; name: string; colour: string }[] | null;
     idCards: IdCardRow[] | null;
+    activity: StudentActivity;
 };
 
 const CARD_STATE: Record<IdCardRow['state'], string> = {
@@ -41,11 +43,15 @@ const docSchema = z.object({
 type DocForm = z.infer<typeof docSchema>;
 
 export default function ShowStudent() {
-    const { student, classHistory, canEdit, certificates, canIssueCertificates, clubs, houses, idCards } = usePage<Props>().props;
-    type Tab = 'personal' | 'guardian' | 'documents' | 'history' | 'certificates' | 'id card';
-    const tabs: Tab[] = ['personal', 'guardian', 'documents', 'history', 'certificates', ...(idCards ? ['id card' as const] : [])];
+    const { student, classHistory, canEdit, certificates, canIssueCertificates, clubs, houses, idCards, activity } = usePage<Props>().props;
+    type Tab = 'personal' | 'guardian' | 'documents' | 'history' | 'certificates' | 'id card' | ActivityKey;
+    // Hostel, library, bus, fees ... tabs appear only for the parts this person is allowed to see
+    const activityTabs = (Object.keys(ACTIVITY_LABELS) as ActivityKey[]).filter(k => activity?.[k] != null);
+    const tabs: Tab[] = ['personal', 'guardian', 'documents', ...activityTabs, 'history', 'certificates', ...(idCards ? ['id card' as const] : [])];
+    const boarding = activity?.hostel?.find(a => a.status === 'active');
     const [tab, setTab]       = useState<Tab>(() => {
         const asked = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+        if (asked && (Object.keys(ACTIVITY_LABELS) as string[]).includes(asked) && activity?.[asked as ActivityKey] != null) return asked as ActivityKey;
         return asked === 'certificates' ? 'certificates' : asked === 'id-card' && idCards ? 'id card' : 'personal';
     });
     const [replacing, setReplacing] = useState(false);
@@ -107,6 +113,11 @@ export default function ShowStudent() {
                             {student.status}
                         </span>
                     </div>
+                    {boarding && (
+                        <button type="button" onClick={() => setTab('hostel')} className="mt-1 block text-left text-sm text-slate-600 hover:underline dark:text-slate-300">
+                            Boarder · {boarding.hostel} · Room {boarding.room}{boarding.bed ? ` · ${/^bed/i.test(boarding.bed) ? boarding.bed : `Bed ${boarding.bed}`}` : ''}
+                        </button>
+                    )}
                     {canEdit && (
                         <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5">
                             <Camera className="size-3.5" /> {student.photo_url ? 'Change photo' : 'Upload photo'}
@@ -153,9 +164,11 @@ export default function ShowStudent() {
                         key={t}
                         onClick={() => setTab(t)}
                         className={`shrink-0 px-4 py-2 text-sm font-medium capitalize border-b-2 transition-colors ${tab === t ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                    >{t === 'history' ? 'Class history' : t === 'id card' ? 'ID card' : t}</button>
+                    >{t === 'history' ? 'Class history' : t === 'id card' ? 'ID card' : t in ACTIVITY_LABELS ? ACTIVITY_LABELS[t as ActivityKey] : t}</button>
                 ))}
             </div>
+
+            {activityTabs.includes(tab as ActivityKey) && <StudentActivityPanel kind={tab as ActivityKey} data={activity} />}
 
             {/* Personal tab */}
             {tab === 'personal' && (
