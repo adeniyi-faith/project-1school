@@ -69,7 +69,7 @@ export default function DemoPick() {
                 <span className="min-w-0">
                     <span className="flex flex-wrap items-center gap-x-2 font-[Plus_Jakarta_Sans,Helvetica,Arial,sans-serif] text-[15.5px] font-semibold text-[#0E1A3A]">
                         {a.label}
-                        {isCurrent && <span className="rounded-full bg-[#EEF0FF] px-2 py-0.5 text-[11.5px] font-medium text-[#3346E0]">You are here</span>}
+                        {isCurrent && <span className="rounded-full bg-[#EEF0FF] px-1.5 py-px text-[10.5px] font-medium leading-tight text-[#3346E0] sm:px-2 sm:py-0.5 sm:text-[11.5px]">Here now</span>}
                         {going === a.key && <span className="text-[12.5px] font-normal text-[#5A6482]">Opening…</span>}
                     </span>
                     {big && <span className="mt-0.5 block text-[13.5px] leading-snug text-[#5A6482]">{a.available ? a.text : 'Needs the sample pupils, which are not loaded yet.'}</span>}
