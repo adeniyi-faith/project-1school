@@ -92,8 +92,12 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'store']);
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:5,10');
-    Route::get('/demo', [DemoController::class, 'enter'])->middleware('throttle:20,1')->name('demo');
 });
+
+// The demo: pick an account type, then look around as that person. Open to visitors and to
+// someone already in the demo (to switch account type); a real account is sent to its dashboard.
+Route::get('/demo', [DemoController::class, 'pick'])->name('demo');
+Route::post('/demo/{account}', [DemoController::class, 'enter'])->middleware('throttle:20,1')->name('demo.enter');
 
 /*
 |--------------------------------------------------------------------------

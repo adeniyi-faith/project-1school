@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\PlatformSetting;
+use App\Support\DemoSchool;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -48,6 +49,10 @@ class HandleInertiaRequests extends Middleware
                     'school_id' => $request->user()->school_id ?? null,
                 ] : null,
             ],
+            // Set while someone is looking around the public demo: the bar on top offers to switch account type
+            'demo' => fn () => DemoSchool::isDemoUser($request->user())
+                ? ['label' => DemoSchool::ACCOUNTS[DemoSchool::keyOf($request->user())][1]]
+                : null,
             'flash' => [
                 'success' => fn () => session('success'),
                 'error'   => fn () => session('error'),
