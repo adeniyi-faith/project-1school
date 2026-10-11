@@ -46,7 +46,7 @@ class OldMarksService
                 if (! $subject) {
                     continue;
                 }
-                $component = AssessmentScheme::forSubject($subject)?->components
+                $component = AssessmentScheme::forSubject($subject, $sheet->class_id)?->components
                     ->first(fn (AssessmentComponent $c) => in_array($wanted, [mb_strtolower($c->short_name), mb_strtolower($c->name)], true));
                 if (! $component) {
                     $report['missing_part'][] = $subject->name;

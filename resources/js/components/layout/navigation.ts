@@ -32,7 +32,7 @@ export const navGroups: NavGroup[] = [
         title: 'School Setup',
         items: [
             { label: 'Classes',     href: '/school/classes',  icon: GraduationCap,  roles: ['super-admin','school-admin','principal'] },
-            { label: 'Sections',    href: '/school/sections', icon: Layers,         roles: ['super-admin','school-admin','principal'] },
+            { label: 'Arms',        href: '/school/sections', icon: Layers,         roles: ['super-admin','school-admin','principal'] },
             { label: 'Subjects',    href: '/school/subjects', icon: BookOpen,       roles: ['super-admin','school-admin','principal'] },
             { label: 'Shifts',      href: '/school/shifts',   icon: Clock,          roles: ['super-admin','school-admin','principal'] },
             { label: 'Holidays',    href: '/school/holidays', icon: CalendarOff,    roles: ['super-admin','school-admin','principal'] },

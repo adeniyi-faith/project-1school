@@ -21,7 +21,7 @@ interface Props {
     };
     banks: { id: number; name: string; counts: { topic: string | null; difficulty: CbtDifficulty; type: CbtQuestionType }[] }[];
     classes: { id: number; name: string }[];
-    subjects: { id: number; name: string; class_id: number }[];
+    subjects: { id: number; name: string; class_ids: number[] }[];
     terms: { id: number; name: string; is_current: boolean }[];
 }
 
@@ -77,7 +77,7 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
     const locked = !!test?.started;
     const applicants = d.audience === 'applicants';
     const classItems = classes.map(c => ({ value: String(c.id), label: c.name }));
-    const subjectItems = [{ value: '', label: 'No subject' }, ...subjects.filter(s => String(s.class_id) === d.class_id).map(s => ({ value: String(s.id), label: s.name }))];
+    const subjectItems = [{ value: '', label: 'No subject' }, ...subjects.filter(s => s.class_ids.includes(Number(d.class_id))).map(s => ({ value: String(s.id), label: s.name }))];
     const termItems = [{ value: '', label: 'No term' }, ...terms.map(t => ({ value: String(t.id), label: t.name }))];
     const bankItems = banks.map(b => ({ value: String(b.id), label: b.name }));
     const total = d.sections.reduce((n, s) => n + (parseInt(s.question_count) || 0), 0);

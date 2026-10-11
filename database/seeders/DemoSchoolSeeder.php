@@ -176,7 +176,7 @@ class DemoSchoolSeeder extends Seeder
             'student_promotions', 'promotion_batches', 'marks', 'exams', 'ledger_entries', 'invoices', 'student_scholarships', 'scholarships', 'fee_payments', 'fee_structures', 'fee_categories', 'attendances',
             'timetables', 'homework', 'books', 'announcements', 'holidays', 'grade_scales',
             'students', 'guardians', 'staff', 'designations', 'departments', 'sections',
-            'subjects', 'classes', 'grading_schemes', 'assessment_components', 'assessment_schemes',
+            'class_subjects', 'subject_merges', 'subjects', 'classes', 'grading_schemes', 'assessment_components', 'assessment_schemes',
             'terms', 'academic_years',
         ] as $table) {
             if (Schema::hasTable($table) && Schema::hasColumn($table, 'school_id')) {
@@ -239,11 +239,13 @@ class DemoSchoolSeeder extends Seeder
         foreach ($defs as $i => [$name, $level, $age, $count, $sections, $capacity]) {
             $id = $this->insertGetId('classes', [
                 'school_id' => $this->sid, 'name' => $name, 'numeric_name' => $i + 1, 'capacity' => $capacity,
+                'level' => $level === 'early' ? 'early_years' : $level,
             ]);
             $sectionIds = [];
             foreach ($sections as $s) {
                 $sectionIds[$s] = $this->insertGetId('sections', [
                     'school_id' => $this->sid, 'class_id' => $id, 'name' => $s,
+                    'department' => $level === 'senior' ? $s : null,
                     'capacity' => (int) ceil($capacity / count($sections)),
                 ]);
             }
@@ -284,18 +286,24 @@ class DemoSchoolSeeder extends Seeder
         ];
     }
 
-    /** @return array<int,array> subjects keyed by class id */
+    /** @return array<int,array> subjects keyed by class id. Each subject is made once and offered by every class that takes it. */
     private function subjects(array $classes): array
     {
         $catalog = $this->subjectCatalog();
+        $ids = [];
         $out = [];
 
         foreach ($classes as $class) {
             $rows = [];
             foreach ($catalog[$class['level']] as $s) {
-                $id = $this->insertGetId('subjects', [
+                $key = mb_strtolower($s[0]).'|'.($s[2] ?? 'theory');
+                $id = $ids[$key] ??= $this->insertGetId('subjects', [
                     'school_id' => $this->sid, 'class_id' => $class['id'], 'name' => $s[0], 'code' => $s[1],
                     'type' => $s[2] ?? 'theory', 'full_marks' => 100, 'pass_marks' => 40,
+                ]);
+                $this->insertGetId('class_subjects', [
+                    'school_id' => $this->sid, 'class_id' => $class['id'], 'subject_id' => $id,
+                    'departments' => isset($s[3]) ? json_encode($s[3]) : null,
                 ]);
                 $rows[$id] = ['id' => $id, 'name' => $s[0], 'tracks' => $s[3] ?? null];
             }

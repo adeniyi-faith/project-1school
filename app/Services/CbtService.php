@@ -710,7 +710,7 @@ class CbtService
         if ($test->audience !== 'students' || ! $test->term_id || ! $test->subject_id || ! $test->class_id) {
             throw ValidationException::withMessages(['component_id' => 'Set the class, subject and term on the test first.']);
         }
-        $part = AssessmentScheme::forSubject($test->subject)?->components->firstWhere('id', $componentId);
+        $part = AssessmentScheme::forSubject($test->subject, $test->class_id)?->components->firstWhere('id', $componentId);
         if (! $part) {
             throw ValidationException::withMessages(['component_id' => 'Choose one of this subject\'s score parts.']);
         }

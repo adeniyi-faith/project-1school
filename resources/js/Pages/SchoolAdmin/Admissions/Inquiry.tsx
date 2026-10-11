@@ -120,7 +120,7 @@ export default function Inquiry({ inquiry, assessments, matchingGuardians, class
     }
 
     const classItems = classes.map(c => ({ value: String(c.id), label: c.name }));
-    const sectionItems = [{ value: '', label: 'No section' }, ...classSections.map(s => ({ value: String(s.id), label: s.name }))];
+    const sectionItems = [{ value: '', label: 'No arm' }, ...classSections.map(s => ({ value: String(s.id), label: s.name }))];
     const guardianItems = [
         ...matchingGuardians.map(g => ({ value: String(g.id), label: `${g.name} (already a parent here)` })),
         { value: NEW_GUARDIAN, label: `Add ${inquiry.guardian_name} as a new parent` },
@@ -382,9 +382,9 @@ export default function Inquiry({ inquiry, assessments, matchingGuardians, class
                                 <ErrorText>{enrol.errors.class_id}</ErrorText>
                             </div>
                             <div className="space-y-1.5">
-                                <Label>Section / arm</Label>
+                                <Label>Arm</Label>
                                 <Select items={sectionItems} value={enrol.data.section_id} onValueChange={v => enrol.setData('section_id', v ?? '')} disabled={classSections.length === 0}>
-                                    <SelectTrigger className="w-full"><SelectValue placeholder="No section" /></SelectTrigger>
+                                    <SelectTrigger className="w-full"><SelectValue placeholder="No arm" /></SelectTrigger>
                                     <SelectContent>{sectionItems.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <ErrorText>{enrol.errors.section_id}</ErrorText>

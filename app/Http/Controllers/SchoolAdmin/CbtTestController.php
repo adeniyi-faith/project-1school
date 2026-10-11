@@ -126,7 +126,7 @@ class CbtTestController extends Controller
         $test->load('sections.bank:id,name', 'schoolClass:id,name', 'subject:id,name', 'term:id,name');
         $results = $this->cbt->results($test);
         $finished = $results->whereIn('status', ['submitted', 'timed_out']);
-        $scheme = $test->subject ? AssessmentScheme::forSubject($test->subject) : null;
+        $scheme = $test->subject ? AssessmentScheme::forSubject($test->subject, $test->class_id) : null;
 
         return Inertia::render('SchoolAdmin/Cbt/Test', [
             'test' => $this->row($test) + [
@@ -318,7 +318,7 @@ class CbtTestController extends Controller
                 'counts' => $questions->where('cbt_bank_id', $b->id)->map(fn ($q) => ['topic' => $q->topic, 'difficulty' => $q->difficulty, 'type' => $q->type])->values(),
             ]),
             'classes' => SchoolClass::orderBy('numeric_name')->get(['id', 'name']),
-            'subjects' => Subject::get(['id', 'name', 'class_id']),
+            'subjects' => Subject::picker($this->getSchoolId()),
             'terms' => Term::with('academicYear:id,name')->orderByDesc('start_date')->get()
                 ->map(fn (Term $t) => ['id' => $t->id, 'name' => trim($t->name.' '.($t->academicYear?->name ?? '')), 'is_current' => $t->is_current]),
         ]);
@@ -331,7 +331,9 @@ class CbtTestController extends Controller
             'title' => 'required|string|max:150',
             'audience' => ['nullable', Rule::in(['students', 'applicants'])],
             'class_id' => [Rule::requiredIf($request->input('audience', 'students') === 'students'), 'nullable', Rule::exists('classes', 'id')->where('school_id', $school)],
-            'subject_id' => ['nullable', Rule::exists('subjects', 'id')->where('school_id', $school)->where('class_id', $request->class_id)],
+            'subject_id' => ['nullable', $request->filled('class_id')
+                ? Rule::exists('class_subjects', 'subject_id')->where('school_id', $school)->where('class_id', $request->class_id)
+                : Rule::exists('subjects', 'id')->where('school_id', $school)->whereNull('deleted_at')],
             'term_id' => ['nullable', Rule::exists('terms', 'id')->where('school_id', $school)],
             'instructions' => 'nullable|string|max:3000',
             'duration_minutes' => 'required|integer|min:1|max:600',
