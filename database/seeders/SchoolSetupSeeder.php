@@ -78,9 +78,9 @@ class SchoolSetupSeeder extends Seeder
             $subjects = $num <= 5 ? $primarySubjects : $secondarySubjects;
             foreach ($subjects as $sub) {
                 Subject::firstOrCreate(
-                    ['school_id' => $sid, 'class_id' => $class->id, 'name' => $sub['name']],
-                    ['code' => $sub['code'], 'type' => $sub['type'], 'full_marks' => 100, 'pass_marks' => 33]
-                );
+                    ['school_id' => $sid, 'name' => $sub['name']],
+                    ['class_id' => $class->id, 'code' => $sub['code'], 'type' => $sub['type'], 'full_marks' => 100, 'pass_marks' => 33]
+                )->offerIn([$class->id]);
             }
         }
 

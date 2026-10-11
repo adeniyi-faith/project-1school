@@ -194,9 +194,9 @@ export default function EditStudent() {
                                 {errors.class_id && <p className="text-xs text-red-500">{errors.class_id.message}</p>}
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-sm font-medium">Section</Label>
+                                <Label className="text-sm font-medium">Arm</Label>
                                 <Select defaultValue={student.section_id ? String(student.section_id) : undefined} onValueChange={(v) => setValue('section_id', Number(v))}>
-                                    <SelectTrigger className="h-9"><SelectValue placeholder="Select section" /></SelectTrigger>
+                                    <SelectTrigger className="h-9"><SelectValue placeholder="Select arm" /></SelectTrigger>
                                     <SelectContent>
                                         {visibleSections.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
                                     </SelectContent>

@@ -106,11 +106,11 @@ export default function MarksEntry({ exam, subjects, students, existingMarks, se
 
                 {sections.length > 0 && (
                     <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-slate-500">Section</label>
+                        <label className="text-xs font-medium text-slate-500">Arm</label>
                         <Select value={filters.section_id ?? ''} onValueChange={v => applyFilter('section_id', v)}>
-                            <SelectTrigger className="h-10 w-48"><SelectValue placeholder="All sections" /></SelectTrigger>
+                            <SelectTrigger className="h-10 w-48"><SelectValue placeholder="All arms" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All sections</SelectItem>
+                                <SelectItem value="">All arms</SelectItem>
                                 {sections.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
                             </SelectContent>
                         </Select>

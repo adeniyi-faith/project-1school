@@ -52,7 +52,7 @@ class TimetableController extends Controller
         return Inertia::render('SchoolAdmin/Timetable/Index', [
             'classes'      => SchoolClass::orderBy('numeric_name')->get(['id', 'name']),
             'sections'     => Section::orderBy('name')->get(['id', 'class_id', 'name']),
-            'subjects'     => $classId ? Subject::where('class_id', $classId)->orderBy('name')->get(['id', 'name', 'code']) : collect(),
+            'subjects'     => $classId ? Subject::offeredIn($classId)->orderBy('name')->get(['id', 'name', 'code']) : collect(),
             'teachers'     => Staff::where('status', 'active')->orderBy('first_name')->get(['id', 'first_name', 'last_name']),
             'periods'      => $periods,
             'grid'         => $grid,
