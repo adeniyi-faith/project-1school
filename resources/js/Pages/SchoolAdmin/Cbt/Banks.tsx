@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EmptyState, PageHeader, Panel } from '@/components/app/kit';
-import { Library, Plus, MonitorCheck } from 'lucide-react';
+import { Library, Plus, MonitorCheck, Printer } from 'lucide-react';
 import type { CbtBankRow } from '@/Types';
 
 interface Props {
@@ -32,6 +32,9 @@ export default function CbtBanks({ banks, subjects, canManage }: Props) {
         <div className="flex flex-wrap gap-2">
             <Link href="/school/cbt/tests" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
                 <MonitorCheck className="size-4" /> Tests
+            </Link>
+            <Link href="/school/cbt/papers" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+                <Printer className="size-4" /> Exam papers
             </Link>
             {canManage && <Button onClick={() => setOpen(true)} className="bg-indigo-600 text-white hover:bg-indigo-700"><Plus className="size-4" /> New question bank</Button>}
         </div>

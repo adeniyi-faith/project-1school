@@ -708,3 +708,34 @@ export interface LessonChoices {
     terms: { id: number; name: string; is_current: boolean }[];
 }
 export interface AiAvailability { shown: boolean; reason: string | null }
+
+/** A printed exam paper in the list */
+export interface ExamPaperRow {
+    id: number;
+    title: string;
+    class: string | null;
+    subject: string | null;
+    term: string | null;
+    questions: number;
+    marks: number;
+    by: string | null;
+    updated: string | null;
+}
+
+export interface ExamPaperSection {
+    title: string;
+    instructions: string | null;
+    /** Question ids, in the order they print */
+    questions: number[];
+}
+
+export interface ExamPaperData {
+    title: string;
+    class_id: number | null;
+    subject_id: number | null;
+    term_id: number | null;
+    duration_minutes: number | null;
+    instructions: string;
+    show_marks: boolean;
+    sections: ExamPaperSection[];
+}

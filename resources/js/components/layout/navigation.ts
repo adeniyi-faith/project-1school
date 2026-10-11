@@ -90,6 +90,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Online Classes',href: '/school/homework/online-classes', icon: Video,         roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'CBT Tests',     href: '/school/cbt/tests',               icon: MonitorCheck,  roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Question Banks',href: '/school/cbt/banks',               icon: Library,       roles: ['super-admin','school-admin','principal','teacher'] },
+            { label: 'Exam Papers',   href: '/school/cbt/papers',              icon: Printer,       roles: ['super-admin','school-admin','principal','teacher'] },
         ],
     },
     {
