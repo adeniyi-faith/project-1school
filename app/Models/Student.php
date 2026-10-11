@@ -86,9 +86,8 @@ class Student extends Model
 
         static::creating(function (Student $student) {
             if (empty($student->admission_no)) {
-                $year  = now()->format('Y');
-                $count = static::withoutGlobalScopes()->where('school_id', $student->school_id)->count() + 1;
-                $student->admission_no = "ADM-{$year}-" . str_pad($count, 4, '0', STR_PAD_LEFT);
+                $student->admission_no = NumberSequence::next($student->school_id, 'ADM-'.now()->format('Y').'-', 4,
+                    static::withoutGlobalScopes()->where('school_id', $student->school_id), 'admission_no');
             }
         });
     }

@@ -6,7 +6,12 @@ on:
       - main
 
 jobs:
+  # Nothing is deployed unless every test passes
+  tests:
+    uses: ./.github/workflows/tests.yml
+
   deploy:
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
