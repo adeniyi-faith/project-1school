@@ -26,11 +26,13 @@ class DemoFill extends Command
         $hasData = DB::table('students')->where('school_id', $school->id)->exists();
 
         if ($hasData && ! $this->option('fresh')) {
-            $this->info('The demo school already has data. Use --fresh to refill it.');
+            $this->info('The demo school already has its students; refreshing the extras (hostels, buses, store, front desk, notices).');
 
-            return self::SUCCESS;
+            return $this->call('db:seed', ['--class' => \Database\Seeders\DemoExtrasSeeder::class, '--force' => true]);
         }
 
-        return $this->call('db:seed', ['--class' => \Database\Seeders\DemoSchoolSeeder::class, '--force' => true]);
+        $code = $this->call('db:seed', ['--class' => \Database\Seeders\DemoSchoolSeeder::class, '--force' => true]);
+
+        return $code ?: $this->call('db:seed', ['--class' => \Database\Seeders\DemoExtrasSeeder::class, '--force' => true]);
     }
 }
