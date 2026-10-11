@@ -43,7 +43,7 @@ export default function Paper({ paper, initial, questions, banks, classes, subje
     const totalMarks = d.sections.flatMap(s => s.questions).reduce((sum, id) => sum + (known[id]?.marks ?? 0), 0);
 
     const classItems = [{ value: '', label: 'No class' }, ...classes.map(c => ({ value: String(c.id), label: c.name }))];
-    const subjectItems = [{ value: '', label: 'No subject' }, ...subjects.filter(s => !d.class_id || !s.class_id || s.class_id === d.class_id).map(s => ({ value: String(s.id), label: s.name }))];
+    const subjectItems = [{ value: '', label: 'No subject' }, ...subjects.filter(s => !d.class_id || s.class_ids.length === 0 || s.class_ids.includes(Number(d.class_id))).map(s => ({ value: String(s.id), label: s.name }))];
     const termItems = [{ value: '', label: 'No term' }, ...terms.map(t => ({ value: String(t.id), label: t.name }))];
 
     function setSection(i: number, patch: Partial<ExamPaperData['sections'][number]>) {

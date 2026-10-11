@@ -56,9 +56,9 @@ export default function ExamResults({ exam, subjects, results, sections, gradeSc
                     <div className="flex items-center gap-2">
                         {sections.length > 0 && (
                             <Select value={filters.section_id ?? ''} onValueChange={v => applyFilter('section_id', v)}>
-                                <SelectTrigger className="w-36"><SelectValue placeholder="All Sections" /></SelectTrigger>
+                                <SelectTrigger className="w-36"><SelectValue placeholder="All arms" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">All Sections</SelectItem>
+                                    <SelectItem value="">All arms</SelectItem>
                                     {sections.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>

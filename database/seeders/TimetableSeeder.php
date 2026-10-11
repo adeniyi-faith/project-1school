@@ -39,7 +39,7 @@ class TimetableSeeder extends Seeder
 
         foreach ($classes->take(3) as $class) {
             $section  = $class->sections->first();
-            $subjects = Subject::where('class_id', $class->id)->get();
+            $subjects = Subject::offeredIn($class->id)->get();
 
             if ($subjects->isEmpty()) continue;
 

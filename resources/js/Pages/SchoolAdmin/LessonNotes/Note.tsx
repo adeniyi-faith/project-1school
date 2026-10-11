@@ -60,7 +60,7 @@ export default function LessonNote({ note, values, classes, subjects, terms, for
     const schemeItems = [{ value: '', label: 'No scheme of work' }, ...schemes.map(s => ({ value: String(s.id), label: s.label }))];
     const weekItems = (scheme?.weeks ?? []).map(w => ({ value: String(w.week), label: `Week ${w.week}: ${w.topic}` }));
     const classItems = classes.map(c => ({ value: String(c.id), label: c.name }));
-    const subjectItems = subjects.filter(s => !d.class_id || !s.class_id || s.class_id === d.class_id).map(s => ({ value: String(s.id), label: s.name }));
+    const subjectItems = subjects.filter(s => !d.class_id || s.class_ids.length === 0 || s.class_ids.includes(Number(d.class_id))).map(s => ({ value: String(s.id), label: s.name }));
     const termItems = [{ value: '', label: 'No term' }, ...terms.map(t => ({ value: String(t.id), label: t.name }))];
     const formatItems = formats.map(f => ({ value: String(f.id), label: f.name + (f.is_default ? ' (default)' : '') }));
 

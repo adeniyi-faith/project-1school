@@ -119,6 +119,8 @@ export interface SchoolClass {
     school_id: number;
     name: string;
     numeric_name: number | null;
+    /** early_years, primary, junior or senior */
+    level: string | null;
     capacity: number;
     class_teacher_id: number | null;
     sections_count?: number;
@@ -132,14 +134,18 @@ export interface Section {
     school_id: number;
     class_id: number;
     name: string;
+    /** Senior arms: Science, Arts, Commercial ... */
+    department: string | null;
     capacity: number;
     school_class?: SchoolClass;
+    students_count?: number;
 }
 
 export interface Subject {
     id: number;
     school_id: number;
-    class_id: number;
+    /** The class it was first made for; a subject can be offered by many classes */
+    class_id: number | null;
     name: string;
     code: string | null;
     type: 'theory' | 'practical';
@@ -702,9 +708,12 @@ export interface LessonNoteRow {
     ai_drafted: boolean;
 }
 export interface SchemeRow { id: number; title: string; class: string | null; subject: string | null; term: string | null; weeks: number; notes: number; has_file: boolean }
+/** A subject in a picker, with the classes that offer it */
+export interface SubjectChoice { id: number; name: string; class_ids: number[] }
+
 export interface LessonChoices {
     classes: { id: number; name: string }[];
-    subjects: { id: number; name: string; class_id: number | null }[];
+    subjects: SubjectChoice[];
     terms: { id: number; name: string; is_current: boolean }[];
 }
 export interface AiAvailability { shown: boolean; reason: string | null }

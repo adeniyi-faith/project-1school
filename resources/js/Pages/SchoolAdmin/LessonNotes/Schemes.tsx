@@ -20,7 +20,7 @@ export default function Schemes({ schemes, classes, subjects, terms, filters, ca
 
     const lists = [
         { key: 'class_id', label: 'Class', items: [{ value: '', label: 'All classes' }, ...classes.map(c => ({ value: String(c.id), label: c.name }))] },
-        { key: 'subject_id', label: 'Subject', items: [{ value: '', label: 'All subjects' }, ...subjects.filter(s => !filters.class_id || !s.class_id || String(s.class_id) === filters.class_id).map(s => ({ value: String(s.id), label: s.name }))] },
+        { key: 'subject_id', label: 'Subject', items: [{ value: '', label: 'All subjects' }, ...subjects.filter(s => !filters.class_id || s.class_ids.length === 0 || s.class_ids.includes(Number(filters.class_id))).map(s => ({ value: String(s.id), label: s.name }))] },
         { key: 'term_id', label: 'Term', items: [{ value: '', label: 'All terms' }, ...terms.map(t => ({ value: String(t.id), label: t.name }))] },
     ];
 

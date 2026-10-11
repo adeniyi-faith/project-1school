@@ -75,11 +75,11 @@ class ResultController extends Controller
         $sheet->load(['term.academicYear:id,name', 'schoolClass:id,name']);
         $user = $request->user();
 
-        $subjects = Subject::with('schoolClass:id,assessment_scheme_id')->where('class_id', $sheet->class_id)->orderBy('name')->get();
+        $subjects = Subject::with('classLines')->offeredIn($sheet->class_id)->orderBy('name')->get();
         $subject = $subjects->firstWhere('id', (int) $request->subject_id) ?? $subjects->first();
-        $scheme = $subject ? AssessmentScheme::forSubject($subject)?->load('components') : null;
+        $scheme = $subject ? AssessmentScheme::forSubject($subject, $sheet->class_id)?->load('components') : null;
 
-        $students = $this->students($sheet);
+        $students = $this->students($sheet, $subject);
 
         $scores = $subject
             ? SubjectScore::where('result_sheet_id', $sheet->id)->where('subject_id', $subject->id)->get()
@@ -102,7 +102,7 @@ class ResultController extends Controller
             'canPrint' => $user->can('reportcard.generate'),
             'canEnter' => $sheet->isEditable() && $user->can('marks.entry'),
             'tab' => in_array($request->tab, ['scores', 'behaviour', 'results'], true) ? $request->tab : 'scores',
-            'subjects' => $subjects->map->only('id', 'name'),
+            'subjects' => $subjects->map(fn (Subject $s) => ['id' => $s->id, 'name' => $s->name, 'departments' => $s->lineFor($sheet->class_id)?->departments ?? []]),
             'subjectId' => $subject?->id,
             'components' => $scheme?->components->map->only('id', 'name', 'short_name', 'max_score')->values() ?? [],
             'students' => $students,
@@ -138,9 +138,9 @@ class ResultController extends Controller
             'scores.*.score' => 'nullable|numeric|min:0',
         ]);
 
-        $subject = Subject::where('class_id', $sheet->class_id)->findOrFail($data['subject_id']);
-        $components = AssessmentScheme::forSubject($subject)?->components->keyBy('id') ?? collect();
-        $studentIds = $this->students($sheet)->pluck('id')->flip();
+        $subject = Subject::offeredIn($sheet->class_id)->findOrFail($data['subject_id']);
+        $components = AssessmentScheme::forSubject($subject, $sheet->class_id)?->components->keyBy('id') ?? collect();
+        $studentIds = $this->students($sheet, $subject)->pluck('id')->flip();
 
         $errors = [];
         foreach ($data['scores'] as $i => $row) {
@@ -243,15 +243,24 @@ class ResultController extends Controller
         }
     }
 
-    /** Active students in the class, plus anyone who already has scores on this sheet. */
-    private function students(ResultSheet $sheet)
+    /**
+     * Active students in the class, plus anyone who already has scores on this sheet. With a subject that only
+     * some departments take (e.g. Physics for Science arms), only students in those arms, plus anyone already scored in it.
+     */
+    private function students(ResultSheet $sheet, ?Subject $subject = null)
     {
-        $scored = SubjectScore::where('result_sheet_id', $sheet->id)->distinct()->pluck('student_id');
+        $scored = SubjectScore::where('result_sheet_id', $sheet->id)
+            ->when($subject, fn ($q) => $q->where('subject_id', $subject->id))->distinct()->pluck('student_id');
+        $line = $subject?->lineFor($sheet->class_id);
+        $anyScored = $subject ? SubjectScore::where('result_sheet_id', $sheet->id)->distinct()->pluck('student_id') : $scored;
 
-        return Student::where(fn ($q) => $q->where('class_id', $sheet->class_id)->where('status', 'active'))
-            ->orWhereIn('id', $scored)
+        return Student::with('section:id,department')
+            ->where(fn ($q) => $q->where('class_id', $sheet->class_id)->where('status', 'active'))
+            ->orWhereIn('id', $anyScored)
             ->orderBy('first_name')->orderBy('last_name')
-            ->get(['id', 'first_name', 'last_name', 'admission_no'])
+            ->get(['id', 'first_name', 'last_name', 'admission_no', 'section_id'])
+            ->filter(fn (Student $s) => ! $line || $line->takenBy($s->section?->department) || $scored->contains($s->id))
+            ->values()
             ->map(fn (Student $s) => ['id' => $s->id, 'name' => $s->full_name, 'admission_no' => $s->admission_no]);
     }
 }

@@ -152,7 +152,7 @@ class ExamPaperController extends Controller
             'paper' => $paper ? ['id' => $paper->id] + $data : null,
             'initial' => $data,
             'questions' => $questions->mapWithKeys(fn (CbtQuestion $q) => [$q->id => CbtBankController::questionRow($q) + ['deleted' => $q->trashed()]]),
-            'banks' => CbtBank::with('subject.schoolClass:id,name')->where('school_id', $sid)->withCount('questions')->orderBy('name')->get()
+            'banks' => CbtBank::where('school_id', $sid)->withCount('questions')->orderBy('name')->get()
                 ->map(fn (CbtBank $b) => ['id' => $b->id, 'name' => $b->name, 'subject_id' => $b->subject_id, 'questions' => $b->questions_count]),
             'canManage' => $request->user()->can('cbt.manage'),
             'limits' => ['sections' => ExamPaper::MAX_SECTIONS, 'questions' => ExamPaper::MAX_QUESTIONS],
@@ -163,7 +163,7 @@ class ExamPaperController extends Controller
     {
         return [
             'classes' => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->get(['id', 'name']),
-            'subjects' => Subject::where('school_id', $sid)->orderBy('name')->get(['id', 'name', 'class_id']),
+            'subjects' => Subject::picker($sid),
             'terms' => Term::with('academicYear:id,name')->where('school_id', $sid)->orderByDesc('start_date')->get(['id', 'name', 'academic_year_id', 'is_current'])
                 ->map(fn ($t) => ['id' => $t->id, 'name' => trim($t->name.' '.($t->academicYear?->name ?? '')), 'is_current' => (bool) $t->is_current]),
         ];

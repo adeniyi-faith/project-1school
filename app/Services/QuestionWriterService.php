@@ -84,12 +84,12 @@ class QuestionWriterService
      */
     public function draft(CbtBank $bank, User $by, array $ask): array
     {
-        $bank->loadMissing('subject.schoolClass:id,name');
+        $bank->loadMissing('subject');
         $theory = $ask['type'] === 'theory';
         $count = (int) $ask['count'];
         $parts = $theory ? max(0, min(self::MAX_PARTS, (int) ($ask['parts'] ?? 0))) : 0;
         $marks = $theory ? (float) ($ask['marks'] ?? 10) : 1.0;
-        $level = trim((string) ($ask['level'] ?? '')) ?: ($bank->subject?->schoolClass?->name ?? '');
+        $level = trim((string) ($ask['level'] ?? '')) ?: ($bank->subject?->levelLabel() ?? '');
         $subject = $bank->subject?->name ?? $bank->name;
         $topic = trim($ask['topic']);
 

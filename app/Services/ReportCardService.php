@@ -50,7 +50,7 @@ class ReportCardService
 
         $ids = $summaries->pluck('student_id');
         $results = TermResult::where('result_sheet_id', $sheet->id)->whereIn('student_id', $ids)->get()->groupBy('student_id');
-        $subjects = Subject::withTrashed()->with('schoolClass:id,assessment_scheme_id')
+        $subjects = Subject::withTrashed()->with('classLines')
             ->whereIn('id', $results->flatten()->pluck('subject_id')->unique())->get()->keyBy('id');
         $scores = SubjectScore::where('result_sheet_id', $sheet->id)->whereIn('student_id', $ids)->with('component')->get()
             ->groupBy(fn ($s) => $s->student_id.'-'.$s->subject_id);
@@ -58,7 +58,7 @@ class ReportCardService
             ->with(['behaviourTrait' => fn ($q) => $q->withTrashed()])->get()->groupBy('student_id');
         $remarks = ReportCardRemark::where('result_sheet_id', $sheet->id)->whereIn('student_id', $ids)->get()->groupBy('student_id');
         $attendance = $this->attendance($sheet->term, $ids->all());
-        $columns = $this->columns($subjects);
+        $columns = $this->columns($subjects, $sheet->class_id);
         $grading = GradingService::forClass($sheet->school_id, $sheet->class_id);
         $design = ReportCardDesign::forClass($sheet->school_id, $sheet->class_id);
         $common = $this->common($sheet->school_id, $sheet, $grading, $design);
@@ -338,11 +338,11 @@ class ReportCardService
     }
 
     /** Score part headings (CA1, CA2, Exam ...) across the subjects on the card, in order. */
-    private function columns(Collection $subjects): array
+    private function columns(Collection $subjects, int $classId): array
     {
         $schemes = [];
         foreach ($subjects as $subject) {
-            $scheme = AssessmentScheme::forSubject($subject);
+            $scheme = AssessmentScheme::forSubject($subject, $classId);
             if ($scheme && ! isset($schemes[$scheme->id])) {
                 $schemes[$scheme->id] = $scheme->components()->get(['short_name', 'max_score']);
             }

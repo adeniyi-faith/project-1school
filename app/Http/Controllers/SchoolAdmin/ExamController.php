@@ -105,7 +105,7 @@ class ExamController extends Controller
     {
         $sectionId = $request->section_id;
 
-        $subjects = Subject::where('class_id', $exam->class_id)->orderBy('name')->get();
+        $subjects = Subject::offeredIn($exam->class_id)->orderBy('name')->get();
 
         $students = Student::where('class_id', $exam->class_id)
             ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
@@ -181,7 +181,7 @@ class ExamController extends Controller
     public function results(Request $request, Exam $exam): Response
     {
         $sectionId = $request->section_id;
-        $subjects  = Subject::where('class_id', $exam->class_id)->orderBy('name')->get();
+        $subjects  = Subject::offeredIn($exam->class_id)->orderBy('name')->get();
 
         $students = Student::where('class_id', $exam->class_id)
             ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))

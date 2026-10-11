@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\AssessmentScheme;
 use App\Models\BehaviourTrait;
+use App\Models\ClassSubject;
 use App\Models\GradeScale;
 use App\Models\GradingScheme;
 use App\Models\SchoolClass;
@@ -109,11 +110,19 @@ class AcademicSetupController extends Controller
                     ])->values(),
                 ]),
             'classes' => SchoolClass::orderBy('numeric_name')->get(['id', 'name', 'assessment_scheme_id', 'grading_scheme_id']),
-            'subjects' => Subject::with('schoolClass:id,name')->orderBy('name')->get(['id', 'name', 'class_id', 'assessment_scheme_id'])
+            'subjects' => Subject::with('classes:id,name')->orderBy('name')->get(['id', 'name', 'assessment_scheme_id'])
                 ->map(fn (Subject $s) => [
-                    'id' => $s->id, 'name' => $s->name, 'class_name' => $s->schoolClass?->name,
+                    'id' => $s->id, 'name' => $s->name, 'class_id' => null, 'class_name' => null,
                     'assessment_scheme_id' => $s->assessment_scheme_id,
+                    'classes' => $s->classes->map->only('id', 'name')->values(),
                 ]),
+            // A subject scored differently in one class only
+            'subjectLines' => ClassSubject::with(['subject:id,name', 'schoolClass:id,name'])->whereNotNull('assessment_scheme_id')->get()
+                ->filter(fn (ClassSubject $l) => $l->subject && $l->schoolClass)
+                ->map(fn (ClassSubject $l) => [
+                    'id' => $l->subject_id, 'name' => $l->subject->name, 'class_id' => $l->class_id, 'class_name' => $l->schoolClass->name,
+                    'assessment_scheme_id' => $l->assessment_scheme_id,
+                ])->values(),
             'presets' => [
                 'assessment' => collect(SchoolDefaults::ASSESSMENT_PRESETS)->map(fn ($p, $key) => [
                     'key' => $key, 'name' => $p['name'],
@@ -226,6 +235,7 @@ class AcademicSetupController extends Controller
             // Classes and subjects that used it go back to the school default
             SchoolClass::where('assessment_scheme_id', $scheme->id)->update(['assessment_scheme_id' => null]);
             Subject::where('assessment_scheme_id', $scheme->id)->update(['assessment_scheme_id' => null]);
+            ClassSubject::where('assessment_scheme_id', $scheme->id)->update(['assessment_scheme_id' => null]);
             $scheme->delete();
             activity()->performedOn($scheme)->log('Score setup deleted');
         });
@@ -324,14 +334,19 @@ class AcademicSetupController extends Controller
         return back()->with('success', "{$class->name} updated.");
     }
 
-    /** Give one subject its own score setup, or send it back to its class's. */
+    /** Give one subject its own score setup (in every class, or in one class), or send it back to its class's. */
     public function assignSubject(Request $request, Subject $subject): RedirectResponse
     {
         $data = $request->validate([
             'assessment_scheme_id' => ['nullable', Rule::exists('assessment_schemes', 'id')->where('school_id', $subject->school_id)->whereNull('deleted_at')],
+            'class_id' => ['nullable', Rule::exists('class_subjects', 'class_id')->where('subject_id', $subject->id)],
         ]);
 
-        $subject->update($data);
+        if (! empty($data['class_id'])) {
+            ClassSubject::where('subject_id', $subject->id)->where('class_id', $data['class_id'])->update(['assessment_scheme_id' => $data['assessment_scheme_id']]);
+        } else {
+            $subject->update(['assessment_scheme_id' => $data['assessment_scheme_id']]);
+        }
 
         return back()->with('success', "{$subject->name} updated.");
     }

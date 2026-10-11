@@ -244,21 +244,21 @@ function ClassMove({ yearId, selected, classes, sections, onPassMark }: {
                                     <TableHead className="pl-5">Student</TableHead>
                                     <TableHead className="text-right">Year average</TableHead>
                                     <TableHead>Decision</TableHead>
-                                    <TableHead className="pr-5">Section or reason</TableHead>
+                                    <TableHead className="pr-5">Arm or reason</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {selected.students.map(s => {
                                     const d = decisions[s.id];
                                     const below = s.year_average !== null && s.year_average < selected.pass_mark;
-                                    const sectionItems = [{ value: NONE, label: 'No section' }, ...toSections.map(x => ({ value: String(x.id), label: x.name }))];
+                                    const sectionItems = [{ value: NONE, label: 'No arm' }, ...toSections.map(x => ({ value: String(x.id), label: x.name }))];
                                     const defaultSection = String(sameNamedSection(s.section) ?? NONE);
                                     const errorAt = chosen.indexOf(s);
                                     return (
                                         <TableRow key={s.id} className={d.outcome === 'repeated' ? 'bg-amber-50/60 dark:bg-amber-500/[0.06]' : ''}>
                                             <TableCell className="pl-5">
                                                 <p className="font-medium text-slate-900 dark:text-white">{s.name}</p>
-                                                <p className="text-xs text-slate-500">{s.admission_no}{s.section ? ` · Section ${s.section}` : ''}</p>
+                                                <p className="text-xs text-slate-500">{s.admission_no}{s.section ? ` · Arm ${s.section}` : ''}</p>
                                             </TableCell>
                                             <TableCell className="text-right tabular-nums">
                                                 {s.year_average === null
@@ -276,7 +276,7 @@ function ClassMove({ yearId, selected, classes, sections, onPassMark }: {
                                             <TableCell className="pr-5">
                                                 {d.outcome === 'promoted' && toClass !== NONE && (
                                                     <Select items={sectionItems} value={d.section_id || defaultSection} onValueChange={v => change(s.id, { section_id: v ?? '' })}>
-                                                        <SelectTrigger className="w-36" aria-label={`Section for ${s.name}`}><SelectValue /></SelectTrigger>
+                                                        <SelectTrigger className="w-36" aria-label={`Arm for ${s.name}`}><SelectValue /></SelectTrigger>
                                                         <SelectContent>{sectionItems.map(x => <SelectItem key={x.value} value={x.value}>{x.label}</SelectItem>)}</SelectContent>
                                                     </Select>
                                                 )}

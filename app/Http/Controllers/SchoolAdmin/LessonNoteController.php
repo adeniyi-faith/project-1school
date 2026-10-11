@@ -431,7 +431,7 @@ class LessonNoteController extends Controller
     {
         return [
             'classes' => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->get(['id', 'name']),
-            'subjects' => Subject::where('school_id', $sid)->orderBy('name')->get(['id', 'name', 'class_id']),
+            'subjects' => Subject::picker($sid),
             'terms' => Term::with('academicYear:id,name')->where('school_id', $sid)->orderByDesc('start_date')->get(['id', 'name', 'academic_year_id', 'is_current'])
                 ->map(fn ($t) => ['id' => $t->id, 'name' => trim($t->name.' '.($t->academicYear?->name ?? '')), 'is_current' => (bool) $t->is_current]),
         ];
