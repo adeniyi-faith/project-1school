@@ -126,7 +126,7 @@ export default function ShowStudent() {
             <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
                 {[
                     { icon: GraduationCap, label: 'Class', value: student.school_class?.name ?? '—' },
-                    { icon: Users,         label: 'Section', value: student.section?.name ?? '—' },
+                    { icon: Users,         label: 'Arm', value: student.section?.name ?? '—' },
                     { icon: Shield,        label: 'House', value: student.house?.name ?? '—' },
                     { icon: FileText,      label: 'Documents', value: String(student.documents?.length ?? 0) },
                 ].map((s) => (

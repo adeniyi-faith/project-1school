@@ -113,9 +113,9 @@ export default function StudentsIndex() {
                             </SelectContent>
                         </Select>
                         <Select value={filters.section_id ?? 'all'} onValueChange={(v) => applyFilter({ section_id: v === 'all' ? '' : v })}>
-                            <SelectTrigger className="h-10 w-[9.5rem]"><SelectValue placeholder="Section" /></SelectTrigger>
+                            <SelectTrigger className="h-10 w-[9.5rem]"><SelectValue placeholder="Arm" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All sections</SelectItem>
+                                <SelectItem value="all">All arms</SelectItem>
                                 {visibleSections.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
                             </SelectContent>
                         </Select>

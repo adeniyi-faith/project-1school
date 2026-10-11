@@ -34,7 +34,7 @@ class ExamSeeder extends Seeder
 
         $markCount = 0;
         foreach ($classes as $class) {
-            $subjects = Subject::where('class_id', $class->id)->get();
+            $subjects = Subject::offeredIn($class->id)->get();
             $students = Student::where('class_id', $class->id)->where('status', 'active')->get();
 
             foreach ($examTypes as $et) {

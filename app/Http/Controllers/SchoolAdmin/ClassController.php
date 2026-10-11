@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SchoolClass;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,6 +21,7 @@ class ClassController extends Controller
 
         return Inertia::render('SchoolAdmin/Classes/Index', [
             'classes' => $classes,
+            'levels' => SchoolClass::LEVELS,
         ]);
     }
 
@@ -28,6 +30,7 @@ class ClassController extends Controller
         $data = $request->validate([
             'name'         => 'required|string|max:100',
             'numeric_name' => 'nullable|integer|min:1',
+            'level'        => ['nullable', Rule::in(array_keys(SchoolClass::LEVELS))],
             'capacity'     => 'nullable|integer|min:0',
         ]);
 
@@ -41,6 +44,7 @@ class ClassController extends Controller
         $data = $request->validate([
             'name'         => 'required|string|max:100',
             'numeric_name' => 'nullable|integer|min:1',
+            'level'        => ['nullable', Rule::in(array_keys(SchoolClass::LEVELS))],
             'capacity'     => 'nullable|integer|min:0',
         ]);
 

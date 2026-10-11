@@ -141,11 +141,11 @@ export default function AttendanceIndex({ classes, sections, students, existing,
                     </div>
                     {filteredSections.length > 0 && (
                         <div className="space-y-1.5">
-                            <label className={labelCls}>Section</label>
+                            <label className={labelCls}>Arm</label>
                             <Select value={filters.section_id ?? ''} onValueChange={v => applyFilter('section_id', v)}>
-                                <SelectTrigger className="h-10 w-40"><SelectValue placeholder="All sections" /></SelectTrigger>
+                                <SelectTrigger className="h-10 w-40"><SelectValue placeholder="All arms" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">All sections</SelectItem>
+                                    <SelectItem value="">All arms</SelectItem>
                                     {filteredSections.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>

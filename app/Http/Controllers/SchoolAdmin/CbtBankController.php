@@ -29,14 +29,14 @@ class CbtBankController extends Controller
 {
     public function index(Request $request): Response
     {
-        $banks = CbtBank::with('subject.schoolClass:id,name')->withCount('questions')->orderBy('name')->get();
+        $banks = CbtBank::with('subject:id,name')->withCount('questions')->orderBy('name')->get();
         $rows = CbtQuestion::whereIn('cbt_bank_id', $banks->pluck('id'))->get(['cbt_bank_id', 'difficulty', 'type'])->groupBy('cbt_bank_id');
         $levels = $rows->map(fn ($r) => $r->countBy('difficulty'));
 
         return Inertia::render('SchoolAdmin/Cbt/Banks', [
             'banks' => $banks->map(fn (CbtBank $b) => [
                 'id' => $b->id, 'name' => $b->name, 'description' => $b->description, 'subject_id' => $b->subject_id,
-                'subject' => $b->subject ? trim($b->subject->name.' ('.($b->subject->schoolClass?->name ?? '').')') : null,
+                'subject' => $b->subject?->name,
                 'questions' => $b->questions_count,
                 'theory' => $rows->get($b->id)?->where('type', 'theory')->count() ?? 0,
                 'levels' => collect(CbtQuestion::DIFFICULTIES)->mapWithKeys(fn ($d) => [$d => (int) ($levels->get($b->id)?->get($d) ?? 0)]),
@@ -98,7 +98,7 @@ class CbtBankController extends Controller
             'ai' => [
                 'shown' => $ai->schoolState($bank->school_id)['platform_ready'],
                 'reason' => $ai->unavailable($bank->school_id, 'questions'),
-                'level' => $bank->subject?->schoolClass?->name,
+                'level' => $bank->subject?->levelLabel() ?: null,
                 // Topics from the subject's schemes of work, offered when asking the AI
                 'topics' => $bank->subject_id
                     ? SchemeOfWork::where('school_id', $bank->school_id)->where('subject_id', $bank->subject_id)->get(['weeks'])
@@ -266,9 +266,7 @@ class CbtBankController extends Controller
 
     private function subjects()
     {
-        return Subject::with('schoolClass:id,name,numeric_name')->get(['id', 'name', 'class_id'])
-            ->sortBy(fn (Subject $s) => [$s->schoolClass?->numeric_name ?? 0, $s->name])
-            ->map(fn (Subject $s) => ['id' => $s->id, 'name' => trim($s->name.' ('.($s->schoolClass?->name ?? '').')')])->values();
+        return Subject::orderBy('name')->get(['id', 'name'])->map(fn (Subject $s) => ['id' => $s->id, 'name' => $s->name])->values();
     }
 
     private function validateBank(Request $request): array

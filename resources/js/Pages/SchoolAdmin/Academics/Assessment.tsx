@@ -13,13 +13,15 @@ import { Pencil, Plus, Star, Trash2, X } from 'lucide-react';
 import type { AssessmentComponent, AssessmentPresets, AssessmentScheme, BehaviourTrait, GradeBand, GradingScheme } from '@/Types';
 
 interface ClassRow { id: number; name: string; assessment_scheme_id: number | null; grading_scheme_id: number | null }
-interface SubjectRow { id: number; name: string; class_name: string | null; assessment_scheme_id: number | null }
+interface SubjectRow { id: number; name: string; class_id: number | null; class_name: string | null; assessment_scheme_id: number | null; classes?: { id: number; name: string }[] }
 
 interface Props {
     assessmentSchemes: AssessmentScheme[];
     gradingSchemes: GradingScheme[];
     classes: ClassRow[];
     subjects: SubjectRow[];
+    /** A subject scored differently in one class only */
+    subjectLines: SubjectRow[];
     presets: AssessmentPresets;
     traits: BehaviourTrait[];
     canEdit: boolean;
@@ -37,7 +39,7 @@ function firstRowError(errors: Record<string, string>, prefix: string) {
     return key ? errors[key] : undefined;
 }
 
-export default function Assessment({ assessmentSchemes, gradingSchemes, classes, subjects, presets, traits, canEdit }: Props) {
+export default function Assessment({ assessmentSchemes, gradingSchemes, classes, subjects, subjectLines, presets, traits, canEdit }: Props) {
     const defaultScoreSetup = assessmentSchemes.find(s => s.is_default);
     const defaultGradeScale = gradingSchemes.find(s => s.is_default);
 
@@ -107,21 +109,24 @@ export default function Assessment({ assessmentSchemes, gradingSchemes, classes,
             assessment_scheme_id: next.assessment_scheme_id, grading_scheme_id: next.grading_scheme_id,
         }, { preserveScroll: true });
     }
-    function assignSubject(subjectId: number, schemeId: number | null) {
-        router.put(`/school/academics/subjects/${subjectId}/scheme`, { assessment_scheme_id: schemeId }, { preserveScroll: true });
+    function assignSubject(subjectId: number, schemeId: number | null, classId: number | null = null) {
+        router.put(`/school/academics/subjects/${subjectId}/scheme`, { assessment_scheme_id: schemeId, class_id: classId }, { preserveScroll: true });
     }
 
     // ───── subject exceptions ─────
-    const exceptions = subjects.filter(s => s.assessment_scheme_id !== null);
+    const exceptions = [...subjects.filter(s => s.assessment_scheme_id !== null), ...subjectLines].sort((a, b) => a.name.localeCompare(b.name));
     const [exceptionOpen, setExceptionOpen] = useState(false);
     const [exSubject, setExSubject] = useState('');
+    const [exClass, setExClass] = useState('');
+    const exClasses = subjects.find(s => String(s.id) === exSubject)?.classes ?? [];
+    const exClassItems = [{ value: '', label: 'Every class that has it' }, ...exClasses.map(c => ({ value: String(c.id), label: `Only ${c.name}` }))];
     const [exScheme, setExScheme] = useState('');
     const subjectLabel = (s: SubjectRow) => (s.class_name ? `${s.name} (${s.class_name})` : s.name);
 
     function saveException(e: React.FormEvent) {
         e.preventDefault();
         if (!exSubject || !exScheme) return;
-        assignSubject(Number(exSubject), Number(exScheme));
+        assignSubject(Number(exSubject), Number(exScheme), exClass ? Number(exClass) : null);
         setExceptionOpen(false);
         setExSubject('');
         setExScheme('');
@@ -269,12 +274,12 @@ export default function Assessment({ assessmentSchemes, gradingSchemes, classes,
                     ) : (
                         <ul className="divide-y divide-slate-100 dark:divide-white/[0.06]">
                             {exceptions.map(s => (
-                                <li key={s.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                                <li key={`${s.id}-${s.class_id ?? 'all'}`} className="flex items-center justify-between gap-3 py-2 text-sm">
                                     <span className="text-slate-900 dark:text-white">{subjectLabel(s)}</span>
                                     <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                         {assessmentSchemes.find(a => a.id === s.assessment_scheme_id)?.name}
                                         {canEdit && (
-                                            <Button size="icon" variant="ghost" className="size-7" onClick={() => assignSubject(s.id, null)} aria-label={`Remove the exception for ${s.name}`}>
+                                            <Button size="icon" variant="ghost" className="size-7" onClick={() => assignSubject(s.id, null, s.class_id)} aria-label={`Remove the exception for ${s.name}`}>
                                                 <X className="size-4" />
                                             </Button>
                                         )}
@@ -413,13 +418,22 @@ export default function Assessment({ assessmentSchemes, gradingSchemes, classes,
                     <form onSubmit={saveException} className="mt-2 space-y-4">
                         <div className="space-y-1.5">
                             <Label>Subject</Label>
-                            <Select value={exSubject} onValueChange={v => setExSubject(v ?? '')} items={subjects.map(s => ({ value: String(s.id), label: subjectLabel(s) }))}>
+                            <Select value={exSubject} onValueChange={v => { setExSubject(v ?? ''); setExClass(''); }} items={subjects.map(s => ({ value: String(s.id), label: subjectLabel(s) }))}>
                                 <SelectTrigger className="w-full"><SelectValue placeholder="Choose a subject" /></SelectTrigger>
                                 <SelectContent>
                                     {subjects.map(s => <SelectItem key={s.id} value={String(s.id)}>{subjectLabel(s)}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
+                        {exClasses.length > 1 && (
+                            <div className="space-y-1.5">
+                                <Label>In which classes</Label>
+                                <Select value={exClass} onValueChange={v => setExClass(v ?? '')} items={exClassItems}>
+                                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                                    <SelectContent>{exClassItems.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+                                </Select>
+                            </div>
+                        )}
                         <div className="space-y-1.5">
                             <Label>Score setup</Label>
                             <Select value={exScheme} onValueChange={v => setExScheme(v ?? '')} items={assessmentSchemes.map(s => ({ value: String(s.id), label: s.name }))}>

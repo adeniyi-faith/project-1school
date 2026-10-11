@@ -21,10 +21,16 @@ class AssessmentScheme extends Model
         return $this->hasMany(AssessmentComponent::class)->orderBy('sort_order');
     }
 
-    /** The score setup a subject uses: its own, else its class's, else the school default. */
-    public static function forSubject(Subject $subject): ?self
+    /**
+     * The score setup a subject uses in a class: the class's own for that subject, else the subject's, else the class's,
+     * else the school default. Without a class, the class the subject was first made for.
+     */
+    public static function forSubject(Subject $subject, ?int $classId = null): ?self
     {
-        $id = $subject->assessment_scheme_id ?? $subject->schoolClass?->assessment_scheme_id;
+        $classId ??= $subject->class_id;
+        $id = $subject->lineFor($classId)?->assessment_scheme_id
+            ?? $subject->assessment_scheme_id
+            ?? ($classId ? SchoolClass::withoutGlobalScopes()->whereKey($classId)->value('assessment_scheme_id') : null);
 
         return ($id ? static::find($id) : null)
             ?? static::where('school_id', $subject->school_id)->where('is_default', true)->first();

@@ -22,7 +22,7 @@ export default function LessonNotesIndex({ notes, counts, classes, subjects, ter
     }
 
     const classItems = [{ value: '', label: 'All classes' }, ...classes.map(c => ({ value: String(c.id), label: c.name }))];
-    const subjectItems = [{ value: '', label: 'All subjects' }, ...subjects.filter(s => !filters.class_id || !s.class_id || String(s.class_id) === filters.class_id).map(s => ({ value: String(s.id), label: s.name }))];
+    const subjectItems = [{ value: '', label: 'All subjects' }, ...subjects.filter(s => !filters.class_id || s.class_ids.length === 0 || s.class_ids.includes(Number(filters.class_id))).map(s => ({ value: String(s.id), label: s.name }))];
     const termItems = [{ value: '', label: 'All terms' }, ...terms.map(t => ({ value: String(t.id), label: t.name }))];
     const statuses = ['', 'draft', 'submitted', 'approved', 'rejected'];
 
