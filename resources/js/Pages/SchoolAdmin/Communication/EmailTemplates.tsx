@@ -64,7 +64,7 @@ export default function EmailTemplates({ templates }: Props) {
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {templates.length === 0 && (
-                        <Card className="col-span-3"><CardContent className="py-12 text-center text-slate-400">No templates yet</CardContent></Card>
+                        <Card className="col-span-full"><CardContent className="py-12 text-center text-slate-400">No templates yet</CardContent></Card>
                     )}
                     {templates.map(t => (
                         <Card key={t.id} className={!t.is_active ? 'opacity-60' : ''}>
