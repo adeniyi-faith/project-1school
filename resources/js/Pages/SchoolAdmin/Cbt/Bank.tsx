@@ -9,7 +9,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EmptyState, PageHeader, Panel, Pill, Segmented } from '@/components/app/kit';
-import { ArrowLeft, Download, FileUp, ImagePlus, Pencil, Plus, Search, Settings2, Trash2, X } from 'lucide-react';
+import AiQuestionWriter, { type AiWriterInfo } from '@/components/cbt/AiQuestionWriter';
+import { ArrowLeft, Download, FileUp, ImagePlus, Pencil, Plus, Search, Settings2, Sparkles, Trash2, X } from 'lucide-react';
 import type { CbtDifficulty, CbtQuestionRow, CbtQuestionType } from '@/Types';
 
 interface Props {
@@ -20,17 +21,19 @@ interface Props {
     subjects: { id: number; name: string }[];
     canManage: boolean;
     maxOptions: number;
+    ai: AiWriterInfo;
 }
 
 const LETTERS = 'ABCDEF';
 const LEVELS: { value: CbtDifficulty; label: string }[] = [{ value: 'easy', label: 'Easy' }, { value: 'medium', label: 'Medium' }, { value: 'hard', label: 'Hard' }];
 const LEVEL_TONE: Record<CbtDifficulty, 'good' | 'info' | 'bad'> = { easy: 'good', medium: 'info', hard: 'bad' };
 
-export default function CbtBank({ bank, questions, topics, filters, subjects, canManage, maxOptions }: Props) {
+export default function CbtBank({ bank, questions, topics, filters, subjects, canManage, maxOptions, ai }: Props) {
     const [search, setSearch] = useState(filters.search);
     const [editing, setEditing] = useState<CbtQuestionRow | 'new' | null>(null);
     const [importing, setImporting] = useState(false);
     const [settings, setSettings] = useState(false);
+    const [writing, setWriting] = useState(false);
     const url = `/school/cbt/banks/${bank.id}`;
     const topicItems = [{ value: 'all', label: 'All topics' }, ...topics.map(t => ({ value: t, label: t }))];
 
@@ -48,6 +51,7 @@ export default function CbtBank({ bank, questions, topics, filters, subjects, ca
         <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setSettings(true)}><Settings2 className="size-4" /> Bank settings</Button>
             <Button variant="outline" onClick={() => setImporting(true)}><FileUp className="size-4" /> Add many</Button>
+            {ai.shown && !ai.reason && <Button variant="outline" onClick={() => setWriting(true)} className="border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-violet-500/30 dark:text-violet-300"><Sparkles className="size-4" /> Write with AI</Button>}
             <Button onClick={() => setEditing('new')} className="bg-indigo-600 text-white hover:bg-indigo-700"><Plus className="size-4" /> Add question</Button>
         </div>
     );
@@ -58,6 +62,7 @@ export default function CbtBank({ bank, questions, topics, filters, subjects, ca
                 <Link href="/school/cbt/banks" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"><ArrowLeft className="size-4" /> All question banks</Link>
                 <PageHeader title={bank.name} description={`${bank.total} question${bank.total === 1 ? '' : 's'}${bank.theory ? ` (${bank.theory} theory)` : ''}${bank.description ? ` · ${bank.description}` : ''}`} actions={actions || undefined} />
                 {actions && <div className="md:hidden">{actions}</div>}
+                {canManage && ai.shown && ai.reason && <p className="text-sm text-slate-500">AI question writer: {ai.reason}</p>}
 
                 <div className="flex flex-wrap items-center gap-2">
                     <form onSubmit={e => { e.preventDefault(); apply({ search }); }} className="relative min-w-52 flex-1">
@@ -138,6 +143,7 @@ export default function CbtBank({ bank, questions, topics, filters, subjects, ca
 
             {editing && <QuestionDialog key={editing === 'new' ? 'new' : editing.id} url={url} question={editing === 'new' ? null : editing} topics={topics} maxOptions={maxOptions} onClose={() => setEditing(null)} />}
             {importing && <ImportDialog url={url} topics={topics} onClose={() => setImporting(false)} />}
+            {writing && <AiQuestionWriter url={url} info={ai} topics={topics} onClose={() => setWriting(false)} />}
             {settings && <BankSettings bank={bank} subjects={subjects} onClose={() => setSettings(false)} />}
         </AppLayout>
     );

@@ -23,6 +23,7 @@ class AiService
     public const FEATURES = [
         'result_comments' => 'Report card comments',
         'lesson_notes' => 'Lesson notes and schemes of work',
+        'questions' => 'Question writer',
     ];
 
     /** Two kinds of model: one for long careful writing, one for short quick jobs */
