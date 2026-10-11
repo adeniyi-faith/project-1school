@@ -11,7 +11,7 @@ abstract class Controller
      */
     protected function getSchoolId(): int
     {
-        $sid = auth()->user()?->school_id;
+        $sid = \App\Support\ActingSchool::id() ?? auth()->user()?->school_id;
 
         if (! $sid) {
             $sid = \App\Models\School::orderBy('id')->value('id');

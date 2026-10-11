@@ -21,7 +21,7 @@ trait BelongsToSchool
 
         static::creating(function ($model) {
             if (empty($model->school_id) && auth()->check()) {
-                $model->school_id = auth()->user()->school_id;
+                $model->school_id = \App\Support\ActingSchool::id() ?? auth()->user()->school_id;
             }
         });
     }

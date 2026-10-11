@@ -268,8 +268,17 @@ export const bottomTabs: Record<string, BottomTab[]> = {
  * The menu for one person. `paths` (from the server) says which pages they may really open;
  * when it is missing the role list is used as a fallback.
  */
-export function navGroupsForRole(role: string, paths?: string[]): NavGroup[] {
-    const allowed = (item: NavItem) => (!item.roles || item.roles.includes(role)) && (!paths || paths.includes(item.href));
+export function navGroupsForRole(role: string, paths?: string[], actingSchool = false): NavGroup[] {
+    const inPaths = (item: NavItem) => !paths || paths.includes(item.href);
+    // The platform owner sees the platform menu, or, once inside a school, that school's whole menu
+    const allowed = (item: NavItem) => {
+        if (role === 'super-admin') {
+            const school = item.href.startsWith('/school');
+            const ok = actingSchool ? school && (!item.roles || item.roles.includes('super-admin') || item.roles.includes('school-admin')) : item.href.startsWith('/super-admin');
+            return ok && inPaths(item);
+        }
+        return (!item.roles || item.roles.includes(role)) && inPaths(item);
+    };
 
     return navGroups
         .map((group) => ({ ...group, items: group.items.filter(allowed) }))
@@ -277,8 +286,8 @@ export function navGroupsForRole(role: string, paths?: string[]): NavGroup[] {
 }
 
 /** Phone tab-bar shortcuts, leaving out any the person cannot open */
-export function tabsForRole(role: string, paths?: string[]): BottomTab[] {
-    const tabs = bottomTabs[role] ?? bottomTabs.default;
+export function tabsForRole(role: string, paths?: string[], actingSchool = false): BottomTab[] {
+    const tabs = bottomTabs[role === 'super-admin' && actingSchool ? 'school-admin' : role] ?? bottomTabs.default;
 
     return paths ? tabs.filter((t) => paths.includes(t.href)) : tabs;
 }

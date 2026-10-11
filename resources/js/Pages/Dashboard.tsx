@@ -18,7 +18,7 @@ export default function Dashboard() {
                         </svg>
                     </div>
                     <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                        Genius SMS Dashboard
+                        SchoolRuns Dashboard
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400">
                         Sprint 1 — Login working. Dashboard coming in Sprint 3+.

@@ -668,6 +668,8 @@ Route::middleware('auth')->group(function () {
         ->name('super-admin.')
         ->group(function () {
             Route::resource('schools', SchoolController::class);
+            Route::post('schools/{school}/enter', [SchoolController::class, 'enter'])->name('schools.enter');
+            Route::post('leave-school', [SchoolController::class, 'leave'])->name('schools.leave');
             Route::patch('schools/{school}/suspend', [SchoolController::class, 'suspend'])->name('schools.suspend');
             Route::patch('schools/{school}/activate', [SchoolController::class, 'activate'])->name('schools.activate');
 

@@ -46,13 +46,17 @@ class HandleInertiaRequests extends Middleware
                     'name'      => $request->user()->name,
                     'email'     => $request->user()->email,
                     'avatar'    => $request->user()->avatar ?? null,
-                    'role'      => $request->user()->roles()->first()?->name ?? null,
+                    'role'      => $request->user()->hasRole('super-admin') ? 'super-admin' : ($request->user()->roles()->first()?->name ?? null),
                     'school_id' => $request->user()->school_id ?? null,
                 ] : null,
                 // What this person may do: page buttons check `permissions`, the menu checks `paths`
                 'permissions' => fn () => $request->user() ? NavAccess::permissions($request->user()) : [],
                 'paths' => fn () => $request->user() ? NavAccess::paths($request->user()) : [],
             ],
+            // Set while the platform owner is working inside one school
+            'acting_school' => fn () => ($id = \App\Support\ActingSchool::id())
+                ? ['id' => $id, 'name' => \App\Models\School::whereKey($id)->value('name')]
+                : null,
             // Set while someone is looking around the public demo: the bar on top offers to switch account type
             'demo' => fn () => DemoSchool::isDemoUser($request->user())
                 ? ['label' => DemoSchool::ACCOUNTS[DemoSchool::keyOf($request->user())][1]]
