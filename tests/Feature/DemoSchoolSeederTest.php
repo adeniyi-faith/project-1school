@@ -73,7 +73,7 @@ class DemoSchoolSeederTest extends TestCase
         config(['app.demo_enabled' => true, 'app.demo_email' => 'demo@schoolruns.demo']);
         $this->seed(DemoSchoolSeeder::class);
 
-        $this->get('/demo')->assertRedirect(route('dashboard'));
+        $this->post('/demo/admin')->assertRedirect(route('dashboard'));
 
         foreach ([
             'school.reports.dashboard', 'school.students.index', 'school.staff.index', 'school.classes.index',
@@ -82,6 +82,43 @@ class DemoSchoolSeederTest extends TestCase
         ] as $route) {
             $this->get(route($route), ['X-Inertia' => 'true'])->assertOk();
         }
+    }
+
+    public function test_every_demo_account_type_opens_its_own_home_and_stays_read_only(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+        config(['app.demo_enabled' => true, 'app.demo_email' => 'demo@schoolruns.demo']);
+        $this->seed(DemoSchoolSeeder::class);
+
+        // The picker lists every account type, with parent and student available once pupils exist
+        $this->get('/demo')->assertOk()->assertInertia(fn ($page) => $page
+            ->component('Auth/DemoPick', false)
+            ->has('accounts', count(\App\Support\DemoSchool::ACCOUNTS))
+            ->where('accounts.4.key', 'parent')->where('accounts.4.available', true)
+            ->where('accounts.5.key', 'student')->where('accounts.5.available', true));
+
+        foreach (array_keys(\App\Support\DemoSchool::ACCOUNTS) as $key) {
+            // Someone already in the demo switches straight to the next account type
+            $this->post("/demo/{$key}")->assertRedirect(route('dashboard'));
+            $user = auth()->user();
+            $this->assertSame(\App\Support\DemoSchool::ACCOUNTS[$key][0], $user->roles()->value('name'));
+            $this->followingRedirects()->get('/dashboard')->assertOk()
+                ->assertInertia(fn ($page) => $page->where('demo.label', \App\Support\DemoSchool::ACCOUNTS[$key][1]));
+        }
+
+        // The student account sees one real pupil, and the parent account is that pupil's parent
+        $student = \App\Models\Student::withoutGlobalScopes()->where('user_id', \App\Models\User::where('email', 'demo-student@schoolruns.demo')->value('id'))->sole();
+        $guardian = \App\Models\Guardian::withoutGlobalScopes()->find($student->guardian_id);
+        $this->assertSame(\App\Models\User::where('email', 'demo-parent@schoolruns.demo')->value('id'), $guardian->user_id);
+
+        $this->post('/demo/student');
+        $this->get(route('student.dashboard'), ['X-Inertia' => 'true'])->assertOk();
+        $this->from('/profile')->put('/profile', ['name' => 'Changed'])->assertSessionHas('error');
+        $this->assertSame($student->full_name, auth()->user()->fresh()->name);
+
+        // Coming back does not link a second pupil
+        $this->post('/demo/student');
+        $this->assertSame(1, \App\Models\Student::withoutGlobalScopes()->where('user_id', auth()->id())->count());
     }
 
     public function test_demo_fill_does_nothing_when_the_demo_is_off_and_only_fills_once_when_on(): void

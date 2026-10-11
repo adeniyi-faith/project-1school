@@ -51,6 +51,8 @@ export interface PageProps {
         info?: string;
     };
     faviconUrl: string | null;
+    /** Set while someone looks around the public demo, with the account type they chose */
+    demo?: { label: string } | null;
     errors: Record<string, string>;
 }
 

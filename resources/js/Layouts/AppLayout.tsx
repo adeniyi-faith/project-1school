@@ -16,7 +16,7 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children, title, breadcrumbs }: AppLayoutProps) {
-    const { flash, faviconUrl } = usePage<PageProps>().props;
+    const { flash, faviconUrl, demo } = usePage<PageProps>().props;
     const theme = useAuthStore((s) => s.theme);
 
     // Favicon sync
@@ -61,6 +61,12 @@ export default function AppLayout({ children, title, breadcrumbs }: AppLayoutPro
 
             {/* Main */}
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                {demo && (
+                    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-indigo-600 px-4 py-1.5 text-center text-[13px] text-white">
+                        <span>Demo: you are looking around as <b className="font-semibold">{demo.label}</b>. Nothing can be changed.</span>
+                        <a href="/demo" className="font-semibold underline underline-offset-2 hover:text-indigo-100">Switch account type</a>
+                    </div>
+                )}
                 <Topbar title={title} breadcrumbs={breadcrumbs} />
                 <main id="main" className="scroll-quiet flex-1 overflow-y-auto px-4 pb-28 pt-5 md:px-8 md:pb-10 md:pt-7">
                     <div className="mx-auto w-full max-w-[1400px]">{children}</div>
