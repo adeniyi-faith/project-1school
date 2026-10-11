@@ -189,17 +189,21 @@ class CbtService
         $paper = [];
         $used = [];
         foreach ($test->sections as $s => $section) {
-            $pool = $section->pool()->whereNotIn('id', $used)->get(['id', 'options']);
+            $pool = $section->pool()->whereNotIn('id', $used)->get(['id', 'type', 'options']);
             $picked = $pool->shuffle()->take($section->question_count);
             if (! $test->shuffle_questions) {
                 $picked = $picked->sortBy('id');
             }
             foreach ($picked as $q) {
-                $order = range(0, count($q->options) - 1);
-                if ($test->shuffle_options) {
-                    shuffle($order);
+                if ($q->isTheory()) {
+                    $paper[] = ['q' => $q->id, 'o' => [], 's' => $s, 't' => 'theory'];
+                } else {
+                    $order = range(0, count($q->options) - 1);
+                    if ($test->shuffle_options) {
+                        shuffle($order);
+                    }
+                    $paper[] = ['q' => $q->id, 'o' => $order, 's' => $s];
                 }
-                $paper[] = ['q' => $q->id, 'o' => $order, 's' => $s];
                 $used[] = $q->id;
             }
         }
@@ -219,7 +223,7 @@ class CbtService
             throw ValidationException::withMessages(['answer' => 'Time is up, so answers can no longer be changed.']);
         }
         $line = collect($attempt->paper)->firstWhere('q', $questionId);
-        if (! $line || ($option !== null && ! in_array($option, $line['o'], true))) {
+        if (! $line || self::isTheoryLine($line) || ($option !== null && ! in_array($option, $line['o'], true))) {
             throw ValidationException::withMessages(['answer' => 'That answer does not belong to this test.']);
         }
 
@@ -234,6 +238,38 @@ class CbtService
             $fresh->update(['answers' => $answers]);
             $attempt->answers = $answers;
         });
+    }
+
+    /** Save a typed answer to a theory question (empty text clears it). Refused once the attempt is over. */
+    public function write(CbtAttempt $attempt, int $questionId, ?string $text): void
+    {
+        $this->settle($attempt);
+        if ($attempt->isFinished()) {
+            throw ValidationException::withMessages(['answer' => 'Time is up, so answers can no longer be changed.']);
+        }
+        $line = collect($attempt->paper)->firstWhere('q', $questionId);
+        if (! $line || ! self::isTheoryLine($line)) {
+            throw ValidationException::withMessages(['answer' => 'That answer does not belong to this test.']);
+        }
+        $text = trim((string) $text);
+
+        DB::transaction(function () use ($attempt, $questionId, $text) {
+            $fresh = CbtAttempt::lockForUpdate()->find($attempt->id);
+            $written = $fresh->written ?? [];
+            if ($text === '') {
+                unset($written[$questionId]);
+            } else {
+                $written[$questionId] = $text;
+            }
+            $fresh->update(['written' => $written]);
+            $attempt->written = $written;
+        });
+    }
+
+    /** A paper line for a theory question (lines from before theory questions existed are all objective) */
+    public static function isTheoryLine(array $line): bool
+    {
+        return ($line['t'] ?? null) === 'theory';
     }
 
     /** Mark or unmark a question for review */
@@ -270,50 +306,155 @@ class CbtService
             'deadline_at' => $from->copy()->addMinutes($minutes),
             'extra_minutes' => $attempt->extra_minutes + $minutes,
             'status' => 'in_progress', 'submitted_at' => null, 'ended_reason' => null, 'marking' => null, 'section_scores' => null, 'score' => null, 'max_score' => null,
+            'needs_marking' => false, 'marked_at' => null,
         ]);
         $this->recordAdmission($attempt);
     }
 
-    /** Hand in: mark every question and fix the score */
+    /**
+     * Hand in: objective questions are marked straight away. Theory answers wait for a teacher
+     * (a blank one gets 0 at once), and the score counts only what has been marked so far.
+     */
     public function finish(CbtAttempt $attempt, string $status = 'submitted'): CbtAttempt
     {
         if ($attempt->isFinished()) {
             return $attempt;
         }
-        $ids = collect($attempt->paper)->pluck('q');
-        $questions = CbtQuestion::withTrashed()->whereIn('id', $ids)->get()->keyBy('id');
+        $questions = $this->questionsOf($attempt);
         $answers = $attempt->answers ?? [];
+        $written = $attempt->written ?? [];
         $marking = [];
-        $score = 0.0;
-        $max = 0.0;
-        foreach ($ids as $id) {
+        foreach ($attempt->paper as $line) {
+            $id = $line['q'];
             $q = $questions->get($id);
             if (! $q) {
                 continue;
             }
-            $chosen = array_key_exists($id, $answers) ? (int) $answers[$id] : null;
-            $right = $chosen === $q->correct_option;
-            $marking[$id] = ['chosen' => $chosen, 'correct' => $q->correct_option, 'marks' => $right ? $q->marks : 0];
-            $score += $right ? $q->marks : 0;
-            $max += $q->marks;
-        }
-
-        $sections = [];
-        foreach ($attempt->paper as $line) {
-            $m = $marking[$line['q']] ?? null;
-            if ($m) {
-                $s = $line['s'] ?? 0;
-                $sections[$s] = ['score' => ($sections[$s]['score'] ?? 0) + $m['marks'], 'max' => ($sections[$s]['max'] ?? 0) + $questions[$line['q']]->marks];
+            if (self::isTheoryLine($line)) {
+                $blank = trim((string) ($written[$id] ?? '')) === '';
+                $marking[$id] = ['type' => 'theory', 'marks' => $blank ? 0.0 : null, 'max' => $q->marks, 'comment' => null];
+            } else {
+                $chosen = array_key_exists($id, $answers) ? (int) $answers[$id] : null;
+                $right = $chosen === $q->correct_option;
+                $marking[$id] = ['chosen' => $chosen, 'correct' => $q->correct_option, 'marks' => $right ? $q->marks : 0];
             }
         }
 
-        $attempt->update([
-            'status' => $status, 'submitted_at' => $status === 'submitted' ? now() : $attempt->deadline_at, 'ended_reason' => $attempt->ended_reason,
-            'marking' => $marking, 'section_scores' => $sections, 'score' => round($score, 2), 'max_score' => round($max, 2),
+        $attempt->fill([
+            'status' => $status, 'submitted_at' => $status === 'submitted' ? now() : $attempt->deadline_at, 'ended_reason' => $attempt->ended_reason, 'marking' => $marking,
         ]);
+        $this->total($attempt, $questions);
+        $attempt->save();
         $this->recordAdmission($attempt);
 
         return $attempt;
+    }
+
+    /** Work out the score, section scores and whether theory marking is still waiting, from the marking lines */
+    private function total(CbtAttempt $attempt, Collection $questions): void
+    {
+        $marking = $attempt->marking ?? [];
+        $score = 0.0;
+        $max = 0.0;
+        $sections = [];
+        $waiting = false;
+        foreach ($attempt->paper as $line) {
+            $m = $marking[$line['q']] ?? null;
+            if (! $m) {
+                continue;
+            }
+            $out = (float) ($m['max'] ?? $questions->get($line['q'])?->marks ?? 0);
+            $got = (float) ($m['marks'] ?? 0);
+            $waiting = $waiting || $m['marks'] === null;
+            $score += $got;
+            $max += $out;
+            $s = $line['s'] ?? 0;
+            $sections[$s] = ['score' => ($sections[$s]['score'] ?? 0) + $got, 'max' => ($sections[$s]['max'] ?? 0) + $out];
+        }
+        $attempt->fill([
+            'section_scores' => $sections, 'score' => round($score, 2), 'max_score' => round($max, 2),
+            'needs_marking' => $waiting, 'marked_at' => $waiting ? null : ($attempt->marked_at ?? ($this->hasTheory($marking) ? now() : null)),
+        ]);
+    }
+
+    private function hasTheory(array $marking): bool
+    {
+        return collect($marking)->contains(fn ($m) => ($m['type'] ?? null) === 'theory');
+    }
+
+    private function questionsOf(CbtAttempt $attempt): Collection
+    {
+        return CbtQuestion::withTrashed()->whereIn('id', collect($attempt->paper)->pluck('q'))->get()->keyBy('id');
+    }
+
+    /**
+     * The theory questions of a test, and for the chosen one every handed-in answer with its mark so far.
+     * Names can be hidden on the page so marking is fair.
+     */
+    public function markingSheet(CbtTest $test, ?int $questionId): array
+    {
+        $this->settleTest($test);
+        $attempts = $test->attempts()->where('status', '!=', 'in_progress')->with('student:id,first_name,last_name,admission_no', 'candidate:id,exam_number,inquiry_id', 'candidate.inquiry:id,student_name')
+            ->orderBy('id')->get();
+        $lines = $attempts->flatMap(fn (CbtAttempt $a) => collect($a->marking ?? [])->filter(fn ($m) => ($m['type'] ?? null) === 'theory')->map(fn ($m, $qid) => ['q' => (int) $qid, 'marks' => $m['marks']])->values());
+        $byQuestion = $lines->groupBy('q');
+        $questions = CbtQuestion::withTrashed()->whereIn('id', $byQuestion->keys())->orderBy('id')->get();
+
+        $list = $questions->map(fn (CbtQuestion $q) => [
+            'id' => $q->id, 'text' => $q->text, 'marks' => $q->marks, 'topic' => $q->topic,
+            'answers' => $byQuestion[$q->id]->count(), 'waiting' => $byQuestion[$q->id]->whereNull('marks')->count(),
+        ])->values();
+        $current = $questions->firstWhere('id', $questionId) ?? $questions->first(fn ($q) => $byQuestion[$q->id]->whereNull('marks')->isNotEmpty()) ?? $questions->first();
+
+        $answers = $current ? $attempts->filter(fn (CbtAttempt $a) => isset($a->marking[$current->id]['type']))->map(fn (CbtAttempt $a) => [
+            'attempt_id' => $a->id,
+            'name' => $a->student ? trim($a->student->first_name.' '.$a->student->last_name) : ($a->candidate?->inquiry?->student_name ?? 'Applicant'),
+            'number' => $a->student?->admission_no ?? $a->candidate?->exam_number,
+            'text' => $a->written[$current->id] ?? '',
+            'marks' => $a->marking[$current->id]['marks'],
+            'comment' => $a->marking[$current->id]['comment'] ?? null,
+        ])->values() : collect();
+
+        return [
+            'questions' => $list,
+            'question' => $current ? [
+                'id' => $current->id, 'text' => $current->text, 'marks' => $current->marks, 'marking_guide' => $current->marking_guide,
+                'image' => $current->image_path ? "/cbt/images/{$current->id}" : null,
+            ] : null,
+            'answers' => $answers,
+        ];
+    }
+
+    /**
+     * Save a teacher's marks for one theory question across many sittings: [attempt id => ['marks' => 4.5, 'comment' => '...']].
+     * Marks go from 0 to the question's marks. Returns how many were saved.
+     */
+    public function markTheory(CbtTest $test, int $questionId, array $marks): int
+    {
+        $saved = 0;
+        DB::transaction(function () use ($test, $questionId, $marks, &$saved) {
+            $attempts = $test->attempts()->whereIn('id', array_keys($marks))->where('status', '!=', 'in_progress')->lockForUpdate()->get();
+            foreach ($attempts as $attempt) {
+                $marking = $attempt->marking ?? [];
+                $line = $marking[$questionId] ?? null;
+                if (($line['type'] ?? null) !== 'theory') {
+                    continue;
+                }
+                $given = $marks[$attempt->id];
+                $value = (float) $given['marks'];
+                if ($value < 0 || $value > $line['max']) {
+                    throw ValidationException::withMessages(["marks.{$attempt->id}.marks" => "Give between 0 and {$line['max']} marks."]);
+                }
+                $marking[$questionId] = array_merge($line, ['marks' => round($value, 2), 'comment' => ($given['comment'] ?? null) ?: null]);
+                $attempt->marking = $marking;
+                $this->total($attempt, $this->questionsOf($attempt));
+                $attempt->save();
+                $this->recordAdmission($attempt);
+                $saved++;
+            }
+        });
+
+        return $saved;
     }
 
     /** Mark an attempt whose time ran out without being handed in */
@@ -343,6 +484,7 @@ class CbtService
                 'section' => $line['s'] ?? 0,
                 'text' => $q->text,
                 'image' => $q->image_path ? "{$images}/{$q->id}" : null,
+                'type' => self::isTheoryLine($line) ? 'theory' : 'objective',
                 'options' => collect($line['o'])->map(fn (int $i) => ['value' => $i, 'text' => $q->options[$i] ?? ''])->values()->all(),
             ] : null;
         })->filter()->values()->all();
@@ -396,13 +538,21 @@ class CbtService
             'status' => $a?->status ?? 'not_started',
             'score' => $a?->score,
             'max_score' => $a?->max_score,
-            'percent' => $a && $a->max_score ? round($a->score / $a->max_score * 100, 1) : null,
-            'answered' => $a ? count($a->answers ?? []) : 0,
+            // A percentage only once every theory answer is marked
+            'percent' => $a && $a->max_score && ! $a->needs_marking ? round($a->score / $a->max_score * 100, 1) : null,
+            'needs_marking' => (bool) $a?->needs_marking,
+            'answered' => $a ? self::answeredCount($a) : 0,
             'questions' => $a ? count($a->paper) : 0,
             'minutes' => $minutes,
             'attempt_id' => $a?->id,
             'page_leaves' => $a?->page_leaves ?? 0,
         ];
+    }
+
+    /** Questions answered: options chosen plus theory answers typed */
+    public static function answeredCount(CbtAttempt $a): int
+    {
+        return count($a->answers ?? []) + count(array_filter($a->written ?? [], fn ($t) => trim((string) $t) !== ''));
     }
 
     /**
@@ -476,7 +626,7 @@ class CbtService
         if (! $assessment) {
             return;
         }
-        if (! $attempt->isFinished()) {
+        if (! $attempt->isFinished() || $attempt->needs_marking) {
             $assessment->update(['score' => null, 'max_score' => null, 'outcome' => 'pending']);
 
             return;
@@ -515,7 +665,7 @@ class CbtService
         return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     }
 
-    /** For each question in the test: how many got it and how many chose each option */
+    /** For each question in the test: how many got it and how many chose each option; for theory, the average mark */
     public function questionReport(CbtTest $test): array
     {
         $marked = $test->attempts()->whereNotNull('marking')->pluck('marking');
@@ -523,23 +673,29 @@ class CbtService
         $ids = $marked->flatMap(fn ($m) => array_keys($m))->unique();
 
         return CbtQuestion::withTrashed()->whereIn('id', $ids)->orderBy('id')->get()->map(function (CbtQuestion $q) use ($marked) {
-            $seen = 0;
+            $lines = $marked->map(fn ($m) => $m[$q->id] ?? null)->filter()->values();
+            if ($lines->contains(fn ($l) => ($l['type'] ?? null) === 'theory')) {
+                $scored = $lines->whereNotNull('marks');
+                $average = $scored->count() ? round($scored->avg('marks'), 1) : null;
+
+                return [
+                    'id' => $q->id, 'type' => 'theory', 'text' => $q->text, 'topic' => $q->topic, 'options' => [], 'correct_option' => null,
+                    'seen' => $lines->count(), 'marked' => $scored->count(), 'average' => $average, 'max' => $q->marks,
+                    'percent' => $average !== null && $q->marks ? round($average / $q->marks * 100) : null, 'right' => 0, 'picks' => [],
+                ];
+            }
             $right = 0;
-            $picks = array_fill(0, count($q->options), 0);
-            foreach ($marked as $marking) {
-                $line = $marking[$q->id] ?? null;
-                if (! $line) {
-                    continue;
-                }
-                $seen++;
+            $picks = array_fill(0, count($q->options ?? []), 0);
+            foreach ($lines as $line) {
                 $right += $line['chosen'] === $line['correct'] ? 1 : 0;
                 if ($line['chosen'] !== null && isset($picks[$line['chosen']])) {
                     $picks[$line['chosen']]++;
                 }
             }
+            $seen = $lines->count();
 
             return [
-                'id' => $q->id, 'text' => $q->text, 'topic' => $q->topic, 'options' => $q->options, 'correct_option' => $q->correct_option,
+                'id' => $q->id, 'type' => 'objective', 'text' => $q->text, 'topic' => $q->topic, 'options' => $q->options, 'correct_option' => $q->correct_option,
                 'seen' => $seen, 'right' => $right, 'percent' => $seen ? round($right / $seen * 100) : null, 'picks' => $picks,
             ];
         })->sortBy(fn ($r) => $r['percent'] ?? 101)->values()->all();
@@ -564,7 +720,8 @@ class CbtService
         }
 
         $this->settleTest($test);
-        $attempts = $test->attempts()->where('status', '!=', 'in_progress')->where('max_score', '>', 0)->get();
+        // Sittings with theory answers still to mark wait until they are marked
+        $attempts = $test->attempts()->where('status', '!=', 'in_progress')->where('needs_marking', false)->where('max_score', '>', 0)->get();
         DB::transaction(function () use ($attempts, $sheet, $test, $part) {
             foreach ($attempts as $a) {
                 SubjectScore::updateOrCreate(

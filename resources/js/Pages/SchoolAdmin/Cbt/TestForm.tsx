@@ -8,18 +8,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader, Panel, Segmented } from '@/components/app/kit';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
-import type { CbtDifficulty } from '@/Types';
+import type { CbtDifficulty, CbtQuestionType } from '@/Types';
 
-interface Section { title: string; cbt_bank_id: string; topic: string; difficulty: string; question_count: string }
+interface Section { title: string; cbt_bank_id: string; topic: string; difficulty: string; question_type: string; question_count: string }
 
 interface Props {
     test: null | {
         id: number; title: string; audience: 'students' | 'applicants'; has_candidates: boolean; class_id: number | null; subject_id: number | null; term_id: number | null; instructions: string | null;
-        duration_minutes: number; opens_at: string; closes_at: string | null; shuffle_questions: boolean; shuffle_options: boolean; show_score: boolean;
+        duration_minutes: number; opens_at: string; closes_at: string | null; shuffle_questions: boolean; shuffle_options: boolean; show_score: boolean; allow_calculator: boolean;
         access_code: string | null; max_page_leaves: number | null; pass_mark: number | null; started: boolean;
-        sections: { title: string; cbt_bank_id: number; topic: string | null; difficulty: CbtDifficulty | null; question_count: number }[];
+        sections: { title: string; cbt_bank_id: number; topic: string | null; difficulty: CbtDifficulty | null; question_type: CbtQuestionType | null; question_count: number }[];
     };
-    banks: { id: number; name: string; counts: { topic: string | null; difficulty: CbtDifficulty }[] }[];
+    banks: { id: number; name: string; counts: { topic: string | null; difficulty: CbtDifficulty; type: CbtQuestionType }[] }[];
     classes: { id: number; name: string }[];
     subjects: { id: number; name: string; class_id: number }[];
     terms: { id: number; name: string; is_current: boolean }[];
@@ -27,7 +27,7 @@ interface Props {
 
 interface TestForm {
     title: string; audience: 'students' | 'applicants'; class_id: string; subject_id: string; term_id: string; instructions: string; duration_minutes: string; opens_at: string; closes_at: string;
-    shuffle_questions: boolean; shuffle_options: boolean; show_score: boolean; access_code: string; max_page_leaves: string; pass_mark: string; sections: Section[];
+    shuffle_questions: boolean; shuffle_options: boolean; show_score: boolean; allow_calculator: boolean; access_code: string; max_page_leaves: string; pass_mark: string; sections: Section[];
 }
 
 const ANY = 'any';
@@ -65,11 +65,12 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
         shuffle_questions: test?.shuffle_questions ?? true,
         shuffle_options: test?.shuffle_options ?? true,
         show_score: test?.show_score ?? true,
+        allow_calculator: test?.allow_calculator ?? false,
         access_code: test?.access_code ?? '',
         max_page_leaves: test?.max_page_leaves ? String(test.max_page_leaves) : '',
         pass_mark: test?.pass_mark != null ? String(test.pass_mark) : '',
-        sections: test?.sections.map(s => ({ title: s.title, cbt_bank_id: String(s.cbt_bank_id), topic: s.topic ?? '', difficulty: s.difficulty ?? '', question_count: String(s.question_count) }))
-            ?? [{ title: 'Section A', cbt_bank_id: banks[0] ? String(banks[0].id) : '', topic: '', difficulty: '', question_count: '20' }],
+        sections: test?.sections.map(s => ({ title: s.title, cbt_bank_id: String(s.cbt_bank_id), topic: s.topic ?? '', difficulty: s.difficulty ?? '', question_type: s.question_type ?? '', question_count: String(s.question_count) }))
+            ?? [{ title: 'Section A', cbt_bank_id: banks[0] ? String(banks[0].id) : '', topic: '', difficulty: '', question_type: '', question_count: '20' }],
     });
     const d = form.data;
     const errors = form.errors as Record<string, string | undefined>;
@@ -87,7 +88,7 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
 
     function available(s: Section): number {
         const bank = banks.find(b => String(b.id) === s.cbt_bank_id);
-        return bank ? bank.counts.filter(c => (!s.topic || c.topic === s.topic) && (!s.difficulty || c.difficulty === s.difficulty)).length : 0;
+        return bank ? bank.counts.filter(c => (!s.topic || c.topic === s.topic) && (!s.difficulty || c.difficulty === s.difficulty) && (!s.question_type || c.type === s.question_type)).length : 0;
     }
 
     function submit(e: React.FormEvent) {
@@ -96,7 +97,7 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
             ...data,
             class_id: data.audience === 'applicants' ? null : data.class_id, subject_id: data.subject_id || null, term_id: data.term_id || null, opens_at: fromLocalInput(data.opens_at), closes_at: fromLocalInput(data.closes_at),
             access_code: data.access_code.trim() || null, max_page_leaves: data.max_page_leaves || null, pass_mark: data.pass_mark || null,
-            sections: data.sections.map(s => ({ ...s, topic: s.topic || null, difficulty: s.difficulty || null })),
+            sections: data.sections.map(s => ({ ...s, topic: s.topic || null, difficulty: s.difficulty || null, question_type: s.question_type || null })),
         }));
         if (test) form.put(`/school/cbt/tests/${test.id}`);
         else form.post('/school/cbt/tests');
@@ -159,13 +160,15 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
                     </div>
                 </Panel>
 
-                <Panel title="Questions" description={locked ? 'People have started this test, so its questions can no longer change.' : 'Each section draws questions at random from a bank. Add sections to mix banks, topics or difficulty, e.g. 10 easy and 10 hard.'}>
+                <Panel title="Questions" description={locked ? 'People have started this test, so its questions can no longer change.' : 'Each section draws questions at random from a bank. Add sections to mix banks, topics or difficulty, e.g. Section A: 30 objective, Section B: 3 theory.'}>
                     <div className="space-y-4">
                         {d.sections.map((s, i) => {
                             const bank = banks.find(b => String(b.id) === s.cbt_bank_id);
                             const topics = [...new Set(bank?.counts.map(c => c.topic).filter((t): t is string => !!t) ?? [])].sort();
                             const topicItems = [{ value: ANY, label: 'Any topic' }, ...topics.map(t => ({ value: t, label: t }))];
                             const levelItems = [{ value: ANY, label: 'Any difficulty' }, { value: 'easy', label: 'Easy' }, { value: 'medium', label: 'Medium' }, { value: 'hard', label: 'Hard' }];
+                            const kindItems = [{ value: ANY, label: 'Objective and theory' }, { value: 'objective', label: 'Objective only' }, { value: 'theory', label: 'Theory only' }];
+                            const hasTheory = !!bank?.counts.some(c => c.type === 'theory');
                             const have = available(s);
                             const short = (parseInt(s.question_count) || 0) > have;
                             return (
@@ -192,6 +195,14 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
                                             <SelectContent>{levelItems.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </div>
+                                    {(hasTheory || s.question_type) && (
+                                        <div className="sm:w-1/2">
+                                            <Select items={kindItems} value={s.question_type || ANY} disabled={locked} onValueChange={v => setSection(i, { question_type: v && v !== ANY ? v : '' })}>
+                                                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                                                <SelectContent>{kindItems.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
                                     <div className="flex flex-wrap items-center gap-2 text-sm">
                                         <span>Draw</span>
                                         <Input aria-label="Number of questions" type="number" min={1} max={500} value={s.question_count} disabled={locked} onChange={e => setSection(i, { question_count: e.target.value })} className="w-20" />
@@ -202,7 +213,7 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
                             );
                         })}
                         {!locked && (
-                            <Button type="button" variant="outline" size="sm" onClick={() => form.setData('sections', [...d.sections, { title: `Section ${String.fromCharCode(65 + d.sections.length)}`, cbt_bank_id: d.sections[0]?.cbt_bank_id ?? '', topic: '', difficulty: '', question_count: '10' }])}>
+                            <Button type="button" variant="outline" size="sm" onClick={() => form.setData('sections', [...d.sections, { title: `Section ${String.fromCharCode(65 + d.sections.length)}`, cbt_bank_id: d.sections[0]?.cbt_bank_id ?? '', topic: '', difficulty: '', question_type: '', question_count: '10' }])}>
                                 <Plus className="size-4" /> Add a section
                             </Button>
                         )}
@@ -216,7 +227,8 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
                         {([
                             ['shuffle_questions', 'Mix the order of questions for each person'],
                             ['shuffle_options', 'Mix the order of the options (A, B, C ...) for each person'],
-                            ['show_score', 'Show students their score as soon as they hand in'],
+                            ['show_score', 'Show students their score as soon as they hand in (with theory questions, once they are marked)'],
+                            ['allow_calculator', 'Give students an on-screen calculator'],
                         ] as const).map(([key, label]) => (
                             <label key={key} className="flex items-center gap-2"><Checkbox checked={d[key]} onCheckedChange={v => form.setData(key, !!v)} /> {label}</label>
                         ))}

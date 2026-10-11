@@ -214,6 +214,8 @@ Route::middleware('auth')->group(function () {
             Route::get('cbt/tests/{test}/export',                     [CbtTestController::class, 'export'])->middleware('permission:cbt.view')->name('cbt.tests.export');
             Route::post('cbt/tests/{test}/attempts/{attempt}/time',   [CbtTestController::class, 'addTime'])->middleware('permission:cbt.manage')->name('cbt.attempts.time');
             Route::delete('cbt/tests/{test}/attempts/{attempt}',      [CbtTestController::class, 'reset'])->middleware('permission:cbt.manage')->name('cbt.attempts.reset');
+            Route::get('cbt/tests/{test}/marking',                    [CbtTestController::class, 'marking'])->middleware('permission:cbt.manage')->name('cbt.tests.marking');
+            Route::post('cbt/tests/{test}/marking',                   [CbtTestController::class, 'saveMarks'])->middleware('permission:cbt.manage')->name('cbt.tests.marks');
             Route::post('cbt/tests/{test}/copy-to-results',           [CbtTestController::class, 'copyToResults'])->middleware('permission:marks.entry')->name('cbt.tests.copy');
             Route::post('cbt/tests/{test}/candidates',                [CbtTestController::class, 'addCandidates'])->middleware('permission:cbt.manage')->name('cbt.candidates.store');
             Route::delete('cbt/tests/{test}/candidates/{candidate}',  [CbtTestController::class, 'removeCandidate'])->middleware('permission:cbt.manage')->name('cbt.candidates.destroy');

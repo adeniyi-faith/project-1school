@@ -6,7 +6,7 @@ import { MonitorCheck } from 'lucide-react';
 
 interface TestItem {
     id: number; title: string; subject: string | null; duration_minutes: number; questions: number; opens_at: string; closes_at: string | null;
-    state: 'open' | 'writing' | 'done' | 'soon' | 'missed'; score: number | null; max_score: number | null;
+    state: 'open' | 'writing' | 'done' | 'soon' | 'missed'; marking: boolean; score: number | null; max_score: number | null;
 }
 
 const STATE: Record<TestItem['state'], { label: string; tone: 'good' | 'info' | 'neutral' | 'warn' }> = {
@@ -37,6 +37,7 @@ export default function StudentCbtIndex({ linked, tests }: { linked: boolean; te
                                         </div>
                                         <div className="text-right">
                                             <Pill tone={STATE[t.state].tone}>{STATE[t.state].label}</Pill>
+                                            {t.marking && <p className="mt-1 text-xs text-slate-500">Theory answers being marked</p>}
                                             {t.score != null && <p className="mt-1 text-sm font-medium tabular-nums">{t.score} / {t.max_score}</p>}
                                         </div>
                                     </div>
