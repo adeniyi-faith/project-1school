@@ -133,7 +133,7 @@ export default function ParentDashboard({ linked, guardian, children, announceme
         <AppLayout breadcrumbs={[{ label: 'Home' }]}>
             <div className="space-y-6">
                 <PageHeader
-                    title={`Welcome, ${guardian.name.split(' ')[0]}`}
+                    title={`Welcome, ${greetingName(guardian.name)}`}
                     description={`${children.length} ${children.length === 1 ? 'child' : 'children'} enrolled${guardian.phone ? ` · ${guardian.phone}` : ''}`}
                 />
 
@@ -170,4 +170,13 @@ export default function ParentDashboard({ linked, guardian, children, announceme
             </div>
         </AppLayout>
     );
+}
+
+/** "Mr. Adebayo Oyebanji" is greeted as "Mr. Oyebanji"; a name without a title by its first word. */
+function greetingName(name: string): string {
+    const words = name.trim().split(/\s+/);
+    if (words.length >= 2 && /^(mr|mrs|ms|miss|dr|chief|alhaji|alhaja|engr|prof|pastor|barr)\.?$/i.test(words[0])) {
+        return `${words[0]} ${words[words.length - 1]}`;
+    }
+    return words[0];
 }
