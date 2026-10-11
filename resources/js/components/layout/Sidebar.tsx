@@ -52,12 +52,12 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ drawer = false, onNavigate }: SidebarProps) {
-    const { auth, school } = usePage<PageProps>().props;
+    const { auth, school, acting_school } = usePage<PageProps>().props;
     const { sidebarCollapsed, toggleCollapsed } = useUIStore();
     const collapsed = drawer ? false : sidebarCollapsed;
     const role = auth.user?.role ?? '';
     const roleLabel = role.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    const groups = navGroupsForRole(role, auth.paths);
+    const groups = navGroupsForRole(role, auth.paths, !!acting_school);
 
     return (
         <TooltipProvider delayDuration={0}>
@@ -76,10 +76,10 @@ export default function Sidebar({ drawer = false, onNavigate }: SidebarProps) {
                 {!collapsed && (
                     <div className="mx-3 mb-2 flex items-center gap-2.5 rounded-xl border border-sidebar-border bg-white/[0.04] px-3 py-2.5">
                         <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-300 to-amber-500 text-[11px] font-bold text-amber-950">
-                            {initialsOf(school?.name ?? 'SR')}
+                            {initialsOf(acting_school?.name ?? school?.name ?? 'SR')}
                         </span>
                         <span className="min-w-0 leading-tight">
-                            <span className="block truncate text-[13px] font-medium text-white">{school?.name ?? 'SchoolRuns'}</span>
+                            <span className="block truncate text-[13px] font-medium text-white">{acting_school?.name ?? school?.name ?? 'SchoolRuns'}</span>
                             <span className="block truncate text-[11px] text-white/45">{roleLabel}</span>
                         </span>
                     </div>

@@ -1,6 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { Plus, Search, School, MoreHorizontal, Pencil, Ban, CheckCircle, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, School, MoreHorizontal, Pencil, Ban, CheckCircle, Trash2, Eye, LogIn } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -166,7 +166,10 @@ export default function SchoolsIndex() {
                                 <TableCell className="text-xs text-slate-400">
                                     {new Date(school.created_at).toLocaleDateString()}
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                    <Button size="sm" variant="outline" className="mr-1 h-8 gap-1.5" onClick={() => router.post(`/super-admin/schools/${school.id}/enter`)}>
+                                        <LogIn className="w-3.5 h-3.5" /> Open
+                                    </Button>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-8 w-8">

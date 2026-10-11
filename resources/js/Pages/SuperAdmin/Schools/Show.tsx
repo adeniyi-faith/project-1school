@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Ban, CheckCircle, Globe, Phone, Mail, MapPin, Users, Calendar } from 'lucide-react';
+import { ArrowLeft, Pencil, Ban, CheckCircle, Globe, Phone, Mail, MapPin, Users, Calendar, LogIn } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,7 +51,10 @@ export default function ShowSchool() {
                         </div>
                     </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                    <Button size="sm" className="bg-amber-500 text-amber-950 hover:bg-amber-600" onClick={() => router.post(`/super-admin/schools/${school.id}/enter`)}>
+                        <LogIn className="w-4 h-4 mr-1.5" /> Open this school
+                    </Button>
                     {school.status === 'suspended' ? (
                         <Button size="sm" variant="outline" className="text-emerald-600" onClick={() => router.patch(`/super-admin/schools/${school.id}/activate`)}>
                             <CheckCircle className="w-4 h-4 mr-1.5" /> Activate
