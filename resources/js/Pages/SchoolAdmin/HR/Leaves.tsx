@@ -74,7 +74,7 @@ export default function LeaveRequests({ requests, leaveTypes, staffList, filters
     return (
         <AppLayout title="Leave Management">
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Leave Management</h1>
                         <p className="text-sm text-slate-500 mt-0.5">{requests.meta?.total ?? 0} total requests</p>
@@ -207,7 +207,7 @@ export default function LeaveRequests({ requests, leaveTypes, staffList, filters
                             </Select>
                             {errors.leave_type_id && <p className="text-xs text-red-500">{errors.leave_type_id}</p>}
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Start Date <span className="text-red-500">*</span></Label>
                                 <Input type="date" value={data.start_date} onChange={e => setData('start_date', e.target.value)} />

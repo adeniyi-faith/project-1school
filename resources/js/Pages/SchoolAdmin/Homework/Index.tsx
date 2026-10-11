@@ -89,7 +89,7 @@ export default function HomeworkIndex({ homework, classes, subjects, staff, filt
         <AppLayout title="Homework">
             <div className="space-y-6">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Homework</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Manage and track homework assignments</p>
@@ -208,7 +208,7 @@ export default function HomeworkIndex({ homework, classes, subjects, staff, filt
                         <DialogTitle>{editing ? 'Edit Homework' : 'Assign Homework'}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Class *</Label>
                                 <Select value={data.class_id} onValueChange={v => setData('class_id', v)}>
