@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/Stores/useUIStore';
 import Sidebar from '@/components/layout/Sidebar';
-import { bottomTabs, isNavActive } from '@/components/layout/navigation';
+import { isNavActive, tabsForRole } from '@/components/layout/navigation';
 import type { PageProps } from '@/Types';
 
 /** Phone tab bar plus the full-menu drawer behind its "More" tab. Hidden from tablet width up. */
@@ -12,7 +12,7 @@ export default function MobileNav() {
     const { auth } = usePage<PageProps>().props;
     const { url } = usePage();
     const { mobileNavOpen, setMobileNavOpen } = useUIStore();
-    const tabs = bottomTabs[auth.user?.role ?? ''] ?? bottomTabs.default;
+    const tabs = tabsForRole(auth.user?.role ?? '', auth.paths);
     const onTab = tabs.some((t) => isNavActive(url, t.href, t.exact));
 
     useEffect(() => { setMobileNavOpen(false); }, [url, setMobileNavOpen]);

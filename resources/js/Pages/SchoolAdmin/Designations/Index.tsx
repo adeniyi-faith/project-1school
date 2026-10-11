@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Plus, MoreHorizontal, Pencil, Trash2, BadgeCheck } from 'lucide-react';
 import type { Designation, Department, PageProps } from '@/Types';
+import { useCan } from '@/lib/can';
 
 interface Props {
     designations: Designation[];
@@ -29,6 +30,7 @@ interface Props {
 const emptyForm = { department_id: '', name: '', description: '' };
 
 export default function DesignationsIndex({ designations, departments }: Props) {
+    const can = useCan();
     const { flash } = usePage<PageProps>().props;
     const [open, setOpen]       = useState(false);
     const [editing, setEditing] = useState<Designation | null>(null);
@@ -73,10 +75,12 @@ export default function DesignationsIndex({ designations, departments }: Props) 
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Designations</h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{designations.length} designations</p>
                     </div>
-                    <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
-                        <Plus className="w-4 h-4" />
-                        Add Designation
-                    </Button>
+                    {can('staff.edit') && (
+                        <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
+                            <Plus className="w-4 h-4" />
+                            Add Designation
+                        </Button>
+                    )}
                 </div>
 
                 {flash?.success && (
@@ -121,7 +125,7 @@ export default function DesignationsIndex({ designations, departments }: Props) 
                                         {d.description ?? '—'}
                                     </TableCell>
                                     <TableCell>
-                                        <DropdownMenu>
+                                        {can('staff.edit') && <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="w-8 h-8">
                                                     <MoreHorizontal className="w-4 h-4" />
@@ -135,7 +139,7 @@ export default function DesignationsIndex({ designations, departments }: Props) 
                                                     <Trash2 className="w-4 h-4" /> Delete
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        </DropdownMenu>}
                                     </TableCell>
                                 </TableRow>
                             ))}

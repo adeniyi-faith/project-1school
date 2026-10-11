@@ -263,10 +263,23 @@ export const bottomTabs: Record<string, BottomTab[]> = {
     ],
 };
 
-export function navGroupsForRole(role: string): NavGroup[] {
+/**
+ * The menu for one person. `paths` (from the server) says which pages they may really open;
+ * when it is missing the role list is used as a fallback.
+ */
+export function navGroupsForRole(role: string, paths?: string[]): NavGroup[] {
+    const allowed = (item: NavItem) => (!item.roles || item.roles.includes(role)) && (!paths || paths.includes(item.href));
+
     return navGroups
-        .map((group) => ({ ...group, items: group.items.filter((item) => !item.roles || item.roles.includes(role)) }))
+        .map((group) => ({ ...group, items: group.items.filter(allowed) }))
         .filter((group) => group.items.length > 0);
+}
+
+/** Phone tab-bar shortcuts, leaving out any the person cannot open */
+export function tabsForRole(role: string, paths?: string[]): BottomTab[] {
+    const tabs = bottomTabs[role] ?? bottomTabs.default;
+
+    return paths ? tabs.filter((t) => paths.includes(t.href)) : tabs;
 }
 
 export function isNavActive(url: string, href: string, exact?: boolean): boolean {

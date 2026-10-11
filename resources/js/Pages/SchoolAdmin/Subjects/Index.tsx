@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EmptyState, PageHeader, Panel, Pill } from '@/components/app/kit';
 import type { PageProps } from '@/Types';
+import { useCan } from '@/lib/can';
 
 interface ClassLine { id: number; departments: string[] }
 interface SubjectRow { id: number; name: string; code: string | null; type: 'theory' | 'practical'; full_marks: number; pass_marks: number; classes: ClassLine[] }
@@ -29,6 +30,7 @@ const typeItems = [{ value: 'theory', label: 'Written (theory)' }, { value: 'pra
 
 /** One list of subjects for the whole school; each subject is ticked for the classes that offer it */
 export default function SubjectsIndex({ subjects, classes, levels, departments }: Props) {
+    const can = useCan();
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<SubjectRow | null>(null);
     const [search, setSearch] = useState('');
@@ -91,11 +93,12 @@ export default function SubjectsIndex({ subjects, classes, levels, departments }
         }
     }
 
-    const actions = (
+    const canEdit = can('settings.edit');
+    const actions = canEdit ? (
         <Button onClick={openCreate} className="bg-indigo-600 text-white hover:bg-indigo-700">
             <Plus className="size-4" /> Add subject
         </Button>
-    );
+    ) : null;
     const classItems = [{ value: '', label: 'All classes' }, ...classes.map(c => ({ value: String(c.id), label: c.name }))];
 
     return (
@@ -145,7 +148,7 @@ export default function SubjectsIndex({ subjects, classes, levels, departments }
                                                 ))}
                                         </div>
                                     </div>
-                                    <div className="flex gap-1">
+                                    <div className={canEdit ? 'flex gap-1' : 'hidden'}>
                                         <Button variant="ghost" size="sm" onClick={() => openEdit(s)} aria-label={`Change ${s.name}`}><Pencil className="size-4" /></Button>
                                         <Button variant="ghost" size="sm" onClick={() => destroy(s)} aria-label={`Delete ${s.name}`} className="text-red-600 hover:text-red-700"><Trash2 className="size-4" /></Button>
                                     </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useCan } from '@/lib/can';
 import { Plus, Search, Users, Eye, Pencil, Trash2, MoreHorizontal, ChevronRight, ImageUp } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import AppLayout from '@/Layouts/AppLayout';
@@ -35,6 +36,7 @@ const classLabel = (s: Student) => `${s.school_class?.name ?? '—'}${s.section 
 
 export default function StudentsIndex() {
     const { students, filters, classes, sections, stats } = usePage<Props>().props;
+    const can = useCan();
     const [search, setSearch] = useState(filters.search ?? '');
     const [photosOpen, setPhotosOpen] = useState(false);
     const [photos, setPhotos] = useState<File[]>([]);
@@ -63,10 +65,12 @@ export default function StudentsIndex() {
 
     const headerActions = (
         <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setPhotosOpen(true)}><ImageUp className="size-4" /> Upload photos</Button>
-            <Link href="/school/students/create" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 text-sm font-medium text-white shadow-xs outline-none transition-colors hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
-                <Plus className="size-4" /> Admit student
-            </Link>
+            {can('students.edit') && <Button variant="outline" onClick={() => setPhotosOpen(true)}><ImageUp className="size-4" /> Upload photos</Button>}
+            {can('students.create') && (
+                <Link href="/school/students/create" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 text-sm font-medium text-white shadow-xs outline-none transition-colors hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
+                    <Plus className="size-4" /> Admit student
+                </Link>
+            )}
         </div>
     );
 
@@ -210,9 +214,11 @@ export default function StudentsIndex() {
                     )}
                 </Panel>
 
-                <Link href="/school/students/create" aria-label="Admit student" className="fixed bottom-24 right-4 z-20 flex size-14 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg transition-colors hover:bg-indigo-700 md:hidden">
-                    <Plus className="size-6" />
-                </Link>
+                {can('students.create') && (
+                    <Link href="/school/students/create" aria-label="Admit student" className="fixed bottom-24 right-4 z-20 flex size-14 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg transition-colors hover:bg-indigo-700 md:hidden">
+                        <Plus className="size-6" />
+                    </Link>
+                )}
             </div>
             <Dialog open={photosOpen} onOpenChange={setPhotosOpen}>
                 <DialogContent className="sm:max-w-md">
@@ -234,6 +240,8 @@ export default function StudentsIndex() {
 }
 
 function RowMenu({ student, onDelete }: { student: Student; onDelete: (s: Student) => void }) {
+    const can = useCan();
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -245,13 +253,17 @@ function RowMenu({ student, onDelete }: { student: Student; onDelete: (s: Studen
                 <DropdownMenuItem asChild>
                     <Link href={`/school/students/${student.id}`} className="flex items-center gap-2 text-sm"><Eye className="size-4 shrink-0" /> View profile</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                    <Link href={`/school/students/${student.id}/edit`} className="flex items-center gap-2 text-sm"><Pencil className="size-4 shrink-0" /> Edit details</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400" onClick={() => onDelete(student)}>
-                    <Trash2 className="size-4 shrink-0" /> Remove
-                </DropdownMenuItem>
+                {can('students.edit') && (
+                    <DropdownMenuItem asChild>
+                        <Link href={`/school/students/${student.id}/edit`} className="flex items-center gap-2 text-sm"><Pencil className="size-4 shrink-0" /> Edit details</Link>
+                    </DropdownMenuItem>
+                )}
+                {can('students.delete') && <DropdownMenuSeparator />}
+                {can('students.delete') && (
+                    <DropdownMenuItem className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400" onClick={() => onDelete(student)}>
+                        <Trash2 className="size-4 shrink-0" /> Remove
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     );

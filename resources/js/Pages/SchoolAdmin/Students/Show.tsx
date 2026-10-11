@@ -115,11 +115,13 @@ export default function ShowStudent() {
                     )}
                     {canEdit && !student.photo_url && <p className="mt-1 text-xs text-slate-500">A passport photo on a plain background. It is printed on the ID card and report card.</p>}
                 </div>
-                <Button size="sm" asChild className="shrink-0 gap-2 bg-indigo-600 text-white hover:bg-indigo-700">
-                    <Link href={`/school/students/${student.id}/edit`}>
-                        <Pencil className="w-4 h-4" /> <span className="max-sm:sr-only">Edit</span>
-                    </Link>
-                </Button>
+                {canEdit && (
+                    <Button size="sm" asChild className="shrink-0 gap-2 bg-indigo-600 text-white hover:bg-indigo-700">
+                        <Link href={`/school/students/${student.id}/edit`}>
+                            <Pencil className="w-4 h-4" /> <span className="max-sm:sr-only">Edit</span>
+                        </Link>
+                    </Button>
+                )}
             </div>
 
             {/* Quick stats */}
@@ -225,9 +227,11 @@ export default function ShowStudent() {
                 <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <CardHeader className="pb-3 flex-row items-center justify-between">
                         <CardTitle className="text-sm">Documents</CardTitle>
-                        <Button size="sm" variant="outline" onClick={() => setDocOpen(true)} className="inline-flex items-center gap-2">
-                            <FileUp className="w-3.5 h-3.5" /> Upload
-                        </Button>
+                        {canEdit && (
+                            <Button size="sm" variant="outline" onClick={() => setDocOpen(true)} className="inline-flex items-center gap-2">
+                                <FileUp className="w-3.5 h-3.5" /> Upload
+                            </Button>
+                        )}
                     </CardHeader>
                     <CardContent>
                         {!student.documents?.length ? (
@@ -243,10 +247,12 @@ export default function ShowStudent() {
                                                 {doc.file_size && <p className="text-xs text-slate-400">{(doc.file_size / 1024).toFixed(1)} KB</p>}
                                             </div>
                                         </div>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600"
-                                            onClick={() => { if (confirm('Delete this document?')) router.delete(`/school/students/documents/${doc.id}`); }}>
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </Button>
+                                        {canEdit && (
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600"
+                                                onClick={() => { if (confirm('Delete this document?')) router.delete(`/school/students/documents/${doc.id}`); }}>
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </Button>
+                                        )}
                                     </div>
                                 ))}
                             </div>

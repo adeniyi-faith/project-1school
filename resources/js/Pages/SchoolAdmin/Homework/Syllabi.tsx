@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { useCan } from '@/lib/can';
 
 interface SchoolClass { id: number; name: string; }
 interface Subject     { id: number; name: string; }
@@ -44,6 +45,7 @@ interface Props {
 const emptyForm = { class_id: '', subject_id: '', academic_year: '', title: '', topics: [] as Topic[] };
 
 export default function Syllabi({ syllabi, classes, subjects, filters }: Props) {
+    const can = useCan();
     const [open, setOpen]           = useState(false);
     const [editing, setEditing]     = useState<Syllabus | null>(null);
     const [filterClass, setFilterClass]   = useState(filters.class_id ?? '');
@@ -96,7 +98,7 @@ export default function Syllabi({ syllabi, classes, subjects, filters }: Props) 
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Syllabus</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Track topic-wise syllabus completion</p>
                     </div>
-                    <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> New Syllabus</Button>
+                    {can('syllabus.manage') && <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> New Syllabus</Button>}
                 </div>
 
                 {/* Filters */}
@@ -159,9 +161,11 @@ export default function Syllabi({ syllabi, classes, subjects, filters }: Props) 
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right space-x-1">
-                                            <Button size="sm" variant="outline" onClick={() => openEdit(s)}>
-                                                <Pencil className="w-3.5 h-3.5" />
-                                            </Button>
+                                            {can('syllabus.manage') && (
+                                                <Button size="sm" variant="outline" onClick={() => openEdit(s)}>
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </Button>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))}
