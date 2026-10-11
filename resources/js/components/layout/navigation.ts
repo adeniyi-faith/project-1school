@@ -85,7 +85,7 @@ export const navGroups: NavGroup[] = [
         title: 'Learning',
         items: [
             { label: 'Homework',      href: '/school/homework',                icon: NotebookPen,   roles: ['super-admin','school-admin','principal','teacher'] },
-            { label: 'Lesson Plans',  href: '/school/homework/lesson-plans',   icon: ClipboardList, roles: ['super-admin','school-admin','principal','teacher'] },
+            { label: 'Lesson Notes',  href: '/school/lesson-notes',             icon: ClipboardList, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Syllabus',      href: '/school/homework/syllabi',        icon: BookOpen,      roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Online Classes',href: '/school/homework/online-classes', icon: Video,         roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'CBT Tests',     href: '/school/cbt/tests',               icon: MonitorCheck,  roles: ['super-admin','school-admin','principal','teacher'] },
