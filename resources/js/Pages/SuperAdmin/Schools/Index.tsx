@@ -122,7 +122,9 @@ export default function SchoolsIndex() {
                             <TableHead>School</TableHead>
                             <TableHead>Contact</TableHead>
                             <TableHead>Location</TableHead>
-                            <TableHead>Users</TableHead>
+                            <TableHead>Students</TableHead>
+                            <TableHead>Plan</TableHead>
+                            <TableHead>Last sign-in</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Created</TableHead>
                             <TableHead className="w-10" />
@@ -131,7 +133,7 @@ export default function SchoolsIndex() {
                     <TableBody>
                         {schools.data.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-16 text-slate-400">
+                                <TableCell colSpan={9} className="text-center py-16 text-slate-400">
                                     <School className="w-10 h-10 mx-auto mb-3 opacity-30" />
                                     <p className="text-sm">No schools found</p>
                                 </TableCell>
@@ -160,7 +162,13 @@ export default function SchoolsIndex() {
                                     {[school.city, school.country].filter(Boolean).join(', ') || '—'}
                                 </TableCell>
                                 <TableCell className="text-sm text-slate-600 dark:text-slate-400">
-                                    {school.users_count ?? 0}
+                                    {school.students_count ?? 0}
+                                </TableCell>
+                                <TableCell className="text-sm text-slate-600 dark:text-slate-400">
+                                    {school.plan ? <>{school.plan}<p className="text-xs capitalize">{school.plan_status}{school.plan_ends ? ` · to ${school.plan_ends}` : ''}</p></> : <span className="text-xs text-amber-600">No plan</span>}
+                                </TableCell>
+                                <TableCell className="text-xs text-slate-500">
+                                    {school.last_login_at ? new Date(school.last_login_at).toLocaleDateString() : 'Never'}
                                 </TableCell>
                                 <TableCell>{statusBadge(school.status)}</TableCell>
                                 <TableCell className="text-xs text-slate-400">

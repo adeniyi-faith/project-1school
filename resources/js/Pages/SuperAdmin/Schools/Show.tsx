@@ -1,100 +1,242 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Ban, CheckCircle, Globe, Phone, Mail, MapPin, Users, Calendar, LogIn } from 'lucide-react';
+import { useState } from 'react';
+import {
+    ArrowLeft, Pencil, Ban, CheckCircle, Globe, Phone, Mail, MapPin, Users, Calendar, LogIn,
+    GraduationCap, UserCog, Banknote, Clock, CreditCard, Layers, KeyRound, Plus, Sparkles, History, Trash2,
+} from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import type { PageProps, School, AcademicYear } from '@/Types';
 
+interface Admin { id: number; name: string; email: string; phone: string | null; status: string; last_login_at: string | null }
 interface ShowPageProps extends PageProps {
-    school: School & { academic_years: AcademicYear[]; users_count: number };
+    school: School & { academic_years: AcademicYear[] };
+    usage: { students: number; staff: number; users: number; outstanding: number; last_login: string | null };
+    subscription: { id: number; package: string | null; status: string; start: string | null; end: string | null; is_trial: boolean; max_students: number | null; max_staff: number | null } | null;
+    packages: { id: number; name: string; price_monthly: string; price_yearly: string }[];
+    modules: { slug: string; label: string; is_enabled: boolean }[];
+    admins: Admin[];
+    ai: { blocked: boolean; limit: string | null; spent: number };
+    activity: { id: number; text: string; by: string | null; at: string }[];
 }
 
-const statusMap = {
+const statusMap: Record<string, string> = {
     active:    'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400',
     inactive:  'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
     suspended: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400',
 };
 
+const naira = (n: number) => '₦' + n.toLocaleString('en-NG', { maximumFractionDigits: 0 });
+const when = (s: string | null) => (s ? new Date(s).toLocaleString() : 'Never');
+const field = 'w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm';
+
 export default function ShowSchool() {
-    const { school } = usePage<ShowPageProps>().props;
+    const { school, usage, subscription, packages, modules, admins, ai, activity } = usePage<ShowPageProps>().props;
     const statusClass = statusMap[school.status] ?? statusMap.inactive;
+    const base = `/super-admin/schools/${school.id}`;
+
+    // Features (module switches)
+    const [mods, setMods] = useState<Record<string, boolean>>(Object.fromEntries(modules.map((m) => [m.slug, m.is_enabled])));
+    const modsChanged = modules.some((m) => mods[m.slug] !== m.is_enabled);
+
+    // Plan
+    const today = new Date().toISOString().slice(0, 10);
+    const nextYear = new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10);
+    const [plan, setPlan] = useState({ package_id: '', status: 'active', start_date: today, end_date: nextYear, amount_paid: '0' });
+    const [planOpen, setPlanOpen] = useState(false);
+
+    // Admins
+    const [adminOpen, setAdminOpen] = useState(false);
+    const [admin, setAdmin] = useState({ name: '', email: '', phone: '', password: '' });
+    const [resetFor, setResetFor] = useState<Admin | null>(null);
+    const [newPassword, setNewPassword] = useState('');
+
+    // AI
+    const [aiBlocked, setAiBlocked] = useState(ai.blocked);
+    const [aiLimit, setAiLimit] = useState(ai.limit ?? '');
+
+    const savePlan = () => {
+        router.post('/super-admin/subscriptions', {
+            school_id: school.id, ...plan, package_id: Number(plan.package_id), is_trial: plan.status === 'trial',
+        }, { onSuccess: () => setPlanOpen(false) });
+    };
+
+    const confirmDelete = () => {
+        if (confirm(`Delete "${school.name}"? Its people will no longer be able to sign in.`)) {
+            router.delete(base);
+        }
+    };
 
     return (
-        <AppLayout breadcrumbs={[
-            { label: 'Schools', href: '/super-admin/schools' },
-            { label: school.name },
-        ]}>
+        <AppLayout breadcrumbs={[{ label: 'Schools', href: '/super-admin/schools' }, { label: school.name }]}>
             <Head title={school.name} />
 
             {/* Header */}
-            <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
+                <div className="flex items-center gap-3 min-w-0">
                     <Button variant="ghost" size="icon" asChild>
                         <Link href="/super-admin/schools"><ArrowLeft className="w-4 h-4" /></Link>
                     </Button>
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                            {school.logo_url
-                                ? <img src={school.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
-                                : <span className="text-xl font-bold text-indigo-600">{school.name[0]}</span>
-                            }
+                    <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center shrink-0">
+                        {school.logo_url
+                            ? <img src={school.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                            : <span className="text-xl font-bold text-indigo-600">{school.name[0]}</span>}
+                    </div>
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <h1 className="text-xl font-bold text-slate-900 dark:text-white">{school.name}</h1>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusClass}`}>{school.status}</span>
                         </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-xl font-bold text-slate-900 dark:text-white">{school.name}</h1>
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusClass}`}>
-                                    {school.status}
-                                </span>
-                            </div>
-                            <p className="text-sm text-slate-400 font-mono">{school.slug}</p>
-                        </div>
+                        <p className="text-sm text-slate-400 font-mono truncate">{school.slug}</p>
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <Button size="sm" className="bg-amber-500 text-amber-950 hover:bg-amber-600" onClick={() => router.post(`/super-admin/schools/${school.id}/enter`)}>
+                    <Button size="sm" className="bg-amber-500 text-amber-950 hover:bg-amber-600" onClick={() => router.post(`${base}/enter`)}>
                         <LogIn className="w-4 h-4 mr-1.5" /> Open this school
                     </Button>
                     {school.status === 'suspended' ? (
-                        <Button size="sm" variant="outline" className="text-emerald-600" onClick={() => router.patch(`/super-admin/schools/${school.id}/activate`)}>
+                        <Button size="sm" variant="outline" className="text-emerald-600" onClick={() => router.patch(`${base}/activate`)}>
                             <CheckCircle className="w-4 h-4 mr-1.5" /> Activate
                         </Button>
                     ) : (
-                        <Button size="sm" variant="outline" className="text-amber-600" onClick={() => router.patch(`/super-admin/schools/${school.id}/suspend`)}>
+                        <Button size="sm" variant="outline" className="text-amber-600" onClick={() => confirm(`Suspend ${school.name}? Everyone there is signed out and cannot sign in until you activate it again.`) && router.patch(`${base}/suspend`)}>
                             <Ban className="w-4 h-4 mr-1.5" /> Suspend
                         </Button>
                     )}
                     <Button size="sm" asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                        <Link href={`/super-admin/schools/${school.id}/edit`}>
-                            <Pencil className="w-4 h-4 mr-1.5" /> Edit
-                        </Link>
+                        <Link href={`${base}/edit`}><Pencil className="w-4 h-4 mr-1.5" /> Edit</Link>
                     </Button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {/* Stats */}
+            {school.status === 'suspended' && (
+                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+                    This school is suspended. Nobody there can sign in until you activate it.
+                </div>
+            )}
+
+            {/* Numbers */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
                 {[
-                    { icon: Users, label: 'Total Users', value: school.users_count },
-                    { icon: Calendar, label: 'Academic Years', value: school.academic_years?.length ?? 0 },
-                    { icon: Globe, label: 'Timezone', value: school.timezone },
+                    { icon: GraduationCap, label: 'Students', value: usage.students.toLocaleString() },
+                    { icon: UserCog, label: 'Staff', value: usage.staff.toLocaleString() },
+                    { icon: Users, label: 'Sign-in accounts', value: usage.users.toLocaleString() },
+                    { icon: Banknote, label: 'Fees still owed', value: naira(usage.outstanding) },
+                    { icon: Clock, label: 'Last sign-in', value: when(usage.last_login) },
                 ].map((s) => (
                     <Card key={s.label} className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                        <CardContent className="p-4 flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                                <s.icon className="w-4 h-4 text-indigo-500" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-slate-500">{s.label}</p>
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white">{s.value}</p>
-                            </div>
+                        <CardContent className="p-4">
+                            <div className="flex items-center gap-2 text-xs text-slate-500"><s.icon className="w-3.5 h-3.5" /> {s.label}</div>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white mt-1 break-words">{s.value}</p>
                         </CardContent>
                     </Card>
                 ))}
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+                {/* Plan */}
+                <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-sm flex items-center gap-2"><CreditCard className="w-4 h-4" /> Plan</CardTitle>
+                        <Button size="sm" variant="outline" onClick={() => setPlanOpen(true)}>{subscription ? 'Change plan' : 'Give a plan'}</Button>
+                    </CardHeader>
+                    <CardContent className="text-sm space-y-1.5">
+                        {subscription ? (
+                            <>
+                                <p className="font-semibold text-slate-900 dark:text-white">{subscription.package ?? 'Plan'} <span className="ml-1 text-xs font-medium text-slate-500 capitalize">({subscription.status}{subscription.is_trial ? ', trial' : ''})</span></p>
+                                <p className="text-slate-500">From {subscription.start} to {subscription.end}</p>
+                                <p className="text-slate-500">
+                                    Students: {usage.students.toLocaleString()}{subscription.max_students ? ` of ${subscription.max_students.toLocaleString()}` : ' (no limit set)'}
+                                    {subscription.max_students && usage.students > subscription.max_students && <span className="text-red-600 font-medium"> — over the limit</span>}
+                                </p>
+                                <p className="text-slate-500">Staff: {usage.staff.toLocaleString()}{subscription.max_staff ? ` of ${subscription.max_staff.toLocaleString()}` : ' (no limit set)'}</p>
+                            </>
+                        ) : <p className="text-slate-400">This school has no plan yet.</p>}
+                    </CardContent>
+                </Card>
+
+                {/* Features */}
+                <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-sm flex items-center gap-2"><Layers className="w-4 h-4" /> Features this school has</CardTitle>
+                        <Button size="sm" disabled={!modsChanged} onClick={() => router.post('/super-admin/module-manager/bulk', { school_id: school.id, modules: mods })}>Save</Button>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-2">
+                        {modules.map((m) => (
+                            <label key={m.slug} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                                <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={mods[m.slug]} onChange={(e) => setMods({ ...mods, [m.slug]: e.target.checked })} />
+                                {m.label}
+                            </label>
+                        ))}
+                    </CardContent>
+                </Card>
+
+                {/* Administrators */}
+                <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-sm flex items-center gap-2"><UserCog className="w-4 h-4" /> School administrators</CardTitle>
+                        <Button size="sm" variant="outline" onClick={() => setAdminOpen(true)}><Plus className="w-3.5 h-3.5 mr-1" /> Add</Button>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {admins.length === 0 && <p className="text-sm text-slate-400">This school has no administrator. Add one so someone there can sign in.</p>}
+                        {admins.map((a) => (
+                            <div key={a.id} className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium text-slate-900 dark:text-white">{a.name} {a.status !== 'active' && <span className="text-xs text-red-600 capitalize">({a.status})</span>}</p>
+                                    <p className="text-xs text-slate-500 truncate">{a.email} · last in: {when(a.last_login_at)}</p>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    <Button size="sm" variant="outline" onClick={() => { setResetFor(a); setNewPassword(''); }}><KeyRound className="w-3.5 h-3.5 mr-1" /> New password</Button>
+                                    {a.status === 'active'
+                                        ? <Button size="sm" variant="outline" className="text-amber-600" onClick={() => router.patch(`/super-admin/users/${a.id}/suspend`)}>Suspend</Button>
+                                        : <Button size="sm" variant="outline" className="text-emerald-600" onClick={() => router.patch(`/super-admin/users/${a.id}/activate`)}>Activate</Button>}
+                                </div>
+                            </div>
+                        ))}
+                        <Link href={`/super-admin/users?school_id=${school.id}`} className="text-xs text-indigo-600 hover:underline inline-block">See every account in this school</Link>
+                    </CardContent>
+                </Card>
+
+                {/* AI */}
+                <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Sparkles className="w-4 h-4" /> AI helper</CardTitle></CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                        <p className="text-slate-500">Spent this month: <span className="font-medium text-slate-900 dark:text-white">{naira(ai.spent)}</span></p>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={aiBlocked} onChange={(e) => setAiBlocked(e.target.checked)} />
+                            Switch AI off for this school
+                        </label>
+                        <div className="flex flex-wrap items-end gap-2">
+                            <div>
+                                <Label className="text-xs">Monthly allowance (₦) — empty uses the platform default</Label>
+                                <Input type="number" min="0" className="h-9 w-48" value={aiLimit} onChange={(e) => setAiLimit(e.target.value)} />
+                            </div>
+                            <Button size="sm" onClick={() => router.post(`/super-admin/ai/schools/${school.id}`, { blocked: aiBlocked, limit: aiLimit === '' ? null : aiLimit })}>Save</Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Activity */}
+                <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><History className="w-4 h-4" /> Latest activity</CardTitle></CardHeader>
+                    <CardContent className="space-y-2">
+                        {activity.length === 0 && <p className="text-sm text-slate-400">Nothing recorded yet.</p>}
+                        {activity.map((a) => (
+                            <div key={a.id} className="text-sm">
+                                <p className="text-slate-700 dark:text-slate-300">{a.text}</p>
+                                <p className="text-xs text-slate-400">{a.by ?? 'System'} · {when(a.at)}</p>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
 
                 {/* Details */}
-                <Card className="col-span-2 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                    <CardHeader className="pb-3"><CardTitle className="text-sm">Contact & Location</CardTitle></CardHeader>
+                <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <CardHeader className="pb-3"><CardTitle className="text-sm">Contact, location and years</CardTitle></CardHeader>
                     <CardContent className="grid grid-cols-2 gap-3 text-sm">
                         {[
                             { icon: Mail, label: 'Email', value: school.email },
@@ -102,45 +244,97 @@ export default function ShowSchool() {
                             { icon: MapPin, label: 'City', value: school.city },
                             { icon: Globe, label: 'Country', value: school.country },
                         ].map(({ icon: Icon, label, value }) => (
-                            <div key={label} className="flex items-start gap-2">
+                            <div key={label} className="flex items-start gap-2 min-w-0">
                                 <Icon className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                                <div>
+                                <div className="min-w-0">
                                     <p className="text-xs text-slate-400">{label}</p>
-                                    <p className="text-slate-700 dark:text-slate-300">{value ?? '—'}</p>
+                                    <p className="text-slate-700 dark:text-slate-300 break-words">{value ?? '—'}</p>
                                 </div>
                             </div>
                         ))}
-                        {school.address && (
-                            <div className="col-span-2 flex items-start gap-2">
-                                <MapPin className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                                <div>
-                                    <p className="text-xs text-slate-400">Address</p>
-                                    <p className="text-slate-700 dark:text-slate-300">{school.address}</p>
-                                </div>
+                        <div className="col-span-2 flex items-start gap-2">
+                            <Calendar className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                            <div>
+                                <p className="text-xs text-slate-400">School years</p>
+                                {school.academic_years?.length === 0 ? <p className="text-slate-400">None yet</p> : school.academic_years?.map((y) => (
+                                    <p key={y.id} className="text-slate-700 dark:text-slate-300">{y.name}{y.is_current && <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-600">Current</span>}</p>
+                                ))}
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* Academic Years */}
-                <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                    <CardHeader className="pb-3"><CardTitle className="text-sm">Academic Years</CardTitle></CardHeader>
-                    <CardContent className="space-y-2">
-                        {school.academic_years?.length === 0 ? (
-                            <p className="text-xs text-slate-400">No academic years yet</p>
-                        ) : school.academic_years?.map((y) => (
-                            <div key={y.id} className="flex items-center justify-between">
-                                <span className="text-sm text-slate-700 dark:text-slate-300">{y.name}</span>
-                                {y.is_current && (
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400 font-medium">
-                                        Current
-                                    </span>
-                                )}
-                            </div>
-                        ))}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
+
+            <div className="mt-6 rounded-lg border border-red-200 dark:border-red-900 p-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p className="text-sm font-medium text-red-700 dark:text-red-400">Delete this school</p>
+                    <p className="text-xs text-slate-500">Removes it from the platform. Use Suspend instead if you may want it back.</p>
+                </div>
+                <Button size="sm" variant="outline" className="text-red-600" onClick={confirmDelete}><Trash2 className="w-4 h-4 mr-1.5" /> Delete</Button>
+            </div>
+
+            {/* Plan dialog */}
+            <Dialog open={planOpen} onOpenChange={setPlanOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader><DialogTitle>{subscription ? 'Change plan' : 'Give a plan'}</DialogTitle></DialogHeader>
+                    <div className="space-y-3">
+                        <div>
+                            <Label>Plan</Label>
+                            <select className={field} value={plan.package_id} onChange={(e) => setPlan({ ...plan, package_id: e.target.value })}>
+                                <option value="">Choose a plan…</option>
+                                {packages.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <Label>State</Label>
+                            <select className={field} value={plan.status} onChange={(e) => setPlan({ ...plan, status: e.target.value })}>
+                                <option value="active">Active</option>
+                                <option value="trial">Free trial</option>
+                                <option value="expired">Expired</option>
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div><Label>Starts</Label><Input type="date" value={plan.start_date} onChange={(e) => setPlan({ ...plan, start_date: e.target.value })} /></div>
+                            <div><Label>Ends</Label><Input type="date" value={plan.end_date} onChange={(e) => setPlan({ ...plan, end_date: e.target.value })} /></div>
+                        </div>
+                        <div><Label>Amount paid (₦)</Label><Input type="number" min="0" value={plan.amount_paid} onChange={(e) => setPlan({ ...plan, amount_paid: e.target.value })} /></div>
+                        <p className="text-xs text-slate-500">This adds a new plan record. The newest one is the school's current plan.</p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setPlanOpen(false)}>Cancel</Button>
+                        <Button disabled={!plan.package_id} onClick={savePlan}>Save plan</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Add administrator dialog */}
+            <Dialog open={adminOpen} onOpenChange={setAdminOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader><DialogTitle>Add a school administrator</DialogTitle></DialogHeader>
+                    <div className="space-y-3">
+                        <div><Label>Full name</Label><Input value={admin.name} onChange={(e) => setAdmin({ ...admin, name: e.target.value })} /></div>
+                        <div><Label>Email (they sign in with this)</Label><Input type="email" value={admin.email} onChange={(e) => setAdmin({ ...admin, email: e.target.value })} /></div>
+                        <div><Label>Phone (optional)</Label><Input value={admin.phone} onChange={(e) => setAdmin({ ...admin, phone: e.target.value })} /></div>
+                        <div><Label>Starting password (at least 8 characters)</Label><Input value={admin.password} onChange={(e) => setAdmin({ ...admin, password: e.target.value })} /></div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setAdminOpen(false)}>Cancel</Button>
+                        <Button disabled={!admin.name || !admin.email || admin.password.length < 8} onClick={() => router.post(`${base}/admins`, admin, { onSuccess: () => { setAdminOpen(false); setAdmin({ name: '', email: '', phone: '', password: '' }); } })}>Add administrator</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Reset password dialog */}
+            <Dialog open={!!resetFor} onOpenChange={(o) => !o && setResetFor(null)}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader><DialogTitle>New password for {resetFor?.name}</DialogTitle></DialogHeader>
+                    <div><Label>New password (at least 8 characters)</Label><Input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /></div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setResetFor(null)}>Cancel</Button>
+                        <Button disabled={newPassword.length < 8} onClick={() => resetFor && router.patch(`/super-admin/users/${resetFor.id}/reset-password`, { password: newPassword }, { onSuccess: () => setResetFor(null) })}>Save password</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }
