@@ -56,7 +56,8 @@ body.menu-open{overflow:hidden}
 .sbtn svg{width:1.55rem;height:1.55rem}
 .sbar{position:relative;z-index:45;background:var(--bg);color:var(--text);border-bottom:1px solid var(--line);box-shadow:0 18px 30px -22px rgba(0,0,0,.45)}
 .sbar[hidden]{display:none}
-.sbar-in{display:flex;gap:.6rem;padding-top:1.4rem;padding-bottom:1.4rem}
+.sbar-in{display:flex;gap:.6rem}
+.sbar form.sbar-in{padding-top:1.4rem;padding-bottom:1.5rem}
 @media (max-width:36rem){.sbar-in{flex-direction:column;gap:.7rem}.sbar button{width:100%}.sbar input{font-size:1rem}}
 .sbar-page{padding:0;margin-top:1rem;max-width:40rem}
 .sbar input,.sbar-page input{flex:1;min-width:0;min-height:3.2rem;padding:.6rem 1rem;border:1.5px solid color-mix(in srgb,var(--text) 30%,transparent);border-radius:var(--radius);background:var(--bg);color:var(--text);font:inherit;font-size:1.05rem}

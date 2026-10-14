@@ -43,7 +43,8 @@ class ImageShrinker
                 return null; // only JPEG and PNG are re-encoded; anything else is kept
             }
             [$width, $height] = $info;
-            if ($file->getSize() <= self::KEEP_BYTES && max($width, $height) <= $maxSide) {
+            // Already small in pixels (for instance shrunk in the browser): keep it as it is, no image work needed
+            if (max($width, $height) <= $maxSide && $file->getSize() <= self::KEEP_BYTES * 8) {
                 return null;
             }
             // Opening a picture takes about 4 bytes per pixel, and we hold up to three copies at once
