@@ -22,7 +22,7 @@ class DemoReadOnly
         if (
             ! $request->isMethodSafe()
             && DemoSchool::isDemoUser($user)
-            && ! $request->routeIs('logout', 'demo.enter', 'school.report-card-designs.try', 'school.certificate-designs.try', 'school.website.preview')
+            && ! $request->routeIs('logout', 'demo.enter', 'school.report-card-designs.try', 'school.certificate-designs.try', 'school.website.preview', 'school.website.posts.preview')
         ) {
             if ($request->header('X-Inertia') || ! $request->expectsJson()) {
                 return back()->with('error', 'This is a read-only demo. Register your school to make changes.');

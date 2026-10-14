@@ -36,6 +36,20 @@ class Themes
         ],
     ];
 
+    /** Ready colour pairs a school can try with one tap (main colour, second colour) */
+    public const PALETTES = [
+        ['name' => 'Cardinal and gold', 'color' => '#990000', 'color2' => '#ffcc00'],
+        ['name' => 'Royal blue', 'color' => '#1e3a8a', 'color2' => '#facc15'],
+        ['name' => 'Forest green', 'color' => '#166534', 'color2' => '#fde047'],
+        ['name' => 'Navy and sky', 'color' => '#0c2340', 'color2' => '#7dd3fc'],
+        ['name' => 'Purple and gold', 'color' => '#5b21b6', 'color2' => '#fbbf24'],
+        ['name' => 'Maroon and cream', 'color' => '#7f1d1d', 'color2' => '#fde68a'],
+        ['name' => 'Teal and coral', 'color' => '#0f766e', 'color2' => '#fb923c'],
+        ['name' => 'Indigo and amber', 'color' => '#4338ca', 'color2' => '#f59e0b'],
+        ['name' => 'Burnt orange', 'color' => '#c2410c', 'color2' => '#fbbf24'],
+        ['name' => 'Black and gold', 'color' => '#111827', 'color2' => '#eab308'],
+    ];
+
     public static function options(): array
     {
         return collect(self::ALL)->map(fn ($t, $key) => [

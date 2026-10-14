@@ -10,6 +10,9 @@ namespace App\Website;
 class Blocks
 {
     public const MAX_BLOCKS = 30;
+    /** Page addresses the website uses for itself */
+    public const RESERVED_SLUGS = ['news', 'sitemap', 'feed', 'apply', 'login', 'admin'];
+
     public const BUTTONS = ['none' => 'No button', 'apply' => 'Apply online', 'login' => 'Sign in', 'contact' => 'Contact us'];
 
     /** field kinds: text, textarea, select (options), number, image (an uploaded picture), list (repeating rows of fields) */
@@ -33,7 +36,7 @@ class Blocks
                 'label' => 'Text and picture', 'help' => 'A heading, some paragraphs, and an optional picture beside them.',
                 'fields' => [
                     $heading(),
-                    ['key' => 'body', 'label' => 'Text', 'kind' => 'textarea', 'max' => 4000, 'hint' => 'Leave a blank line between paragraphs.'],
+                    ['key' => 'body', 'label' => 'Text', 'kind' => 'textarea', 'max' => 6000, 'format' => true, 'hint' => 'Leave a blank line between paragraphs. Use the buttons above the box for headings, lists, bold and links.'],
                     ['key' => 'image', 'label' => 'Picture (optional)', 'kind' => 'image'],
                     ['key' => 'side', 'label' => 'Picture sits on the', 'kind' => 'select', 'options' => ['right' => 'Right', 'left' => 'Left']],
                     ['key' => 'align', 'label' => 'When there is no picture, line up the text', 'kind' => 'select', 'options' => ['left' => 'To the left', 'center' => 'In the centre']],
@@ -65,12 +68,13 @@ class Blocks
                 'default' => ['heading' => '', 'items' => []],
             ],
             'news' => [
-                'label' => 'Latest news', 'help' => 'Shows your newest announcements that are meant for everyone. It updates by itself.',
+                'label' => 'Latest news', 'help' => 'Shows your newest posts from News and events. It updates by itself. Before you write any posts, it shows announcements meant for everyone.',
                 'fields' => [
                     $heading(),
+                    ['key' => 'category', 'label' => 'Which posts', 'kind' => 'select', 'options' => ['all' => 'All kinds'] + \App\Models\SchoolSitePost::CATEGORIES],
                     ['key' => 'count', 'label' => 'How many to show (1 to 10)', 'kind' => 'number', 'min' => 1, 'max' => 10],
                 ],
-                'default' => ['heading' => 'Latest news', 'count' => 3],
+                'default' => ['heading' => 'Latest news', 'category' => 'all', 'count' => 3],
             ],
             'apply' => [
                 'label' => 'Call to action', 'help' => 'A bold coloured band that sends visitors to apply or get in touch. Applications land in Admission Inquiries.',

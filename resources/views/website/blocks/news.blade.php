@@ -1,18 +1,17 @@
-@php $tag = ($b['_h1'] ?? false) ? 'h1' : 'h2'; @endphp
+@php
+    $tag = ($b['_h1'] ?? false) ? 'h1' : 'h2';
+    $items = $news->when(($b['category'] ?? 'all') !== 'all', fn ($c) => $c->where('category', $b['category']))->take($b['count'])->values();
+@endphp
 <section class="sec"><div class="wrap">
-    @if ($b['heading'])<div class="sec-head"><{{ $tag }}>{{ $b['heading'] }}</{{ $tag }}></div>@endif
-    @if ($news->isEmpty())
+    <div class="sec-head sec-head--row">
+        @if ($b['heading'])<{{ $tag }}>{{ $b['heading'] }}</{{ $tag }}>@endif
+        @if ($newsUrl)<a class="more" href="{{ $newsUrl }}">See all &rarr;</a>@endif
+    </div>
+    @if ($items->isEmpty())
         <p>No news yet. Check back soon.</p>
     @else
-        <div class="news">
-            @foreach ($news->take($b['count']) as $item)
-                <article class="news-item">
-                    <span class="tag">News</span>
-                    <h3>{{ $item->title }}</h3>
-                    <p>{{ \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', $item->body)), 220) }}</p>
-                    <time class="date" datetime="{{ $item->published_at->toDateString() }}">{{ $item->published_at->format('M j, Y') }}</time>
-                </article>
-            @endforeach
+        <div class="news {{ $items->count() >= 3 ? 'news--feature' : 'news--grid' }}">
+            @foreach ($items as $item)@include('website.partials.news-card', ['item' => $item])@endforeach
         </div>
     @endif
 </div></section>
