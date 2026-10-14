@@ -11,9 +11,16 @@ class Blocks
 {
     public const MAX_BLOCKS = 30;
     /** Page addresses the website uses for itself */
-    public const RESERVED_SLUGS = ['news', 'sitemap', 'feed', 'apply', 'login', 'admin'];
+    public const RESERVED_SLUGS = ['news', 'sitemap', 'feed', 'apply', 'login', 'sign-in', 'admin'];
 
     public const BUTTONS = ['none' => 'No button', 'apply' => 'Apply online', 'login' => 'Sign in', 'contact' => 'Contact us'];
+
+    /** Small pictures a card can start with (drawn by website/partials/icon.blade.php) */
+    public const ICONS = [
+        'none' => 'No icon', 'book' => 'Open book', 'heart' => 'Heart', 'shield' => 'Shield', 'star' => 'Star', 'users' => 'People',
+        'laptop' => 'Computer', 'trophy' => 'Trophy', 'cap' => 'Graduation cap', 'sprout' => 'Growing plant', 'palette' => 'Art',
+        'chat' => 'Chat', 'clipboard' => 'Checklist', 'user' => 'Person',
+    ];
 
     /** field kinds: text, textarea, select (options), number, image (an uploaded picture), list (repeating rows of fields) */
     public static function types(): array
@@ -24,37 +31,66 @@ class Blocks
             'hero' => [
                 'label' => 'Top banner', 'help' => 'The big first impression: a large heading over a photo, with buttons.',
                 'fields' => [
+                    ['key' => 'eyebrow', 'label' => 'Small line above the heading', 'kind' => 'text', 'max' => 80],
                     $heading('Big heading'),
                     ['key' => 'subheading', 'label' => 'One line under it', 'kind' => 'text', 'max' => 220],
                     ['key' => 'image', 'label' => 'Photo', 'kind' => 'image', 'hint' => 'A wide, bright photo works best. Without one, your colours are used.'],
                     ['key' => 'button', 'label' => 'First button', 'kind' => 'select', 'options' => self::BUTTONS],
                     ['key' => 'button2', 'label' => 'Second button', 'kind' => 'select', 'options' => self::BUTTONS],
                 ],
-                'default' => ['heading' => 'Welcome', 'subheading' => '', 'image' => '', 'button' => 'apply', 'button2' => 'none'],
+                'default' => ['eyebrow' => '', 'heading' => 'Welcome', 'subheading' => '', 'image' => '', 'button' => 'apply', 'button2' => 'none'],
             ],
             'text' => [
                 'label' => 'Text and picture', 'help' => 'A heading, some paragraphs, and an optional picture beside them.',
                 'fields' => [
+                    ['key' => 'eyebrow', 'label' => 'Small label above the heading', 'kind' => 'text', 'max' => 40],
                     $heading(),
                     ['key' => 'body', 'label' => 'Text', 'kind' => 'textarea', 'max' => 6000, 'format' => true, 'hint' => 'Leave a blank line between paragraphs. Use the buttons above the box for headings, lists, bold and links.'],
                     ['key' => 'image', 'label' => 'Picture (optional)', 'kind' => 'image'],
                     ['key' => 'side', 'label' => 'Picture sits on the', 'kind' => 'select', 'options' => ['right' => 'Right', 'left' => 'Left']],
                     ['key' => 'align', 'label' => 'When there is no picture, line up the text', 'kind' => 'select', 'options' => ['left' => 'To the left', 'center' => 'In the centre']],
                 ],
-                'default' => ['heading' => '', 'body' => '', 'image' => '', 'side' => 'right', 'align' => 'left'],
+                'default' => ['eyebrow' => '', 'heading' => '', 'body' => '', 'image' => '', 'side' => 'right', 'align' => 'left'],
             ],
             'features' => [
                 'label' => 'Cards', 'help' => 'Up to 8 cards, each with a picture, a title and a few words. Good for programmes, facilities or reasons to choose you.',
                 'fields' => [
+                    ['key' => 'eyebrow', 'label' => 'Small label above the heading', 'kind' => 'text', 'max' => 40],
                     $heading(),
                     ['key' => 'intro', 'label' => 'A sentence under the heading', 'kind' => 'text', 'max' => 300],
                     ['key' => 'items', 'label' => 'Cards', 'kind' => 'list', 'limit' => 8, 'noun' => 'card', 'fields' => [
+                        ['key' => 'icon', 'label' => 'Small picture', 'kind' => 'select', 'options' => self::ICONS],
                         ['key' => 'title', 'label' => 'Title', 'kind' => 'text', 'max' => 80],
                         ['key' => 'body', 'label' => 'A few words about it', 'kind' => 'textarea', 'max' => 300],
                         ['key' => 'image', 'label' => 'Picture (optional)', 'kind' => 'image'],
                     ]],
                 ],
-                'default' => ['heading' => 'Why families choose us', 'intro' => '', 'items' => []],
+                'default' => ['eyebrow' => '', 'heading' => 'Why families choose us', 'intro' => '', 'items' => []],
+            ],
+            'actions' => [
+                'label' => 'Quick action cards', 'help' => 'Three big cards that sit over the bottom of the top banner, for example Apply online, Sign in and Talk to us.',
+                'fields' => [
+                    ['key' => 'items', 'label' => 'Cards', 'kind' => 'list', 'limit' => 4, 'noun' => 'card', 'fields' => [
+                        ['key' => 'icon', 'label' => 'Small picture', 'kind' => 'select', 'options' => self::ICONS],
+                        ['key' => 'title', 'label' => 'Title', 'kind' => 'text', 'max' => 60],
+                        ['key' => 'body', 'label' => 'A few words', 'kind' => 'text', 'max' => 120],
+                        ['key' => 'link', 'label' => 'Where it goes', 'kind' => 'select', 'options' => self::BUTTONS],
+                    ]],
+                ],
+                'default' => ['items' => []],
+            ],
+            'steps' => [
+                'label' => 'Steps', 'help' => 'Numbered steps, for example how to join the school.',
+                'fields' => [
+                    ['key' => 'eyebrow', 'label' => 'Small label above the heading', 'kind' => 'text', 'max' => 40],
+                    $heading(),
+                    ['key' => 'intro', 'label' => 'A sentence under the heading', 'kind' => 'text', 'max' => 300],
+                    ['key' => 'items', 'label' => 'Steps', 'kind' => 'list', 'limit' => 8, 'noun' => 'step', 'fields' => [
+                        ['key' => 'title', 'label' => 'Title', 'kind' => 'text', 'max' => 80],
+                        ['key' => 'body', 'label' => 'A few words about it', 'kind' => 'textarea', 'max' => 300],
+                    ]],
+                ],
+                'default' => ['eyebrow' => '', 'heading' => 'How it works', 'intro' => '', 'items' => []],
             ],
             'stats' => [
                 'label' => 'Big numbers', 'help' => 'Up to 4 proud facts, for example 25 Years or 1,200 Students.',

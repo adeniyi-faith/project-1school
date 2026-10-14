@@ -18,7 +18,7 @@ class Themes
             'brand' => '#990000', 'brand2' => '#ffcc00', 'bg' => '#ffffff', 'soft' => '#faf6ee', 'text' => '#1c1917',
             'head' => self::SERIF, 'body' => self::SANS,
             'radius' => '.375rem', 'radius_lg' => '1.5rem', 'btn_radius' => '.75rem', 'btn_case' => 'uppercase', 'btn_track' => '.16em', 'btn_style' => 'outline',
-            'hdr' => 'brand2', 'ftr' => 'brand2',
+            'hdr' => 'bg', 'ftr' => 'dark',
         ],
         'modern' => [
             'label' => 'Modern', 'note' => 'Crisp white, bold colour, rounded cards and pill buttons.',

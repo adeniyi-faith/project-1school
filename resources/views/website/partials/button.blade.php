@@ -1,7 +1,7 @@
 @php
     $href = match ($kind ?? 'none') {
         'apply' => route('public.admission.show', $school),
-        'login' => route('login'),
+        'login' => $homeUrl.'/sign-in',
         'contact' => $contactUrl,
         default => null,
     };

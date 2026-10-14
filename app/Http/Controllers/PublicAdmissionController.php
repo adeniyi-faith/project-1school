@@ -4,18 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\AdmissionInquiry;
 use App\Models\School;
+use App\Models\SchoolClass;
+use App\Models\SchoolSitePage;
+use App\Website\SiteRenderer;
+use App\Website\SiteStarter;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
+/** The public admission form. It is drawn in the school's website look, whether or not the site is switched on */
 class PublicAdmissionController extends Controller
 {
     public function show(School $school)
     {
         abort_if($school->status !== 'active', 404);
 
-        return Inertia::render('Public/AdmissionForm', [
-            'school' => $school->only('id', 'name'),
-        ]);
+        $site = SiteStarter::ensure($school);
+        $pages = SchoolSitePage::withoutGlobalScopes()
+            ->where('school_id', $school->id)->where('is_published', true)->whereNull('deleted_at')
+            ->orderBy('position')->orderBy('id')->get();
+        $classes = SchoolClass::withoutGlobalScopes()->where('school_id', $school->id)->orderBy('numeric_name')->orderBy('name')->pluck('name');
+
+        return SiteRenderer::renderPlain($school, $site, $pages, 'website.apply', 'apply', 'Apply online',
+            'Tell us about your child. It takes about two minutes, and our office will contact you.', ['classes' => $classes]);
     }
 
     public function submit(Request $request, School $school)
@@ -31,11 +40,14 @@ class PublicAdmissionController extends Controller
             'notes'            => 'nullable|string|max:1000',
         ]);
 
-        AdmissionInquiry::create(array_merge($data, [
-            'school_id' => $school->id,
-            'source'    => 'online',
-        ]));
+        // A hidden box real people never see: a robot that fills it in is thanked and ignored
+        if (! $request->filled('company_site')) {
+            AdmissionInquiry::create(array_merge($data, [
+                'school_id' => $school->id,
+                'source'    => 'online',
+            ]));
+        }
 
-        return back()->with('success', 'Your application has been submitted. We will contact you soon.');
+        return back()->with('applied', 'Your application has been submitted. We will contact you soon.');
     }
 }
