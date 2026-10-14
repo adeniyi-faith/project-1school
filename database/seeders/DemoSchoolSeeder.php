@@ -261,6 +261,7 @@ class DemoSchoolSeeder extends Seeder
             'early' => [
                 ['Number Work', 'NUM'], ['Letter Work & Phonics', 'PHO'], ['Rhymes & Songs', 'RHY'], ['Health Habits', 'HEA'],
                 ['Social Habits', 'SOC'], ['Creative Arts & Colouring', 'ART', 'practical'], ['Bible Stories / Islamic Studies', 'REL'], ['Basic Computer Skills', 'ICT', 'practical'],
+                ['Writing Readiness', 'WRT', 'practical'], ['Colours, Shapes & Sizes', 'CSS'], ['Nature Studies', 'NAT'], ['Physical Education & Play', 'PEP', 'practical'],
             ],
             'primary' => [
                 ['English Language', 'ENG'], ['Mathematics', 'MTH'], ['Basic Science & Technology', 'BST'], ['Social Studies', 'SST'],
@@ -275,15 +276,20 @@ class DemoSchoolSeeder extends Seeder
                 ['Digital Technologies', 'DGT', 'practical'], ['Social and Citizenship Studies', 'SCS'], ['History', 'HIS'], ['Business Studies', 'BUS'],
                 ['Christian Religious Studies', 'CRS'], ['Trade Subject (Entrepreneurship)', 'TRD', 'practical'], ['Yoruba Language', 'YOR'], ['French', 'FRE'],
                 ['Agricultural Science', 'AGR'], ['Home Economics', 'HEC', 'practical'], ['Cultural & Creative Arts', 'CCA', 'practical'], ['Physical & Health Education', 'PHE', 'practical'],
+                ['Literature-in-English', 'LIT'], ['Security Education', 'SEC'], ['Music', 'MUS', 'practical'],
             ],
             // third item = type, fourth = which SS tracks take it (null = everyone)
             'senior' => [
                 ['English Language', 'ENG', 'theory', null], ['Mathematics', 'MTH', 'theory', null], ['Civic Education', 'CIV', 'theory', null], ['Computer Studies (ICT)', 'ICT', 'practical', null],
+                ['Trade Subject (Entrepreneurship)', 'TRD', 'practical', null], ['Yoruba Language', 'YOR', 'theory', null],
                 ['Physics', 'PHY', 'theory', ['Science']], ['Chemistry', 'CHM', 'theory', ['Science']], ['Biology', 'BIO', 'theory', ['Science']],
                 ['Further Mathematics', 'FMT', 'theory', ['Science']], ['Agricultural Science', 'AGR', 'theory', ['Science']],
-                ['Literature-in-English', 'LIT', 'theory', ['Arts']], ['Christian Religious Studies', 'CRS', 'theory', ['Arts']], ['History', 'HIS', 'theory', ['Arts']],
+                ['Geography', 'GEO', 'theory', ['Science', 'Arts']], ['Technical Drawing', 'TDR', 'practical', ['Science']],
+                ['Literature-in-English', 'LIT', 'theory', ['Arts']], ['Christian Religious Studies', 'CRS', 'theory', ['Arts', 'Commercial']], ['History', 'HIS', 'theory', ['Arts']],
                 ['Fine Art', 'FIN', 'practical', ['Arts']], ['Government', 'GOV', 'theory', ['Arts', 'Commercial']],
+                ['French', 'FRE', 'theory', ['Arts']], ['Music', 'MUS', 'practical', ['Arts']],
                 ['Economics', 'ECO', 'theory', ['Commercial']], ['Financial Accounting', 'ACC', 'theory', ['Commercial']], ['Commerce', 'COM', 'theory', ['Commercial']], ['Marketing', 'MKT', 'theory', ['Commercial']],
+                ['Office Practice', 'OFP', 'practical', ['Commercial']],
             ],
         ];
     }
@@ -344,7 +350,7 @@ class DemoSchoolSeeder extends Seeder
             ]);
         };
 
-        $early = ['Number Work', 'Letter Work & Phonics', 'Rhymes & Songs', 'Health Habits', 'Social Habits', 'Creative Arts & Colouring', 'Bible Stories / Islamic Studies', 'Basic Computer Skills'];
+        $early = ['Number Work', 'Letter Work & Phonics', 'Rhymes & Songs', 'Health Habits', 'Social Habits', 'Creative Arts & Colouring', 'Bible Stories / Islamic Studies', 'Basic Computer Skills', 'Writing Readiness', 'Colours, Shapes & Sizes', 'Nature Studies', 'Physical Education & Play'];
         $primaryCore = ['English Language', 'Mathematics', 'Basic Science & Technology', 'Social Studies', 'Civic Education', 'Verbal Reasoning', 'Quantitative Reasoning'];
 
         // [role, department, level, specialties, count, salary range, gender hint]
@@ -369,21 +375,22 @@ class DemoSchoolSeeder extends Seeder
             ['Mathematics Teacher', 'JSS', 'junior', ['Mathematics'], 3, [190000, 280000], 'male'],
             ['Intermediate Science Teacher', 'JSS', 'junior', ['Intermediate Science'], 2, [190000, 260000], 'any'],
             ['Basic Technology Teacher', 'JSS', 'junior', ['Basic Technology'], 2, [190000, 250000], 'male'],
-            ['Humanities Teacher', 'JSS', 'junior', ['Social and Citizenship Studies', 'History', 'Business Studies'], 2, [180000, 250000], 'any'],
-            ['Religious Studies & Arts Teacher', 'JSS', 'junior', ['Christian Religious Studies', 'Cultural & Creative Arts'], 2, [170000, 240000], 'any'],
+            ['Humanities Teacher', 'JSS', 'junior', ['Social and Citizenship Studies', 'History', 'Business Studies', 'Literature-in-English', 'Security Education'], 2, [180000, 250000], 'any'],
+            ['Religious Studies & Arts Teacher', 'JSS', 'junior', ['Christian Religious Studies', 'Cultural & Creative Arts', 'Music'], 2, [170000, 240000], 'any'],
             ['Digital & French Teacher', 'JSS', 'junior', ['Digital Technologies', 'French', 'Trade Subject (Entrepreneurship)'], 2, [190000, 260000], 'any'],
             ['Yoruba & Home Economics Teacher', 'JSS', 'junior', ['Yoruba Language', 'Home Economics', 'Agricultural Science'], 2, [170000, 230000], 'female'],
             ['PHE Teacher', 'JSS', 'junior', ['Physical & Health Education'], 2, [160000, 220000], 'male'],
             ['English Teacher', 'SSS', 'senior', ['English Language'], 2, [230000, 330000], 'any'],
             ['Mathematics Teacher', 'SSS', 'senior', ['Mathematics', 'Further Mathematics'], 3, [240000, 340000], 'male'],
-            ['Physics Teacher', 'SSS', 'senior', ['Physics'], 2, [250000, 340000], 'male'],
+            ['Physics Teacher', 'SSS', 'senior', ['Physics', 'Technical Drawing'], 2, [250000, 340000], 'male'],
             ['Chemistry Teacher', 'SSS', 'senior', ['Chemistry'], 2, [250000, 340000], 'any'],
             ['Biology Teacher', 'SSS', 'senior', ['Biology', 'Agricultural Science'], 2, [240000, 330000], 'female'],
-            ['Literature & History Teacher', 'SSS', 'senior', ['Literature-in-English', 'History', 'Fine Art', 'Christian Religious Studies'], 2, [220000, 310000], 'any'],
-            ['Government & Civic Teacher', 'SSS', 'senior', ['Government', 'Civic Education'], 2, [220000, 300000], 'any'],
+            ['Literature & History Teacher', 'SSS', 'senior', ['Literature-in-English', 'History', 'Fine Art', 'Christian Religious Studies', 'Music'], 2, [220000, 310000], 'any'],
+            ['Government & Civic Teacher', 'SSS', 'senior', ['Government', 'Civic Education', 'Geography'], 2, [220000, 300000], 'any'],
             ['Economics & Commerce Teacher', 'SSS', 'senior', ['Economics', 'Commerce'], 2, [230000, 320000], 'any'],
             ['Accounting & Marketing Teacher', 'SSS', 'senior', ['Financial Accounting', 'Marketing'], 2, [230000, 320000], 'any'],
             ['ICT Teacher', 'SSS', 'senior', ['Computer Studies (ICT)'], 2, [230000, 310000], 'male'],
+            ['Languages & Enterprise Teacher', 'SSS', 'senior', ['Yoruba Language', 'French', 'Trade Subject (Entrepreneurship)', 'Office Practice'], 2, [210000, 290000], 'any'],
         ];
 
         $groupKeys = array_keys($this->groups);
@@ -619,7 +626,7 @@ class DemoSchoolSeeder extends Seeder
         }
 
         // A few subjects are harder than others, so results look natural
-        $bias = ['Mathematics' => -6, 'Further Mathematics' => -8, 'Physics' => -5, 'Chemistry' => -4, 'English Language' => -2, 'Physical & Health Education' => 9, 'Cultural & Creative Arts' => 8, 'Digital Technologies' => 5, 'Basic Digital Literacy' => 5, 'Creative Arts & Colouring' => 9, 'Christian Religious Studies' => 6];
+        $bias = ['Mathematics' => -6, 'Further Mathematics' => -8, 'Physics' => -5, 'Chemistry' => -4, 'English Language' => -2, 'Physical & Health Education' => 9, 'Cultural & Creative Arts' => 8, 'Digital Technologies' => 5, 'Basic Digital Literacy' => 5, 'Creative Arts & Colouring' => 9, 'Christian Religious Studies' => 6, 'Music' => 8, 'Physical Education & Play' => 9, 'Writing Readiness' => 6, 'Trade Subject (Entrepreneurship)' => 6, 'Technical Drawing' => -3, 'Geography' => 0];
 
         // [year, term number] each exam belongs to
         $termId = fn (string $year, int $seq) => DB::table('terms')->where('school_id', $this->sid)->where('sequence', $seq)
