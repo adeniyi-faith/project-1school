@@ -9,7 +9,7 @@ import { Check, Eye, Monitor, Smartphone, X } from 'lucide-react';
 import type { Palette, ThemeOption, WebsiteShell } from '@/Types/website';
 
 interface Props {
-    shell: WebsiteShell; themes: ThemeOption[]; palettes: Palette[];
+    shell: WebsiteShell; themes: ThemeOption[]; palettes: Palette[]; logoColors?: string[];
     current: { theme: string; color: string | null; color2: string | null };
 }
 
@@ -59,7 +59,7 @@ function FullPreview({ src, title, onClose }: { src: string; title: string; onCl
     );
 }
 
-export default function WebsiteThemes({ shell, themes, palettes, current }: Props) {
+export default function WebsiteThemes({ shell, themes, palettes, logoColors = [], current }: Props) {
     const form = useForm({ theme: current.theme, color: current.color ?? '', color2: current.color2 ?? '' });
     const [viewing, setViewing] = useState<string | null>(null);
     const d = form.data;
@@ -73,6 +73,23 @@ export default function WebsiteThemes({ shell, themes, palettes, current }: Prop
             description="Each theme is a complete design for your whole website. The pictures below are your own website, drawn live in each theme with the colours you pick.">
             <Panel title="Your colours" description="Pick a ready colour set, or choose your school colours. Every theme uses them. Text colours adjust so writing stays easy to read.">
                 <div className="space-y-4 text-sm">
+                    {logoColors.length > 0 && shell.canEdit && (
+                        <div>
+                            <p className="mb-1.5 text-xs text-slate-500">Colours from your school logo. Tap one for the main colour; tap the small circle beside it to use it as the second colour:</p>
+                            <div className="flex flex-wrap gap-2">
+                                {logoColors.map(c => (
+                                    <span key={c} className="inline-flex items-center overflow-hidden rounded-full border border-slate-200 text-xs font-mono dark:border-white/20">
+                                        <button type="button" onClick={() => form.setData(v => ({ ...v, color: c }))} className="flex items-center gap-1.5 py-1 pl-1.5 pr-2" title={`Use ${c} as main colour`}>
+                                            <i className="size-4 rounded-full border border-white/60" style={{ background: c }} />{c}
+                                        </button>
+                                        <button type="button" onClick={() => form.setData(v => ({ ...v, color2: c }))} className="border-l border-slate-200 px-2 py-1 dark:border-white/20" title={`Use ${c} as second colour`} aria-label={`Use ${c} as second colour`}>
+                                            <i className="block size-3 rounded-full" style={{ background: c }} />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     <div className="flex flex-wrap gap-2">
                         {palettes.map(p => {
                             const on = d.color === p.color && d.color2 === p.color2;

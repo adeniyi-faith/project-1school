@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { Bell, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-interface Item { key: string; title: string; body: string | null; when: string | null; unread: boolean; kind: string }
+interface Item { key: string; title: string; body: string | null; when: string | null; unread: boolean; kind: string; url?: string | null }
 
 /** The bell: tap it to read the latest notices right there; tap a notice to read all of it. */
 export default function NotificationBell({ feedUrl, allHref, buttonClass }: { feedUrl: string; allHref: string; buttonClass: string }) {
@@ -57,6 +57,7 @@ export default function NotificationBell({ feedUrl, allHref, buttonClass }: { fe
                                         <span className="min-w-0 flex-1">
                                             <span className="block text-[13.5px] font-medium leading-snug">{n.title}</span>
                                             {n.body && <span className={`mt-0.5 block whitespace-pre-line text-[13px] text-muted-foreground ${expanded ? '' : 'line-clamp-2'}`}>{n.body}</span>}
+                                            {expanded && n.url && <Link href={n.url} className="mt-1.5 inline-block text-[12.5px] font-medium text-indigo-600 hover:underline dark:text-indigo-400" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>Open</Link>}
                                             <span className="mt-1 block text-[11.5px] text-muted-foreground">{n.kind}{n.when ? ` · ${n.when}` : ''}</span>
                                         </span>
                                         <ChevronDown className={`mt-1 size-4 shrink-0 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden="true" />

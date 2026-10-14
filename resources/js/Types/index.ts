@@ -52,6 +52,8 @@ export interface PageProps {
         permissions: string[];
         /** Page addresses this person may open (decided by the server from the route rules) */
         paths: string[];
+        /** Numbers to show beside menu items that have something waiting (page address => count) */
+        badges?: Record<string, number>;
     };
     school: School | null;
     flash: {
