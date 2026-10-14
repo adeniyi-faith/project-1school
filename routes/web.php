@@ -73,6 +73,8 @@ use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\StudentPhotoController;
 use App\Http\Controllers\SchoolAdmin\VisitorLogController;
 use App\Http\Controllers\PublicAdmissionController;
+use App\Http\Controllers\PublicSiteController;
+use App\Http\Controllers\SchoolAdmin\WebsiteController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\ParentPortalController;
 use App\Http\Controllers\SuperAdmin\CouponController;
@@ -569,6 +571,13 @@ Route::middleware('auth')->group(function () {
             Route::get('settings/school-type',                  [SchoolTypeController::class, 'index'])->middleware('permission:settings.view')->name('settings.school-type');
             Route::post('settings/school-type',                 [SchoolTypeController::class, 'apply'])->middleware('permission:settings.edit')->name('settings.school-type.apply');
 
+            // Public website: the editor (the site itself is served at /s/{school})
+            Route::get('website',                [WebsiteController::class, 'index'])->middleware('permission:settings.view')->name('website.index');
+            Route::put('website',                [WebsiteController::class, 'updateSite'])->middleware('permission:settings.edit')->name('website.update');
+            Route::post('website/pages',         [WebsiteController::class, 'storePage'])->middleware('permission:settings.edit')->name('website.pages.store');
+            Route::put('website/pages/{page}',   [WebsiteController::class, 'updatePage'])->whereNumber('page')->middleware('permission:settings.edit')->name('website.pages.update');
+            Route::delete('website/pages/{page}', [WebsiteController::class, 'destroyPage'])->whereNumber('page')->middleware('permission:settings.edit')->name('website.pages.destroy');
+
             // Integrations / Gateway Settings
             Route::get('settings/integrations',                 [IntegrationController::class, 'index'])->middleware('permission:settings.edit')->name('settings.integrations');
             Route::post('settings/integrations/smtp',           [IntegrationController::class, 'saveSmtp'])->middleware('permission:settings.edit')->name('settings.integrations.smtp');
@@ -764,5 +773,7 @@ Route::prefix('exam')->name('exam.')->controller(CandidateCbtController::class)-
 // What a student ID card's QR opens: staff of the school go to the scan screen, anyone else sees if the card is valid
 Route::get('/id/{token}', IdCardCheckController::class)->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:60,1')->name('id-cards.check');
 Route::get('/verify/{code}', [CertificateVerifyController::class, 'show'])->where('code', '[A-Za-z0-9]{6,16}')->middleware('throttle:30,1')->name('certificates.verify');
+// A school's public website (open to everyone, only when the school switched it on)
+Route::get('/s/{slug}/{page?}', [PublicSiteController::class, 'show'])->where('slug', '[a-z0-9-]+')->where('page', '[a-z0-9_-]+')->middleware('throttle:120,1')->name('site.show');
 Route::get('/apply/{school}',  [PublicAdmissionController::class, 'show'])->name('public.admission.show');
 Route::post('/apply/{school}', [PublicAdmissionController::class, 'submit'])->name('public.admission.submit');
