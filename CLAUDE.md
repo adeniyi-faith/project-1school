@@ -33,8 +33,8 @@ shared files; Phase 1 (safety fixes) is finished. Phase 2 (terms, score/grade se
 | Database | Supabase Postgres in production; SQLite for local development and tests |
 | Files | Laravel Storage. Disks: `local`, `public`, `supabase` (S3 style), and `private` (documents) |
 | PDF | barryvdh/laravel-dompdf, generated inside the web request. QR codes on certificates: chillerlan/php-qrcode (PNG, no outside service) |
-| Queue / cache / sessions | Database drivers. `QUEUE_CONNECTION=sync` by default (jobs run inside the request). The `Procfile` starts `queue:work`; set `QUEUE_CONNECTION=database` in production to use it |
-| Hosting | **cPanel** (the live site). Every merge to `main` deploys itself through `.github/workflows/deploy.yml`: it builds the front end and uploads `public/build`, then on the server resets the code to `main`, runs `composer install`, `migrate --force`, the `RolePermissionSeeder`, `demo:fill` and the caches. Nobody needs to run commands by hand. `railway.json`, `Procfile` and `vercel.json` are left over from earlier attempts |
+| Queue / cache / sessions | Database drivers. `QUEUE_CONNECTION=sync` by default (jobs run inside the request). `deploy/old-railway/Procfile` starts `queue:work`; set `QUEUE_CONNECTION=database` in production to use it |
+| Hosting | **cPanel** (the live site). Every merge to `main` deploys itself through `.github/workflows/deploy.yml`: it builds the front end and uploads `public/build`, then on the server resets the code to `main`, runs `composer install`, `migrate --force`, the `RolePermissionSeeder`, `demo:fill` and the caches. Nobody needs to run commands by hand. `railway.json` and `Procfile` now live in `deploy/old-railway/` (left over from an earlier attempt); `vercel.json` is for the docs site |
 | Tests | PHPUnit 12 (`php artisan test`). `.github/workflows/tests.yml` runs every test (PHP 8.4, SQLite, after building the front end) on each pull request, and `deploy.yml` runs it first and deploys only if it passes. There are no frontend tests |
 
 **Not in this project (despite older docs):** Laravel 11, `app/Modules/*` folders, Redis,
