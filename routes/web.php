@@ -74,6 +74,7 @@ use App\Http\Controllers\StudentPhotoController;
 use App\Http\Controllers\SchoolAdmin\VisitorLogController;
 use App\Http\Controllers\PublicAdmissionController;
 use App\Http\Controllers\PublicSiteController;
+use App\Http\Controllers\SchoolAdmin\Website\WebsiteGalleryController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteMediaController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsitePageController;
@@ -605,6 +606,17 @@ Route::middleware('auth')->group(function () {
                 Route::put('posts/{post}',             [WebsitePostController::class, 'update'])->whereNumber('post')->middleware($edit)->name('posts.update');
                 Route::delete('posts/{post}',          [WebsitePostController::class, 'destroy'])->whereNumber('post')->middleware($edit)->name('posts.destroy');
 
+                Route::get('gallery',                  [WebsiteGalleryController::class, 'index'])->middleware($view)->name('gallery.index');
+                Route::post('gallery',                 [WebsiteGalleryController::class, 'store'])->middleware($edit)->name('gallery.store');
+                Route::get('gallery/{album}',          [WebsiteGalleryController::class, 'edit'])->whereNumber('album')->middleware($view)->name('gallery.edit');
+                Route::put('gallery/{album}',          [WebsiteGalleryController::class, 'update'])->whereNumber('album')->middleware($edit)->name('gallery.update');
+                Route::delete('gallery/{album}',       [WebsiteGalleryController::class, 'destroy'])->whereNumber('album')->middleware($edit)->name('gallery.destroy');
+                Route::post('gallery/{album}/photos',  [WebsiteGalleryController::class, 'addPhotos'])->whereNumber('album')->middleware($edit)->name('gallery.photos.add');
+                Route::put('gallery/{album}/order',    [WebsiteGalleryController::class, 'reorder'])->whereNumber('album')->middleware($edit)->name('gallery.photos.order');
+                Route::put('gallery/{album}/cover',    [WebsiteGalleryController::class, 'cover'])->whereNumber('album')->middleware($edit)->name('gallery.cover');
+                Route::put('gallery/{album}/photos/{photo}',    [WebsiteGalleryController::class, 'updatePhoto'])->whereNumber(['album', 'photo'])->middleware($edit)->name('gallery.photos.update');
+                Route::delete('gallery/{album}/photos/{photo}', [WebsiteGalleryController::class, 'removePhoto'])->whereNumber(['album', 'photo'])->middleware($edit)->name('gallery.photos.remove');
+
                 Route::get('media',                    [WebsiteMediaController::class, 'index'])->middleware($view)->name('media.index');
                 Route::post('media',                   [WebsiteMediaController::class, 'store'])->middleware($edit)->name('media.store');
                 Route::post('images',                  [WebsiteMediaController::class, 'store'])->middleware($edit)->name('images'); // older editor address
@@ -811,6 +823,8 @@ Route::get('/verify/{code}', [CertificateVerifyController::class, 'show'])->wher
 Route::get('/s/{slug}/feed.xml', [PublicSiteController::class, 'feed'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.feed');
 Route::get('/s/{slug}/news', [PublicSiteController::class, 'news'])->where('slug', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.news');
 Route::get('/s/{slug}/news/{post}', [PublicSiteController::class, 'post'])->where('slug', '[a-z0-9-]+')->where('post', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.post');
+Route::get('/s/{slug}/gallery', [PublicSiteController::class, 'gallery'])->where('slug', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.gallery');
+Route::get('/s/{slug}/gallery/{album}', [PublicSiteController::class, 'album'])->where('slug', '[a-z0-9-]+')->where('album', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.album');
 Route::get('/s/{slug}/sitemap.xml', [PublicSiteController::class, 'sitemap'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.sitemap');
 Route::get('/s/{slug}/sign-in', [PublicSiteController::class, 'signIn'])->where('slug', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.sign-in');
 Route::get('/s/{slug}/{page?}', [PublicSiteController::class, 'show'])->where('slug', '[a-z0-9-]+')->where('page', '[a-z0-9_-]+')->middleware('throttle:120,1')->name('site.show');

@@ -1,3 +1,6 @@
+@if (\App\Website\Themes::key($theme) === 'statement')
+@include('website.blocks.features-statement')
+@else
 @php $tag = ($b['_h1'] ?? false) ? 'h1' : 'h2'; @endphp
 <section class="sec sec--soft"><div class="wrap">
     @if (($b['heading'] ?? '') || ($b['intro'] ?? '') || ($b['eyebrow'] ?? ''))<div class="sec-head">@include('website.partials.heading') @if ($b['intro'])<p>{{ $b['intro'] }}</p>@endif</div>@endif
@@ -14,3 +17,4 @@
         @endforeach
     </div>
 </div></section>
+@endif

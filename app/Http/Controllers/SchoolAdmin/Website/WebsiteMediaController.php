@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\SchoolAdmin\Website;
 
+use App\Models\SchoolSiteAlbumPhoto;
 use App\Models\SchoolSiteMedia;
 use App\Models\SchoolSitePage;
 use App\Models\SchoolSitePost;
@@ -79,6 +80,11 @@ class WebsiteMediaController extends WebsiteBase
             }
         };
         SchoolSitePage::get(['blocks'])->each(fn ($p) => $walk($p->blocks ?? []));
+        // pictures that sit in a gallery album
+        $inAlbums = SchoolSiteAlbumPhoto::pluck('media_id');
+        if ($inAlbums->isNotEmpty()) {
+            $paths = array_merge($paths, SchoolSiteMedia::whereIn('id', $inAlbums)->pluck('path')->all());
+        }
 
         return array_values(array_unique($paths));
     }

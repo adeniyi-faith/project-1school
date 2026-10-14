@@ -18,42 +18,14 @@
     @if ($logo)<link rel="icon" href="{{ $logo }}">@endif
     @if ($newsUrl)<link rel="alternate" type="application/rss+xml" title="{{ $school->name }}" href="{{ $homeUrl }}/feed.xml">@endif
     <style>:root{ {!! $style !!} }</style>
-    <style>@include('website.styles')</style>
+    <style>@include('website.styles')@include('website.styles-themes')</style>
     <noscript><style>.burger{display:none}.menu{display:block;position:static;background:none;color:inherit;padding:0}.menu a{font-size:1rem;display:inline-block;border:0;margin-right:1rem}</style></noscript>
     <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 </head>
 <body id="sheet" data-theme="{{ $theme }}">
 <a class="skip" href="#main">Skip to content</a>
 
-<div class="top">
-    <div class="wrap top-in">
-        <div class="top-info">
-            @if ($school->phone)<a href="tel:{{ preg_replace('/[^0-9+]/', '', $school->phone) }}">{{ $school->phone }}</a>@endif
-            @if ($school->email)<a href="mailto:{{ $school->email }}">{{ $school->email }}</a>@endif
-        </div>
-        <div class="top-links">
-            @if ($site->option('apply_button'))<a href="{{ route('public.admission.show', $school) }}">Admissions</a>@endif
-            <a href="{{ $homeUrl }}/sign-in">Parent, student and staff sign in</a>
-        </div>
-    </div>
-</div>
-
-<header class="hdr">
-    <div class="wrap hdr-in">
-        <a class="brand" href="{{ $homeUrl }}">
-            @if ($logo)<img src="{{ $logo }}" alt="" width="52" height="42">@endif
-            <span>{{ $school->name }}</span>
-        </a>
-        <button class="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu"><i></i><i></i><i></i></button>
-        <nav class="menu" id="menu" aria-label="Main">
-            @foreach ($menu as $item)
-                <a href="{{ $item['url'] }}" @if ($item['current']) aria-current="page" @endif>{{ $item['label'] }}</a>
-            @endforeach
-            <a class="menu-signin" href="{{ $homeUrl }}/sign-in" @if (($current ?? '') === 'sign-in') aria-current="page" @endif>Sign in</a>
-            @if ($site->option('apply_button'))<a class="btn btn--solid" href="{{ route('public.admission.show', $school) }}">Apply online</a>@endif
-        </nav>
-    </div>
-</header>
+@include('website.headers.'.\App\Website\Themes::key($theme))
 
 <main id="main">
     @yield('main')
@@ -105,6 +77,28 @@
   @if ($preview)
   document.addEventListener('click',function(e){var a=e.target.closest('a');if(a){e.preventDefault();}});
   @endif
+})();
+</script>
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Photo viewer">
+    <button class="lb-x" type="button" aria-label="Close">&times;</button>
+    <button class="lb-nav lb-prev" type="button" aria-label="Previous photo">&lsaquo;</button>
+    <figure><img alt=""><figcaption></figcaption></figure>
+    <button class="lb-nav lb-next" type="button" aria-label="Next photo">&rsaquo;</button>
+</div>
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('a[data-lightbox]'));
+  if(!links.length)return;
+  var lb=document.getElementById('lb'),img=lb.querySelector('img'),cap=lb.querySelector('figcaption'),i=0;
+  function show(n){i=(n+links.length)%links.length;img.src=links[i].href;img.alt=links[i].querySelector('img').alt;cap.textContent=links[i].getAttribute('data-caption')||'';}
+  function open(n){show(n);lb.hidden=false;document.body.style.overflow='hidden';lb.querySelector('.lb-x').focus();}
+  function close(){lb.hidden=true;document.body.style.overflow='';img.src='';}
+  links.forEach(function(a,n){a.addEventListener('click',function(e){e.preventDefault();open(n);});});
+  lb.querySelector('.lb-x').addEventListener('click',close);
+  lb.querySelector('.lb-prev').addEventListener('click',function(){show(i-1);});
+  lb.querySelector('.lb-next').addEventListener('click',function(){show(i+1);});
+  lb.addEventListener('click',function(e){if(e.target===lb)close();});
+  document.addEventListener('keydown',function(e){if(lb.hidden)return;if(e.key==='Escape')close();if(e.key==='ArrowLeft')show(i-1);if(e.key==='ArrowRight')show(i+1);});
 })();
 </script>
 </body>

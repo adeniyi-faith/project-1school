@@ -439,4 +439,73 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->assertSame('hero', SchoolSitePage::withoutGlobalScopes()->find($home->id)->blocks[0]['type']);
         $this->assertSame('Old text', SchoolSitePage::withoutGlobalScopes()->find($about->id)->blocks[0]['heading']);
     }
+
+    public function test_each_theme_has_its_own_layout_not_just_its_own_colours(): void
+    {
+        [$school] = $this->liveSite('Look School');
+        auth()->logout();
+        $marks = ['heritage' => '<section class="hero hero--plain', 'modern' => '<section class="hero hero--modern', 'warm' => '<section class="hero hero--warm', 'statement' => '<section class="hero hero--statement'];
+        $this->assertSame(array_keys($marks), array_keys(Themes::ALL));
+        foreach ($marks as $theme => $mark) {
+            \App\Models\SchoolSite::withoutGlobalScopes()->where('school_id', $school->id)->update(['theme' => $theme]);
+            $html = $this->get('/s/look-school')->assertOk()->assertSee('data-theme="'.$theme.'"', false)->getContent();
+            $this->assertStringContainsString($mark, $html, $theme);
+            foreach (array_diff($marks, [$theme => $mark]) as $other) {
+                $this->assertStringNotContainsString($other, $html, "$theme should not use the $other layout");
+            }
+        }
+        $this->assertSame('<em>cared for</em>', substr(\App\Website\Prose::accent('Known and *cared for*'), -18));
+        $this->assertStringContainsString('<em>', \App\Website\Prose::accent('Where every child is known and cared for', true));
+        $this->assertStringNotContainsString('<em>', \App\Website\Prose::accent('Short title'));
+    }
+
+    public function test_the_gallery_has_albums_a_public_page_and_keeps_schools_apart(): void
+    {
+        [$school, $admin] = $this->liveSite('Gal School');
+        $other = $this->makeSchool('Other Gal');
+        Storage::fake('public');
+
+        $this->actingAs($admin)->get('/school/website/gallery')->assertOk();
+        $this->post('/school/website/gallery', ['title' => 'Sports Day 2026', 'description' => 'Inter-house', 'event_date' => '2026-05-02'])->assertRedirect();
+        $album = \App\Models\SchoolSiteAlbum::where('title', 'Sports Day 2026')->firstOrFail();
+        $this->assertSame('sports-day-2026', $album->slug);
+
+        // nothing public until it holds a photo
+        auth()->logout();
+        $this->get('/s/gal-school/gallery')->assertOk()->assertSee('No photos yet');
+        $this->get('/s/gal-school/gallery/sports-day-2026')->assertNotFound();
+
+        $this->actingAs($admin);
+        $a = $this->post('/school/website/media', ['image' => UploadedFile::fake()->image('a.jpg', 800, 600)])->json();
+        $b = $this->post('/school/website/media', ['image' => UploadedFile::fake()->image('b.jpg', 800, 600)])->json();
+        $theirs = \App\Models\SchoolSiteMedia::withoutGlobalScopes()->create(['school_id' => $other->id, 'path' => 'schools/'.$other->id.'/website/x.jpg', 'name' => 'x']);
+
+        $this->post("/school/website/gallery/{$album->id}/photos", ['media_ids' => [$a['id'], $b['id'], $theirs->id]])->assertSessionHasNoErrors();
+        $this->assertSame(2, \App\Models\SchoolSiteAlbumPhoto::where('album_id', $album->id)->count()); // the other school's picture is refused
+        $this->assertSame($a['id'], $album->fresh()->cover_media_id);
+
+        $photo = \App\Models\SchoolSiteAlbumPhoto::where('album_id', $album->id)->where('media_id', $b['id'])->first();
+        $this->put("/school/website/gallery/{$album->id}/photos/{$photo->id}", ['caption' => 'Relay finals'])->assertSessionHasNoErrors();
+        $this->put("/school/website/gallery/{$album->id}/cover", ['media_id' => $b['id']]);
+        $this->assertSame($b['id'], $album->fresh()->cover_media_id);
+
+        // a picture inside an album cannot be deleted from the library
+        $this->delete('/school/website/media/'.$a['id'])->assertSessionHasErrors('media');
+
+        auth()->logout();
+        $this->get('/s/gal-school')->assertOk()->assertSee('/s/gal-school/gallery', false)->assertSee('Life at Gal School');
+        $this->get('/s/gal-school/gallery')->assertOk()->assertSee('Sports Day 2026')->assertSee('2 photos');
+        $this->get('/s/gal-school/gallery/sports-day-2026')->assertOk()->assertSee('Relay finals')->assertSee('data-lightbox', false);
+        $this->get('/s/gal-school/sitemap.xml')->assertOk()->assertSee('/gallery/sports-day-2026', false);
+
+        // another school cannot open or change it
+        $this->actingAs($this->makeUser($other, 'school-admin'));
+        $this->put("/school/website/gallery/{$album->id}", ['title' => 'Hijacked'])->assertNotFound();
+        $this->assertSame('Sports Day 2026', $album->fresh()->title);
+
+        // hidden albums disappear from the site
+        $this->actingAs($admin)->put("/school/website/gallery/{$album->id}", ['title' => 'Sports Day 2026', 'is_published' => false]);
+        auth()->logout();
+        $this->get('/s/gal-school/gallery/sports-day-2026')->assertNotFound();
+    }
 }

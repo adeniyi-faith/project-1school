@@ -14,25 +14,32 @@ class Themes
 
     public const ALL = [
         'heritage' => [
-            'label' => 'Heritage', 'note' => 'Gold header, deep red accents, classic serif headings. Inspired by great universities.',
+            'label' => 'Heritage', 'note' => 'Classic university look: top strip, serif headings, a banner with action cards over its edge.',
             'brand' => '#990000', 'brand2' => '#ffcc00', 'bg' => '#ffffff', 'soft' => '#faf6ee', 'text' => '#1c1917',
             'head' => self::SERIF, 'body' => self::SANS,
             'radius' => '.375rem', 'radius_lg' => '1.5rem', 'btn_radius' => '.75rem', 'btn_case' => 'uppercase', 'btn_track' => '.16em', 'btn_style' => 'outline',
             'hdr' => 'bg', 'ftr' => 'dark',
         ],
         'modern' => [
-            'label' => 'Modern', 'note' => 'Crisp white, bold colour, rounded cards and pill buttons.',
+            'label' => 'Modern', 'note' => 'Floating menu bar, a split banner with a big picture, a bento grid of cards and a timeline.',
             'brand' => '#4338ca', 'brand2' => '#f59e0b', 'bg' => '#ffffff', 'soft' => '#f5f6ff', 'text' => '#0f172a',
             'head' => self::SANS, 'body' => self::SANS,
             'radius' => '1rem', 'radius_lg' => '1.5rem', 'btn_radius' => '999px', 'btn_case' => 'none', 'btn_track' => '0', 'btn_style' => 'solid',
             'hdr' => 'bg', 'ftr' => 'dark',
         ],
         'warm' => [
-            'label' => 'Warm', 'note' => 'Friendly cream background, soft curves, gentle serif headings.',
+            'label' => 'Warm', 'note' => 'Friendly and playful: centred header, soft shapes, an arched picture, bright rounded cards.',
             'brand' => '#c2410c', 'brand2' => '#fbbf24', 'bg' => '#fffaf3', 'soft' => '#fdf0dc', 'text' => '#292524',
             'head' => self::SERIF, 'body' => self::SANS,
             'radius' => '1.25rem', 'radius_lg' => '2rem', 'btn_radius' => '999px', 'btn_case' => 'none', 'btn_track' => '.01em', 'btn_style' => 'solid',
             'hdr' => 'bg', 'ftr' => 'dark',
+        ],
+        'statement' => [
+            'label' => 'Statement', 'note' => 'Bold and serious: deep colour bands, huge serif headlines, numbered commitments and pillars.',
+            'brand' => '#6b1414', 'brand2' => '#c89b32', 'bg' => '#fbf9f4', 'soft' => '#f2ede2', 'text' => '#2b2723',
+            'head' => self::SERIF, 'body' => self::SANS,
+            'radius' => '.5rem', 'radius_lg' => '.5rem', 'btn_radius' => '.4rem', 'btn_case' => 'none', 'btn_track' => '0', 'btn_style' => 'solid',
+            'hdr' => 'bg', 'ftr' => 'deep',
         ],
     ];
 
@@ -49,6 +56,12 @@ class Themes
         ['name' => 'Burnt orange', 'color' => '#c2410c', 'color2' => '#fbbf24'],
         ['name' => 'Black and gold', 'color' => '#111827', 'color2' => '#eab308'],
     ];
+
+    /** The theme to draw with: the saved one, or Heritage when the name is not known */
+    public static function key(?string $theme): string
+    {
+        return isset(self::ALL[$theme]) ? $theme : 'heritage';
+    }
 
     public static function options(): array
     {
@@ -71,12 +84,14 @@ class Themes
         $brand2 = self::isHex($color2) ? strtolower($color2) : $t['brand2'];
 
         $hdr = $t['hdr'] === 'brand2' ? $brand2 : $t['bg'];
-        $ftr = $t['ftr'] === 'brand2' ? $brand2 : '#171717';
+        $deep = self::shade($brand, .42);
+        $ftr = match ($t['ftr']) { 'brand2' => $brand2, 'deep' => $deep, default => '#171717' };
         $hdrInk = self::ink($hdr);
 
         return [
             'brand' => $brand, 'brand-ink' => self::ink($brand),
             'brand2' => $brand2, 'brand2-ink' => self::ink($brand2),
+            'deep' => $deep, 'deep-ink' => self::ink($deep),
             'bg' => $t['bg'], 'soft' => $t['soft'], 'text' => $t['text'],
             'muted' => self::ink($t['bg']) === '#ffffff' ? '#d4d4d8' : '#57534e',
             'line' => 'rgba(0,0,0,.1)',
@@ -100,6 +115,14 @@ class Themes
     public static function btnStyle(string $theme): string
     {
         return (self::ALL[$theme] ?? self::ALL['heritage'])['btn_style'];
+    }
+
+    /** A darker shade of a colour: $keep is how much of the original stays (0.4 keeps 40%, the rest is black) */
+    public static function shade(string $hex, float $keep): string
+    {
+        $parts = array_map(fn ($c) => str_pad(dechex((int) round(hexdec($c) * $keep)), 2, '0', STR_PAD_LEFT), str_split(ltrim($hex, '#'), 2));
+
+        return '#'.implode('', $parts);
     }
 
     /** Readable text colour (dark or white) for writing on this background */

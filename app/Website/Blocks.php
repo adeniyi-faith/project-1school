@@ -11,7 +11,7 @@ class Blocks
 {
     public const MAX_BLOCKS = 30;
     /** Page addresses the website uses for itself */
-    public const RESERVED_SLUGS = ['news', 'sitemap', 'feed', 'apply', 'login', 'sign-in', 'admin'];
+    public const RESERVED_SLUGS = ['news', 'sitemap', 'feed', 'gallery', 'apply', 'login', 'sign-in', 'admin'];
 
     public const BUTTONS = ['none' => 'No button', 'apply' => 'Apply online', 'login' => 'Sign in', 'contact' => 'Contact us'];
 
@@ -111,6 +111,15 @@ class Blocks
                     ['key' => 'count', 'label' => 'How many to show (1 to 10)', 'kind' => 'number', 'min' => 1, 'max' => 10],
                 ],
                 'default' => ['heading' => 'Latest news', 'category' => 'all', 'count' => 3],
+            ],
+            'gallery' => [
+                'label' => 'Photo gallery', 'help' => 'Shows your newest photos from the Gallery. It updates by itself and stays hidden until you have added photos.',
+                'fields' => [
+                    ['key' => 'eyebrow', 'label' => 'Small label above the heading', 'kind' => 'text', 'max' => 40],
+                    $heading(),
+                    ['key' => 'count', 'label' => 'How many photos (4 to 12)', 'kind' => 'number', 'min' => 4, 'max' => 12],
+                ],
+                'default' => ['eyebrow' => '', 'heading' => 'Life at our school', 'count' => 8],
             ],
             'apply' => [
                 'label' => 'Call to action', 'help' => 'A bold coloured band that sends visitors to apply or get in touch. Applications land in Admission Inquiries.',

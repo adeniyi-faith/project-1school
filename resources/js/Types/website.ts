@@ -33,3 +33,7 @@ export interface PostForm {
     id: number | null; title: string; slug: string; category: string; excerpt: string; body: string; cover_image: string; status: 'draft' | 'published';
     published_at: string; event_date: string; event_place: string; is_featured: boolean; seo_title: string; seo_description: string; url: string | null;
 }
+
+export interface AlbumRow { id: number; title: string; description: string | null; event_date: string | null; is_published: boolean; photos: number; cover: string | null; url: string }
+export interface AlbumForm { id: number; title: string; description: string; event_date: string; is_published: boolean; cover_media_id: number | null; url: string }
+export interface AlbumPhoto { id: number; media_id: number; path: string; caption: string; alt: string | null }

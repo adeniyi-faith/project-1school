@@ -88,4 +88,26 @@ class Prose
 
         return $s;
     }
+
+    /**
+     * A headline with an accent: words written between *stars* become italic and coloured (<em>).
+     * With $auto, a headline without stars gets its last three words accented instead.
+     */
+    public static function accent(string $text, bool $auto = false): string
+    {
+        $safe = e($text);
+        if (preg_match('/\*[^*]+\*/', $safe)) {
+            return preg_replace('/\*([^*]+)\*/', '<em>$1</em>', $safe);
+        }
+        if (! $auto) {
+            return $safe;
+        }
+        $words = preg_split('/\s+/', trim($safe));
+        if (count($words) < 5) {
+            return $safe;
+        }
+        $tail = implode(' ', array_splice($words, -3));
+
+        return implode(' ', $words).' <em>'.$tail.'</em>';
+    }
 }
