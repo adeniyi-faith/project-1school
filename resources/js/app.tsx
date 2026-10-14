@@ -1,9 +1,10 @@
 import '../css/app.css';
 import { Component, type ReactNode } from 'react';
-import { createInertiaApp, http } from '@inertiajs/react';
+import { createInertiaApp, http, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
     state = { error: null };
@@ -37,6 +38,20 @@ http.onRequest((config) => {
     else if (data === null || data === undefined) data = { _method: method.toUpperCase() };
 
     return { ...config, method: 'post', headers, data };
+});
+
+// If the web server itself refuses a request (before the app can answer), Inertia would draw the server's raw page
+// in a blank white pop-up. Show a short plain message instead and leave the person on their page.
+router.on('httpException', (event) => {
+    event.preventDefault();
+    const status = event.detail.response.status;
+    toast.error(status === 413
+        ? 'That file is too big to upload. Please choose a smaller one.'
+        : `The server refused this request (code ${status}). Nothing was saved. Please try again, or use a smaller file.`);
+});
+router.on('networkError', (event) => {
+    event.preventDefault();
+    toast.error('We could not reach the server. Check your internet connection and try again.');
 });
 
 createInertiaApp({

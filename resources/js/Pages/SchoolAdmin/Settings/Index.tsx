@@ -163,6 +163,25 @@ function GeneralTab({ school }: { school: SchoolData }) {
 }
 
 /* ── Branding Tab ── */
+/** Shrinks a JPEG/PNG/WebP picture in the browser (keeps transparency as PNG). Anything else, or any failure, is sent as it was. */
+async function shrinkPicture(file: File, maxSide: number): Promise<File> {
+    try {
+        if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return file;
+        const bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+        if (scale === 1 && file.size <= 300 * 1024) return file;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        canvas.getContext('2d')?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
+        if (!blob || blob.size >= file.size) return file;
+        return new File([blob], file.name.replace(/\.\w+$/, '') + '.png', { type: 'image/png' });
+    } catch {
+        return file;
+    }
+}
+
 function BrandingTab({ logoUrl, settings }: { logoUrl: string | null; settings: Record<string, string> }) {
     const form = useForm<{
         logo: File | null; favicon: File | null;
@@ -181,8 +200,10 @@ function BrandingTab({ logoUrl, settings }: { logoUrl: string | null; settings: 
     const faviconRef = useRef<HTMLInputElement>(null);
     const { flash }  = usePage<any>().props;
 
-    function handleFile(field: 'logo' | 'favicon', file: File | null) {
-        if (!file) return;
+    async function handleFile(field: 'logo' | 'favicon', picked: File | null) {
+        if (!picked) return;
+        // Make big phone photos small before sending, so the upload is quick and never hits the server's size limit
+        const file = await shrinkPicture(picked, field === 'logo' ? 600 : 128);
         form.setData(field, file);
         const url = URL.createObjectURL(file);
         if (field === 'logo')    setLogoPreview(url);
