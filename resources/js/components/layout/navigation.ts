@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
 import {
-    LayoutDashboard, School, Users, GraduationCap, UserCog, CalendarDays, BookOpen, ClipboardList, Banknote, Library, Bus, Home, Package, MessageSquare, BarChart3, Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff, Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell, PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug, CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock, IdCard, ScanLine, Medal, Shapes, Sparkles,
+    LayoutDashboard, School, Users, GraduationCap, UserCog, CalendarDays, BookOpen, ClipboardList, Banknote, Library, Bus, Home, Package, MessageSquare, BarChart3, Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff, Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell, PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug, CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock, IdCard, ScanLine, Medal, Shapes, Sparkles, Globe,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -177,6 +177,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Settings',      href: '/school/settings',              icon: Settings, roles: ['school-admin'], exact: true },
             { label: 'Settings',      href: '/super-admin/settings',         icon: Settings, roles: ['super-admin'] },
             { label: 'School Type',   href: '/school/settings/school-type',  icon: School,   roles: ['school-admin'] },
+            { label: 'Website',       href: '/school/website',               icon: Globe,    roles: ['school-admin'] },
             { label: 'AI Assistant',  href: '/school/settings/ai',           icon: Sparkles, roles: ['school-admin'] },
             { label: 'AI (Gemini)',   href: '/super-admin/ai',               icon: Sparkles, roles: ['super-admin'] },
             { label: 'Integrations',  href: '/school/settings/integrations', icon: Plug,     roles: ['super-admin','school-admin'] },
