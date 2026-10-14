@@ -3,6 +3,9 @@
 namespace App\Support;
 
 use App\Models\AdmissionInquiry;
+use App\Models\Invoice;
+use App\Models\LeaveRequest;
+use App\Models\ResultSheet;
 use App\Models\User;
 
 /**
@@ -25,6 +28,34 @@ class NavBadges
             $new = AdmissionInquiry::where('status', 'new')->count();
             if ($new > 0) {
                 $badges['/school/admissions/inquiries'] = $new;
+            }
+        }
+
+        // Leave requests waiting for a decision
+        if ($user->can('leave.approve') && $user->can('leave.view')) {
+            $pending = LeaveRequest::where('status', 'pending')->count();
+            if ($pending > 0) {
+                $badges['/school/hr/leaves'] = $pending;
+            }
+        }
+
+        // Class results sent in or approved, waiting for the head to approve or publish them
+        if ($user->can('results.publish') && $user->can('results.view')) {
+            $waiting = ResultSheet::whereIn('status', ['submitted', 'approved'])->count();
+            if ($waiting > 0) {
+                $badges['/school/results'] = $waiting;
+            }
+        }
+
+        // Unpaid invoices that are past their date (or have a part that is past its date)
+        if ($user->can('fees.view')) {
+            $today = now()->toDateString();
+            $late = Invoice::whereIn('status', ['unpaid', 'partial'])
+                ->where(fn ($q) => $q->whereDate('due_date', '<', $today)
+                    ->orWhereHas('instalments', fn ($p) => $p->whereDate('due_date', '<', $today)->whereColumn('paid', '<', 'amount')))
+                ->count();
+            if ($late > 0) {
+                $badges['/school/fees/invoices'] = $late;
             }
         }
 

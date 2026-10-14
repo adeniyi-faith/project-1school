@@ -44,10 +44,12 @@ http.onRequest((config) => {
 // in a blank white pop-up. Show a short plain message instead and leave the person on their page.
 router.on('httpException', (event) => {
     event.preventDefault();
-    const status = event.detail.response.status;
+    const { status, data } = event.detail.response;
+    // A short plain-text peek at what the server answered, so support can tell what went wrong
+    const peek = String(data ?? '').replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>|<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140);
     toast.error(status === 413
         ? 'That file is too big to upload. Please choose a smaller one.'
-        : `The server refused this request (code ${status}). Nothing was saved. Please try again, or use a smaller file.`);
+        : `The server refused this request (code ${status}). Nothing was saved. Please try again, or use a smaller file.${peek ? ` Server said: ${peek}` : ''}`);
 });
 router.on('networkError', (event) => {
     event.preventDefault();
