@@ -542,6 +542,21 @@ class WebsiteEngineTest extends SecurityTestCase
         auth()->logout();
     }
 
+    public function test_the_statement_theme_has_its_own_menu_and_inner_pages(): void
+    {
+        [$school] = $this->liveSite('Civic Two', 'statement');
+        \App\Models\SchoolSitePost::create(['school_id' => $school->id, 'title' => 'Summit news', 'slug' => 'summit', 'category' => 'news', 'body' => 'Come.', 'status' => 'published', 'published_at' => now()->subDay()]);
+        auth()->logout();
+
+        $this->get('/s/civic-two')->assertOk()->assertSee('class="menu-list"', false)->assertSee('class="menu-foot"', false)->assertSee('<b>I</b>', false);
+        $this->get('/s/civic-two/sign-in')->assertOk()->assertSee('class="sp-who"', false)->assertSee('sp-band', false)->assertDontSee('class="pagehero"', false);
+        $this->get('/apply/'.$school->id)->assertOk()->assertSee('class="sp-form"', false)->assertDontSee('class="pagehero"', false);
+        $this->get('/s/civic-two/news')->assertOk()->assertSee('sp-cards', false)->assertSee('Summit news');
+        $this->get('/s/civic-two/news/summit')->assertOk()->assertSee('sp-back', false);
+        $this->get('/s/civic-two/gallery')->assertStatus(200);
+        $this->get('/s/civic-two/search?q=summit')->assertOk()->assertSee('sp-search', false)->assertSee('Summit news');
+    }
+
     public function test_the_site_search_finds_pages_and_stories_of_this_school_only(): void
     {
         [$school, $admin] = $this->liveSite('Search School', 'heritage');
