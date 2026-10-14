@@ -61,6 +61,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 default => 'Something went wrong and this was not saved. Please try again. If it keeps happening, tell support.',
             };
 
+            // A short code (the kind of error, plus the database error number if there is one) so support can tell what broke
+            $code = class_basename($e).($e instanceof \Illuminate\Database\QueryException ? ' '.($e->errorInfo[0] ?? '').'/'.($e->errorInfo[1] ?? '') : '');
+            if ($status >= 500) {
+                $message .= " (Support code: {$code})";
+            }
+
             if (! $request->isMethod('GET')) {
                 // 303 so the browser asks for the page again with GET; a plain 302 would repeat the PUT and fail
                 return back(303)->with('error', $message);
