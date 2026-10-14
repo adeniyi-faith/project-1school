@@ -71,6 +71,19 @@ class SupabaseAuthService
         return $id;
     }
 
+    /** Give an existing Supabase login a new password (used when a school resets login details in bulk). */
+    public function setPassword(string $supabaseId, string $password): void
+    {
+        $url = rtrim((string) config('services.supabase.url'), '/').'/auth/v1/admin/users/'.$supabaseId;
+        $key = config('services.supabase.service_role_key');
+
+        $response = Http::withHeaders(['apikey' => $key, 'Authorization' => 'Bearer '.$key])->put($url, ['password' => $password]);
+
+        if (! $response->successful()) {
+            throw new \RuntimeException('Supabase could not change this password.');
+        }
+    }
+
     /** Remove a Supabase login again, used to undo a half-finished sign-up. */
     public function deleteUser(string $supabaseId): void
     {

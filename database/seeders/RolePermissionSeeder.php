@@ -20,7 +20,7 @@ class RolePermissionSeeder extends Seeder
 
         // Students
         'students.view', 'students.create', 'students.edit', 'students.delete',
-        'students.import', 'students.export', 'students.promote', 'students.idcard', 'students.certificates',
+        'students.import', 'students.export', 'students.promote', 'students.idcard', 'students.certificates', 'students.logins',
 
         // Admissions: entrance exams, interviews and the accept/decline decision
         'admissions.manage',

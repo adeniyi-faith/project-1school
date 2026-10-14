@@ -9,8 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader, Panel, Pill } from '@/components/app/kit';
 import { statusLabel } from '@/components/lesson-notes/LessonTabs';
-import { ArrowLeft, Check, FileText, Loader2, Send, Sparkles, Trash2, Undo2 } from 'lucide-react';
-import type { AiAvailability, LessonChoices, LessonNoteFormat, SchemeWeek } from '@/Types';
+import { ArrowLeft, Check, FileText, FileUp, Loader2, Send, Sparkles, Trash2, Undo2 } from 'lucide-react';
+import type { AiAvailability, DetectedNames, LessonChoices, LessonNoteFormat, SchemeWeek } from '@/Types';
 
 interface Values {
     class_id: number | null;
@@ -48,6 +48,9 @@ export default function LessonNote({ note, values, classes, subjects, terms, for
     const [instructions, setInstructions] = useState('');
     const [drafting, setDrafting] = useState(false);
     const [aiNote, setAiNote] = useState<{ tone: 'good' | 'bad'; text: string } | null>(null);
+    const [upload, setUpload] = useState<File | null>(null);
+    const [reading, setReading] = useState(false);
+    const [readNote, setReadNote] = useState<{ tone: 'good' | 'bad'; text: string } | null>(null);
     const [feedback, setFeedback] = useState('');
     const [reviewing, setReviewing] = useState(false);
 
@@ -106,6 +109,37 @@ export default function LessonNote({ note, values, classes, subjects, terms, for
             setAiNote({ tone: 'bad', text: message || 'The AI could not write the note just now. Try again.' });
         } finally {
             setDrafting(false);
+        }
+    }
+
+    /** Read a note that already exists as a file into the headings, and fill in the class, subject and topic from it */
+    async function readUpload() {
+        if (!upload) return;
+        const filled = Object.values(d.sections).some(t => (t ?? '').trim() !== '');
+        if (filled && !confirm('The text under the headings will be replaced by what is read from the file. Continue?')) return;
+        setReading(true);
+        setReadNote(null);
+        const body = new FormData();
+        body.append('file', upload);
+        if (format) body.append('lesson_note_format_id', String(format.id));
+        try {
+            const { data } = await axios.post<{ sections: Record<string, string>; topic: string; week: number | null; duration_minutes: number | null; detected: DetectedNames }>('/school/lesson-notes/read-note', body);
+            form.setData(prev => ({
+                ...prev,
+                sections: { ...prev.sections, ...data.sections },
+                title: prev.title || data.topic,
+                week: prev.week ?? data.week,
+                duration_minutes: prev.duration_minutes ?? data.duration_minutes ?? prev.duration_minutes,
+                class_id: prev.class_id ?? data.detected.class_id,
+                subject_id: prev.subject_id ?? data.detected.subject_id,
+                term_id: prev.term_id ?? data.detected.term_id,
+            }));
+            setReadNote({ tone: 'good', text: 'The note has been read into the headings below. Check the class, subject, topic and every heading, then save.' });
+        } catch (e) {
+            const errs = axios.isAxiosError(e) ? e.response?.data?.errors : null;
+            setReadNote({ tone: 'bad', text: errs ? (errs.source?.[0] ?? errs.ai?.[0] ?? errs.file?.[0] ?? 'The file could not be read just now.') : 'The file could not be read just now. Try again.' });
+        } finally {
+            setReading(false);
         }
     }
 
@@ -174,6 +208,28 @@ export default function LessonNote({ note, values, classes, subjects, terms, for
                                 <Button disabled={reviewing} onClick={() => review('approved')} className="bg-emerald-600 text-white hover:bg-emerald-700"><Check className="size-4" /> Approve</Button>
                             </div>
                         </div>
+                    </Panel>
+                )}
+
+                {canEdit && ai.shown && (
+                    <Panel title="Start from a note you already have" description="Upload a lesson note you wrote in Word, a PDF or a text file. The AI sorts it under your format's headings and works out the class, subject and topic. Nothing is saved until you press Save.">
+                        {ai.reason ? (
+                            <p className="text-sm text-slate-500">{ai.reason}</p>
+                        ) : (
+                            <div className="space-y-3">
+                                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-300 px-4 py-3 text-sm hover:border-indigo-400 dark:border-white/15">
+                                    <FileUp className="size-5 text-slate-500" aria-hidden="true" />
+                                    <span className="min-w-0 flex-1 truncate">{upload ? upload.name : 'Choose a PDF, Word (.docx) or text file (up to 10 MB)'}</span>
+                                    <input type="file" accept=".pdf,.docx,.txt" className="sr-only" onChange={e => { setUpload(e.target.files?.[0] ?? null); setReadNote(null); }} />
+                                </label>
+                                <div className="flex flex-wrap items-center justify-end gap-3">
+                                    {readNote && <p role="status" className={`mr-auto text-sm ${readNote.tone === 'good' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600'}`}>{readNote.text}</p>}
+                                    <Button type="button" onClick={readUpload} disabled={reading || !upload} className="bg-violet-600 text-white hover:bg-violet-700">
+                                        {reading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />} {reading ? 'Reading…' : 'Read the note'}
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </Panel>
                 )}
 

@@ -230,6 +230,7 @@ class LessonNoteController extends Controller
                 'subject' => $s->subject?->name,
                 'term' => $s->term?->name,
                 'weeks' => count($s->weeks ?? []),
+                'taught' => collect($s->weeks ?? [])->where('taught', true)->count(),
                 'notes' => $s->notes_count,
                 'has_file' => (bool) $s->source_path,
             ]);
@@ -303,12 +304,13 @@ class LessonNoteController extends Controller
             'file' => 'nullable|file|max:10240|mimes:pdf,docx,txt',
             'text' => 'nullable|string|max:60000',
             'use_ai' => 'boolean',
-            'class_id' => ['required', Rule::exists('classes', 'id')->where('school_id', $sid)],
-            'subject_id' => ['required', Rule::exists('subjects', 'id')->where('school_id', $sid)],
+            'class_id' => ['nullable', Rule::exists('classes', 'id')->where('school_id', $sid)],
+            'subject_id' => ['nullable', Rule::exists('subjects', 'id')->where('school_id', $sid)],
             'term_id' => ['nullable', Rule::exists('terms', 'id')->where('school_id', $sid)],
         ], ['file.mimes' => 'Upload the scheme as a PDF, a Word (.docx) file or a text file.']);
 
         $source = $request->file('file') ? $this->notes->readUpload($request->file('file')) : ['text' => $data['text'] ?? '', 'file' => null];
+        $options = $this->nameOptions($sid);
 
         if (! $request->boolean('use_ai')) {
             if ($source['file']) {
@@ -318,16 +320,92 @@ class LessonNoteController extends Controller
             if ($weeks === []) {
                 throw ValidationException::withMessages(['source' => 'No weeks found. Start each line with the week number, for example "Week 1: Number bases".']);
             }
+            // "Class: JSS 1", "Subject: Mathematics" and "Term: First Term" lines at the top are noticed too
+            $header = $this->notes->typedHeader((string) $source['text']);
 
-            return response()->json(['weeks' => $weeks]);
+            return response()->json(['weeks' => $weeks, 'detected' => $this->detected($header['class'], $header['subject'], $header['term'], null, $options)]);
         }
 
-        return response()->json(['weeks' => $this->notes->readWithAi(
-            $sid, $request->user(), $source['text'], $source['file'],
-            (string) Subject::whereKey($data['subject_id'])->value('name'),
-            (string) SchoolClass::whereKey($data['class_id'])->value('name'),
-            ! empty($data['term_id']) ? Term::whereKey($data['term_id'])->value('name') : null,
-        )]);
+        // With the class and subject chosen, the AI only reads the weeks; with them empty it also works out which class, subject and term the document is for
+        if (! empty($data['class_id']) && ! empty($data['subject_id'])) {
+            return response()->json(['weeks' => $this->notes->readWithAi(
+                $sid, $request->user(), $source['text'], $source['file'],
+                (string) Subject::whereKey($data['subject_id'])->value('name'),
+                (string) SchoolClass::whereKey($data['class_id'])->value('name'),
+                ! empty($data['term_id']) ? Term::whereKey($data['term_id'])->value('name') : null,
+            ), 'detected' => null]);
+        }
+
+        $answer = $this->notes->readDocument($sid, $request->user(), 'scheme', $source['text'], $source['file'], $this->optionNames($options));
+        $weeks = $this->notes->clean($answer['weeks'] ?? []);
+        if ($weeks === []) {
+            throw ValidationException::withMessages(['source' => 'The AI could not find any weekly topics in this document. Check that it is the scheme of work, or type the weeks in.']);
+        }
+
+        return response()->json(['weeks' => $weeks, 'detected' => $this->detected($answer['class'] ?? null, $answer['subject'] ?? null, $answer['term'] ?? null, $answer['title'] ?? null, $options)]);
+    }
+
+    /**
+     * A lesson note someone already wrote (Word, PDF or text) read by the AI into the chosen format's headings,
+     * with the class, subject, term, topic and week worked out too. Nothing is saved: the note form is filled in
+     * for the teacher to check.
+     */
+    public function readNote(Request $request): JsonResponse
+    {
+        $sid = $this->getSchoolId();
+        $data = $request->validate([
+            'file' => 'nullable|file|max:10240|mimes:pdf,docx,txt',
+            'text' => 'nullable|string|max:60000',
+            'lesson_note_format_id' => ['nullable', Rule::exists('lesson_note_formats', 'id')->where('school_id', $sid)],
+        ], ['file.mimes' => 'Upload the note as a PDF, a Word (.docx) file or a text file.']);
+
+        $source = $request->file('file') ? $this->notes->readUpload($request->file('file')) : ['text' => $data['text'] ?? '', 'file' => null];
+        $format = ! empty($data['lesson_note_format_id']) ? LessonNoteFormat::find($data['lesson_note_format_id']) : null;
+        $sections = $this->notes->sectionsOf($format);
+        $options = $this->nameOptions($sid);
+
+        $answer = $this->notes->readDocument($sid, $request->user(), 'note', $source['text'], $source['file'], $this->optionNames($options), $sections);
+        $found = collect($sections)->mapWithKeys(fn ($x) => [$x['key'] => mb_substr(trim((string) ($answer['sections'][$x['key']] ?? '')), 0, 8000)])->all();
+        if (collect($found)->every(fn ($t) => $t === '')) {
+            throw ValidationException::withMessages(['source' => 'The AI could not find a lesson note in this document. Check the file, or type the note in.']);
+        }
+
+        return response()->json([
+            'sections' => (object) $found,
+            'topic' => mb_substr(trim((string) ($answer['topic'] ?? $answer['title'] ?? '')), 0, 255),
+            'week' => isset($answer['week']) && (int) $answer['week'] >= 1 && (int) $answer['week'] <= LessonNoteService::MAX_WEEKS ? (int) $answer['week'] : null,
+            'duration_minutes' => isset($answer['duration_minutes']) && (int) $answer['duration_minutes'] >= 10 && (int) $answer['duration_minutes'] <= 300 ? (int) $answer['duration_minutes'] : null,
+            'detected' => $this->detected($answer['class'] ?? null, $answer['subject'] ?? null, $answer['term'] ?? null, null, $options),
+        ]);
+    }
+
+    /** @return array{classes: array<int, string>, subjects: array<int, string>, terms: array<int, string>} id => name */
+    private function nameOptions(int $sid): array
+    {
+        return [
+            'classes' => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->pluck('name', 'id')->all(),
+            'subjects' => Subject::where('school_id', $sid)->orderBy('name')->pluck('name', 'id')->all(),
+            'terms' => Term::where('school_id', $sid)->orderByDesc('start_date')->pluck('name', 'id')->all(),
+        ];
+    }
+
+    private function optionNames(array $options): array
+    {
+        return array_map(fn ($list) => array_values(array_unique($list)), $options);
+    }
+
+    /** What a document turned out to be about, as ids the page can select (null where nothing matched) */
+    private function detected(?string $class, ?string $subject, ?string $term, ?string $title, array $options): array
+    {
+        $classId = $this->notes->matchId($class, $options['classes']);
+        $subjectId = $this->notes->matchId($subject, $options['subjects']);
+        $names = [
+            'class' => $classId ? $options['classes'][$classId] : null,
+            'subject' => $subjectId ? $options['subjects'][$subjectId] : null,
+        ];
+        $termId = $this->notes->matchId($term, $options['terms']);
+
+        return ['class_id' => $classId, 'subject_id' => $subjectId, 'term_id' => $termId, 'title' => $title ? mb_substr(trim($title), 0, 255) : null] + $names;
     }
 
     /** The scheme file as the school uploaded it */
@@ -530,6 +608,7 @@ class LessonNoteController extends Controller
             'weeks.*.week' => 'required|integer|min:1|max:'.LessonNoteService::MAX_WEEKS,
             'weeks.*.topic' => 'required|string|max:255',
             'weeks.*.details' => 'nullable|string|max:2000',
+            'weeks.*.taught' => 'nullable|boolean',
             'file' => 'nullable|file|max:10240|mimes:pdf,docx,txt',
         ], [
             'weeks.required' => 'Add at least one week.',

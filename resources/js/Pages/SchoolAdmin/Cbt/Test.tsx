@@ -19,7 +19,7 @@ interface QuestionReport {
 }
 
 interface Props {
-    test: CbtTestRow & { instructions: string | null; access_code: string | null; sections: { title: string; bank: string | null; topic: string | null; difficulty: string | null; question_type: 'objective' | 'theory' | null; count: number }[] };
+    test: CbtTestRow & { instructions: string | null; access_code: string | null; sections: { title: string; bank: string | null; topic: string | null; topics: string[]; difficulty: string | null; question_type: 'objective' | 'theory' | null; count: number }[] };
     problems: string[];
     results: CbtResultRow[];
     summary: { expected: number; finished: number; writing: number; to_mark: number; average: number | null; highest: number | null; lowest: number | null; passed: number | null };
@@ -100,7 +100,7 @@ export default function CbtTestPage({ test, problems, results, summary, question
                         <p className="mb-1 text-slate-500">Questions</p>
                         <ul className="space-y-0.5">
                             {test.sections.map((s, i) => (
-                                <li key={i}><span className="font-medium">{s.title}:</span> {s.count} from {s.bank ?? 'a deleted bank'}{s.topic ? `, topic ${s.topic}` : ''}{s.difficulty ? `, ${s.difficulty}` : ''}{s.question_type ? `, ${s.question_type} only` : ''}</li>
+                                <li key={i}><span className="font-medium">{s.title}:</span> {s.count} from {s.bank ?? 'a deleted bank'}{s.topics.length ? `, ${s.topics.length === 1 ? 'topic' : 'topics'} ${s.topics.join(', ')}` : ''}{s.difficulty ? `, ${s.difficulty}` : ''}{s.question_type ? `, ${s.question_type} only` : ''}</li>
                             ))}
                         </ul>
                     </div>

@@ -116,6 +116,109 @@ class LessonNoteService
     }
 
     /**
+     * The AI reads a whole document (a scheme of work, a lesson note someone already wrote, or a syllabus) and
+     * also works out which class, subject and term it is for, so the teacher does not have to pick them first.
+     * $options lists the school's own names (classes, subjects, terms); the AI must choose from them or say nothing.
+     * Only the document's text goes to the AI. Nothing is saved.
+     *
+     * @param  'scheme'|'note'|'syllabus'  $kind
+     * @param  array{classes: list<string>, subjects: list<string>, terms: list<string>}  $options
+     * @param  array<int, array{key: string, label: string, hint?: string}>  $sections  the lesson note headings (kind "note")
+     * @return array<string, mixed>
+     */
+    public function readDocument(int $schoolId, User $by, string $kind, ?string $text, ?array $file, array $options, array $sections = []): array
+    {
+        $text = $text !== null ? mb_substr(trim($text), 0, 60000) : null;
+        if (($text === null || $text === '') && ! $file) {
+            throw ValidationException::withMessages(['source' => 'Upload the document or paste its text first.']);
+        }
+
+        $props = [
+            'class' => ['type' => 'STRING'], 'subject' => ['type' => 'STRING'], 'title' => ['type' => 'STRING'],
+        ];
+        $what = match ($kind) {
+            'scheme' => 'a scheme of work: the topics a teacher will teach week by week for one term',
+            'syllabus' => 'a syllabus: the list of topics a class must cover in a subject for the year',
+            default => 'a lesson note a teacher has already written',
+        };
+        if ($kind === 'scheme') {
+            $props += ['term' => ['type' => 'STRING'], 'weeks' => self::WEEKS_SCHEMA['properties']['weeks']];
+        } elseif ($kind === 'syllabus') {
+            $props += ['academic_year' => ['type' => 'STRING'], 'topics' => ['type' => 'ARRAY', 'items' => ['type' => 'STRING']]];
+        } else {
+            $props += [
+                'term' => ['type' => 'STRING'], 'topic' => ['type' => 'STRING'], 'week' => ['type' => 'INTEGER'], 'duration_minutes' => ['type' => 'INTEGER'],
+                'sections' => ['type' => 'OBJECT', 'properties' => collect($sections)->mapWithKeys(fn ($x) => [$x['key'] => ['type' => 'STRING']])->all()],
+            ];
+        }
+
+        $system = "You read school documents from Nigerian schools. The document is {$what}. "
+            .'Copy the school\'s own wording; never invent content that is not in the document. '
+            .'For "class", "subject" and "term" choose the closest match from the school\'s lists below and answer with the list\'s exact spelling; '
+            .'answer with an empty string when the document does not say or nothing in the list fits. '
+            .($kind === 'note' ? 'Sort the note\'s text under the headings given, copying it across; a heading with no matching text gets an empty string. ' : '')
+            .($kind === 'scheme' ? '"details" holds the sub-topics or content for that week as short lines; skip weeks that are only revision, examination or holiday unless they are all there is. ' : '')
+            .($kind === 'syllabus' ? 'List each topic once, as a short title, in the order given. ' : '');
+        $prompt = "The school's classes: ".(implode('; ', $options['classes']) ?: 'none')
+            ."\nThe school's subjects: ".(implode('; ', $options['subjects']) ?: 'none')
+            .($kind !== 'syllabus' ? "\nThe school's terms: ".(implode('; ', $options['terms']) ?: 'none') : '')
+            .($kind === 'note' ? "\n\nHeadings (key: heading):\n".collect($sections)->map(fn ($x) => "- {$x['key']}: {$x['label']}".(! empty($x['hint']) ? " ({$x['hint']})" : ''))->implode("\n") : '')
+            ."\n\nRead this document.".($text ? "\n\nDocument:\n".$text : '');
+
+        $answer = $this->ai->ask($schoolId, $by->id, 'lesson_notes', 'writing', $system, $prompt, ['type' => 'OBJECT', 'properties' => $props], 12000, $file ? [$file] : []);
+
+        return is_array($answer) ? $answer : [];
+    }
+
+    /**
+     * The id whose name best matches what a document called it: "JSS1" finds "JSS 1", "Maths" finds "Mathematics".
+     *
+     * @param  array<int, string>  $options  id => name
+     */
+    public function matchId(?string $name, array $options): ?int
+    {
+        $norm = fn (string $v) => preg_replace('/[^a-z0-9]+/', '', mb_strtolower($v));
+        $want = $norm((string) $name);
+        if ($want === '') {
+            return null;
+        }
+        // Short forms teachers use for subjects
+        $want = ['maths' => 'mathematics', 'math' => 'mathematics', 'eng' => 'english', 'bio' => 'biology', 'chem' => 'chemistry', 'phy' => 'physics',
+            'govt' => 'government', 'econs' => 'economics', 'agric' => 'agricultural', 'crs' => 'christianreligious', 'crk' => 'christianreligious',
+            'irs' => 'islamicreligious', 'irk' => 'islamicreligious', 'civic' => 'civiceducation', 'lit' => 'literature'][$want] ?? $want;
+        foreach ($options as $id => $label) {
+            if ($norm($label) === $want) {
+                return (int) $id;
+            }
+        }
+        foreach ($options as $id => $label) {
+            $have = $norm($label);
+            if ($have !== '' && (str_contains($have, $want) || str_contains($want, $have))) {
+                return (int) $id;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Class, subject and term named in the first lines of a typed scheme ("Subject: Mathematics"), without the AI.
+     *
+     * @return array{class: ?string, subject: ?string, term: ?string}
+     */
+    public function typedHeader(string $text): array
+    {
+        $found = ['class' => null, 'subject' => null, 'term' => null];
+        foreach (array_slice(preg_split('/\R/', $text) ?: [], 0, 15) as $line) {
+            if (preg_match('/^\s*(class|subject|term)\s*[:\-–]\s*(.+?)\s*$/iu', $line, $m)) {
+                $found[mb_strtolower($m[1])] ??= $m[2];
+            }
+        }
+
+        return $found;
+    }
+
+    /**
      * A lesson note drafted by the AI in the given format, for the teacher to change and save.
      *
      * @param  array<int, array{key: string, label: string, hint?: string}>  $sections
@@ -180,7 +283,7 @@ class LessonNoteService
     /**
      * Weeks tidied: numbered 1 to 20, one entry per week, topics and details trimmed and shortened.
      *
-     * @return array<int, array{week: int, topic: string, details: string}>
+     * @return array<int, array{week: int, topic: string, details: string, taught?: bool}>
      */
     public function clean(array $weeks): array
     {
@@ -192,6 +295,10 @@ class LessonNoteService
                 continue;
             }
             $out[$n] = ['week' => $n, 'topic' => mb_substr($topic, 0, 255), 'details' => mb_substr(trim((string) ($w['details'] ?? '')), 0, 2000)];
+            // Only weeks marked as taught carry the flag
+            if (filter_var($w['taught'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                $out[$n]['taught'] = true;
+            }
         }
         ksort($out);
 

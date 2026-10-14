@@ -34,6 +34,8 @@ use App\Http\Controllers\SchoolAdmin\SectionController;
 use App\Http\Controllers\SchoolAdmin\ShiftController;
 use App\Http\Controllers\SchoolAdmin\StaffController;
 use App\Http\Controllers\SchoolAdmin\StudentController;
+use App\Http\Controllers\SchoolAdmin\StudentImportController;
+use App\Http\Controllers\SchoolAdmin\StudentLoginController;
 use App\Http\Controllers\SchoolAdmin\SubjectController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SchoolAdmin\SchoolUserController;
@@ -203,6 +205,16 @@ Route::middleware('auth')->group(function () {
                 Route::resource($name, $controller)->only(['store', 'update', 'destroy'])->middleware('permission:settings.edit');
             }
 
+            // Bulk adding of students and bulk sign-in details (before the students/{student} routes below)
+            Route::get('students/import',                       [StudentImportController::class, 'index'])->middleware('permission:students.import')->name('students.import');
+            Route::get('students/import/template',              [StudentImportController::class, 'template'])->middleware('permission:students.import')->name('students.import.template');
+            Route::post('students/import/preview',              [StudentImportController::class, 'preview'])->middleware(['permission:students.import', 'throttle:20,1'])->name('students.import.preview');
+            Route::post('students/import',                      [StudentImportController::class, 'store'])->middleware('permission:students.import')->name('students.import.store');
+            Route::get('students/logins',                       [StudentLoginController::class, 'index'])->middleware('permission:students.logins')->name('students.logins');
+            Route::post('students/logins/start',                [StudentLoginController::class, 'start'])->middleware('permission:students.logins')->name('students.logins.start');
+            Route::post('students/logins/{token}/step',         [StudentLoginController::class, 'step'])->middleware(['permission:students.logins', 'throttle:600,1'])->whereUuid('token')->name('students.logins.step');
+            Route::get('students/logins/{token}/pdf',           [StudentLoginController::class, 'pdf'])->middleware('permission:students.logins')->whereUuid('token')->name('students.logins.pdf');
+            Route::get('students/logins/{token}/excel',         [StudentLoginController::class, 'excel'])->middleware('permission:students.logins')->whereUuid('token')->name('students.logins.excel');
             Route::resource('students', StudentController::class)->only(['create', 'store'])->middleware('permission:students.create');
             Route::resource('students', StudentController::class)->only(['index', 'show'])->middleware('permission:students.view');
             Route::resource('students', StudentController::class)->only(['edit', 'update'])->middleware('permission:students.edit');
@@ -230,6 +242,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('cbt/papers/{paper}',                       [ExamPaperController::class, 'destroy'])->middleware('permission:cbt.manage')->name('cbt.papers.destroy');
             Route::get('cbt/papers/{paper}/pdf',                      [ExamPaperController::class, 'pdf'])->middleware('permission:cbt.view')->name('cbt.papers.pdf');
             Route::get('cbt/papers/{paper}/marking-scheme',           [ExamPaperController::class, 'markingScheme'])->middleware('permission:cbt.view')->name('cbt.papers.scheme');
+            Route::get('cbt/taught',                                  [CbtTestController::class, 'taught'])->middleware('permission:cbt.view')->name('cbt.taught');
             Route::get('cbt/tests',                                   [CbtTestController::class, 'index'])->middleware('permission:cbt.view')->name('cbt.tests');
             Route::get('cbt/tests/new',                               [CbtTestController::class, 'create'])->middleware('permission:cbt.manage')->name('cbt.tests.create');
             Route::post('cbt/tests',                                  [CbtTestController::class, 'store'])->middleware('permission:cbt.manage')->name('cbt.tests.store');
@@ -454,6 +467,7 @@ Route::middleware('auth')->group(function () {
             Route::get('lesson-notes/new',                            [LessonNoteController::class, 'create'])->middleware('permission:lessons.create')->name('lesson-notes.create');
             Route::post('lesson-notes',                               [LessonNoteController::class, 'store'])->middleware('permission:lessons.create')->name('lesson-notes.store');
             Route::post('lesson-notes/ai',                            [LessonNoteController::class, 'aiDraft'])->middleware(['permission:lessons.create', 'throttle:20,1'])->name('lesson-notes.ai');
+            Route::post('lesson-notes/read-note',                     [LessonNoteController::class, 'readNote'])->middleware(['permission:lessons.create', 'throttle:20,1'])->name('lesson-notes.read-note');
             Route::get('lesson-notes/schemes',                        [LessonNoteController::class, 'schemes'])->middleware('permission:lessons.view')->name('lesson-notes.schemes');
             Route::get('lesson-notes/schemes/new',                    [LessonNoteController::class, 'scheme'])->middleware('permission:lessons.create')->name('lesson-notes.schemes.create');
             Route::post('lesson-notes/schemes',                       [LessonNoteController::class, 'storeScheme'])->middleware('permission:lessons.create')->name('lesson-notes.schemes.store');
@@ -473,6 +487,7 @@ Route::middleware('auth')->group(function () {
             Route::get('lesson-notes/{note}/pdf',                     [LessonNoteController::class, 'pdf'])->middleware('permission:lessons.view')->name('lesson-notes.pdf');
 
             Route::get('homework/syllabi',                            [HomeworkController::class, 'syllabi'])->middleware('permission:syllabus.view')->name('homework.syllabi.index');
+            Route::post('homework/syllabi/read',                      [HomeworkController::class, 'readSyllabus'])->middleware(['permission:syllabus.manage', 'throttle:20,1'])->name('homework.syllabi.read');
             Route::post('homework/syllabi',                           [HomeworkController::class, 'storeSyllabus'])->middleware('permission:syllabus.manage')->name('homework.syllabi.store');
             Route::put('homework/syllabi/{syllabus}',                 [HomeworkController::class, 'updateSyllabus'])->middleware('permission:syllabus.manage')->name('homework.syllabi.update');
 
