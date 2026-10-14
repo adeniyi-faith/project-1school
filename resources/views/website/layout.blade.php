@@ -22,11 +22,11 @@
     <link rel="stylesheet" href="{{ $fontsUrl }}">
     @endif
     <style>:root{ {!! $style !!} }</style>
-    <style>@include('website.styles')@include('website.styles-themes')</style>
+    <style>@include('website.styles')@include('website.styles-themes')@include('website.styles-heritage')</style>
     <noscript><style>.burger{display:none}.menu{display:block;position:static;background:none;color:inherit;padding:0}.menu a{font-size:1rem;display:inline-block;border:0;margin-right:1rem}</style></noscript>
     <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 </head>
-<body id="sheet" data-theme="{{ $theme }}">
+<body id="sheet" data-theme="{{ \App\Website\Themes::key($theme) }}">
 <a class="skip" href="#main">Skip to content</a>
 
 @include('website.partials.announcement')

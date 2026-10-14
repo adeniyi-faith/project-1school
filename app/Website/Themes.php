@@ -12,15 +12,16 @@ class Themes
     private const SERIF = "'Source Serif 4','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const NEWSREADER = "'Newsreader','Source Serif 4','Iowan Old Style',Georgia,serif";
     private const INSTRUMENT = "'Instrument Sans','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
+    private const CRIMSON = "'Crimson Pro','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const SANS = "'Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
 
     public const ALL = [
         'heritage' => [
-            'label' => 'Heritage', 'note' => 'Classic university look: top strip, serif headings, a banner with action cards over its edge.',
+            'label' => 'Heritage', 'note' => 'Classic university look: gold header, red full-screen menu, big serif headlines, photo banners and a gold footer.',
             'brand' => '#990000', 'brand2' => '#ffcc00', 'bg' => '#ffffff', 'soft' => '#faf6ee', 'text' => '#1c1917',
-            'head' => self::SERIF, 'body' => self::SANS,
-            'radius' => '.375rem', 'radius_lg' => '1.5rem', 'btn_radius' => '.75rem', 'btn_case' => 'uppercase', 'btn_track' => '.16em', 'btn_style' => 'outline',
-            'hdr' => 'bg', 'ftr' => 'dark',
+            'head' => self::CRIMSON, 'body' => self::SANS, 'fonts' => 'Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500|Source+Sans+3:wght@400;600;700',
+            'radius' => '0', 'radius_lg' => '1.75rem', 'btn_radius' => '.75rem', 'btn_case' => 'uppercase', 'btn_track' => '.16em', 'btn_style' => 'outline',
+            'hdr' => 'brand2', 'ftr' => 'brand2',
         ],
         'modern' => [
             'label' => 'Modern', 'note' => 'Floating menu bar, a split banner with a big picture, a bento grid of cards and a timeline.',
