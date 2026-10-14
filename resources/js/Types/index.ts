@@ -27,6 +27,11 @@ export interface School {
     language: string;
     status: 'active' | 'inactive' | 'suspended';
     users_count?: number;
+    students_count?: number;
+    last_login_at?: string | null;
+    plan?: string | null;
+    plan_status?: string | null;
+    plan_ends?: string | null;
     created_at: string;
     updated_at: string;
 }

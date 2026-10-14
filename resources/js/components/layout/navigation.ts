@@ -275,7 +275,8 @@ export function navGroupsForRole(role: string, paths?: string[], actingSchool = 
         if (role === 'super-admin') {
             const school = item.href.startsWith('/school');
             const ok = actingSchool ? school && (!item.roles || item.roles.includes('super-admin') || item.roles.includes('school-admin')) : item.href.startsWith('/super-admin');
-            return ok && inPaths(item);
+            // The platform's own pages are always listed for the owner; school pages still follow what she may open
+            return ok && (actingSchool ? inPaths(item) : true);
         }
         return (!item.roles || item.roles.includes(role)) && inPaths(item);
     };
@@ -288,6 +289,9 @@ export function navGroupsForRole(role: string, paths?: string[], actingSchool = 
 /** Phone tab-bar shortcuts, leaving out any the person cannot open */
 export function tabsForRole(role: string, paths?: string[], actingSchool = false): BottomTab[] {
     const tabs = bottomTabs[role === 'super-admin' && actingSchool ? 'school-admin' : role] ?? bottomTabs.default;
+
+    // The platform owner's own tabs never depend on the page list
+    if (role === 'super-admin' && !actingSchool) return tabs;
 
     return paths ? tabs.filter((t) => paths.includes(t.href)) : tabs;
 }
