@@ -1,95 +1,51 @@
 # SchoolRuns
 
-SchoolRuns is a school management system: one Laravel application that
-renders its own React (TypeScript) pages using [Inertia.js](https://inertiajs.com/),
-so there's a single codebase instead of a separate backend and frontend.
-It covers admissions, students, staff, attendance, timetables, exams,
-fees, the library, transport, hostels, homework, communication, and
-reporting, with separate views for Super Admin, School Admin, Teacher,
-Accountant, Student, and Parent accounts.
+[![Tests and deploy](https://github.com/adeniyi-faith/project-1school/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/adeniyi-faith/project-1school/actions/workflows/deploy.yml)
 
-**Supabase** checks logins: when someone signs in, Laravel sends their
-email and password to Supabase, and Supabase confirms whether that
-password is correct. Laravel never stores or checks the password itself
-— it only decides, once Supabase confirms who is signing in, what that
-person is allowed to do (which school they belong to, whether they're a
-Teacher or a Parent, and so on), using the person's existing account
-here. **Supabase's database (Postgres) is also this app's own database**,
-and **Supabase Storage** holds uploaded files (documents, photos, school
-logos).
+**SchoolRuns is one website that runs a whole school.** Admissions, students, staff, attendance, timetables, exams, report cards, fees, the library, buses, hostels, homework and messages all live in one place. Many schools can use the same install, and each school only ever sees its own information.
 
-## Running it locally
+It is built for Nigerian schools first: three terms a year, continuous assessment, WAEC-style report cards, and fees in naira with online payment. It also has setups for British, American and Montessori schools.
+
+## The problem it solves
+
+Many schools keep students in one notebook, fees in another, and results in a spreadsheet. Parents ask the same questions again and again. SchoolRuns puts it all in one system, with a separate view for each kind of person, so each one only sees what they need.
+
+## What it can do
+
+- **People and logins:** Super Admin, School Admin, Principal, Teacher, Accountant, Librarian, Receptionist, Driver, Warden, Store Manager, Student and Parent. Menus and buttons show only what that person is allowed to use.
+- **Admissions:** inquiry, entrance exam, interview, offer, then enrolment in one step.
+- **Results:** score parts that each school sets up, grade scales, positions, approval steps, report card PDFs (one student or a whole school as a ZIP), and broadsheets in PDF and Excel.
+- **Computer-based tests:** question banks, class tests, entrance exams and printed exam papers.
+- **Fees:** invoices, a payment record that cannot be edited, scholarships, paying in dated parts, and online payment with Paystack, Flutterwave, Monnify, Remita or Interswitch.
+- **AI helpers (Google Gemini, optional):** report card comments, lesson notes and question drafts. Each school can switch AI off.
+- **Also:** attendance, timetable, staff and payroll, library, inventory, transport, hostels, homework, certificates, student ID cards with QR scanning, SMS and email messages, and reports.
+
+## Try it
+
+Run it on your own computer (you need PHP 8.4, Composer and Node 20):
 
 ```bash
-composer install
-npm install
-
-cp .env.example .env
-php artisan key:generate
-php artisan migrate --seed
-
-npm run build
-php artisan serve
+composer install && npm install && cp .env.example .env && php artisan key:generate
+php artisan migrate --seed && npm run build && php artisan serve
 ```
 
-The app reads its Supabase project's details, and which database to use,
-from environment variables in `.env` instead of having them typed
-directly into the code.
+Then open the address it prints. Run the tests with `php artisan test`.
 
-### Connecting a real Supabase project
+## Built with
 
-Until you create one, the app runs against placeholder values (the
-sign-in form will show, but signing in won't work). To connect a real
-project:
+Laravel 13 (PHP) for the server, React and TypeScript for the screens, [Inertia.js](https://inertiajs.com/) to join the two so there is one codebase, Tailwind CSS for styling, and MySQL in production (SQLite on your own computer). Permissions use Spatie laravel-permission. PDFs use DomPDF.
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. In its dashboard, go to **Settings → API** and copy the Project URL,
-   anon key, and service role key into `.env` (`SUPABASE_URL`,
-   `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`).
-3. For the database, go to **Settings → Database**, copy the connection
-   details into `.env` (`DB_CONNECTION=pgsql`, `DB_HOST`, `DB_PORT`,
-   `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`), then run
-   `php artisan migrate`.
-4. For file storage, create a bucket under **Storage**, then copy its
-   S3-compatible access keys (**Storage → Connect**) into `.env`
-   (`SUPABASE_STORAGE_*` variables), and set `FILESYSTEM_DISK=supabase`.
-5. **Important**: signing in only works for people who already have an
-   account in *this app's* database (school admins create Staff,
-   Student, and Guardian accounts, which is where roles and school
-   membership come from). Creating someone in Supabase's own user list
-   doesn't by itself give them access — a matching account (same email)
-   also needs to exist here, and vice versa.
+## Where things are
 
-## Deploying
+- [Architecture in plain English](docs/architecture.md)
+- [User guides for each role](docs/index.md) and the [cPanel install guide](docs/cpanel-installation.md)
+- [Original feature specs](requirements/00-overview.md)
+- [Notes for people (and AI tools) changing the code](CLAUDE.md) and [CONTRIBUTING.md](CONTRIBUTING.md)
 
-- **The app**: deploys on [Railway](https://railway.app), which runs it
-  as a normal, always-on server (not a serverless function), so it
-  behaves like it would on any regular host. `railway.json` tells
-  Railway how to build it (`composer install` + `npm run build`), and
-  `Procfile` tells it how to start it:
-  - `web` runs pending database migrations, then starts the app.
-  - `worker` (optional, enable it as a second Railway service if you
-    want it) processes queued background jobs — e-mail/SMS blasts,
-    report generation, and the like — instead of running them inline.
-    If you enable it, switch `QUEUE_CONNECTION` to `database` in your
-    environment variables so jobs actually wait in the queue for it.
-  - **Important**: if your Railway project still has its root directory
-    set to `api/` from before this app was swapped in, change it to the
-    repository root in Railway's project settings — that folder no
-    longer exists.
-  - Set the same environment variables from your `.env` in Railway's
-    project settings, plus `APP_ENV=production`, `APP_DEBUG=false`, and
-    `APP_URL` set to the app's real Railway/custom domain.
-  - Uploaded files still go to Supabase Storage rather than this
-    server's own disk, since a redeploy replaces the container (and
-    its disk) from scratch.
-- **Documentation site** (`docs/`): a separate [VitePress](https://vitepress.dev)
-  site with its own build step, deployed on [Vercel](https://vercel.com)
-  — see `vercel.json`. Set the Vercel project's root directory to the
-  repository root (it `cd`s into `docs/` itself during the build).
+## How the live site is updated
 
-## What's built so far
+Every change merged to `main` is tested by GitHub, and only if every test passes is it put on the live cPanel server. The old Railway files are kept in `deploy/old-railway/`.
 
-See `requirements/00-overview.md` and the module files under
-`requirements/modules/` for the full feature list, and `docs/` for
-day-to-day usage guides for each role.
+## Licence
+
+All rights reserved. The code is public to show how it was built, not to be reused. See [LICENSE](LICENSE).
