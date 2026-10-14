@@ -53,7 +53,7 @@ class ExamPaperController extends Controller
         return $this->editor($request, null, [
             'title' => $term ? $term->name.' Examination' : 'Examination',
             'class_id' => $request->integer('class_id') ?: null, 'subject_id' => $request->integer('subject_id') ?: null, 'term_id' => $term?->id,
-            'duration_minutes' => 120, 'instructions' => '', 'show_marks' => true,
+            'duration_minutes' => 120, 'instructions' => '', 'show_marks' => true, 'scope' => [],
             'sections' => [
                 ['title' => 'Section A: Objectives', 'instructions' => 'Answer all the questions. Choose the correct option from the letters A to D.', 'questions' => []],
                 ['title' => 'Section B: Theory', 'instructions' => 'Answer any four questions.', 'questions' => []],
@@ -65,7 +65,7 @@ class ExamPaperController extends Controller
     {
         return $this->editor($request, $paper, [
             'title' => $paper->title, 'class_id' => $paper->class_id, 'subject_id' => $paper->subject_id, 'term_id' => $paper->term_id,
-            'duration_minutes' => $paper->duration_minutes, 'instructions' => $paper->instructions ?? '', 'show_marks' => $paper->show_marks,
+            'duration_minutes' => $paper->duration_minutes, 'instructions' => $paper->instructions ?? '', 'show_marks' => $paper->show_marks, 'scope' => $paper->scope ?? [],
             'sections' => $paper->sections,
         ]);
     }
@@ -185,6 +185,8 @@ class ExamPaperController extends Controller
             'sections.*.instructions' => 'nullable|string|max:1000',
             'sections.*.questions' => 'present|array',
             'sections.*.questions.*' => 'integer',
+            'scope' => 'nullable|array|max:100',
+            'scope.*' => 'string|max:255',
         ], ['sections.*.title.required' => 'Give every section a heading.']);
 
         $ids = collect($data['sections'])->flatMap(fn ($s) => $s['questions'])->map(fn ($id) => (int) $id);
@@ -208,6 +210,7 @@ class ExamPaperController extends Controller
         ])->all();
         $data['instructions'] = ($data['instructions'] ?? null) ?: null;
         $data['show_marks'] = $request->boolean('show_marks');
+        $data['scope'] = array_values(array_unique(array_filter(array_map('trim', $data['scope'] ?? [])))) ?: null;
 
         return $data;
     }

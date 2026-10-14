@@ -17,9 +17,9 @@ class ExamPaper extends Model
 
     public const MAX_QUESTIONS = 150;
 
-    protected $fillable = ['school_id', 'title', 'class_id', 'subject_id', 'term_id', 'duration_minutes', 'instructions', 'sections', 'show_marks', 'created_by'];
+    protected $fillable = ['school_id', 'title', 'class_id', 'subject_id', 'term_id', 'duration_minutes', 'instructions', 'sections', 'show_marks', 'scope', 'created_by'];
 
-    protected $casts = ['sections' => 'array', 'show_marks' => 'boolean', 'duration_minutes' => 'integer'];
+    protected $casts = ['sections' => 'array', 'show_marks' => 'boolean', 'scope' => 'array', 'duration_minutes' => 'integer'];
 
     public function schoolClass(): BelongsTo { return $this->belongsTo(SchoolClass::class, 'class_id'); }
     public function subject(): BelongsTo     { return $this->belongsTo(Subject::class); }

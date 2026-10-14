@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -8,16 +9,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader, Panel, Segmented } from '@/components/app/kit';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import TaughtScope from '@/components/cbt/TaughtScope';
+import { inScope } from '@/lib/scope';
 import type { CbtDifficulty, CbtQuestionType } from '@/Types';
 
-interface Section { title: string; cbt_bank_id: string; topic: string; difficulty: string; question_type: string; question_count: string }
+interface Section { title: string; cbt_bank_id: string; topics: string[]; difficulty: string; question_type: string; question_count: string }
 
 interface Props {
     test: null | {
         id: number; title: string; audience: 'students' | 'applicants'; has_candidates: boolean; class_id: number | null; subject_id: number | null; term_id: number | null; instructions: string | null;
         duration_minutes: number; opens_at: string; closes_at: string | null; shuffle_questions: boolean; shuffle_options: boolean; show_score: boolean; allow_calculator: boolean;
         access_code: string | null; max_page_leaves: number | null; pass_mark: number | null; started: boolean;
-        sections: { title: string; cbt_bank_id: number; topic: string | null; difficulty: CbtDifficulty | null; question_type: CbtQuestionType | null; question_count: number }[];
+        sections: { title: string; cbt_bank_id: number; topic: string | null; topics: string[] | null; difficulty: CbtDifficulty | null; question_type: CbtQuestionType | null; question_count: number }[];
     };
     banks: { id: number; name: string; counts: { topic: string | null; difficulty: CbtDifficulty; type: CbtQuestionType }[] }[];
     classes: { id: number; name: string }[];
@@ -69,10 +72,11 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
         access_code: test?.access_code ?? '',
         max_page_leaves: test?.max_page_leaves ? String(test.max_page_leaves) : '',
         pass_mark: test?.pass_mark != null ? String(test.pass_mark) : '',
-        sections: test?.sections.map(s => ({ title: s.title, cbt_bank_id: String(s.cbt_bank_id), topic: s.topic ?? '', difficulty: s.difficulty ?? '', question_type: s.question_type ?? '', question_count: String(s.question_count) }))
-            ?? [{ title: 'Section A', cbt_bank_id: banks[0] ? String(banks[0].id) : '', topic: '', difficulty: '', question_type: '', question_count: '20' }],
+        sections: test?.sections.map(s => ({ title: s.title, cbt_bank_id: String(s.cbt_bank_id), topics: s.topics?.length ? s.topics : s.topic ? [s.topic] : [], difficulty: s.difficulty ?? '', question_type: s.question_type ?? '', question_count: String(s.question_count) }))
+            ?? [{ title: 'Section A', cbt_bank_id: banks[0] ? String(banks[0].id) : '', topics: [], difficulty: '', question_type: '', question_count: '20' }],
     });
     const d = form.data;
+    const [scope, setScope] = useState<string[]>([]);
     const errors = form.errors as Record<string, string | undefined>;
     const locked = !!test?.started;
     const applicants = d.audience === 'applicants';
@@ -88,7 +92,7 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
 
     function available(s: Section): number {
         const bank = banks.find(b => String(b.id) === s.cbt_bank_id);
-        return bank ? bank.counts.filter(c => (!s.topic || c.topic === s.topic) && (!s.difficulty || c.difficulty === s.difficulty) && (!s.question_type || c.type === s.question_type)).length : 0;
+        return bank ? bank.counts.filter(c => (s.topics.length === 0 || (c.topic !== null && s.topics.includes(c.topic))) && (!s.difficulty || c.difficulty === s.difficulty) && (!s.question_type || c.type === s.question_type)).length : 0;
     }
 
     function submit(e: React.FormEvent) {
@@ -97,7 +101,7 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
             ...data,
             class_id: data.audience === 'applicants' ? null : data.class_id, subject_id: data.subject_id || null, term_id: data.term_id || null, opens_at: fromLocalInput(data.opens_at), closes_at: fromLocalInput(data.closes_at),
             access_code: data.access_code.trim() || null, max_page_leaves: data.max_page_leaves || null, pass_mark: data.pass_mark || null,
-            sections: data.sections.map(s => ({ ...s, topic: s.topic || null, difficulty: s.difficulty || null, question_type: s.question_type || null })),
+            sections: data.sections.map(s => ({ ...s, topic: null, topics: s.topics.length ? s.topics : null, difficulty: s.difficulty || null, question_type: s.question_type || null })),
         }));
         if (test) form.put(`/school/cbt/tests/${test.id}`);
         else form.post('/school/cbt/tests');
@@ -160,12 +164,17 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
                     </div>
                 </Panel>
 
+                {!applicants && (
+                    <Panel title="What the test covers" description="Tick the topics this test is set from, usually what has been taught so far. Then, in each section below, one tap limits its questions to those topics.">
+                        <TaughtScope classId={d.class_id ? Number(d.class_id) : null} subjectId={d.subject_id ? Number(d.subject_id) : null} termId={d.term_id ? Number(d.term_id) : null} value={scope} onChange={setScope} disabled={locked} />
+                    </Panel>
+                )}
+
                 <Panel title="Questions" description={locked ? 'People have started this test, so its questions can no longer change.' : 'Each section draws questions at random from a bank. Add sections to mix banks, topics or difficulty, e.g. Section A: 30 objective, Section B: 3 theory.'}>
                     <div className="space-y-4">
                         {d.sections.map((s, i) => {
                             const bank = banks.find(b => String(b.id) === s.cbt_bank_id);
                             const topics = [...new Set(bank?.counts.map(c => c.topic).filter((t): t is string => !!t) ?? [])].sort();
-                            const topicItems = [{ value: ANY, label: 'Any topic' }, ...topics.map(t => ({ value: t, label: t }))];
                             const levelItems = [{ value: ANY, label: 'Any difficulty' }, { value: 'easy', label: 'Easy' }, { value: 'medium', label: 'Medium' }, { value: 'hard', label: 'Hard' }];
                             const kindItems = [{ value: ANY, label: 'Objective and theory' }, { value: 'objective', label: 'Objective only' }, { value: 'theory', label: 'Theory only' }];
                             const hasTheory = !!bank?.counts.some(c => c.type === 'theory');
@@ -179,22 +188,38 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
                                             <Button type="button" variant="ghost" size="sm" aria-label="Remove section" onClick={() => form.setData('sections', d.sections.filter((_, j) => j !== i))}><Trash2 className="size-4" /></Button>
                                         )}
                                     </div>
-                                    <div className="grid gap-3 sm:grid-cols-4">
+                                    <div className="grid gap-3 sm:grid-cols-3">
                                         <div className="sm:col-span-2">
-                                            <Select items={bankItems} value={s.cbt_bank_id} disabled={locked} onValueChange={v => setSection(i, { cbt_bank_id: v ?? '', topic: '' })}>
+                                            <Select items={bankItems} value={s.cbt_bank_id} disabled={locked} onValueChange={v => setSection(i, { cbt_bank_id: v ?? '', topics: [] })}>
                                                 <SelectTrigger className="w-full"><SelectValue placeholder="Question bank" /></SelectTrigger>
                                                 <SelectContent>{bankItems.map(b => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}</SelectContent>
                                             </Select>
                                         </div>
-                                        <Select items={topicItems} value={s.topic || ANY} disabled={locked} onValueChange={v => setSection(i, { topic: v && v !== ANY ? v : '' })}>
-                                            <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                                            <SelectContent>{topicItems.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-                                        </Select>
                                         <Select items={levelItems} value={s.difficulty || ANY} disabled={locked} onValueChange={v => setSection(i, { difficulty: v && v !== ANY ? v : '' })}>
                                             <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                                             <SelectContent>{levelItems.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </div>
+                                    {topics.length > 0 && (
+                                        <div className="space-y-1.5">
+                                            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                                <span>{s.topics.length ? `Only these ${s.topics.length} topic${s.topics.length === 1 ? '' : 's'}:` : 'Any topic. Tap topics to limit this section to them:'}</span>
+                                                {!locked && scope.length > 0 && (
+                                                    <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSection(i, { topics: topics.filter(t => inScope(t, scope)) })}>Use the exam scope ({topics.filter(t => inScope(t, scope)).length})</Button>
+                                                )}
+                                                {!locked && s.topics.length > 0 && <Button type="button" size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSection(i, { topics: [] })}>Any topic</Button>}
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {topics.map(t => {
+                                                    const on = s.topics.includes(t);
+                                                    return (
+                                                        <button key={t} type="button" disabled={locked} aria-pressed={on} onClick={() => setSection(i, { topics: on ? s.topics.filter(x => x !== t) : [...s.topics, t] })}
+                                                            className={`rounded-full border px-2.5 py-1 text-xs ${on ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 text-slate-700 hover:border-indigo-400 dark:border-white/15 dark:text-slate-200'}`}>{t}</button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
                                     {(hasTheory || s.question_type) && (
                                         <div className="sm:w-1/2">
                                             <Select items={kindItems} value={s.question_type || ANY} disabled={locked} onValueChange={v => setSection(i, { question_type: v && v !== ANY ? v : '' })}>
@@ -213,7 +238,7 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
                             );
                         })}
                         {!locked && (
-                            <Button type="button" variant="outline" size="sm" onClick={() => form.setData('sections', [...d.sections, { title: `Section ${String.fromCharCode(65 + d.sections.length)}`, cbt_bank_id: d.sections[0]?.cbt_bank_id ?? '', topic: '', difficulty: '', question_type: '', question_count: '10' }])}>
+                            <Button type="button" variant="outline" size="sm" onClick={() => form.setData('sections', [...d.sections, { title: `Section ${String.fromCharCode(65 + d.sections.length)}`, cbt_bank_id: d.sections[0]?.cbt_bank_id ?? '', topics: [], difficulty: '', question_type: '', question_count: '10' }])}>
                                 <Plus className="size-4" /> Add a section
                             </Button>
                         )}

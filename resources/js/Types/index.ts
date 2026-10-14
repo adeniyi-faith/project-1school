@@ -753,6 +753,7 @@ export interface ExamPaperSection {
 }
 
 export interface ExamPaperData {
+    scope: string[];
     title: string;
     class_id: number | null;
     subject_id: number | null;

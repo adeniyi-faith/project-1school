@@ -242,6 +242,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('cbt/papers/{paper}',                       [ExamPaperController::class, 'destroy'])->middleware('permission:cbt.manage')->name('cbt.papers.destroy');
             Route::get('cbt/papers/{paper}/pdf',                      [ExamPaperController::class, 'pdf'])->middleware('permission:cbt.view')->name('cbt.papers.pdf');
             Route::get('cbt/papers/{paper}/marking-scheme',           [ExamPaperController::class, 'markingScheme'])->middleware('permission:cbt.view')->name('cbt.papers.scheme');
+            Route::get('cbt/taught',                                  [CbtTestController::class, 'taught'])->middleware('permission:cbt.view')->name('cbt.taught');
             Route::get('cbt/tests',                                   [CbtTestController::class, 'index'])->middleware('permission:cbt.view')->name('cbt.tests');
             Route::get('cbt/tests/new',                               [CbtTestController::class, 'create'])->middleware('permission:cbt.manage')->name('cbt.tests.create');
             Route::post('cbt/tests',                                  [CbtTestController::class, 'store'])->middleware('permission:cbt.manage')->name('cbt.tests.store');

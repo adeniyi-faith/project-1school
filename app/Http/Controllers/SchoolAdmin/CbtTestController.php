@@ -132,7 +132,7 @@ class CbtTestController extends Controller
             'test' => $this->row($test) + [
                 'instructions' => $test->instructions,
                 'access_code' => $request->user()->can('cbt.manage') ? $test->access_code : null,
-                'sections' => $test->sections->map(fn ($s) => ['title' => $s->title, 'bank' => $s->bank?->name, 'topic' => $s->topic, 'difficulty' => $s->difficulty, 'question_type' => $s->question_type, 'count' => $s->question_count]),
+                'sections' => $test->sections->map(fn ($s) => ['title' => $s->title, 'bank' => $s->bank?->name, 'topic' => $s->topic, 'topics' => $s->topics ?: ($s->topic ? [$s->topic] : []), 'difficulty' => $s->difficulty, 'question_type' => $s->question_type, 'count' => $s->question_count]),
             ],
             'problems' => $test->status === 'draft' ? $this->cbt->problems($test) : [],
             'results' => $results->values(),
@@ -307,6 +307,30 @@ class CbtTestController extends Controller
 
     public const STATUS_WORDS = ['not_started' => 'Not started', 'in_progress' => 'Writing', 'submitted' => 'Handed in', 'timed_out' => 'Time ran out'];
 
+    /**
+     * The topics already taught for a class and subject, from its schemes of work (weeks ticked as taught) and syllabi
+     * (topics ticked as covered), so an exam can be set from them. Read only.
+     */
+    public function taught(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $sid = $this->getSchoolId();
+        $request->validate(['class_id' => 'required|integer', 'subject_id' => 'required|integer', 'term_id' => 'nullable|integer']);
+
+        $schemes = \App\Models\SchemeOfWork::with('term:id,name')->where('school_id', $sid)
+            ->where('class_id', $request->class_id)->where('subject_id', $request->subject_id)
+            ->when($request->term_id, fn ($q, $t) => $q->where(fn ($q) => $q->where('term_id', $t)->orWhereNull('term_id')))
+            ->orderBy('term_id')->get();
+        $syllabi = \App\Models\Syllabus::where('school_id', $sid)->where('class_id', $request->class_id)->where('subject_id', $request->subject_id)->latest()->get();
+
+        return response()->json(['sources' => $schemes->map(fn ($s) => [
+            'key' => 'scheme-'.$s->id, 'kind' => 'scheme', 'label' => 'Scheme of work'.($s->term ? ': '.$s->term->name : ''), 'link' => "/school/lesson-notes/schemes/{$s->id}",
+            'items' => collect($s->weeks ?? [])->map(fn ($w) => ['label' => 'Week '.$w['week'], 'topic' => $w['topic'], 'taught' => ! empty($w['taught'])])->values(),
+        ])->concat($syllabi->map(fn ($y) => [
+            'key' => 'syllabus-'.$y->id, 'kind' => 'syllabus', 'label' => 'Syllabus: '.$y->title, 'link' => '/school/homework/syllabi',
+            'items' => collect($y->topics ?? [])->map(fn ($t) => ['label' => '', 'topic' => (string) ($t['title'] ?? ''), 'taught' => ! empty($t['covered'])])->filter(fn ($i) => $i['topic'] !== '')->values(),
+        ]))->filter(fn ($src) => count($src['items']) > 0)->values()]);
+    }
+
     private function row(CbtTest $t): array
     {
         return [
@@ -331,7 +355,7 @@ class CbtTestController extends Controller
                 'opens_at' => $test->opens_at->toIso8601String(), 'closes_at' => $test->closes_at?->toIso8601String(),
                 'shuffle_questions' => $test->shuffle_questions, 'shuffle_options' => $test->shuffle_options, 'show_score' => $test->show_score,
                 'allow_calculator' => $test->allow_calculator, 'access_code' => $test->access_code, 'max_page_leaves' => $test->max_page_leaves, 'pass_mark' => $test->pass_mark,
-                'sections' => $test->sections->map(fn ($s) => $s->only('title', 'cbt_bank_id', 'topic', 'difficulty', 'question_type', 'question_count'))->values(),
+                'sections' => $test->sections->map(fn ($s) => $s->only('title', 'cbt_bank_id', 'topic', 'topics', 'difficulty', 'question_type', 'question_count'))->values(),
                 'started' => $test->attempts()->exists(),
                 'has_candidates' => $test->candidates()->exists(),
             ] : null,
@@ -373,6 +397,8 @@ class CbtTestController extends Controller
             'sections.*.title' => 'required|string|max:120',
             'sections.*.cbt_bank_id' => ['required', Rule::exists('cbt_banks', 'id')->where('school_id', $school)->whereNull('deleted_at')],
             'sections.*.topic' => 'nullable|string|max:120',
+            'sections.*.topics' => 'nullable|array|max:100',
+            'sections.*.topics.*' => 'string|max:120',
             'sections.*.difficulty' => ['nullable', Rule::in(CbtQuestion::DIFFICULTIES)],
             'sections.*.question_type' => ['nullable', Rule::in(CbtQuestion::TYPES)],
             'sections.*.question_count' => 'required|integer|min:1|max:500',

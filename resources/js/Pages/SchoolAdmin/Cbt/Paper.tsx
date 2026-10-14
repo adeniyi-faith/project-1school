@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PageHeader, Panel, Pill, Segmented } from '@/components/app/kit';
 import { ArrowDown, ArrowLeft, ArrowUp, FileCheck2, Loader2, Plus, Printer, Search, Shuffle, Trash2, X } from 'lucide-react';
+import TaughtScope from '@/components/cbt/TaughtScope';
+import { inScope } from '@/lib/scope';
 import type { CbtQuestionRow, ExamPaperData, LessonChoices } from '@/Types';
 
 type Question = CbtQuestionRow & { deleted?: boolean };
@@ -133,6 +135,10 @@ export default function Paper({ paper, initial, questions, banks, classes, subje
                     </fieldset>
                 </Panel>
 
+                <Panel title="What the exam covers" description="Tick the topics this exam is set from, usually what has been taught so far. When you add questions you can show only the questions on those topics.">
+                    <TaughtScope classId={d.class_id} subjectId={d.subject_id} termId={d.term_id} value={d.scope ?? []} onChange={t => form.setData('scope', t)} disabled={!canManage} />
+                </Panel>
+
                 {d.sections.map((s, i) => (
                     <Panel key={i} flush>
                         <div className="space-y-3 px-5 pt-4">
@@ -214,7 +220,7 @@ export default function Paper({ paper, initial, questions, banks, classes, subje
             </form>
 
             {picking !== null && (
-                <QuestionPicker banks={banks} subjectId={d.subject_id} onPaper={onPaper} room={limits.questions - onPaper.size}
+                <QuestionPicker banks={banks} subjectId={d.subject_id} scope={d.scope ?? []} onPaper={onPaper} room={limits.questions - onPaper.size}
                     section={d.sections[picking].title} onAdd={qs => addQuestions(picking, qs)} onClose={() => setPicking(null)} />
             )}
         </AppLayout>
@@ -222,8 +228,8 @@ export default function Paper({ paper, initial, questions, banks, classes, subje
 }
 
 /** Choose questions from one bank: tick them, or let the computer pick some at random */
-function QuestionPicker({ banks, subjectId, onPaper, room, section, onAdd, onClose }: {
-    banks: Props['banks']; subjectId: number | null; onPaper: Set<number>; room: number; section: string; onAdd: (q: Question[]) => void; onClose: () => void;
+function QuestionPicker({ banks, subjectId, scope, onPaper, room, section, onAdd, onClose }: {
+    banks: Props['banks']; subjectId: number | null; scope: string[]; onPaper: Set<number>; room: number; section: string; onAdd: (q: Question[]) => void; onClose: () => void;
 }) {
     const [bank, setBank] = useState(() => String(banks.find(b => subjectId && b.subject_id === subjectId)?.id ?? banks[0]?.id ?? ''));
     const [type, setType] = useState<'all' | 'objective' | 'theory'>(() => (/theory|essay|section b/i.test(section) ? 'theory' : /objective|section a/i.test(section) ? 'objective' : 'all'));
@@ -233,6 +239,7 @@ function QuestionPicker({ banks, subjectId, onPaper, room, section, onAdd, onClo
     const [topic, setTopic] = useState('');
     const [ticked, setTicked] = useState<number[]>([]);
     const [random, setRandom] = useState('10');
+    const [onlyScope, setOnlyScope] = useState(scope.length > 0);
 
     useEffect(() => {
         if (!bank) return;
@@ -244,7 +251,8 @@ function QuestionPicker({ banks, subjectId, onPaper, room, section, onAdd, onClo
     }, [bank, type]);
 
     const topics = [...new Set(list.map(q => q.topic).filter((t): t is string => !!t))].sort();
-    const shown = list.filter(q => (!topic || q.topic === topic) && (!search || q.text.toLowerCase().includes(search.toLowerCase())));
+    const shown = list.filter(q => (!topic || q.topic === topic) && (!onlyScope || scope.length === 0 || inScope(q.topic, scope)) && (!search || q.text.toLowerCase().includes(search.toLowerCase())));
+    const outside = onlyScope && scope.length > 0 ? list.length - list.filter(q => inScope(q.topic, scope)).length : 0;
     const free = shown.filter(q => !onPaper.has(q.id));
     const bankItems = banks.map(b => ({ value: String(b.id), label: `${b.name} (${b.questions})` }));
     const topicItems = [{ value: '', label: 'All topics' }, ...topics.map(t => ({ value: t, label: t }))];
@@ -289,6 +297,13 @@ function QuestionPicker({ banks, subjectId, onPaper, room, section, onAdd, onClo
                             <Segmented label="Kind" value={type} onChange={v => { setType(v); setTicked([]); }}
                                 options={[{ value: 'all', label: 'All' }, { value: 'objective', label: 'Objective' }, { value: 'theory', label: 'Theory' }]} />
                         </div>
+                        {scope.length > 0 && (
+                            <label className="flex flex-wrap items-center gap-2 text-sm">
+                                <Checkbox checked={onlyScope} onCheckedChange={v => { setOnlyScope(!!v); setTicked([]); }} />
+                                Only questions on the {scope.length} topic{scope.length === 1 ? '' : 's'} this exam covers
+                                {outside > 0 && <span className="text-xs text-slate-500">({outside} question{outside === 1 ? '' : 's'} outside the scope or without a topic hidden)</span>}
+                            </label>
+                        )}
                         <div className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm dark:bg-white/[0.04]">
                             <Shuffle className="size-4 text-slate-500" aria-hidden="true" />
                             Pick

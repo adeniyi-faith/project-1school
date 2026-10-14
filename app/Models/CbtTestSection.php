@@ -10,9 +10,9 @@ class CbtTestSection extends Model
 {
     public $timestamps = false;
 
-    protected $fillable = ['cbt_test_id', 'position', 'title', 'cbt_bank_id', 'topic', 'difficulty', 'question_type', 'question_count'];
+    protected $fillable = ['cbt_test_id', 'position', 'title', 'cbt_bank_id', 'topic', 'topics', 'difficulty', 'question_type', 'question_count'];
 
-    protected $casts = ['question_count' => 'integer', 'position' => 'integer'];
+    protected $casts = ['question_count' => 'integer', 'position' => 'integer', 'topics' => 'array'];
 
     public function bank(): BelongsTo
     {
@@ -23,7 +23,7 @@ class CbtTestSection extends Model
     public function pool()
     {
         return CbtQuestion::where('cbt_bank_id', $this->cbt_bank_id)
-            ->when($this->topic, fn ($q) => $q->where('topic', $this->topic))
+            ->when($this->topics, fn ($q, $list) => $q->whereIn('topic', $list), fn ($q) => $q->when($this->topic, fn ($q) => $q->where('topic', $this->topic)))
             ->when($this->difficulty, fn ($q) => $q->where('difficulty', $this->difficulty))
             ->when($this->question_type, fn ($q) => $q->where('type', $this->question_type));
     }
