@@ -13,21 +13,21 @@ use Tests\Feature\Security\SecurityTestCase;
 /** Each school gets a public website made of pages and blocks; only switched-on sites show, and nothing leaks between schools */
 class WebsiteEngineTest extends SecurityTestCase
 {
-    public function test_a_site_is_hidden_until_the_school_switches_it_on(): void
+    public function test_a_new_site_is_on_by_default_and_hidden_once_the_school_switches_it_off(): void
     {
         $school = $this->makeSchool('Bright Stars');
         $this->actingAs($this->makeUser($school, 'school-admin'));
-        $this->get('/school/website')->assertOk(); // first visit writes a starter site
-        auth()->logout();
-
-        $this->get('/s/bright-stars')->assertNotFound();
-
-        $this->actingAs($this->makeUser($school, 'school-admin'))->put('/school/website', ['enabled' => true])->assertSessionHasNoErrors();
+        $this->get('/school/website')->assertOk(); // first visit writes a starter site, already switched on
         auth()->logout();
 
         $this->get('/s/bright-stars')->assertOk()->assertSee('Welcome to Bright Stars')->assertSee('Apply online');
         $this->get('/s/bright-stars/about')->assertOk();
         $this->get('/s/bright-stars/nope')->assertNotFound();
+
+        $this->actingAs($this->makeUser($school, 'school-admin'))->put('/school/website', ['enabled' => false])->assertSessionHasNoErrors();
+        auth()->logout();
+
+        $this->get('/s/bright-stars')->assertNotFound();
     }
 
     public function test_only_everyone_announcements_and_published_pages_are_shown_and_only_for_that_school(): void

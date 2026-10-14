@@ -13,7 +13,7 @@ class SiteStarter
     {
         $site = SchoolSite::withoutGlobalScopes()->firstOrCreate(
             ['school_id' => $school->id],
-            ['enabled' => false, 'theme' => 'heritage', 'tagline' => null],
+            ['enabled' => true, 'theme' => 'heritage', 'tagline' => null],
         );
 
         if (! SchoolSitePage::withoutGlobalScopes()->where('school_id', $school->id)->exists()) {
