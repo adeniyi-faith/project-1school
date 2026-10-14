@@ -9,8 +9,10 @@ use App\Models\SchoolSitePage;
 use App\Models\SchoolSitePost;
 use App\Website\Prose;
 use App\Website\SiteRenderer;
+use App\Website\SiteSearch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /** Draws a school's public website. No login needed; only schools that switched their site on are shown */
 class PublicSiteController extends Controller
@@ -35,6 +37,16 @@ class PublicSiteController extends Controller
 
         return SiteRenderer::renderPlain($school, $site, $this->pages($school), 'website.sign-in', 'sign-in', 'Sign in',
             'Parents, students and staff: sign in to see results, fees, notices and your school tools.');
+    }
+
+    /** Search the school's own pages, stories and albums */
+    public function search(Request $request, string $slug)
+    {
+        [$school, $site] = $this->live($slug);
+        $query = trim((string) $request->query('q', ''));
+        $results = SiteSearch::run($school, $query);
+
+        return SiteRenderer::renderSearch($school, $site, $this->pages($school), Str::limit($query, SiteSearch::MAX, ''), $results);
     }
 
     public function gallery(string $slug)

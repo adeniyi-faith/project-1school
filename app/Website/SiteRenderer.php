@@ -112,7 +112,7 @@ class SiteRenderer
         $galleryBlock = collect($blocks)->firstWhere('type', 'gallery');
         $galleryPhotos = $galleryBlock ? self::latestPhotos($school, 12) : collect();
 
-        return view('website.page', $ctx + [
+        return view(self::themed('page', $site->theme), $ctx + [
             'galleryPhotos' => $galleryPhotos,
             'page' => $page, 'blocks' => $blocks, 'needsHiddenH1' => ! collect($blocks)->contains(fn ($b) => ! empty($b['_h1'])),
             'news' => self::newsItems($school), 'title' => $title, 'description' => $description, 'ogImage' => $image, 'ogType' => 'website',
@@ -129,7 +129,7 @@ class SiteRenderer
         $url = self::homeUrl($school).'/'.$slug;
         $ctx = self::context($school, $site, $pages, false, $url, $slug);
 
-        return view($view, $ctx + $data + [
+        return view(self::themed(preg_replace('/^website\./', '', $view), $site->theme), $ctx + $data + [
             'title' => $title.' | '.$school->name, 'description' => $description, 'ogImage' => $ctx['logo'], 'ogType' => 'website',
             'pageTitle' => $title, 'pageLead' => $description,
             'schema' => ['@context' => 'https://schema.org', '@graph' => [
@@ -148,7 +148,7 @@ class SiteRenderer
         $description = 'Photos from life at '.$school->name.'.';
         $first = $albums->first()?->cover_path;
 
-        return view('website.gallery', $ctx + [
+        return view(self::themed('gallery', $site->theme), $ctx + [
             'albums' => $albums, 'title' => 'Photo gallery | '.$school->name, 'description' => $description,
             'ogImage' => self::image($first) ?? $ctx['logo'], 'ogType' => 'website',
             'schema' => ['@context' => 'https://schema.org', '@graph' => [
@@ -167,7 +167,7 @@ class SiteRenderer
         $description = $album->description ?: $album->title.': photos from '.$school->name.'.';
         $first = $photos->first()['path'] ?? null;
 
-        return view('website.album', $ctx + [
+        return view(self::themed('album', $site->theme), $ctx + [
             'album' => $album, 'photos' => $photos, 'title' => $album->title.' | Gallery | '.$school->name, 'description' => $description,
             'ogImage' => self::image($first) ?? $ctx['logo'], 'ogType' => 'website',
             'schema' => ['@context' => 'https://schema.org', '@graph' => [
@@ -175,6 +175,20 @@ class SiteRenderer
                 ['@type' => 'ImageGallery', 'name' => $album->title, 'url' => $url, 'description' => $description],
                 self::breadcrumbs($school, [['Gallery', self::galleryUrl($school)], [$album->title, $url]]),
             ]],
+        ]);
+    }
+
+    /** The search page: the box, and what was found */
+    public static function renderSearch(School $school, SchoolSite $site, Collection $pages, string $query, Collection $results): View
+    {
+        $url = self::homeUrl($school).'/search';
+        $ctx = self::context($school, $site, $pages, false, $url, 'search');
+        $title = ($query !== '' ? 'Search: '.$query : 'Search').' | '.$school->name;
+
+        return view(self::themed('search', $site->theme), $ctx + [
+            'query' => $query, 'results' => $results, 'tooShort' => $query !== '' && SiteSearch::terms($query) === [],
+            'title' => $title, 'description' => 'Search '.$school->name.'.', 'ogImage' => $ctx['logo'], 'ogType' => 'website',
+            'schema' => ['@context' => 'https://schema.org', '@graph' => [self::organisation($school, $site, null, $ctx['logo'], $ctx['social'])]],
         ]);
     }
 
@@ -187,7 +201,7 @@ class SiteRenderer
         $title = ($category ? SchoolSitePost::CATEGORIES[$category].' | ' : $label.' | ').$school->name;
         $description = 'The latest news, events and achievements from '.$school->name.'.';
 
-        return view('website.news', $ctx + [
+        return view(self::themed('news', $site->theme), $ctx + [
             'posts' => $posts, 'category' => $category, 'label' => $label, 'categories' => SchoolSitePost::CATEGORIES,
             'title' => $title, 'description' => $description, 'ogImage' => $ctx['logo'], 'ogType' => 'website',
             'schema' => ['@context' => 'https://schema.org', '@graph' => [
@@ -224,7 +238,7 @@ class SiteRenderer
             $article['datePublished'] = $published->toAtomString();
         }
 
-        return view('website.post', $ctx + [
+        return view(self::themed('post', $site->theme), $ctx + [
             'post' => $post, 'related' => $related, 'label' => $site->option('news_label'),
             'title' => $title, 'description' => $description, 'ogImage' => $image, 'ogType' => 'article',
             'schema' => ['@context' => 'https://schema.org', '@graph' => [
@@ -256,6 +270,17 @@ class SiteRenderer
             ->whereNotNull('published_at')->where('published_at', '<=', now())->whereNull('deleted_at')
             ->orderByDesc('is_pinned')->orderByDesc('published_at')->limit(10)->get(['title', 'body', 'published_at'])
             ->map(fn ($a) => ['title' => $a->title, 'url' => null, 'excerpt' => Str::limit(trim(preg_replace('/\s+/', ' ', $a->body)), 180), 'date' => $a->published_at, 'image' => null, 'tag' => 'News', 'category' => 'news']);
+    }
+
+    /**
+     * The view to draw a page with: the theme's own version (website/themes/{theme}/{name}) when it has one,
+     * else the shared one. This is what lets a theme lay out the news, gallery, apply and sign-in pages its own way.
+     */
+    public static function themed(string $name, ?string $theme): string
+    {
+        $own = 'website.themes.'.Themes::key($theme).'.'.$name;
+
+        return view()->exists($own) ? $own : 'website.'.$name;
     }
 
     /** What every page of the site shares: header, menu, footer, colours */

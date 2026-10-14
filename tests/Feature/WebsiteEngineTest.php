@@ -444,7 +444,7 @@ class WebsiteEngineTest extends SecurityTestCase
     {
         [$school] = $this->liveSite('Look School');
         auth()->logout();
-        $marks = ['heritage' => '<section class="hero hero--plain', 'modern' => '<section class="hero hero--modern', 'warm' => '<section class="hero hero--warm', 'statement' => '<section class="hero hero--statement'];
+        $marks = ['heritage' => '<section class="hh hh--', 'modern' => '<section class="hero hero--modern', 'warm' => '<section class="hero hero--warm', 'statement' => '<section class="hero hero--statement'];
         $this->assertSame(array_keys($marks), array_keys(Themes::ALL));
         foreach ($marks as $theme => $mark) {
             \App\Models\SchoolSite::withoutGlobalScopes()->where('school_id', $school->id)->update(['theme' => $theme]);
@@ -509,6 +509,63 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->get('/s/gal-school/gallery/sports-day-2026')->assertNotFound();
     }
 
+    public function test_the_heritage_theme_has_its_own_header_banner_footer_and_inner_pages(): void
+    {
+        [$school, $admin] = $this->liveSite('Gold School', 'heritage');
+        $home = SchoolSitePage::where('is_home', true)->first();
+        $home->blocks = Blocks::clean([
+            ['type' => 'hero', 'heading' => 'Lifelong and Worldwide', 'subheading' => 'A family.', 'button' => 'apply', 'button2' => 'login'],
+            ['type' => 'news', 'heading' => 'Top Headlines', 'count' => 3],
+            ['type' => 'apply', 'heading' => 'Thinking about us?', 'button' => 'apply', 'button2' => 'contact'],
+        ], $school->id);
+        $home->save();
+        \App\Models\SchoolSitePost::create(['school_id' => $school->id, 'title' => 'Open day', 'slug' => 'open-day', 'category' => 'news', 'body' => 'Come.', 'status' => 'published', 'published_at' => now()->subDay()]);
+        auth()->logout();
+
+        $this->get('/s/gold-school')->assertOk()
+            ->assertSee('Crimson+Pro', false)
+            ->assertSee('<section class="hh hh--plain">', false)
+            ->assertSee('class="menu-main"', false)
+            ->assertSee('class="menu-util"', false)
+            ->assertSee('sec sec--headlines', false)
+            ->assertSee('Visit News', false)
+            ->assertSee('<footer class="ftr ftr--heritage">', false)
+            ->assertSee('School platform powered by', false);
+
+        $this->get('/s/gold-school/sign-in')->assertOk()->assertSee('class="hp-tabs"', false)->assertDontSee('class="pagehero"', false);
+        $this->get('/apply/'.$school->id)->assertOk()->assertSee('class="hp-form"', false)->assertDontSee('class="pagehero"', false);
+        $this->get('/s/gold-school/news')->assertOk()->assertSee('hp-filter', false)->assertSee('news--lead', false);
+        $this->get('/s/gold-school/news/open-day')->assertOk()->assertSee('hp-post', false);
+
+        // another theme keeps the shared inner pages
+        $this->actingAs($admin)->post('/school/website/theme', ['theme' => 'modern']);
+        auth()->logout();
+    }
+
+    public function test_the_site_search_finds_pages_and_stories_of_this_school_only(): void
+    {
+        [$school, $admin] = $this->liveSite('Search School', 'heritage');
+        $home = SchoolSitePage::where('is_home', true)->first();
+        $home->blocks = Blocks::clean([['type' => 'text', 'heading' => 'Our robotics club', 'body' => 'Pupils build robots every Friday.']], $school->id);
+        $home->save();
+        \App\Models\SchoolSitePost::create(['school_id' => $school->id, 'title' => 'Robot contest won', 'slug' => 'robot-contest', 'category' => 'news', 'body' => "## Result\n\nOur team won the <b>robot</b> contest.", 'status' => 'published', 'published_at' => now()->subDay()]);
+        \App\Models\SchoolSitePost::create(['school_id' => $school->id, 'title' => 'Draft about robots', 'slug' => 'draft-robots', 'category' => 'news', 'body' => 'Secret robots.', 'status' => 'draft']);
+        [$other] = $this->liveSite('Other School', 'heritage');
+        auth()->logout();
+
+        $this->get('/s/search-school/search?q=robot')->assertOk()
+            ->assertSee('Robot contest won')->assertSee('Pupils build <mark>robot</mark>s', false)
+            ->assertSee('<mark>robot</mark>', false)
+            ->assertDontSee('Draft about robots')
+            ->assertDontSee('<b>robot</b>', false)
+            ->assertSee('noindex', false);
+        $this->get('/s/search-school/search?q=zzzzqq')->assertOk()->assertSee('Nothing found');
+        $this->get('/s/search-school/search?q=a')->assertOk()->assertSee('at least two letters');
+        $this->get('/s/search-school/search')->assertOk()->assertSee('Type a few words');
+        $this->get('/s/search-school')->assertOk()->assertSee('data-search-toggle', false)->assertSee('id="sbar"', false);
+        $this->get('/s/other-school/search?q=robot')->assertOk()->assertDontSee('Robot contest won');
+    }
+
     public function test_the_statement_theme_draws_the_civic_look_from_the_new_blocks(): void
     {
         [$school, $admin] = $this->liveSite('Civic School', 'statement');
@@ -553,7 +610,7 @@ class WebsiteEngineTest extends SecurityTestCase
 
     public function test_other_themes_show_the_announcement_bar_and_keep_their_own_footer(): void
     {
-        [$school, $admin] = $this->liveSite('Bar School', 'heritage');
+        [$school, $admin] = $this->liveSite('Bar School', 'modern');
         $this->actingAs($admin)->put('/school/website', ['announcement' => 'School is closed on Friday']);
         auth()->logout();
         $this->get('/s/bar-school')->assertOk()->assertSee('School is closed on Friday')->assertSee('<footer class="ftr">', false)->assertDontSee('<footer class="ftr ftr--statement">', false);

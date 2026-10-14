@@ -827,6 +827,7 @@ Route::get('/s/{slug}/gallery', [PublicSiteController::class, 'gallery'])->where
 Route::get('/s/{slug}/gallery/{album}', [PublicSiteController::class, 'album'])->where('slug', '[a-z0-9-]+')->where('album', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.album');
 Route::get('/s/{slug}/sitemap.xml', [PublicSiteController::class, 'sitemap'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.sitemap');
 Route::get('/s/{slug}/sign-in', [PublicSiteController::class, 'signIn'])->where('slug', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.sign-in');
+Route::get('/s/{slug}/search', [PublicSiteController::class, 'search'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.search');
 Route::get('/s/{slug}/{page?}', [PublicSiteController::class, 'show'])->where('slug', '[a-z0-9-]+')->where('page', '[a-z0-9_-]+')->middleware('throttle:120,1')->name('site.show');
 Route::get('/apply/{school}',  [PublicAdmissionController::class, 'show'])->name('public.admission.show');
 Route::post('/apply/{school}', [PublicAdmissionController::class, 'submit'])->middleware('throttle:10,1')->name('public.admission.submit');

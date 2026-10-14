@@ -6,7 +6,7 @@
     <title>{{ $title }}</title>
     @if ($description)<meta name="description" content="{{ $description }}">@endif
     <link rel="canonical" href="{{ $pageUrl }}">
-    @if ($preview)<meta name="robots" content="noindex">@endif
+    @if ($preview || ($current ?? "") === "search")<meta name="robots" content="noindex">@endif
     <meta name="theme-color" content="{{ \App\Website\Themes::vars($site->theme, $site->color, $site->color2)['hdr-bg'] }}">
     <meta property="og:type" content="{{ $ogType }}">
     <meta property="og:site_name" content="{{ $school->name }}">
@@ -22,11 +22,11 @@
     <link rel="stylesheet" href="{{ $fontsUrl }}">
     @endif
     <style>:root{ {!! $style !!} }</style>
-    <style>@include('website.styles')@include('website.styles-themes')</style>
+    <style>@include('website.styles')@include('website.styles-themes')@include('website.styles-heritage')</style>
     <noscript><style>.burger{display:none}.menu{display:block;position:static;background:none;color:inherit;padding:0}.menu a{font-size:1rem;display:inline-block;border:0;margin-right:1rem}</style></noscript>
     <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 </head>
-<body id="sheet" data-theme="{{ $theme }}">
+<body id="sheet" data-theme="{{ \App\Website\Themes::key($theme) }}">
 <a class="skip" href="#main">Skip to content</a>
 
 @include('website.partials.announcement')
@@ -42,6 +42,9 @@
 (function(){
   var b=document.querySelector('.burger'),body=document.body;
   b.addEventListener('click',function(){var o=body.classList.toggle('menu-open');b.setAttribute('aria-expanded',o?'true':'false');});
+  var st=document.querySelector('[data-search-toggle]'),sb=document.getElementById('sbar');
+  if(st&&sb){st.addEventListener('click',function(e){e.preventDefault();var o=sb.hidden;sb.hidden=!o;st.setAttribute('aria-expanded',o?'true':'false');if(o){body.classList.remove('menu-open');sb.querySelector('input').focus();}});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sb.hidden){sb.hidden=true;st.setAttribute('aria-expanded','false');st.focus();}});}
   document.querySelectorAll('.menu a').forEach(function(a){a.addEventListener('click',function(){body.classList.remove('menu-open');});});
   @if ($preview)
   document.addEventListener('click',function(e){var a=e.target.closest('a');if(a){e.preventDefault();}});

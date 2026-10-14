@@ -147,7 +147,7 @@
 [data-theme=statement] .wrap{padding:0 1.5rem}
 [data-theme=statement] p{text-wrap:wrap}
 [data-theme=statement] .hdr-in{position:relative}
-[data-theme=statement] .burger{position:absolute;right:.45rem;top:50%;transform:translateY(-50%)}
+@media (max-width:59.99rem){[data-theme=statement] .hdr-tools{position:absolute;right:.45rem;top:50%;transform:translateY(-50%)}}
 [data-theme=statement] .brand{flex:1 1 auto;padding-right:2.4rem}
 [data-theme=statement] h1,[data-theme=statement] h2,[data-theme=statement] h3{font-weight:700;letter-spacing:-.015em;font-optical-sizing:auto}
 [data-theme=statement] .notice{background:var(--brand2);color:var(--deep)}

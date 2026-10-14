@@ -50,6 +50,29 @@ body.menu-open{overflow:hidden}
   .menu .btn{margin:0 0 0 .5rem;width:auto;min-height:2.5rem;padding:.5rem 1.2rem;font-size:.85rem;background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
 }
 
+/* site search: the icon in the header and the box that drops down under it (every theme) */
+.hdr-tools{display:flex;align-items:center;gap:.15rem}
+.sbtn{display:inline-grid;place-items:center;width:3rem;height:3rem;color:var(--hdr-ink);text-decoration:none}
+.sbtn svg{width:1.55rem;height:1.55rem}
+.sbar{position:relative;z-index:45;background:var(--bg);color:var(--text);border-bottom:1px solid var(--line);box-shadow:0 18px 30px -22px rgba(0,0,0,.45)}
+.sbar[hidden]{display:none}
+.sbar-in{display:flex;gap:.6rem;padding-top:1rem;padding-bottom:1rem}
+.sbar-page{padding:0;margin-top:1rem;max-width:40rem}
+.sbar input,.sbar-page input{flex:1;min-width:0;min-height:3.2rem;padding:.6rem 1rem;border:1.5px solid color-mix(in srgb,var(--text) 30%,transparent);border-radius:var(--radius);background:var(--bg);color:var(--text);font:inherit;font-size:1.05rem}
+.sbar input:focus,.sbar-page input:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 18%,transparent)}
+.sbar button,.sbar-page button{min-height:3.2rem;padding:0 1.4rem;border:0;border-radius:var(--radius);background:var(--brand);color:var(--brand-ink);font:700 .95rem/1 var(--body-font);cursor:pointer}
+.results{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.result{padding:1.25rem 0;border-top:1px solid var(--line)}
+.result:last-child{border-bottom:1px solid var(--line)}
+.result h2,.result h3{font-size:1.4rem;margin:.2rem 0 .35rem}
+.result h2 a,.result h3 a{color:inherit;text-decoration:none}
+.result h2 a:hover,.result h3 a:hover{text-decoration:underline}
+.result p{margin:0;color:var(--muted)}
+.result mark{background:color-mix(in srgb,var(--brand2) 55%,transparent);color:inherit;padding:0 .1em;border-radius:2px}
+.result-pic{display:grid;gap:1rem}
+.result-pic img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:var(--radius)}
+@media (min-width:40rem){.result-pic{grid-template-columns:11rem 1fr;align-items:start}}
+
 /* sections */
 .sec{padding:clamp(3.25rem,8vw,6.25rem) 0}
 .sec--soft{background:var(--soft)}
