@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PageHeader, Panel, Pill } from '@/components/app/kit';
 import { statusLabel } from '@/components/lesson-notes/LessonTabs';
 import { ArrowLeft, Download, FileUp, Loader2, NotebookPen, Plus, Sparkles, Trash2, X } from 'lucide-react';
-import type { AiAvailability, LessonChoices, SchemeWeek } from '@/Types';
+import type { AiAvailability, DetectedNames, LessonChoices, SchemeWeek } from '@/Types';
 
 interface Props extends LessonChoices {
     scheme: {
@@ -54,13 +54,30 @@ export default function Scheme({ scheme, classes, subjects, terms, currentTerm, 
         if (d.file) body.append('file', d.file);
         else body.append('text', text);
         body.append('use_ai', useAi ? '1' : '0');
-        body.append('class_id', d.class_id);
-        body.append('subject_id', d.subject_id);
+        if (d.class_id) body.append('class_id', d.class_id);
+        if (d.subject_id) body.append('subject_id', d.subject_id);
         if (d.term_id) body.append('term_id', d.term_id);
         try {
-            const { data } = await axios.post<{ weeks: SchemeWeek[] }>('/school/lesson-notes/schemes/read', body);
-            form.setData('weeks', data.weeks);
-            setReadNote({ tone: 'good', text: `${data.weeks.length} week${data.weeks.length === 1 ? '' : 's'} found. Check each one below and correct anything that is wrong, then save.` });
+            const { data } = await axios.post<{ weeks: SchemeWeek[]; detected: DetectedNames | null }>('/school/lesson-notes/schemes/read', body);
+            form.setData(prev => {
+                const next = { ...prev, weeks: data.weeks };
+                const found = data.detected;
+                // Only empty boxes are filled in: what the teacher already chose is never changed
+                if (found) {
+                    if (!prev.class_id && found.class_id) next.class_id = String(found.class_id);
+                    if (!prev.subject_id && found.subject_id) next.subject_id = String(found.subject_id);
+                    if (!prev.term_id && found.term_id) next.term_id = String(found.term_id);
+                    if (!prev.title && found.title) next.title = found.title;
+                }
+                return next;
+            });
+            const filled = data.detected ? [data.detected.class, data.detected.subject].filter(Boolean) : [];
+            setReadNote({
+                tone: 'good',
+                text: `${data.weeks.length} week${data.weeks.length === 1 ? '' : 's'} found.`
+                    + (filled.length && !d.class_id && !d.subject_id ? ` It looks like ${filled.join(', ')}: check the class, subject and term above.` : '')
+                    + ' Check each week below and correct anything that is wrong, then save.',
+            });
         } catch (e) {
             const errs = axios.isAxiosError(e) ? e.response?.data?.errors : null;
             const message = errs ? (errs.source?.[0] ?? errs.ai?.[0] ?? errs.file?.[0] ?? errs.class_id?.[0] ?? errs.subject_id?.[0]) : null;
@@ -68,6 +85,11 @@ export default function Scheme({ scheme, classes, subjects, terms, currentTerm, 
         } finally {
             setReading(false);
         }
+    }
+
+    /** Mark every week up to this one as taught (and the later ones as not yet taught) */
+    function taughtUpTo(week: number) {
+        form.setData('weeks', d.weeks.map(w => ({ ...w, taught: w.week <= week })));
     }
 
     function setWeek(i: number, patch: Partial<SchemeWeek>) {
@@ -111,7 +133,7 @@ export default function Scheme({ scheme, classes, subjects, terms, currentTerm, 
                 <PageHeader title={scheme ? scheme.title : 'Add a scheme of work'} description="One subject, one class, one term. Upload the file you already have, or type or paste the weeks." actions={actions} />
                 <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>
 
-                <Panel title="Which subject and class">
+                <Panel title="Which subject and class" description={editable ? 'Leave these empty if you are uploading a file and using AI; they are filled in from the document.' : undefined}>
                     <div className="grid gap-4 sm:grid-cols-3">
                         {[
                             { id: 'class', label: 'Class', items: classItems, key: 'class_id' as const, error: form.errors.class_id },
@@ -155,19 +177,26 @@ export default function Scheme({ scheme, classes, subjects, terms, currentTerm, 
                                         <Sparkles className="size-4 text-violet-600" aria-hidden="true" /> Read it with AI
                                     </label>
                                 )}
-                                <Button type="button" variant="outline" className="ml-auto" onClick={read} disabled={reading || !d.class_id || !d.subject_id || (!d.file && !text.trim())}>
+                                <Button type="button" variant="outline" className="ml-auto" onClick={read} disabled={reading || (!d.file && !text.trim()) || (d.file !== null && isPdf && !useAi)}>
                                     {reading ? <Loader2 className="size-4 animate-spin" /> : null} {reading ? 'Reading…' : 'Read the weeks'}
                                 </Button>
                             </div>
                             {ai.shown && ai.reason && <p className="text-xs text-slate-500">{ai.reason} Typed "Week 1: …" lines can still be read.</p>}
                             {!useAi && isPdf && <p className="text-xs text-amber-700 dark:text-amber-300">A PDF can only be read by the AI. Without it, type the weeks below; the file is still kept with the scheme when you save.</p>}
-                            {(!d.class_id || !d.subject_id) && <p className="text-xs text-slate-500">Choose the class and subject first.</p>}
+                            {aiReady && useAi && (!d.class_id || !d.subject_id) && <p className="text-xs text-slate-500">You can leave the class, subject and term empty: the AI finds them in the document and fills them in for you to check.</p>}
                             {readNote && <p role="status" className={`text-sm ${readNote.tone === 'good' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600'}`}>{readNote.text}</p>}
                         </div>
                     </Panel>
                 )}
 
-                <Panel title={`Weeks (${d.weeks.length})`} flush>
+                <Panel title={`Weeks (${d.weeks.length})`} flush
+                    description={d.weeks.length ? `${d.weeks.filter(w => w.taught).length} of ${d.weeks.length} taught so far. Tick the weeks you have taught; exams can then be set from those topics only.` : undefined}
+                    action={editable && d.weeks.length > 0 ? (
+                        <Select items={[{ value: '', label: 'Taught up to…' }, ...d.weeks.map(w => ({ value: String(w.week), label: `Week ${w.week}` }))]} value="" onValueChange={v => v && taughtUpTo(Number(v))}>
+                            <SelectTrigger className="h-8 w-36 text-xs" aria-label="Mark weeks as taught up to"><SelectValue placeholder="Taught up to…" /></SelectTrigger>
+                            <SelectContent>{d.weeks.map(w => <SelectItem key={w.week} value={String(w.week)}>Week {w.week}</SelectItem>)}</SelectContent>
+                        </Select>
+                    ) : undefined}>
                     {d.weeks.length === 0 ? (
                         <p className="px-5 pb-5 text-sm text-slate-500">No weeks yet. Read them from the scheme above, or add them one by one.</p>
                     ) : (
@@ -179,6 +208,9 @@ export default function Scheme({ scheme, classes, subjects, terms, currentTerm, 
                                         <div className="space-y-1">
                                             <Label htmlFor={`wk-${i}`} className="text-xs text-slate-500">Week</Label>
                                             <Input id={`wk-${i}`} type="number" min={1} max={20} disabled={!editable} value={w.week} onChange={e => setWeek(i, { week: Number(e.target.value) })} />
+                                            <label className="flex items-center gap-1.5 pt-1 text-xs text-slate-600 dark:text-slate-300">
+                                                <input type="checkbox" className="size-4 accent-emerald-600" disabled={!editable} checked={!!w.taught} onChange={e => setWeek(i, { taught: e.target.checked })} /> Taught
+                                            </label>
                                         </div>
                                         <div className="space-y-2">
                                             <div className="flex gap-2">

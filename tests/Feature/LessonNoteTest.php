@@ -264,4 +264,53 @@ class LessonNoteTest extends SecurityTestCase
         $body = collect($old->fresh()->body())->pluck('text', 'label')->all();
         $this->assertSame(['Aim' => 'New aim', 'Class activity' => '', 'Content' => 'Old content'], $body);
     }
+
+    public function test_the_ai_finds_the_class_subject_and_term_of_an_uploaded_scheme_and_reads_old_notes_and_syllabi(): void
+    {
+        $this->aiAnswers([
+            'class' => 'SS1', 'subject' => 'Maths', 'term' => 'Nonsense', 'title' => 'SS1 Maths scheme',
+            'weeks' => [['week' => 1, 'topic' => 'Number bases', 'details' => '']],
+        ]);
+        $this->actingAs($this->teacher);
+
+        // No class or subject chosen: the AI works them out; a term that matches nothing stays empty
+        $res = $this->post('/school/lesson-notes/schemes/read', ['file' => UploadedFile::fake()->createWithContent('scheme.pdf', '%PDF-1.4 fake'), 'use_ai' => true], ['Accept' => 'application/json'])
+            ->assertOk();
+        $this->assertSame($this->class->id, $res->json('detected.class_id'));
+        $this->assertSame($this->subject->id, $res->json('detected.subject_id'));
+        $this->assertNull($res->json('detected.term_id'));
+
+        // Typed "Subject: ..." lines are noticed without the AI
+        $typed = $this->postJson('/school/lesson-notes/schemes/read', ['text' => "Subject: Mathematics\nClass: SS 1\nWeek 1: Number bases", 'use_ai' => false])->assertOk();
+        $this->assertSame($this->subject->id, $typed->json('detected.subject_id'));
+        $this->assertSame($this->class->id, $typed->json('detected.class_id'));
+
+        // A lesson note written earlier is sorted under the format's headings
+        LessonNoteFormat::ensureFor($this->school->id);
+        $format = LessonNoteFormat::where('school_id', $this->school->id)->orderBy('id')->first();
+        $key = $format->sections[0]['key'];
+        $this->aiAnswers(['class' => 'SS 1', 'subject' => 'Mathematics', 'term' => '', 'topic' => 'Number bases', 'week' => 3, 'duration_minutes' => 40, 'sections' => [$key => 'Pupils will convert numbers.']]);
+        $note = $this->post('/school/lesson-notes/read-note', ['file' => UploadedFile::fake()->createWithContent('note.pdf', '%PDF-1.4 fake'), 'lesson_note_format_id' => $format->id], ['Accept' => 'application/json'])->assertOk();
+        $this->assertSame('Pupils will convert numbers.', $note->json("sections.{$key}"));
+        $this->assertSame('Number bases', $note->json('topic'));
+        $this->assertSame(3, $note->json('week'));
+        $this->assertSame($this->subject->id, $note->json('detected.subject_id'));
+
+        // A syllabus document becomes a title, class, subject, year and topic list
+        $this->aiAnswers(['class' => 'SS 1', 'subject' => 'Mathematics', 'academic_year' => '2025/2026', 'title' => 'SS1 Maths syllabus', 'topics' => ['Number bases', 'Indices', 'Number bases']]);
+        $this->actingAs($this->admin);
+        $syl = $this->post('/school/homework/syllabi/read', ['file' => UploadedFile::fake()->createWithContent('syllabus.pdf', '%PDF-1.4 fake')], ['Accept' => 'application/json'])->assertOk();
+        $this->assertSame($this->class->id, $syl->json('class_id'));
+        $this->assertSame([['title' => 'Number bases', 'covered' => false], ['title' => 'Indices', 'covered' => false]], $syl->json('topics'));
+    }
+
+    public function test_weeks_can_be_marked_as_taught_and_the_mark_is_kept(): void
+    {
+        $this->actingAs($this->teacher);
+        $weeks = [['week' => 1, 'topic' => 'Number bases', 'details' => '', 'taught' => true], ['week' => 2, 'topic' => 'Indices', 'details' => '', 'taught' => false]];
+        $this->post('/school/lesson-notes/schemes', $this->base() + ['weeks' => $weeks])->assertSessionHasNoErrors();
+        $scheme = SchemeOfWork::sole();
+        $this->assertTrue($scheme->weeks[0]['taught']);
+        $this->assertArrayNotHasKey('taught', $scheme->weeks[1]);
+    }
 }

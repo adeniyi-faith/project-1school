@@ -107,7 +107,7 @@ class HomeworkController extends Controller
 
     // ── Syllabus ──────────────────────────────────────────────────
 
-    public function syllabi(Request $request)
+    public function syllabi(Request $request, \App\Services\AiService $ai)
     {
         $sid = $this->getSchoolId();
 
@@ -124,6 +124,41 @@ class HomeworkController extends Controller
             'classes'  => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->get(['id', 'name']),
             'subjects' => Subject::where('school_id', $sid)->orderBy('name')->get(['id', 'name']),
             'filters'  => $request->only('class_id', 'academic_year'),
+            'ai'       => ['shown' => $ai->schoolState($sid)['platform_ready'], 'reason' => $ai->unavailable($sid, 'lesson_notes')],
+        ]);
+    }
+
+    /**
+     * A syllabus document (PDF, Word or text) read by the AI into a title, class, subject, year and topic list, so the
+     * "New syllabus" form can be filled in for checking. Nothing is saved here.
+     */
+    public function readSyllabus(Request $request, \App\Services\LessonNoteService $notes)
+    {
+        $sid = $this->getSchoolId();
+        $request->validate([
+            'file' => 'nullable|file|max:10240|mimes:pdf,docx,txt',
+            'text' => 'nullable|string|max:60000',
+        ], ['file.mimes' => 'Upload the syllabus as a PDF, a Word (.docx) file or a text file.']);
+
+        $source = $request->file('file') ? $notes->readUpload($request->file('file')) : ['text' => (string) $request->input('text', ''), 'file' => null];
+        $classes = SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->pluck('name', 'id')->all();
+        $subjects = Subject::where('school_id', $sid)->orderBy('name')->pluck('name', 'id')->all();
+
+        $answer = $notes->readDocument($sid, $request->user(), 'syllabus', $source['text'], $source['file'], [
+            'classes' => array_values(array_unique($classes)), 'subjects' => array_values(array_unique($subjects)), 'terms' => [],
+        ]);
+
+        $topics = collect($answer['topics'] ?? [])->map(fn ($t) => mb_substr(trim(preg_replace('/\s+/u', ' ', (string) $t)), 0, 255))->filter()->unique()->take(200)->values();
+        if ($topics->isEmpty()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['source' => 'The AI could not find a list of topics in this document. Check that it is the syllabus, or add the topics by hand.']);
+        }
+
+        return response()->json([
+            'class_id' => $notes->matchId($answer['class'] ?? null, $classes),
+            'subject_id' => $notes->matchId($answer['subject'] ?? null, $subjects),
+            'academic_year' => mb_substr(trim((string) ($answer['academic_year'] ?? '')), 0, 20),
+            'title' => mb_substr(trim((string) ($answer['title'] ?? '')), 0, 255),
+            'topics' => $topics->map(fn ($t) => ['title' => $t, 'covered' => false])->all(),
         ]);
     }
 

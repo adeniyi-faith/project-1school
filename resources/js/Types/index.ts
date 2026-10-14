@@ -706,7 +706,8 @@ export interface CbtPaperQuestion {
 
 // ── Lesson notes and schemes of work ──
 export interface NoteSection { key: string; label: string; hint?: string }
-export interface SchemeWeek { week: number; topic: string; details: string }
+export interface SchemeWeek { week: number; topic: string; details: string; taught?: boolean }
+export interface DetectedNames { class_id: number | null; subject_id: number | null; term_id: number | null; title: string | null; class: string | null; subject: string | null }
 export interface LessonNoteFormat { id: number; name: string; sections: NoteSection[]; is_default: boolean; notes?: number }
 export interface LessonNoteRow {
     id: number;
@@ -720,7 +721,7 @@ export interface LessonNoteRow {
     status: 'draft' | 'submitted' | 'approved' | 'rejected';
     ai_drafted: boolean;
 }
-export interface SchemeRow { id: number; title: string; class: string | null; subject: string | null; term: string | null; weeks: number; notes: number; has_file: boolean }
+export interface SchemeRow { id: number; title: string; class: string | null; subject: string | null; term: string | null; weeks: number; taught: number; notes: number; has_file: boolean }
 /** A subject in a picker, with the classes that offer it */
 export interface SubjectChoice { id: number; name: string; class_ids: number[] }
 

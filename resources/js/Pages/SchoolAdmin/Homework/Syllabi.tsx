@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import axios from 'axios';
+import { Plus, Pencil, Trash2, FileUp, Sparkles, Loader2 } from 'lucide-react';
 import { useCan } from '@/lib/can';
 
 interface SchoolClass { id: number; name: string; }
@@ -40,21 +41,25 @@ interface Props {
     classes:  SchoolClass[];
     subjects: Subject[];
     filters:  { class_id?: string; academic_year?: string };
+    ai:       { shown: boolean; reason: string | null };
 }
 
 const emptyForm = { class_id: '', subject_id: '', academic_year: '', title: '', topics: [] as Topic[] };
 
-export default function Syllabi({ syllabi, classes, subjects, filters }: Props) {
+export default function Syllabi({ syllabi, classes, subjects, filters, ai }: Props) {
     const can = useCan();
     const [open, setOpen]           = useState(false);
     const [editing, setEditing]     = useState<Syllabus | null>(null);
     const [filterClass, setFilterClass]   = useState(filters.class_id ?? '');
     const [filterYear, setFilterYear]     = useState(filters.academic_year ?? '');
     const [newTopic, setNewTopic]         = useState('');
+    const [upload, setUpload]             = useState<File | null>(null);
+    const [reading, setReading]           = useState(false);
+    const [readNote, setReadNote]         = useState<{ ok: boolean; text: string } | null>(null);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({ ...emptyForm });
 
-    function openCreate() { reset(); setEditing(null); setOpen(true); }
+    function openCreate() { reset(); setEditing(null); setUpload(null); setReadNote(null); setOpen(true); }
     function openEdit(s: Syllabus) {
         setEditing(s);
         setData({ class_id: String(s.school_class?.id ?? ''), subject_id: String(s.subject?.id ?? ''), academic_year: s.academic_year, title: s.title, topics: s.topics ?? [] });
@@ -78,6 +83,31 @@ export default function Syllabi({ syllabi, classes, subjects, filters }: Props) 
             put(`/school/homework/syllabi/${editing.id}`, { onSuccess: () => { reset(); setOpen(false); } });
         } else {
             post('/school/homework/syllabi', { onSuccess: () => { reset(); setOpen(false); } });
+        }
+    }
+    /** The AI reads an uploaded syllabus into the form below; nothing is saved until Create is pressed */
+    async function readFile() {
+        if (!upload) return;
+        setReading(true);
+        setReadNote(null);
+        const body = new FormData();
+        body.append('file', upload);
+        try {
+            const res = await axios.post<{ class_id: number | null; subject_id: number | null; academic_year: string; title: string; topics: Topic[] }>('/school/homework/syllabi/read', body);
+            const r = res.data;
+            setData({
+                class_id: r.class_id ? String(r.class_id) : data.class_id,
+                subject_id: r.subject_id ? String(r.subject_id) : data.subject_id,
+                academic_year: r.academic_year || data.academic_year,
+                title: r.title || data.title,
+                topics: r.topics,
+            });
+            setReadNote({ ok: true, text: `${r.topics.length} topics found. Check the class, subject, year and topics, then press Create.` });
+        } catch (e) {
+            const errs = axios.isAxiosError(e) ? e.response?.data?.errors : null;
+            setReadNote({ ok: false, text: errs?.source?.[0] ?? errs?.ai?.[0] ?? errs?.file?.[0] ?? 'The file could not be read just now. Try again.' });
+        } finally {
+            setReading(false);
         }
     }
     function applyFilter() {
@@ -190,6 +220,26 @@ export default function Syllabi({ syllabi, classes, subjects, filters }: Props) 
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader><DialogTitle>{editing ? 'Edit Syllabus' : 'New Syllabus'}</DialogTitle></DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
+                        {!editing && ai.shown && (
+                            <div className="space-y-2 rounded-lg border border-dashed border-violet-300 p-3 dark:border-violet-500/40">
+                                <p className="flex items-center gap-1.5 text-sm font-medium"><Sparkles className="h-4 w-4 text-violet-600" /> Fill this in from a document</p>
+                                {ai.reason ? <p className="text-xs text-slate-500">{ai.reason}</p> : (
+                                    <>
+                                        <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm">
+                                            <FileUp className="h-4 w-4 text-slate-500" />
+                                            <span className="min-w-0 flex-1 truncate">{upload ? upload.name : 'Choose a PDF, Word (.docx) or text file'}</span>
+                                            <input type="file" accept=".pdf,.docx,.txt" className="sr-only" onChange={e => { setUpload(e.target.files?.[0] ?? null); setReadNote(null); }} />
+                                        </label>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <Button type="button" variant="outline" size="sm" onClick={readFile} disabled={!upload || reading}>
+                                                {reading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} {reading ? 'Reading…' : 'Read the syllabus'}
+                                            </Button>
+                                            {readNote && <p role="status" className={`text-xs ${readNote.ok ? 'text-emerald-700' : 'text-red-600'}`}>{readNote.text}</p>}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
                         {!editing && (
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>

@@ -55,7 +55,7 @@ export default function Schemes({ schemes, classes, subjects, terms, filters, ca
                                 <p className="font-semibold text-slate-900 dark:text-white">{s.subject} · {s.class}</p>
                                 <p className="text-sm text-slate-500">{s.term ?? 'No term chosen'}</p>
                                 <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">
-                                    <span className="text-xl font-semibold tabular-nums text-slate-900 dark:text-white">{s.weeks}</span> weeks · {s.notes} lesson note{s.notes === 1 ? '' : 's'} written
+                                    <span className="text-xl font-semibold tabular-nums text-slate-900 dark:text-white">{s.weeks}</span> weeks ({s.taught} taught) · {s.notes} lesson note{s.notes === 1 ? '' : 's'} written
                                 </p>
                                 {s.has_file && <p className="mt-1 inline-flex items-center gap-1 text-xs text-slate-500"><Paperclip className="size-3.5" aria-hidden="true" /> Original file kept</p>}
                             </Link>

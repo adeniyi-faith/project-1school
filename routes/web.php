@@ -466,6 +466,7 @@ Route::middleware('auth')->group(function () {
             Route::get('lesson-notes/new',                            [LessonNoteController::class, 'create'])->middleware('permission:lessons.create')->name('lesson-notes.create');
             Route::post('lesson-notes',                               [LessonNoteController::class, 'store'])->middleware('permission:lessons.create')->name('lesson-notes.store');
             Route::post('lesson-notes/ai',                            [LessonNoteController::class, 'aiDraft'])->middleware(['permission:lessons.create', 'throttle:20,1'])->name('lesson-notes.ai');
+            Route::post('lesson-notes/read-note',                     [LessonNoteController::class, 'readNote'])->middleware(['permission:lessons.create', 'throttle:20,1'])->name('lesson-notes.read-note');
             Route::get('lesson-notes/schemes',                        [LessonNoteController::class, 'schemes'])->middleware('permission:lessons.view')->name('lesson-notes.schemes');
             Route::get('lesson-notes/schemes/new',                    [LessonNoteController::class, 'scheme'])->middleware('permission:lessons.create')->name('lesson-notes.schemes.create');
             Route::post('lesson-notes/schemes',                       [LessonNoteController::class, 'storeScheme'])->middleware('permission:lessons.create')->name('lesson-notes.schemes.store');
@@ -485,6 +486,7 @@ Route::middleware('auth')->group(function () {
             Route::get('lesson-notes/{note}/pdf',                     [LessonNoteController::class, 'pdf'])->middleware('permission:lessons.view')->name('lesson-notes.pdf');
 
             Route::get('homework/syllabi',                            [HomeworkController::class, 'syllabi'])->middleware('permission:syllabus.view')->name('homework.syllabi.index');
+            Route::post('homework/syllabi/read',                      [HomeworkController::class, 'readSyllabus'])->middleware(['permission:syllabus.manage', 'throttle:20,1'])->name('homework.syllabi.read');
             Route::post('homework/syllabi',                           [HomeworkController::class, 'storeSyllabus'])->middleware('permission:syllabus.manage')->name('homework.syllabi.store');
             Route::put('homework/syllabi/{syllabus}',                 [HomeworkController::class, 'updateSyllabus'])->middleware('permission:syllabus.manage')->name('homework.syllabi.update');
 
