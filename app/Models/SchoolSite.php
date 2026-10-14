@@ -10,7 +10,7 @@ class SchoolSite extends Model
 {
     use BelongsToSchool;
 
-    protected $fillable = ['school_id', 'enabled', 'theme', 'color', 'tagline', 'meta_description', 'footer_text'];
+    protected $fillable = ['school_id', 'enabled', 'theme', 'color', 'color2', 'social', 'tagline', 'meta_description', 'footer_text'];
 
-    protected $casts = ['enabled' => 'boolean'];
+    protected $casts = ['enabled' => 'boolean', 'social' => 'array'];
 }

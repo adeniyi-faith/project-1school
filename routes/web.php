@@ -577,6 +577,8 @@ Route::middleware('auth')->group(function () {
             Route::post('website/pages',         [WebsiteController::class, 'storePage'])->middleware('permission:settings.edit')->name('website.pages.store');
             Route::put('website/pages/{page}',   [WebsiteController::class, 'updatePage'])->whereNumber('page')->middleware('permission:settings.edit')->name('website.pages.update');
             Route::delete('website/pages/{page}', [WebsiteController::class, 'destroyPage'])->whereNumber('page')->middleware('permission:settings.edit')->name('website.pages.destroy');
+            Route::post('website/images',        [WebsiteController::class, 'uploadImage'])->middleware('permission:settings.edit')->name('website.images');
+            Route::post('website/preview',       [WebsiteController::class, 'preview'])->middleware('permission:settings.view')->name('website.preview');
 
             // Integrations / Gateway Settings
             Route::get('settings/integrations',                 [IntegrationController::class, 'index'])->middleware('permission:settings.edit')->name('settings.integrations');
@@ -774,6 +776,7 @@ Route::prefix('exam')->name('exam.')->controller(CandidateCbtController::class)-
 Route::get('/id/{token}', IdCardCheckController::class)->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:60,1')->name('id-cards.check');
 Route::get('/verify/{code}', [CertificateVerifyController::class, 'show'])->where('code', '[A-Za-z0-9]{6,16}')->middleware('throttle:30,1')->name('certificates.verify');
 // A school's public website (open to everyone, only when the school switched it on)
+Route::get('/s/{slug}/sitemap.xml', [PublicSiteController::class, 'sitemap'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.sitemap');
 Route::get('/s/{slug}/{page?}', [PublicSiteController::class, 'show'])->where('slug', '[a-z0-9-]+')->where('page', '[a-z0-9_-]+')->middleware('throttle:120,1')->name('site.show');
 Route::get('/apply/{school}',  [PublicAdmissionController::class, 'show'])->name('public.admission.show');
 Route::post('/apply/{school}', [PublicAdmissionController::class, 'submit'])->name('public.admission.submit');
