@@ -11,7 +11,7 @@ class Blocks
 {
     public const MAX_BLOCKS = 30;
     /** Page addresses the website uses for itself */
-    public const RESERVED_SLUGS = ['news', 'sitemap', 'feed', 'gallery', 'apply', 'login', 'sign-in', 'admin'];
+    public const RESERVED_SLUGS = ['news', 'sitemap', 'feed', 'gallery', 'apply', 'login', 'sign-in', 'search', 'admin'];
 
     /** The colour band a section sits on */
     public const BANDS = ['plain' => 'Plain', 'soft' => 'Soft tint', 'dark' => 'Deep colour'];

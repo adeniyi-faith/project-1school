@@ -542,6 +542,30 @@ class WebsiteEngineTest extends SecurityTestCase
         auth()->logout();
     }
 
+    public function test_the_site_search_finds_pages_and_stories_of_this_school_only(): void
+    {
+        [$school, $admin] = $this->liveSite('Search School', 'heritage');
+        $home = SchoolSitePage::where('is_home', true)->first();
+        $home->blocks = Blocks::clean([['type' => 'text', 'heading' => 'Our robotics club', 'body' => 'Pupils build robots every Friday.']], $school->id);
+        $home->save();
+        \App\Models\SchoolSitePost::create(['school_id' => $school->id, 'title' => 'Robot contest won', 'slug' => 'robot-contest', 'category' => 'news', 'body' => "## Result\n\nOur team won the <b>robot</b> contest.", 'status' => 'published', 'published_at' => now()->subDay()]);
+        \App\Models\SchoolSitePost::create(['school_id' => $school->id, 'title' => 'Draft about robots', 'slug' => 'draft-robots', 'category' => 'news', 'body' => 'Secret robots.', 'status' => 'draft']);
+        [$other] = $this->liveSite('Other School', 'heritage');
+        auth()->logout();
+
+        $this->get('/s/search-school/search?q=robot')->assertOk()
+            ->assertSee('Robot contest won')->assertSee('Pupils build <mark>robot</mark>s', false)
+            ->assertSee('<mark>robot</mark>', false)
+            ->assertDontSee('Draft about robots')
+            ->assertDontSee('<b>robot</b>', false)
+            ->assertSee('noindex', false);
+        $this->get('/s/search-school/search?q=zzzzqq')->assertOk()->assertSee('Nothing found');
+        $this->get('/s/search-school/search?q=a')->assertOk()->assertSee('at least two letters');
+        $this->get('/s/search-school/search')->assertOk()->assertSee('Type a few words');
+        $this->get('/s/search-school')->assertOk()->assertSee('data-search-toggle', false)->assertSee('id="sbar"', false);
+        $this->get('/s/other-school/search?q=robot')->assertOk()->assertDontSee('Robot contest won');
+    }
+
     public function test_the_statement_theme_draws_the_civic_look_from_the_new_blocks(): void
     {
         [$school, $admin] = $this->liveSite('Civic School', 'statement');

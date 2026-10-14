@@ -178,6 +178,20 @@ class SiteRenderer
         ]);
     }
 
+    /** The search page: the box, and what was found */
+    public static function renderSearch(School $school, SchoolSite $site, Collection $pages, string $query, Collection $results): View
+    {
+        $url = self::homeUrl($school).'/search';
+        $ctx = self::context($school, $site, $pages, false, $url, 'search');
+        $title = ($query !== '' ? 'Search: '.$query : 'Search').' | '.$school->name;
+
+        return view(self::themed('search', $site->theme), $ctx + [
+            'query' => $query, 'results' => $results, 'tooShort' => $query !== '' && SiteSearch::terms($query) === [],
+            'title' => $title, 'description' => 'Search '.$school->name.'.', 'ogImage' => $ctx['logo'], 'ogType' => 'website',
+            'schema' => ['@context' => 'https://schema.org', '@graph' => [self::organisation($school, $site, null, $ctx['logo'], $ctx['social'])]],
+        ]);
+    }
+
     /** The news and events list */
     public static function renderNews(School $school, SchoolSite $site, Collection $pages, LengthAwarePaginator $posts, ?string $category): View
     {

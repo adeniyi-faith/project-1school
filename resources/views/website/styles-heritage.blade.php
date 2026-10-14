@@ -266,3 +266,29 @@
 [data-theme=heritage] .hp-head{padding-bottom:0}
 [data-theme=heritage] .hp-form form+.hp-note{margin-top:1.75rem}
 @endverbatim
+@verbatim
+/* ---- search: magnifier next to the burger, a dark red box under the header, results in serif ---- */
+[data-theme=heritage] .hdr-tools{gap:.1rem;margin-right:-.35rem}
+[data-theme=heritage] .sbtn{color:var(--ink);width:2.75rem;height:2.75rem}
+[data-theme=heritage] .sbtn svg{width:1.75rem;height:1.75rem}
+[data-theme=heritage] .sbar{background:var(--maroon);border:0;box-shadow:none}
+[data-theme=heritage] .sbar-in{padding-top:1.4rem;padding-bottom:1.4rem}
+[data-theme=heritage] .sbar input{border:0;border-radius:0;background:#fff;color:var(--ink);font:400 1.35rem/1.2 var(--head-font);min-height:3.4rem}
+[data-theme=heritage] .sbar input:focus{box-shadow:inset 0 -4px 0 var(--brand2)}
+[data-theme=heritage] .sbar button,[data-theme=heritage] .hp-search button{background:var(--brand2);color:var(--brand2-ink);border-radius:0;font:700 .95rem/1 var(--body-font);letter-spacing:.14em;text-transform:uppercase}
+[data-theme=heritage] .sbar button{padding:0 1.5rem}
+@media (max-width:30rem){[data-theme=heritage] .sbar-in{flex-direction:column}}
+@media (min-width:60rem){[data-theme=heritage] .hdr-tools{order:3;margin-left:.75rem;margin-right:0}[data-theme=heritage] .menu{order:2;margin-left:auto}}
+[data-theme=heritage] .hp-search{display:flex;gap:.75rem;max-width:42rem;margin-top:1.25rem}
+[data-theme=heritage] .hp-search input{flex:1;min-width:0;min-height:3.4rem;padding:.6rem 1rem;border:1px solid var(--ink);border-radius:0;background:#fff;color:var(--ink);font:400 1.3rem/1.2 var(--head-font)}
+[data-theme=heritage] .hp-search input:focus{outline:0;border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+[data-theme=heritage] .hp-search button{min-width:8rem;border:0;cursor:pointer;color:var(--ink)}
+[data-theme=heritage] .hp-results{max-width:56rem}
+[data-theme=heritage] .result-count{margin:0 0 1.5rem;font-size:1.05rem}
+[data-theme=heritage] .result{padding:1.6rem 0;border-color:#cfc6b4}
+[data-theme=heritage] .result h2{font:400 clamp(1.6rem,5.5vw,2rem)/1.15 var(--head-font)}
+[data-theme=heritage] .result h2 a:hover{color:var(--brand);text-decoration:none}
+[data-theme=heritage] .result p{color:var(--ink);font-size:1.08rem;line-height:1.6}
+[data-theme=heritage] .result mark{background:var(--brand2);color:var(--ink)}
+[data-theme=heritage] .result-pic img{aspect-ratio:16/9;border-radius:0}
+@endverbatim
