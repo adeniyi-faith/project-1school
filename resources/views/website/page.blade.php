@@ -2,66 +2,96 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $page->is_home ? $school->name : $page->title.' · '.$school->name }}</title>
-    @if ($site->meta_description)<meta name="description" content="{{ $site->meta_description }}">@endif
-    <style>
-        :root { --accent: {{ $css['accent'] }}; --bg: {{ $css['bg'] }}; --soft: {{ $css['soft'] }}; --text: {{ $css['text'] }}; --font: {!! $css['font'] !!}; }
-        * { box-sizing: border-box; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.6; }
-        a { color: var(--accent); }
-        .wrap { max-width: 64rem; margin: 0 auto; padding: 0 1.25rem; }
-        header.top { border-bottom: 1px solid rgba(0,0,0,.08); background: var(--bg); position: sticky; top: 0; z-index: 5; }
-        header.top .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1.5rem; padding-top: .75rem; padding-bottom: .75rem; }
-        .brand { display: flex; align-items: center; gap: .6rem; font-weight: 700; font-size: 1.1rem; color: var(--text); text-decoration: none; }
-        .brand img { height: 2.25rem; width: auto; }
-        nav a { margin-right: 1rem; text-decoration: none; color: var(--text); font-size: .95rem; }
-        nav a.on { color: var(--accent); font-weight: 600; }
-        .btn { display: inline-block; background: var(--accent); color: #fff; padding: .7rem 1.4rem; border-radius: .5rem; text-decoration: none; font-weight: 600; }
-        section.block { padding: 3rem 0; }
-        section.block:nth-of-type(even) { background: var(--soft); }
-        h1, h2 { line-height: 1.2; margin: 0 0 .75rem; }
-        .hero { background: var(--accent); color: #fff; text-align: center; padding: 5rem 0; }
-        .hero h1 { font-size: clamp(2rem, 6vw, 3.25rem); }
-        .hero p { font-size: 1.2rem; opacity: .92; margin: 0 auto 1.75rem; max-width: 40rem; }
-        .hero .btn { background: #fff; color: var(--accent); }
-        .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
-        .card { background: var(--bg); border: 1px solid rgba(0,0,0,.08); border-radius: .75rem; padding: 1.25rem; }
-        .card h3 { margin: 0 0 .35rem; }
-        .muted { opacity: .65; font-size: .875rem; }
-        footer { border-top: 1px solid rgba(0,0,0,.08); padding: 2rem 0; font-size: .9rem; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{{ $title }}</title>
+    @if ($description)<meta name="description" content="{{ $description }}">@endif
+    <link rel="canonical" href="{{ $pageUrl }}">
+    <meta name="theme-color" content="{{ Str::before(Str::after($style, '--hdr-bg:'), ';') }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ $school->name }}">
+    <meta property="og:title" content="{{ $title }}">
+    @if ($description)<meta property="og:description" content="{{ $description }}">@endif
+    <meta property="og:url" content="{{ $pageUrl }}">
+    @if ($ogImage)<meta property="og:image" content="{{ $ogImage }}">@endif
+    <meta name="twitter:card" content="{{ $ogImage ? 'summary_large_image' : 'summary' }}">
+    @if ($school->logo)<link rel="icon" href="{{ $school->logo_url }}">@endif
+    <style>:root{ {!! $style !!} }</style>
+    <style>@include('website.styles')</style>
+    <noscript><style>.burger{display:none}.menu{display:block;position:static;background:none;color:inherit;padding:0}.menu a{font-size:1rem;display:inline-block;border:0;margin-right:1rem}</style></noscript>
+    <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 </head>
-<body>
-<header class="top">
-    <div class="wrap">
+<body id="sheet" data-theme="{{ $theme }}" class="theme-{{ $theme }}">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="hdr">
+    <div class="wrap hdr-in">
         <a class="brand" href="{{ $homeUrl }}">
-            @if ($school->logo)<img src="{{ $school->logo_url }}" alt="">@endif
+            @if ($logo)<img src="{{ $logo }}" alt="" width="52" height="42">@endif
             <span>{{ $school->name }}</span>
         </a>
-        <nav>
+        <button class="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu"><i></i><i></i><i></i></button>
+        <nav class="menu" id="menu" aria-label="Main">
             @foreach ($menu as $item)
-                <a href="{{ $item->is_home ? $homeUrl : $homeUrl.'/'.$item->slug }}" class="{{ $item->id === $page->id ? 'on' : '' }}">{{ $item->title }}</a>
+                <a href="{{ $item->is_home ? $homeUrl : $homeUrl.'/'.$item->slug }}" @if ($item->id === $page->id) aria-current="page" @endif>{{ $item->title }}</a>
             @endforeach
+            <a class="btn btn--solid" href="{{ route('public.admission.show', $school) }}">Apply online</a>
         </nav>
     </div>
 </header>
 
-<main>
-    @forelse ($page->blocks ?? [] as $block)
+<main id="main">
+    @if ($needsHiddenH1)<h1 class="sr">{{ $page->title }}</h1>@endif
+    @forelse ($blocks as $block)
         @includeIf('website.blocks.'.$block['type'], ['b' => $block])
     @empty
-        <section class="block"><div class="wrap"><h1>{{ $page->title }}</h1><p class="muted">This page has no content yet.</p></div></section>
+        <section class="sec"><div class="wrap"><h1>{{ $page->title }}</h1><p>This page has no content yet.</p></div></section>
     @endforelse
 </main>
 
-<footer>
+<footer class="ftr">
     <div class="wrap">
-        <strong>{{ $school->name }}</strong>
-        @if ($site->tagline) &middot; {{ $site->tagline }}@endif
-        @if ($site->footer_text)<div class="muted">{{ $site->footer_text }}</div>@endif
-        <div class="muted"><a href="{{ route('login') }}">Staff, student and parent sign in</a></div>
+        <div class="ftr-grid">
+            <div>
+                <div class="ftr-brand">@if ($logo)<img src="{{ $logo }}" alt="" width="52" height="42">@endif<span>{{ $school->name }}</span></div>
+                @if ($site->tagline)<p style="margin:.75rem 0 0;opacity:.85">{{ $site->tagline }}</p>@endif
+                @if (count($social))
+                    <ul class="social">
+                        @foreach ($social as $key => $href)
+                            <li><a href="{{ $href }}" rel="noopener me" target="_blank" aria-label="{{ \App\Website\SiteRenderer::SOCIAL[$key] ?? $key }}">@include('website.partials.social', ['name' => $key])</a></li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+            <div>
+                <h2>Visit us</h2>
+                <ul>
+                    @if ($place)<li><a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($school->name.' '.$place) }}" target="_blank" rel="noopener">{{ $place }} (Map)</a></li>@endif
+                    @if ($school->phone)<li><a href="tel:{{ preg_replace('/[^0-9+]/', '', $school->phone) }}">{{ $school->phone }}</a></li>@endif
+                    @if ($school->email)<li><a href="mailto:{{ $school->email }}">{{ $school->email }}</a></li>@endif
+                </ul>
+            </div>
+            <div>
+                <h2>Quick links</h2>
+                <ul>
+                    @foreach ($menu->take(5) as $item)<li><a href="{{ $item->is_home ? $homeUrl : $homeUrl.'/'.$item->slug }}">{{ $item->title }}</a></li>@endforeach
+                    <li><a href="{{ route('public.admission.show', $school) }}">Apply online</a></li>
+                    <li><a href="{{ route('login') }}">Sign in</a></li>
+                </ul>
+            </div>
+        </div>
+        <p class="legal">@if ($site->footer_text){{ $site->footer_text }} &middot; @endif&copy; {{ now()->year }} {{ $school->name }}</p>
     </div>
 </footer>
+
+<script>
+(function(){
+  var b=document.querySelector('.burger'),body=document.body;
+  b.addEventListener('click',function(){var o=body.classList.toggle('menu-open');b.setAttribute('aria-expanded',o?'true':'false');});
+  document.querySelectorAll('.menu a').forEach(function(a){a.addEventListener('click',function(){body.classList.remove('menu-open');});});
+  @if ($preview)
+  document.addEventListener('click',function(e){var a=e.target.closest('a');if(a){e.preventDefault();}});
+  @endif
+})();
+</script>
 </body>
 </html>

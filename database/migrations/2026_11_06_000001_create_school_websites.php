@@ -14,7 +14,9 @@ return new class extends Migration
             $table->foreignId('school_id')->unique()->constrained()->cascadeOnDelete();
             $table->boolean('enabled')->default(false);
             $table->string('theme', 30)->default('classic');
-            $table->string('color', 7)->nullable();
+            $table->string('color', 7)->nullable();   // main colour
+            $table->string('color2', 7)->nullable();  // second colour
+            $table->json('social')->nullable();      // facebook, instagram, x, linkedin, youtube links
             $table->string('tagline', 160)->nullable();
             $table->string('meta_description', 300)->nullable();
             $table->string('footer_text', 300)->nullable();
@@ -27,6 +29,8 @@ return new class extends Migration
             $table->foreignId('school_id')->index()->constrained()->cascadeOnDelete();
             $table->string('slug', 60);
             $table->string('title', 120);
+            $table->string('seo_title', 80)->nullable();
+            $table->string('seo_description', 200)->nullable();
             $table->json('blocks')->nullable();
             $table->boolean('is_published')->default(false);
             $table->boolean('is_home')->default(false);

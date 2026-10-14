@@ -1,10 +1,10 @@
-<section class="block"><div class="wrap">
-    @if ($b['heading'])<h2>{{ $b['heading'] }}</h2>@endif
-    <div class="card">
-        @php $place = collect([$school->address, $school->city, $school->state])->filter()->implode(', '); @endphp
-        @if ($place)<p><strong>Address</strong><br>{{ $place }}</p>@endif
-        @if ($school->phone)<p><strong>Phone</strong><br><a href="tel:{{ preg_replace('/[^0-9+]/', '', $school->phone) }}">{{ $school->phone }}</a></p>@endif
-        @if ($school->email)<p><strong>Email</strong><br><a href="mailto:{{ $school->email }}">{{ $school->email }}</a></p>@endif
-        @if (! $place && ! $school->phone && ! $school->email)<p class="muted">Contact details have not been added yet.</p>@endif
+@php $tag = ($b['_h1'] ?? false) ? 'h1' : 'h2'; @endphp
+<section class="sec"><div class="wrap">
+    @if ($b['heading'])<div class="sec-head"><{{ $tag }}>{{ $b['heading'] }}</{{ $tag }}></div>@endif
+    <div class="contact">
+        @if ($place)<div class="card card--plain"><div class="card-body"><b>Address</b><a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($school->name.' '.$place) }}" target="_blank" rel="noopener">{{ $place }}</a></div></div>@endif
+        @if ($school->phone)<div class="card card--plain"><div class="card-body"><b>Phone</b><a href="tel:{{ preg_replace('/[^0-9+]/', '', $school->phone) }}">{{ $school->phone }}</a></div></div>@endif
+        @if ($school->email)<div class="card card--plain"><div class="card-body"><b>Email</b><a href="mailto:{{ $school->email }}">{{ $school->email }}</a></div></div>@endif
+        @if (! $place && ! $school->phone && ! $school->email)<p>Contact details have not been added yet.</p>@endif
     </div>
 </div></section>

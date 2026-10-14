@@ -1,5 +1,9 @@
-<section class="block"><div class="wrap" style="text-align:center">
-    @if ($b['heading'])<h2>{{ $b['heading'] }}</h2>@endif
+@php $tag = ($b['_h1'] ?? false) ? 'h1' : 'h2'; @endphp
+<section class="cta"><div class="wrap">
+    @if ($b['heading'])<{{ $tag }}>{{ $b['heading'] }}</{{ $tag }}>@endif
     @if ($b['body'])<p>{{ $b['body'] }}</p>@endif
-    <a class="btn" href="{{ route('public.admission.show', $school) }}">Apply online</a>
+    <div class="btns">
+        @include('website.partials.button', ['kind' => $b['button'], 'variant' => 'solid'])
+        @include('website.partials.button', ['kind' => $b['button2'], 'variant' => 'ghost'])
+    </div>
 </div></section>
