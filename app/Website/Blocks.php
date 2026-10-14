@@ -13,6 +13,9 @@ class Blocks
     /** Page addresses the website uses for itself */
     public const RESERVED_SLUGS = ['news', 'sitemap', 'feed', 'gallery', 'apply', 'login', 'sign-in', 'admin'];
 
+    /** The colour band a section sits on */
+    public const BANDS = ['plain' => 'Plain', 'soft' => 'Soft tint', 'dark' => 'Deep colour'];
+
     public const BUTTONS = ['none' => 'No button', 'apply' => 'Apply online', 'login' => 'Sign in', 'contact' => 'Contact us'];
 
     /** Small pictures a card can start with (drawn by website/partials/icon.blade.php) */
@@ -33,12 +36,18 @@ class Blocks
                 'fields' => [
                     ['key' => 'eyebrow', 'label' => 'Small line above the heading', 'kind' => 'text', 'max' => 80],
                     $heading('Big heading'),
-                    ['key' => 'subheading', 'label' => 'One line under it', 'kind' => 'text', 'max' => 220],
+                    ['key' => 'lead', 'label' => 'Short line in italics (only the Statement theme shows it)', 'kind' => 'text', 'max' => 160],
+                    ['key' => 'subheading', 'label' => 'One line, or a short paragraph, under it', 'kind' => 'textarea', 'max' => 400],
                     ['key' => 'image', 'label' => 'Photo', 'kind' => 'image', 'hint' => 'A wide, bright photo works best. Without one, your colours are used.'],
+                    ['key' => 'foot', 'label' => 'Line at the bottom of the banner (only the Statement theme shows it)', 'kind' => 'text', 'max' => 80, 'hint' => 'For example a motto. Shown next to a row of small dots.'],
+                    ['key' => 'facts', 'label' => 'Details card (only the Statement theme shows it)', 'kind' => 'list', 'limit' => 4, 'noun' => 'detail', 'fields' => [
+                        ['key' => 'label', 'label' => 'Label (for example Date)', 'kind' => 'text', 'max' => 30],
+                        ['key' => 'value', 'label' => 'Value (for example Wednesday,|5 August 2026)', 'kind' => 'text', 'max' => 100, 'hint' => 'Type | where the line should break.'],
+                    ]],
                     ['key' => 'button', 'label' => 'First button', 'kind' => 'select', 'options' => self::BUTTONS],
                     ['key' => 'button2', 'label' => 'Second button', 'kind' => 'select', 'options' => self::BUTTONS],
                 ],
-                'default' => ['eyebrow' => '', 'heading' => 'Welcome', 'subheading' => '', 'image' => '', 'button' => 'apply', 'button2' => 'none'],
+                'default' => ['eyebrow' => '', 'heading' => 'Welcome', 'lead' => '', 'subheading' => '', 'image' => '', 'foot' => '', 'facts' => [], 'button' => 'apply', 'button2' => 'none'],
             ],
             'text' => [
                 'label' => 'Text and picture', 'help' => 'A heading, some paragraphs, and an optional picture beside them.',
@@ -49,8 +58,9 @@ class Blocks
                     ['key' => 'image', 'label' => 'Picture (optional)', 'kind' => 'image'],
                     ['key' => 'side', 'label' => 'Picture sits on the', 'kind' => 'select', 'options' => ['right' => 'Right', 'left' => 'Left']],
                     ['key' => 'align', 'label' => 'When there is no picture, line up the text', 'kind' => 'select', 'options' => ['left' => 'To the left', 'center' => 'In the centre']],
+                    ['key' => 'band', 'label' => 'Background', 'kind' => 'select', 'options' => self::BANDS],
                 ],
-                'default' => ['eyebrow' => '', 'heading' => '', 'body' => '', 'image' => '', 'side' => 'right', 'align' => 'left'],
+                'default' => ['eyebrow' => '', 'heading' => '', 'body' => '', 'image' => '', 'side' => 'right', 'align' => 'left', 'band' => 'plain'],
             ],
             'features' => [
                 'label' => 'Cards', 'help' => 'Up to 8 cards, each with a picture, a title and a few words. Good for programmes, facilities or reasons to choose you.',
@@ -58,6 +68,9 @@ class Blocks
                     ['key' => 'eyebrow', 'label' => 'Small label above the heading', 'kind' => 'text', 'max' => 40],
                     $heading(),
                     ['key' => 'intro', 'label' => 'A sentence under the heading', 'kind' => 'text', 'max' => 300],
+                    ['key' => 'style', 'label' => 'Look', 'kind' => 'select', 'options' => ['cards' => 'Cards with pictures or icons', 'pillars' => 'Numbered cards (Pillar I, Pillar II ...)', 'panels' => 'Plain panels with a coloured bar on top (for example Vision and Mission)']],
+                    ['key' => 'tag', 'label' => 'Word before each number (numbered cards only)', 'kind' => 'text', 'max' => 20],
+                    ['key' => 'band', 'label' => 'Background', 'kind' => 'select', 'options' => self::BANDS],
                     ['key' => 'items', 'label' => 'Cards', 'kind' => 'list', 'limit' => 8, 'noun' => 'card', 'fields' => [
                         ['key' => 'icon', 'label' => 'Small picture', 'kind' => 'select', 'options' => self::ICONS],
                         ['key' => 'title', 'label' => 'Title', 'kind' => 'text', 'max' => 80],
@@ -65,7 +78,7 @@ class Blocks
                         ['key' => 'image', 'label' => 'Picture (optional)', 'kind' => 'image'],
                     ]],
                 ],
-                'default' => ['eyebrow' => '', 'heading' => 'Why families choose us', 'intro' => '', 'items' => []],
+                'default' => ['eyebrow' => '', 'heading' => 'Why families choose us', 'intro' => '', 'style' => 'cards', 'tag' => 'Pillar', 'band' => 'soft', 'items' => []],
             ],
             'actions' => [
                 'label' => 'Quick action cards', 'help' => 'Three big cards that sit over the bottom of the top banner, for example Apply online, Sign in and Talk to us.',
@@ -85,12 +98,13 @@ class Blocks
                     ['key' => 'eyebrow', 'label' => 'Small label above the heading', 'kind' => 'text', 'max' => 40],
                     $heading(),
                     ['key' => 'intro', 'label' => 'A sentence under the heading', 'kind' => 'text', 'max' => 300],
+                    ['key' => 'band', 'label' => 'Background', 'kind' => 'select', 'options' => self::BANDS],
                     ['key' => 'items', 'label' => 'Steps', 'kind' => 'list', 'limit' => 8, 'noun' => 'step', 'fields' => [
                         ['key' => 'title', 'label' => 'Title', 'kind' => 'text', 'max' => 80],
                         ['key' => 'body', 'label' => 'A few words about it', 'kind' => 'textarea', 'max' => 300],
                     ]],
                 ],
-                'default' => ['eyebrow' => '', 'heading' => 'How it works', 'intro' => '', 'items' => []],
+                'default' => ['eyebrow' => '', 'heading' => 'How it works', 'intro' => '', 'band' => 'plain', 'items' => []],
             ],
             'stats' => [
                 'label' => 'Big numbers', 'help' => 'Up to 4 proud facts, for example 25 Years or 1,200 Students.',
@@ -102,6 +116,25 @@ class Blocks
                     ]],
                 ],
                 'default' => ['heading' => '', 'items' => []],
+            ],
+            'quote' => [
+                'label' => 'Quote', 'help' => 'A pulled-out sentence in large italics with a coloured bar beside it, and who said it.',
+                'fields' => [
+                    ['key' => 'text', 'label' => 'The quote', 'kind' => 'textarea', 'max' => 400],
+                    ['key' => 'who', 'label' => 'Who said it', 'kind' => 'text', 'max' => 100],
+                ],
+                'default' => ['text' => '', 'who' => ''],
+            ],
+            'profile' => [
+                'label' => 'Person profile', 'help' => 'A photo with a coloured panel under it: a name, a role and a few paragraphs. Good for the head teacher, founder or convener.',
+                'fields' => [
+                    ['key' => 'eyebrow', 'label' => 'Small label (for example The Head Teacher)', 'kind' => 'text', 'max' => 40],
+                    ['key' => 'name', 'label' => 'Name', 'kind' => 'text', 'max' => 80],
+                    ['key' => 'role', 'label' => 'Role', 'kind' => 'text', 'max' => 60],
+                    ['key' => 'body', 'label' => 'About them', 'kind' => 'textarea', 'max' => 3000, 'format' => true],
+                    ['key' => 'image', 'label' => 'Photo', 'kind' => 'image', 'hint' => 'A portrait photo works best.'],
+                ],
+                'default' => ['eyebrow' => '', 'name' => '', 'role' => '', 'body' => '', 'image' => ''],
             ],
             'news' => [
                 'label' => 'Latest news', 'help' => 'Shows your newest posts from News and events. It updates by itself. Before you write any posts, it shows announcements meant for everyone.',

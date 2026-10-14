@@ -316,6 +316,18 @@ a.action:hover .action-go{transform:translateX(4px)}
 .lb-prev{left:.5rem;top:50%;transform:translateY(-50%)}
 .lb-next{right:.5rem;top:50%;transform:translateY(-50%)}
 
+/* announcement bar, deep bands, quotes and person profiles (every theme; Statement dresses them further in styles-themes) */
+.notice{background:var(--brand2);color:var(--brand2-ink)}
+.notice .wrap{padding-top:.55rem;padding-bottom:.55rem}
+.notice p{margin:0;font-weight:600;font-size:.95rem}
+@media (min-width:60rem){.notice p{text-align:center}}
+.sec--dark{background:var(--deep);color:var(--deep-ink)}
+.sec--dark h1,.sec--dark h2,.sec--dark h3{color:inherit}
+.sec--dark .eyebrow{color:var(--brand2)}
+.sec--dark .sec-head p{color:inherit;opacity:.88}
+.sec--quote{padding-top:0}
+.sec--tint{background:var(--soft)}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 @media print{.hdr,.menu,.cta{display:none}}
 @endverbatim

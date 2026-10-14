@@ -10,6 +10,8 @@ namespace App\Website;
 class Themes
 {
     private const SERIF = "'Source Serif 4','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
+    private const NEWSREADER = "'Newsreader','Source Serif 4','Iowan Old Style',Georgia,serif";
+    private const INSTRUMENT = "'Instrument Sans','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
     private const SANS = "'Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
 
     public const ALL = [
@@ -36,8 +38,8 @@ class Themes
         ],
         'statement' => [
             'label' => 'Statement', 'note' => 'Bold and serious: deep colour bands, huge serif headlines, numbered commitments and pillars.',
-            'brand' => '#6b1414', 'brand2' => '#c89b32', 'bg' => '#fbf9f4', 'soft' => '#f2ede2', 'text' => '#2b2723',
-            'head' => self::SERIF, 'body' => self::SANS,
+            'brand' => '#6b1414', 'brand2' => '#c89b32', 'bg' => '#fbf9f4', 'soft' => '#f2ede2', 'text' => '#3b3631',
+            'head' => self::NEWSREADER, 'body' => self::INSTRUMENT, 'fonts' => 'Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;0,6..72,700;0,6..72,800;1,6..72,300;1,6..72,400;1,6..72,500;1,6..72,600;1,6..72,700|Instrument+Sans:wght@400;500;600;700',
             'radius' => '.5rem', 'radius_lg' => '.5rem', 'btn_radius' => '.4rem', 'btn_case' => 'none', 'btn_track' => '0', 'btn_style' => 'solid',
             'hdr' => 'bg', 'ftr' => 'deep',
         ],
@@ -84,14 +86,14 @@ class Themes
         $brand2 = self::isHex($color2) ? strtolower($color2) : $t['brand2'];
 
         $hdr = $t['hdr'] === 'brand2' ? $brand2 : $t['bg'];
-        $deep = self::shade($brand, .42);
+        $deep = self::shade($brand, .55);
         $ftr = match ($t['ftr']) { 'brand2' => $brand2, 'deep' => $deep, default => '#171717' };
         $hdrInk = self::ink($hdr);
 
         return [
             'brand' => $brand, 'brand-ink' => self::ink($brand),
             'brand2' => $brand2, 'brand2-ink' => self::ink($brand2),
-            'deep' => $deep, 'deep-ink' => self::ink($deep),
+            'deep' => $deep, 'deep-ink' => self::ink($deep), 'deep-mid' => self::shade($brand, .8), 'gold-lt' => self::tint($brand2, .42),
             'bg' => $t['bg'], 'soft' => $t['soft'], 'text' => $t['text'],
             'muted' => self::ink($t['bg']) === '#ffffff' ? '#d4d4d8' : '#57534e',
             'line' => 'rgba(0,0,0,.1)',
@@ -115,6 +117,22 @@ class Themes
     public static function btnStyle(string $theme): string
     {
         return (self::ALL[$theme] ?? self::ALL['heritage'])['btn_style'];
+    }
+
+    /** A lighter tint of a colour: $amount is how far it moves towards white (0.4 = 40%) */
+    public static function tint(string $hex, float $amount): string
+    {
+        $parts = array_map(fn ($c) => str_pad(dechex((int) round(hexdec($c) + (255 - hexdec($c)) * $amount)), 2, '0', STR_PAD_LEFT), str_split(ltrim($hex, '#'), 2));
+
+        return '#'.implode('', $parts);
+    }
+
+    /** The Google Fonts address a theme needs, if it uses fonts that are not on every device */
+    public static function fontsUrl(?string $theme): ?string
+    {
+        $fonts = (self::ALL[self::key($theme)])['fonts'] ?? null;
+
+        return $fonts ? 'https://fonts.googleapis.com/css2?'.collect(explode('|', $fonts))->map(fn ($f) => 'family='.$f)->implode('&').'&display=swap' : null;
     }
 
     /** A darker shade of a colour: $keep is how much of the original stays (0.4 keeps 40%, the rest is black) */

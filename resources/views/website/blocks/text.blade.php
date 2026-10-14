@@ -1,5 +1,5 @@
-@php $tag = ($b['_h1'] ?? false) ? 'h1' : 'h2'; $pic = $b['image'] !== ''; @endphp
-<section class="sec"><div class="wrap">
+@php $tag = ($b['_h1'] ?? false) ? 'h1' : 'h2'; $pic = $b['image'] !== ''; $band = $b['band'] ?? 'plain'; @endphp
+<section class="sec {{ $band === 'soft' ? 'sec--soft' : ($band === 'dark' ? 'sec--dark' : '') }}"><div class="wrap">
     <div class="{{ $pic ? 'split split--'.$b['side'] : ($b['align'] === 'center' ? 'center prose' : 'prose') }}">
         <div class="{{ $pic ? 'prose' : '' }}">
             @include('website.partials.heading')

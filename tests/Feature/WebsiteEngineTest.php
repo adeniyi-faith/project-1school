@@ -508,4 +508,54 @@ class WebsiteEngineTest extends SecurityTestCase
         auth()->logout();
         $this->get('/s/gal-school/gallery/sports-day-2026')->assertNotFound();
     }
+
+    public function test_the_statement_theme_draws_the_civic_look_from_the_new_blocks(): void
+    {
+        [$school, $admin] = $this->liveSite('Civic School', 'statement');
+        $this->actingAs($admin)->put('/school/website', ['announcement' => 'Open day on 5 August']);
+        $home = SchoolSitePage::where('is_home', true)->first();
+        $home->blocks = Blocks::clean([
+            ['type' => 'hero', 'heading' => 'Beyond *the Crumbs*', 'eyebrow' => 'Summit 2026', 'lead' => 'A seat at the table', 'subheading' => 'A civic platform.', 'foot' => 'One voice.',
+                'facts' => [['label' => 'Date', 'value' => 'Wednesday,|5 August 2026'], ['label' => 'Venue', 'value' => 'Town <b>Hall</b>']], 'button' => 'apply', 'button2' => 'contact'],
+            ['type' => 'stats', 'items' => [['number' => '60+', 'label' => 'Villages']]],
+            ['type' => 'quote', 'text' => 'It buys a day; it costs a generation.', 'who' => 'Founding statement'],
+            ['type' => 'steps', 'band' => 'dark', 'heading' => 'Five commitments', 'items' => [['title' => 'Reframe it', 'body' => 'together.']]],
+            ['type' => 'features', 'style' => 'pillars', 'tag' => 'Pillar', 'heading' => 'Pillars', 'items' => [['title' => 'Education', 'body' => 'Schools.'], ['title' => 'Jobs', 'body' => 'Work.']]],
+            ['type' => 'features', 'style' => 'panels', 'heading' => 'Aims', 'items' => [['title' => 'Vision', 'body' => 'A future.']]],
+            ['type' => 'profile', 'eyebrow' => 'The Convener', 'name' => 'Ada Obi', 'role' => 'Lawyer', 'body' => 'Born in town.'],
+        ], $school->id);
+        $home->save();
+        auth()->logout();
+
+        $this->get("/s/civic-school")->assertOk()
+            ->assertSee('Open day on 5 August')
+            ->assertSee('fonts.googleapis.com', false)
+            ->assertSee('Newsreader', false)
+            ->assertSee('<section class="hero hero--statement', false)
+            ->assertSee('class="hero-card"', false)
+            ->assertSee('Wednesday,<br>5 August 2026', false)
+            ->assertSee('Town &lt;b&gt;Hall&lt;/b&gt;', false)
+            ->assertSee('<small>+</small>', false)
+            ->assertSee('class="quote"', false)
+            ->assertSee('sec--dark', false)
+            ->assertSee('class="step-t"', false)
+            ->assertSee('Pillar I', false)
+            ->assertSee('Pillar II', false)
+            ->assertSee('panel-card', false)
+            ->assertSee('class="profile"', false)
+            ->assertSee('<footer class="ftr ftr--statement">', false);
+        $this->get('/s/civic-school')->assertSee('School platform powered by', false);
+
+        $this->actingAs($admin)->put('/school/website', ['announcement' => '']);
+        auth()->logout();
+        $this->get('/s/civic-school')->assertDontSee('class="notice"', false);
+    }
+
+    public function test_other_themes_show_the_announcement_bar_and_keep_their_own_footer(): void
+    {
+        [$school, $admin] = $this->liveSite('Bar School', 'heritage');
+        $this->actingAs($admin)->put('/school/website', ['announcement' => 'School is closed on Friday']);
+        auth()->logout();
+        $this->get('/s/bar-school')->assertOk()->assertSee('School is closed on Friday')->assertSee('<footer class="ftr">', false)->assertDontSee('<footer class="ftr ftr--statement">', false);
+    }
 }
