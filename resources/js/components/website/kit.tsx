@@ -28,6 +28,7 @@ const TABS = [
     { href: '/school/website', label: 'Overview', exact: true },
     { href: '/school/website/pages', label: 'Pages' },
     { href: '/school/website/posts', label: 'News & events' },
+    { href: '/school/website/gallery', label: 'Gallery' },
     { href: '/school/website/themes', label: 'Themes' },
     { href: '/school/website/media', label: 'Pictures' },
     { href: '/school/website/settings', label: 'Settings' },

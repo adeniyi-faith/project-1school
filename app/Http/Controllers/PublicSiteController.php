@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\School;
 use App\Models\SchoolSite;
+use App\Models\SchoolSiteAlbum;
 use App\Models\SchoolSitePage;
 use App\Models\SchoolSitePost;
 use App\Website\Prose;
@@ -36,6 +37,23 @@ class PublicSiteController extends Controller
             'Parents, students and staff: sign in to see results, fees, notices and your school tools.');
     }
 
+    public function gallery(string $slug)
+    {
+        [$school, $site] = $this->live($slug);
+
+        return SiteRenderer::renderGallery($school, $site, $this->pages($school), SiteRenderer::albums($school));
+    }
+
+    public function album(string $slug, string $album)
+    {
+        [$school, $site] = $this->live($slug);
+        $row = SiteRenderer::albums($school)->firstWhere('slug', $album);
+        abort_if(! $row, 404);
+        $photos = $row->photos->filter(fn ($p) => $p->media)->values()->map(fn ($p) => ['path' => $p->media->path, 'alt' => $p->caption ?: ($p->media->alt ?: $p->media->name), 'caption' => $p->caption]);
+
+        return SiteRenderer::renderAlbum($school, $site, $this->pages($school), $row, $photos);
+    }
+
     public function news(Request $request, string $slug)
     {
         [$school, $site] = $this->live($slug);
@@ -65,7 +83,7 @@ class PublicSiteController extends Controller
         [$school] = $this->live($slug);
 
         return response()->view('website.sitemap', [
-            'school' => $school, 'pages' => $this->pages($school),
+            'school' => $school, 'pages' => $this->pages($school), 'albums' => SiteRenderer::albums($school),
             'posts' => $this->posts($school)->orderByDesc('published_at')->limit(1000)->get(['id', 'slug', 'updated_at', 'published_at']),
         ])->header('Content-Type', 'application/xml; charset=UTF-8');
     }

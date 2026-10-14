@@ -105,6 +105,7 @@ class SiteStarter
                     ['title' => 'Receive an offer', 'body' => 'We send you a place offer with the fees and what to bring.'],
                     ['title' => 'Start learning', 'body' => 'Complete enrolment and welcome your child on the first day.'],
                 ]],
+                ['type' => 'gallery', 'eyebrow' => 'Gallery', 'heading' => 'Life at '.$n, 'count' => 8],
                 ['type' => 'news', 'eyebrow' => 'From the school', 'heading' => 'News and events', 'count' => 3],
                 ['type' => 'apply', 'heading' => 'Give your child the best start', 'body' => 'Admission is open at '.$n.'. Apply in two minutes and our office will contact you.', 'button' => 'apply', 'button2' => 'contact'],
             ]],

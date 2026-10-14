@@ -5,6 +5,8 @@ namespace App\Website;
 use App\Models\Announcement;
 use App\Models\School;
 use App\Models\SchoolSite;
+use App\Models\SchoolSiteAlbum;
+use App\Models\SchoolSiteAlbumPhoto;
 use App\Models\SchoolSitePage;
 use App\Models\SchoolSitePost;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -38,6 +40,36 @@ class SiteRenderer
     public static function postUrl(School $school, SchoolSitePost $post): string
     {
         return self::homeUrl($school).'/news/'.$post->slug;
+    }
+
+    public static function galleryUrl(School $school, ?SchoolSiteAlbum $album = null): string
+    {
+        return self::homeUrl($school).'/gallery'.($album ? '/'.$album->slug : '');
+    }
+
+    /** Published albums that have at least one photo, newest first, each with a cover picture */
+    public static function albums(School $school): Collection
+    {
+        return SchoolSiteAlbum::withoutGlobalScopes()->where('school_id', $school->id)->where('is_published', true)->whereNull('deleted_at')
+            ->whereHas('photos', fn ($q) => $q->withoutGlobalScopes())
+            ->with(['cover' => fn ($q) => $q->withoutGlobalScopes(), 'photos' => fn ($q) => $q->withoutGlobalScopes()->with(['media' => fn ($m) => $m->withoutGlobalScopes()])])
+            ->withCount(['photos' => fn ($q) => $q->withoutGlobalScopes()])
+            ->orderBy('position')->orderByDesc('id')->get()
+            ->map(function ($a) {
+                $a->cover_path = $a->cover?->path ?? $a->photos->first()?->media?->path;
+
+                return $a;
+            });
+    }
+
+    /** The newest photos across every published album, for the "Photo gallery" section */
+    public static function latestPhotos(School $school, int $limit): Collection
+    {
+        $albumIds = SchoolSiteAlbum::withoutGlobalScopes()->where('school_id', $school->id)->where('is_published', true)->whereNull('deleted_at')->pluck('id');
+
+        return SchoolSiteAlbumPhoto::withoutGlobalScopes()->whereIn('album_id', $albumIds)->with(['media' => fn ($q) => $q->withoutGlobalScopes()])
+            ->orderByDesc('id')->limit($limit)->get()->filter(fn ($p) => $p->media)->values()
+            ->map(fn ($p) => ['path' => $p->media->path, 'alt' => $p->caption ?: ($p->media->alt ?: $p->media->name), 'caption' => $p->caption]);
     }
 
     public static function image(?string $path): ?string
@@ -77,7 +109,11 @@ class SiteRenderer
             $graph[] = ['@type' => 'FAQPage', 'mainEntity' => $faq->map(fn ($i) => ['@type' => 'Question', 'name' => $i['question'], 'acceptedAnswer' => ['@type' => 'Answer', 'text' => Prose::plain($i['answer'])]])->all()];
         }
 
+        $galleryBlock = collect($blocks)->firstWhere('type', 'gallery');
+        $galleryPhotos = $galleryBlock ? self::latestPhotos($school, 12) : collect();
+
         return view('website.page', $ctx + [
+            'galleryPhotos' => $galleryPhotos,
             'page' => $page, 'blocks' => $blocks, 'needsHiddenH1' => ! collect($blocks)->contains(fn ($b) => ! empty($b['_h1'])),
             'news' => self::newsItems($school), 'title' => $title, 'description' => $description, 'ogImage' => $image, 'ogType' => 'website',
             'schema' => ['@context' => 'https://schema.org', '@graph' => $graph],
@@ -100,6 +136,44 @@ class SiteRenderer
                 self::organisation($school, $site, $description, $ctx['logo'], $ctx['social']),
                 self::webPage($school, $title.' | '.$school->name, $url, $description),
                 self::breadcrumbs($school, [[$title, $url]]),
+            ]],
+        ]);
+    }
+
+    /** The list of photo albums */
+    public static function renderGallery(School $school, SchoolSite $site, Collection $pages, Collection $albums): View
+    {
+        $url = self::galleryUrl($school);
+        $ctx = self::context($school, $site, $pages, false, $url, 'gallery');
+        $description = 'Photos from life at '.$school->name.'.';
+        $first = $albums->first()?->cover_path;
+
+        return view('website.gallery', $ctx + [
+            'albums' => $albums, 'title' => 'Photo gallery | '.$school->name, 'description' => $description,
+            'ogImage' => self::image($first) ?? $ctx['logo'], 'ogType' => 'website',
+            'schema' => ['@context' => 'https://schema.org', '@graph' => [
+                self::organisation($school, $site, $description, $ctx['logo'], $ctx['social']),
+                ['@type' => 'CollectionPage', 'name' => 'Photo gallery', 'url' => $url, 'description' => $description],
+                self::breadcrumbs($school, [['Gallery', $url]]),
+            ]],
+        ]);
+    }
+
+    /** One album with all its photos */
+    public static function renderAlbum(School $school, SchoolSite $site, Collection $pages, SchoolSiteAlbum $album, Collection $photos): View
+    {
+        $url = self::galleryUrl($school, $album);
+        $ctx = self::context($school, $site, $pages, false, $url, 'gallery');
+        $description = $album->description ?: $album->title.': photos from '.$school->name.'.';
+        $first = $photos->first()['path'] ?? null;
+
+        return view('website.album', $ctx + [
+            'album' => $album, 'photos' => $photos, 'title' => $album->title.' | Gallery | '.$school->name, 'description' => $description,
+            'ogImage' => self::image($first) ?? $ctx['logo'], 'ogType' => 'website',
+            'schema' => ['@context' => 'https://schema.org', '@graph' => [
+                self::organisation($school, $site, $description, $ctx['logo'], $ctx['social']),
+                ['@type' => 'ImageGallery', 'name' => $album->title, 'url' => $url, 'description' => $description],
+                self::breadcrumbs($school, [['Gallery', self::galleryUrl($school)], [$album->title, $url]]),
             ]],
         ]);
     }
@@ -197,6 +271,14 @@ class SiteRenderer
             $news = ['label' => $site->option('news_label'), 'url' => self::newsUrl($school), 'current' => $current === 'news', 'slug' => 'news'];
             $at = $menu->search(fn ($m) => $m['slug'] === 'contact');
             $menu = $at === false ? $menu->push($news) : $menu->splice(0, $at)->push($news)->merge($menu);
+        }
+
+        $hasGallery = SchoolSiteAlbum::withoutGlobalScopes()->where('school_id', $school->id)->where('is_published', true)->whereNull('deleted_at')
+            ->whereExists(fn ($q) => $q->selectRaw('1')->from('school_site_album_media')->whereColumn('school_site_album_media.album_id', 'school_site_albums.id'))->exists();
+        if ($hasGallery) {
+            $gal = ['label' => 'Gallery', 'url' => self::galleryUrl($school), 'current' => $current === 'gallery', 'slug' => 'gallery'];
+            $at = $menu->search(fn ($m) => $m['slug'] === 'contact');
+            $menu = $at === false ? $menu->push($gal) : $menu->splice(0, $at)->push($gal)->merge($menu);
         }
 
         $contactPage = $pages->firstWhere('slug', 'contact');

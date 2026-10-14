@@ -439,4 +439,123 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->assertSame('hero', SchoolSitePage::withoutGlobalScopes()->find($home->id)->blocks[0]['type']);
         $this->assertSame('Old text', SchoolSitePage::withoutGlobalScopes()->find($about->id)->blocks[0]['heading']);
     }
+
+    public function test_each_theme_has_its_own_layout_not_just_its_own_colours(): void
+    {
+        [$school] = $this->liveSite('Look School');
+        auth()->logout();
+        $marks = ['heritage' => '<section class="hero hero--plain', 'modern' => '<section class="hero hero--modern', 'warm' => '<section class="hero hero--warm', 'statement' => '<section class="hero hero--statement'];
+        $this->assertSame(array_keys($marks), array_keys(Themes::ALL));
+        foreach ($marks as $theme => $mark) {
+            \App\Models\SchoolSite::withoutGlobalScopes()->where('school_id', $school->id)->update(['theme' => $theme]);
+            $html = $this->get('/s/look-school')->assertOk()->assertSee('data-theme="'.$theme.'"', false)->getContent();
+            $this->assertStringContainsString($mark, $html, $theme);
+            foreach (array_diff($marks, [$theme => $mark]) as $other) {
+                $this->assertStringNotContainsString($other, $html, "$theme should not use the $other layout");
+            }
+        }
+        $this->assertSame('<em>cared for</em>', substr(\App\Website\Prose::accent('Known and *cared for*'), -18));
+        $this->assertStringContainsString('<em>', \App\Website\Prose::accent('Where every child is known and cared for', true));
+        $this->assertStringNotContainsString('<em>', \App\Website\Prose::accent('Short title'));
+    }
+
+    public function test_the_gallery_has_albums_a_public_page_and_keeps_schools_apart(): void
+    {
+        [$school, $admin] = $this->liveSite('Gal School');
+        $other = $this->makeSchool('Other Gal');
+        Storage::fake('public');
+
+        $this->actingAs($admin)->get('/school/website/gallery')->assertOk();
+        $this->post('/school/website/gallery', ['title' => 'Sports Day 2026', 'description' => 'Inter-house', 'event_date' => '2026-05-02'])->assertRedirect();
+        $album = \App\Models\SchoolSiteAlbum::where('title', 'Sports Day 2026')->firstOrFail();
+        $this->assertSame('sports-day-2026', $album->slug);
+
+        // nothing public until it holds a photo
+        auth()->logout();
+        $this->get('/s/gal-school/gallery')->assertOk()->assertSee('No photos yet');
+        $this->get('/s/gal-school/gallery/sports-day-2026')->assertNotFound();
+
+        $this->actingAs($admin);
+        $a = $this->post('/school/website/media', ['image' => UploadedFile::fake()->image('a.jpg', 800, 600)])->json();
+        $b = $this->post('/school/website/media', ['image' => UploadedFile::fake()->image('b.jpg', 800, 600)])->json();
+        $theirs = \App\Models\SchoolSiteMedia::withoutGlobalScopes()->create(['school_id' => $other->id, 'path' => 'schools/'.$other->id.'/website/x.jpg', 'name' => 'x']);
+
+        $this->post("/school/website/gallery/{$album->id}/photos", ['media_ids' => [$a['id'], $b['id'], $theirs->id]])->assertSessionHasNoErrors();
+        $this->assertSame(2, \App\Models\SchoolSiteAlbumPhoto::where('album_id', $album->id)->count()); // the other school's picture is refused
+        $this->assertSame($a['id'], $album->fresh()->cover_media_id);
+
+        $photo = \App\Models\SchoolSiteAlbumPhoto::where('album_id', $album->id)->where('media_id', $b['id'])->first();
+        $this->put("/school/website/gallery/{$album->id}/photos/{$photo->id}", ['caption' => 'Relay finals'])->assertSessionHasNoErrors();
+        $this->put("/school/website/gallery/{$album->id}/cover", ['media_id' => $b['id']]);
+        $this->assertSame($b['id'], $album->fresh()->cover_media_id);
+
+        // a picture inside an album cannot be deleted from the library
+        $this->delete('/school/website/media/'.$a['id'])->assertSessionHasErrors('media');
+
+        auth()->logout();
+        $this->get('/s/gal-school')->assertOk()->assertSee('/s/gal-school/gallery', false)->assertSee('Life at Gal School');
+        $this->get('/s/gal-school/gallery')->assertOk()->assertSee('Sports Day 2026')->assertSee('2 photos');
+        $this->get('/s/gal-school/gallery/sports-day-2026')->assertOk()->assertSee('Relay finals')->assertSee('data-lightbox', false);
+        $this->get('/s/gal-school/sitemap.xml')->assertOk()->assertSee('/gallery/sports-day-2026', false);
+
+        // another school cannot open or change it
+        $this->actingAs($this->makeUser($other, 'school-admin'));
+        $this->put("/school/website/gallery/{$album->id}", ['title' => 'Hijacked'])->assertNotFound();
+        $this->assertSame('Sports Day 2026', $album->fresh()->title);
+
+        // hidden albums disappear from the site
+        $this->actingAs($admin)->put("/school/website/gallery/{$album->id}", ['title' => 'Sports Day 2026', 'is_published' => false]);
+        auth()->logout();
+        $this->get('/s/gal-school/gallery/sports-day-2026')->assertNotFound();
+    }
+
+    public function test_the_statement_theme_draws_the_civic_look_from_the_new_blocks(): void
+    {
+        [$school, $admin] = $this->liveSite('Civic School', 'statement');
+        $this->actingAs($admin)->put('/school/website', ['announcement' => 'Open day on 5 August']);
+        $home = SchoolSitePage::where('is_home', true)->first();
+        $home->blocks = Blocks::clean([
+            ['type' => 'hero', 'heading' => 'Beyond *the Crumbs*', 'eyebrow' => 'Summit 2026', 'lead' => 'A seat at the table', 'subheading' => 'A civic platform.', 'foot' => 'One voice.',
+                'facts' => [['label' => 'Date', 'value' => 'Wednesday,|5 August 2026'], ['label' => 'Venue', 'value' => 'Town <b>Hall</b>']], 'button' => 'apply', 'button2' => 'contact'],
+            ['type' => 'stats', 'items' => [['number' => '60+', 'label' => 'Villages']]],
+            ['type' => 'quote', 'text' => 'It buys a day; it costs a generation.', 'who' => 'Founding statement'],
+            ['type' => 'steps', 'band' => 'dark', 'heading' => 'Five commitments', 'items' => [['title' => 'Reframe it', 'body' => 'together.']]],
+            ['type' => 'features', 'style' => 'pillars', 'tag' => 'Pillar', 'heading' => 'Pillars', 'items' => [['title' => 'Education', 'body' => 'Schools.'], ['title' => 'Jobs', 'body' => 'Work.']]],
+            ['type' => 'features', 'style' => 'panels', 'heading' => 'Aims', 'items' => [['title' => 'Vision', 'body' => 'A future.']]],
+            ['type' => 'profile', 'eyebrow' => 'The Convener', 'name' => 'Ada Obi', 'role' => 'Lawyer', 'body' => 'Born in town.'],
+        ], $school->id);
+        $home->save();
+        auth()->logout();
+
+        $this->get("/s/civic-school")->assertOk()
+            ->assertSee('Open day on 5 August')
+            ->assertSee('fonts.googleapis.com', false)
+            ->assertSee('Newsreader', false)
+            ->assertSee('<section class="hero hero--statement', false)
+            ->assertSee('class="hero-card"', false)
+            ->assertSee('Wednesday,<br>5 August 2026', false)
+            ->assertSee('Town &lt;b&gt;Hall&lt;/b&gt;', false)
+            ->assertSee('<small>+</small>', false)
+            ->assertSee('class="quote"', false)
+            ->assertSee('sec--dark', false)
+            ->assertSee('class="step-t"', false)
+            ->assertSee('Pillar I', false)
+            ->assertSee('Pillar II', false)
+            ->assertSee('panel-card', false)
+            ->assertSee('class="profile"', false)
+            ->assertSee('<footer class="ftr ftr--statement">', false);
+        $this->get('/s/civic-school')->assertSee('School platform powered by', false);
+
+        $this->actingAs($admin)->put('/school/website', ['announcement' => '']);
+        auth()->logout();
+        $this->get('/s/civic-school')->assertDontSee('class="notice"', false);
+    }
+
+    public function test_other_themes_show_the_announcement_bar_and_keep_their_own_footer(): void
+    {
+        [$school, $admin] = $this->liveSite('Bar School', 'heritage');
+        $this->actingAs($admin)->put('/school/website', ['announcement' => 'School is closed on Friday']);
+        auth()->logout();
+        $this->get('/s/bar-school')->assertOk()->assertSee('School is closed on Friday')->assertSee('<footer class="ftr">', false)->assertDontSee('<footer class="ftr ftr--statement">', false);
+    }
 }

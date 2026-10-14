@@ -8,7 +8,7 @@ import type { WebsiteShell } from '@/Types/website';
 
 interface Props {
     shell: WebsiteShell; socialNames: Record<string, string>; sitemapUrl: string; feedUrl: string;
-    site: { enabled: boolean; tagline: string | null; meta_description: string | null; footer_text: string | null; social: Record<string, string>; news_label: string; news_in_menu: boolean; apply_button: boolean };
+    site: { enabled: boolean; tagline: string | null; meta_description: string | null; footer_text: string | null; social: Record<string, string>; news_label: string; news_in_menu: boolean; apply_button: boolean; announcement: string };
     school: { name: string; phone: string | null; email: string | null; address: string | null; logo: string | null };
 }
 
@@ -18,7 +18,7 @@ export default function WebsiteSettings({ shell, site, school, socialNames, site
     const canEdit = shell.canEdit;
     const form = useForm({
         enabled: site.enabled, tagline: site.tagline ?? '', meta_description: site.meta_description ?? '', footer_text: site.footer_text ?? '',
-        social: site.social, news_label: site.news_label, news_in_menu: site.news_in_menu, apply_button: site.apply_button,
+        social: site.social, news_label: site.news_label, news_in_menu: site.news_in_menu, apply_button: site.apply_button, announcement: site.announcement ?? '',
     });
     const d = form.data;
 
@@ -43,6 +43,10 @@ export default function WebsiteSettings({ shell, site, school, socialNames, site
                     <label className="block space-y-1"><span className="font-medium">Short description for Google</span><Textarea disabled={!canEdit} maxLength={300} placeholder="A caring nursery, primary and secondary school in Lekki, Lagos, with strong WAEC results." value={d.meta_description} onChange={e => form.setData('meta_description', e.target.value)} /><span className="block text-xs text-slate-500">Used for any page that has no description of its own.</span></label>
                     <label className="block space-y-1"><span className="font-medium">Line at the bottom of every page</span><Input disabled={!canEdit} maxLength={300} placeholder="Approved by the Lagos State Ministry of Education" value={d.footer_text} onChange={e => form.setData('footer_text', e.target.value)} /></label>
                 </div>
+            </Panel>
+
+            <Panel title="Announcement bar" description="One short line in a coloured bar at the very top of every page, for example the date of an open day. Leave it empty to hide the bar.">
+                <label className="block space-y-1 text-sm"><span className="font-medium">Announcement</span><Input disabled={!canEdit} maxLength={200} placeholder="Open day: Saturday 14 March, 10am. Come and meet our teachers." value={d.announcement} onChange={e => form.setData('announcement', e.target.value)} /></label>
             </Panel>
 
             <Panel title="Menu and buttons">

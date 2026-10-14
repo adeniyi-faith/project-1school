@@ -9,4 +9,10 @@
 @foreach ($posts as $p)
     <url><loc>{{ \App\Website\SiteRenderer::postUrl($school, $p) }}</loc><lastmod>{{ ($p->updated_at ?? $p->published_at)->toAtomString() }}</lastmod></url>
 @endforeach
+@if ($albums->isNotEmpty())
+    <url><loc>{{ \App\Website\SiteRenderer::galleryUrl($school) }}</loc></url>
+@endif
+@foreach ($albums as $a)
+    <url><loc>{{ \App\Website\SiteRenderer::galleryUrl($school, $a) }}</loc><lastmod>{{ $a->updated_at->toAtomString() }}</lastmod></url>
+@endforeach
 </urlset>
