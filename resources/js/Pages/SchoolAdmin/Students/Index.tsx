@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useCan } from '@/lib/can';
-import { Plus, Search, Users, Eye, Pencil, Trash2, MoreHorizontal, ChevronRight, ImageUp } from 'lucide-react';
+import { Plus, Search, Users, Eye, Pencil, Trash2, MoreHorizontal, ChevronRight, ImageUp, FileUp, KeyRound } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -65,6 +65,8 @@ export default function StudentsIndex() {
 
     const headerActions = (
         <div className="flex flex-wrap gap-2">
+            {can('students.import') && <Link href="/school/students/import" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"><FileUp className="size-4" /> Add many</Link>}
+            {can('students.logins') && <Link href="/school/students/logins" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"><KeyRound className="size-4" /> Login details</Link>}
             {can('students.edit') && <Button variant="outline" onClick={() => setPhotosOpen(true)}><ImageUp className="size-4" /> Upload photos</Button>}
             {can('students.create') && (
                 <Link href="/school/students/create" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 text-sm font-medium text-white shadow-xs outline-none transition-colors hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">

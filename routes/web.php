@@ -34,6 +34,8 @@ use App\Http\Controllers\SchoolAdmin\SectionController;
 use App\Http\Controllers\SchoolAdmin\ShiftController;
 use App\Http\Controllers\SchoolAdmin\StaffController;
 use App\Http\Controllers\SchoolAdmin\StudentController;
+use App\Http\Controllers\SchoolAdmin\StudentImportController;
+use App\Http\Controllers\SchoolAdmin\StudentLoginController;
 use App\Http\Controllers\SchoolAdmin\SubjectController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SchoolAdmin\SchoolUserController;
@@ -203,6 +205,16 @@ Route::middleware('auth')->group(function () {
                 Route::resource($name, $controller)->only(['store', 'update', 'destroy'])->middleware('permission:settings.edit');
             }
 
+            // Bulk adding of students and bulk sign-in details (before the students/{student} routes below)
+            Route::get('students/import',                       [StudentImportController::class, 'index'])->middleware('permission:students.import')->name('students.import');
+            Route::get('students/import/template',              [StudentImportController::class, 'template'])->middleware('permission:students.import')->name('students.import.template');
+            Route::post('students/import/preview',              [StudentImportController::class, 'preview'])->middleware(['permission:students.import', 'throttle:20,1'])->name('students.import.preview');
+            Route::post('students/import',                      [StudentImportController::class, 'store'])->middleware('permission:students.import')->name('students.import.store');
+            Route::get('students/logins',                       [StudentLoginController::class, 'index'])->middleware('permission:students.logins')->name('students.logins');
+            Route::post('students/logins/start',                [StudentLoginController::class, 'start'])->middleware('permission:students.logins')->name('students.logins.start');
+            Route::post('students/logins/{token}/step',         [StudentLoginController::class, 'step'])->middleware(['permission:students.logins', 'throttle:600,1'])->whereUuid('token')->name('students.logins.step');
+            Route::get('students/logins/{token}/pdf',           [StudentLoginController::class, 'pdf'])->middleware('permission:students.logins')->whereUuid('token')->name('students.logins.pdf');
+            Route::get('students/logins/{token}/excel',         [StudentLoginController::class, 'excel'])->middleware('permission:students.logins')->whereUuid('token')->name('students.logins.excel');
             Route::resource('students', StudentController::class)->only(['create', 'store'])->middleware('permission:students.create');
             Route::resource('students', StudentController::class)->only(['index', 'show'])->middleware('permission:students.view');
             Route::resource('students', StudentController::class)->only(['edit', 'update'])->middleware('permission:students.edit');
