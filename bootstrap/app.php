@@ -41,4 +41,31 @@ return Application::configure(basePath: dirname(__DIR__))
             return \Inertia\Inertia::render('Error', ['message' => 'You do not have permission to do that.'])
                 ->toResponse($request)->setStatusCode(403);
         });
+
+        // Any other failure inside the app (a save that breaks, a page left open too long, a file that is too big)
+        // used to show Inertia's blank white pop-up with the raw error page in it. Now a save goes back to the
+        // form with a plain message, and a page that cannot open shows a plain page. The error is still logged.
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $e, \Illuminate\Http\Request $request) {
+            if (! $request->header('X-Inertia') || $response->getStatusCode() < 400 || $response->getStatusCode() === 403
+                || $response->getStatusCode() === 422 || $response->getStatusCode() === 409 || $response->headers->has('X-Inertia')) {
+                return $response;
+            }
+
+            $status = $response->getStatusCode();
+            $message = match (true) {
+                $status === 419 => 'This page was open for a long time, so we could not save. Please try again.',
+                $status === 413 => 'That file is too big to upload. Please choose a smaller one.',
+                $status === 404 => 'We could not find that. It may have been deleted.',
+                $status === 429 => 'Too many tries in a short time. Please wait a minute and try again.',
+                $status === 503 => 'The system is being updated. Please try again in a few minutes.',
+                default => 'Something went wrong and this was not saved. Please try again. If it keeps happening, tell support.',
+            };
+
+            if (! $request->isMethod('GET')) {
+                return back()->with('error', $message);
+            }
+
+            return \Inertia\Inertia::render('Error', ['message' => $message, 'title' => $status === 404 ? 'Not found' : 'Something went wrong', 'kind' => 'error'])
+                ->toResponse($request)->setStatusCode($status);
+        });
     })->create();

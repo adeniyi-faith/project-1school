@@ -74,7 +74,11 @@ use App\Http\Controllers\StudentPhotoController;
 use App\Http\Controllers\SchoolAdmin\VisitorLogController;
 use App\Http\Controllers\PublicAdmissionController;
 use App\Http\Controllers\PublicSiteController;
-use App\Http\Controllers\SchoolAdmin\WebsiteController;
+use App\Http\Controllers\SchoolAdmin\Website\WebsiteController;
+use App\Http\Controllers\SchoolAdmin\Website\WebsiteMediaController;
+use App\Http\Controllers\SchoolAdmin\Website\WebsitePageController;
+use App\Http\Controllers\SchoolAdmin\Website\WebsitePostController;
+use App\Http\Controllers\SchoolAdmin\Website\WebsiteThemeController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\ParentPortalController;
 use App\Http\Controllers\SuperAdmin\CouponController;
@@ -572,13 +576,41 @@ Route::middleware('auth')->group(function () {
             Route::post('settings/school-type',                 [SchoolTypeController::class, 'apply'])->middleware('permission:settings.edit')->name('settings.school-type.apply');
 
             // Public website: the editor (the site itself is served at /s/{school})
-            Route::get('website',                [WebsiteController::class, 'index'])->middleware('permission:settings.view')->name('website.index');
-            Route::put('website',                [WebsiteController::class, 'updateSite'])->middleware('permission:settings.edit')->name('website.update');
-            Route::post('website/pages',         [WebsiteController::class, 'storePage'])->middleware('permission:settings.edit')->name('website.pages.store');
-            Route::put('website/pages/{page}',   [WebsiteController::class, 'updatePage'])->whereNumber('page')->middleware('permission:settings.edit')->name('website.pages.update');
-            Route::delete('website/pages/{page}', [WebsiteController::class, 'destroyPage'])->whereNumber('page')->middleware('permission:settings.edit')->name('website.pages.destroy');
-            Route::post('website/images',        [WebsiteController::class, 'uploadImage'])->middleware('permission:settings.edit')->name('website.images');
-            Route::post('website/preview',       [WebsiteController::class, 'preview'])->middleware('permission:settings.view')->name('website.preview');
+            Route::prefix('website')->name('website.')->group(function () {
+                $view = 'permission:settings.view';
+                $edit = 'permission:settings.edit';
+                Route::get('/',                        [WebsiteController::class, 'overview'])->middleware($view)->name('index');
+                Route::get('settings',                 [WebsiteController::class, 'settings'])->middleware($view)->name('settings');
+                Route::put('/',                        [WebsiteController::class, 'update'])->middleware($edit)->name('update');
+
+                Route::get('themes',                   [WebsiteThemeController::class, 'index'])->middleware($view)->name('themes');
+                Route::get('themes/{theme}/sample',    [WebsiteThemeController::class, 'sample'])->where('theme', '[a-z]+')->middleware($view)->name('themes.sample');
+                Route::put('themes',                   [WebsiteThemeController::class, 'update'])->middleware($edit)->name('themes.update');
+
+                Route::get('pages',                    [WebsitePageController::class, 'index'])->middleware($view)->name('pages.index');
+                Route::post('pages',                   [WebsitePageController::class, 'store'])->middleware($edit)->name('pages.store');
+                Route::put('pages/order',              [WebsitePageController::class, 'reorder'])->middleware($edit)->name('pages.reorder');
+                Route::get('pages/{page}',             [WebsitePageController::class, 'edit'])->whereNumber('page')->middleware($view)->name('pages.edit');
+                Route::put('pages/{page}',             [WebsitePageController::class, 'update'])->whereNumber('page')->middleware($edit)->name('pages.update');
+                Route::patch('pages/{page}',           [WebsitePageController::class, 'toggle'])->whereNumber('page')->middleware($edit)->name('pages.toggle');
+                Route::post('pages/{page}/copy',       [WebsitePageController::class, 'duplicate'])->whereNumber('page')->middleware($edit)->name('pages.copy');
+                Route::delete('pages/{page}',          [WebsitePageController::class, 'destroy'])->whereNumber('page')->middleware($edit)->name('pages.destroy');
+                Route::post('preview',                 [WebsitePageController::class, 'preview'])->middleware($view)->name('preview');
+
+                Route::get('posts',                    [WebsitePostController::class, 'index'])->middleware($view)->name('posts.index');
+                Route::get('posts/create',             [WebsitePostController::class, 'create'])->middleware($edit)->name('posts.create');
+                Route::post('posts',                   [WebsitePostController::class, 'store'])->middleware($edit)->name('posts.store');
+                Route::post('posts/preview',           [WebsitePostController::class, 'preview'])->middleware($view)->name('posts.preview');
+                Route::get('posts/{post}',             [WebsitePostController::class, 'edit'])->whereNumber('post')->middleware($view)->name('posts.edit');
+                Route::put('posts/{post}',             [WebsitePostController::class, 'update'])->whereNumber('post')->middleware($edit)->name('posts.update');
+                Route::delete('posts/{post}',          [WebsitePostController::class, 'destroy'])->whereNumber('post')->middleware($edit)->name('posts.destroy');
+
+                Route::get('media',                    [WebsiteMediaController::class, 'index'])->middleware($view)->name('media.index');
+                Route::post('media',                   [WebsiteMediaController::class, 'store'])->middleware($edit)->name('media.store');
+                Route::post('images',                  [WebsiteMediaController::class, 'store'])->middleware($edit)->name('images'); // older editor address
+                Route::put('media/{media}',            [WebsiteMediaController::class, 'update'])->whereNumber('media')->middleware($edit)->name('media.update');
+                Route::delete('media/{media}',         [WebsiteMediaController::class, 'destroy'])->whereNumber('media')->middleware($edit)->name('media.destroy');
+            });
 
             // Integrations / Gateway Settings
             Route::get('settings/integrations',                 [IntegrationController::class, 'index'])->middleware('permission:settings.edit')->name('settings.integrations');
@@ -776,6 +808,9 @@ Route::prefix('exam')->name('exam.')->controller(CandidateCbtController::class)-
 Route::get('/id/{token}', IdCardCheckController::class)->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:60,1')->name('id-cards.check');
 Route::get('/verify/{code}', [CertificateVerifyController::class, 'show'])->where('code', '[A-Za-z0-9]{6,16}')->middleware('throttle:30,1')->name('certificates.verify');
 // A school's public website (open to everyone, only when the school switched it on)
+Route::get('/s/{slug}/feed.xml', [PublicSiteController::class, 'feed'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.feed');
+Route::get('/s/{slug}/news', [PublicSiteController::class, 'news'])->where('slug', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.news');
+Route::get('/s/{slug}/news/{post}', [PublicSiteController::class, 'post'])->where('slug', '[a-z0-9-]+')->where('post', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.post');
 Route::get('/s/{slug}/sitemap.xml', [PublicSiteController::class, 'sitemap'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.sitemap');
 Route::get('/s/{slug}/{page?}', [PublicSiteController::class, 'show'])->where('slug', '[a-z0-9-]+')->where('page', '[a-z0-9_-]+')->middleware('throttle:120,1')->name('site.show');
 Route::get('/apply/{school}',  [PublicAdmissionController::class, 'show'])->name('public.admission.show');

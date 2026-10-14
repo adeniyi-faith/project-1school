@@ -22,7 +22,7 @@ class WebsiteEngineTest extends SecurityTestCase
 
         $this->get('/s/bright-stars')->assertNotFound();
 
-        $this->actingAs($this->makeUser($school, 'school-admin'))->put('/school/website', ['enabled' => true, 'theme' => 'warm'])->assertSessionHasNoErrors();
+        $this->actingAs($this->makeUser($school, 'school-admin'))->put('/school/website', ['enabled' => true])->assertSessionHasNoErrors();
         auth()->logout();
 
         $this->get('/s/bright-stars')->assertOk()->assertSee('Welcome to Bright Stars')->assertSee('Apply online');
@@ -37,7 +37,7 @@ class WebsiteEngineTest extends SecurityTestCase
         foreach ([$a, $b] as $s) {
             $this->actingAs($this->makeUser($s, 'school-admin'));
             $this->get('/school/website');
-            $this->put('/school/website', ['enabled' => true, 'theme' => 'modern']);
+            $this->put('/school/website', ['enabled' => true]);
             auth()->logout();
         }
         $make = fn ($school, $title, $audience) => Announcement::withoutGlobalScopes()->create(['school_id' => $school->id, 'author_id' => $this->makeUser($school, 'school-admin')->id, 'title' => $title, 'body' => 'x', 'audience' => $audience, 'published_at' => now()->subHour()]);
@@ -54,7 +54,7 @@ class WebsiteEngineTest extends SecurityTestCase
     {
         $school = $this->makeSchool('Gone School');
         $this->actingAs($this->makeUser($school, 'school-admin'))->get('/school/website');
-        $this->put('/school/website', ['enabled' => true, 'theme' => 'modern']);
+        $this->put('/school/website', ['enabled' => true]);
         auth()->logout();
         $school->update(['status' => 'suspended']);
 
@@ -81,7 +81,7 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->assertArrayNotHasKey('evil', $stored[0]);
         $this->assertSame(10, $stored[1]['count']);
 
-        $this->put('/school/website', ['enabled' => true, 'theme' => 'modern']);
+        $this->put('/school/website', ['enabled' => true]);
         auth()->logout();
         $this->get('/s/safe-school/about')->assertDontSee('<script>alert(1)</script>', false)->assertSee('Line one');
     }
@@ -109,11 +109,15 @@ class WebsiteEngineTest extends SecurityTestCase
         $bPage = SchoolSitePage::withoutGlobalScopes()->where('school_id', $b->id)->first();
 
         $this->actingAs($this->makeUser($a, 'school-admin'))->get('/school/website');
-        $this->post('/school/website/pages', ['title' => 'Fees'])->assertSessionHasNoErrors();
+        $this->post('/school/website/pages', ['title' => 'Fees', 'template' => 'fees'])->assertSessionHasNoErrors();
         $this->assertDatabaseHas('school_site_pages', ['school_id' => $a->id, 'slug' => 'fees', 'is_published' => false]);
+        $this->assertNotEmpty(SchoolSitePage::where('slug', 'fees')->first()->blocks);
         $this->put("/school/website/pages/{$bPage->id}", ['title' => 'Hacked', 'slug' => 'x', 'is_published' => true, 'is_home' => false, 'show_in_menu' => true, 'blocks' => []])->assertNotFound();
 
-        $this->actingAs($this->makeUser($a, 'teacher'))->put('/school/website', ['enabled' => true, 'theme' => 'modern'])->assertForbidden();
+        $teacher = $this->makeUser($a, 'teacher');
+        $this->actingAs($teacher)->put('/school/website', ['enabled' => true])->assertForbidden();
+        $this->actingAs($teacher)->put('/school/website/themes', ['theme' => 'modern'])->assertForbidden();
+        $this->actingAs($teacher)->post('/school/website/posts', ['title' => 'x', 'category' => 'news', 'status' => 'published'])->assertForbidden();
     }
 
     public function test_every_block_type_has_a_view_and_a_valid_starting_shape(): void
@@ -129,7 +133,8 @@ class WebsiteEngineTest extends SecurityTestCase
         $school = $this->makeSchool($name);
         $admin = $this->makeUser($school, 'school-admin');
         $this->actingAs($admin)->get('/school/website');
-        $this->put('/school/website', ['enabled' => true, 'theme' => $theme]);
+        $this->put('/school/website', ['enabled' => true]);
+        $this->put('/school/website/themes', ['theme' => $theme])->assertSessionHasNoErrors();
 
         return [$school, $admin];
     }
@@ -223,12 +228,147 @@ class WebsiteEngineTest extends SecurityTestCase
     {
         [$school] = $this->liveSite('Social School');
 
-        $this->put('/school/website', ['enabled' => true, 'theme' => 'modern', 'social' => ['facebook' => 'javascript:alert(1)']])->assertSessionHasErrors('social.facebook');
-        $this->put('/school/website', ['enabled' => true, 'theme' => 'modern', 'color' => 'red'])->assertSessionHasErrors('color');
-        $this->put('/school/website', ['enabled' => true, 'theme' => 'modern', 'color' => '#aa0000', 'color2' => '#ffcc00', 'social' => ['facebook' => 'https://facebook.com/socialschool']])->assertSessionHasNoErrors();
+        $this->put('/school/website', ['social' => ['facebook' => 'javascript:alert(1)']])->assertSessionHasErrors('social.facebook');
+        $this->put('/school/website/themes', ['theme' => 'modern', 'color' => 'red'])->assertSessionHasErrors('color');
+        $this->put('/school/website/themes', ['theme' => 'modern', 'color' => '#aa0000', 'color2' => '#ffcc00'])->assertSessionHasNoErrors();
+        $this->put('/school/website', ['social' => ['facebook' => 'https://facebook.com/socialschool', 'tiktok' => 'https://tiktok.com/@socialschool']])->assertSessionHasNoErrors();
         auth()->logout();
 
-        $this->get('/s/social-school')->assertSee('https://facebook.com/socialschool', false)->assertSee('--brand:#aa0000', false);
+        $this->get('/s/social-school')->assertSee('https://facebook.com/socialschool', false)->assertSee('https://tiktok.com/@socialschool', false)->assertSee('--brand:#aa0000', false);
+    }
+
+    private function postData(array $over = []): array
+    {
+        return $over + ['title' => 'Our pupils win the state spelling bee', 'category' => 'achievements', 'excerpt' => 'A proud day.', 'body' => "## The final\nIt was **close**.\n\n- Ada\n- Tunde", 'status' => 'published', 'is_featured' => false];
+    }
+
+    public function test_stories_get_their_own_page_news_list_feed_and_sitemap_lines(): void
+    {
+        [$school] = $this->liveSite('News School');
+        $this->post('/school/website/posts', $this->postData())->assertSessionHasNoErrors();
+        $this->post('/school/website/posts', $this->postData(['title' => 'Secret draft', 'status' => 'draft']))->assertSessionHasNoErrors();
+        $this->post('/school/website/posts', $this->postData(['title' => 'Coming soon', 'published_at' => now()->addWeek()->toDateTimeString()]))->assertSessionHasNoErrors();
+        $this->post('/school/website/posts', $this->postData(['title' => 'Open day', 'category' => 'events', 'event_date' => now()->addMonth()->toDateString(), 'event_place' => 'School hall']))->assertSessionHasNoErrors();
+        auth()->logout();
+
+        $this->get('/s/news-school/news')->assertOk()->assertSee('Our pupils win the state spelling bee')->assertSee('Open day')->assertDontSee('Secret draft')->assertDontSee('Coming soon');
+        $this->get('/s/news-school/news?category=events')->assertOk()->assertSee('Open day')->assertDontSee('spelling bee');
+        $this->get('/s/news-school')->assertSee('Our pupils win the state spelling bee')->assertSee('href="'.url('/s/news-school/news').'"', false);
+
+        $html = $this->get('/s/news-school/news/our-pupils-win-the-state-spelling-bee')->assertOk()
+            ->assertSee('<strong>close</strong>', false)->assertSee('NewsArticle', false)->getContent();
+        $this->assertSame(1, substr_count($html, '<h1'));
+        $this->get('/s/news-school/news/open-day')->assertOk()->assertSee('School hall')->assertSee('"Event"', false);
+        $this->get('/s/news-school/news/secret-draft')->assertNotFound();
+        $this->get('/s/news-school/news/coming-soon')->assertNotFound();
+
+        $this->get('/s/news-school/feed.xml')->assertOk()->assertSee('spelling bee')->assertDontSee('Secret draft');
+        $xml = $this->get('/s/news-school/sitemap.xml')->getContent();
+        $this->assertStringContainsString(url('/s/news-school/news/open-day'), $xml);
+        $this->assertStringNotContainsString('secret-draft', $xml);
+    }
+
+    public function test_story_text_is_escaped_and_slugs_stay_unique_per_school(): void
+    {
+        [$school] = $this->liveSite('Escape School');
+        $this->post('/school/website/posts', $this->postData(['title' => 'Same title', 'body' => '<script>alert(1)</script> [bad](javascript:alert(1))']))->assertSessionHasNoErrors();
+        $this->post('/school/website/posts', $this->postData(['title' => 'Same title']))->assertSessionHasNoErrors();
+        $this->assertSame(['same-title', 'same-title-2'], \App\Models\SchoolSitePost::orderBy('id')->pluck('slug')->all());
+        auth()->logout();
+
+        $html = $this->get('/s/escape-school/news/same-title')->assertOk()->getContent();
+        $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
+        $this->assertStringNotContainsString('href="javascript:', $html);
+
+        [$other] = $this->liveSite('Other Escape');
+        $this->post('/school/website/posts', $this->postData(['title' => 'Same title']))->assertSessionHasNoErrors();
+        $this->assertSame('same-title', \App\Models\SchoolSitePost::orderByDesc('id')->first()->slug);
+        $first = \App\Models\SchoolSitePost::withoutGlobalScopes()->where('school_id', $school->id)->first();
+        $this->get("/school/website/posts/{$first->id}")->assertNotFound();
+        $this->put("/school/website/posts/{$first->id}", $this->postData())->assertNotFound();
+    }
+
+    public function test_page_addresses_used_by_the_website_itself_are_refused(): void
+    {
+        $this->liveSite('Reserved School');
+        $about = SchoolSitePage::where('slug', 'about')->first();
+        $this->put("/school/website/pages/{$about->id}", ['title' => 'News', 'slug' => 'news', 'is_published' => true, 'is_home' => false, 'show_in_menu' => true, 'blocks' => []])->assertSessionHasErrors('slug');
+        $this->post('/school/website/pages', ['title' => 'News', 'template' => 'blank'])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('school_site_pages', ['slug' => 'news-page']);
+    }
+
+    public function test_pages_can_be_copied_reordered_and_switched(): void
+    {
+        $this->liveSite('Order School');
+        $pages = SchoolSitePage::orderBy('position')->get();
+        $about = $pages->firstWhere('slug', 'about');
+
+        $this->post("/school/website/pages/{$about->id}/copy")->assertRedirect();
+        $copy = SchoolSitePage::where('slug', 'about-copy')->first();
+        $this->assertFalse($copy->is_published);
+        $this->assertSame($about->blocks, $copy->blocks);
+
+        $ids = SchoolSitePage::orderBy('position')->pluck('id')->reverse()->values()->all();
+        $this->put('/school/website/pages/order', ['ids' => $ids])->assertSessionHasNoErrors();
+        $this->assertSame($ids, SchoolSitePage::orderBy('position')->pluck('id')->all());
+
+        $this->patch("/school/website/pages/{$about->id}", ['show_in_menu' => false])->assertSessionHasNoErrors();
+        $this->assertFalse($about->fresh()->show_in_menu);
+        $home = SchoolSitePage::where('is_home', true)->first();
+        $this->patch("/school/website/pages/{$home->id}", ['is_published' => false]);
+        $this->assertTrue($home->fresh()->is_published);
+    }
+
+    public function test_the_picture_library_keeps_pictures_in_use_and_other_schools_out(): void
+    {
+        Storage::fake('public');
+        [$a] = $this->liveSite('Library School');
+        $res = $this->post('/school/website/media', ['image' => UploadedFile::fake()->image('lab.jpg', 800, 600)])->assertOk()->json();
+        $this->assertDatabaseHas('school_site_media', ['id' => $res['id'], 'school_id' => $a->id, 'name' => 'lab']);
+
+        $this->post('/school/website/posts', $this->postData(['cover_image' => $res['path']]))->assertSessionHasNoErrors();
+        $this->delete("/school/website/media/{$res['id']}")->assertSessionHasErrors('media');
+        $this->put("/school/website/media/{$res['id']}", ['name' => 'Science lab', 'alt' => 'Pupils at work'])->assertSessionHasNoErrors();
+
+        $spare = $this->post('/school/website/media', ['image' => UploadedFile::fake()->image('spare.png', 200, 200)])->json();
+        $this->delete("/school/website/media/{$spare['id']}")->assertSessionHasNoErrors();
+        Storage::disk('public')->assertMissing($spare['path']);
+
+        $this->liveSite('Library Other');
+        $this->put("/school/website/media/{$res['id']}", ['name' => 'Mine now'])->assertNotFound();
+        $this->get('/school/website/media')->assertOk()->assertDontSee('Science lab');
+    }
+
+    public function test_theme_pictures_draw_the_school_site_without_saving(): void
+    {
+        [$school] = $this->liveSite('Sample School', 'heritage');
+        $this->get('/school/website/themes/modern/sample?color=%23123456')->assertOk()->assertSee('data-theme="modern"', false)->assertSee('--brand:#123456', false)->assertSee('Welcome to Sample School');
+        $this->get('/school/website/themes/current/sample')->assertOk()->assertSee('data-theme="heritage"', false);
+        $this->get('/school/website/themes/nope/sample')->assertNotFound();
+        $this->assertSame('heritage', \App\Models\SchoolSite::first()->theme);
+
+        foreach (['', '/themes', '/pages', '/posts', '/posts/create', '/media', '/settings'] as $screen) {
+            $this->get('/school/website'.$screen)->assertOk();
+        }
+        $page = SchoolSitePage::first();
+        $this->get("/school/website/pages/{$page->id}")->assertOk();
+    }
+
+    public function test_story_preview_saves_nothing(): void
+    {
+        $this->liveSite('Story Preview');
+        $this->post('/school/website/posts/preview', $this->postData(['title' => 'Draft headline']))->assertOk()->assertSee('id="sheet"', false)->assertSee('Draft headline');
+        $this->assertSame(0, \App\Models\SchoolSitePost::count());
+    }
+
+    public function test_a_failed_save_comes_back_as_a_message_not_a_blank_popup(): void
+    {
+        config(['app.debug' => false]);
+        \Illuminate\Support\Facades\Route::middleware('web')->put('/__boom', fn () => throw new \RuntimeException('database said no'));
+        $this->actingAs($this->makeUser($this->makeSchool('Boom School'), 'school-admin'));
+
+        $this->from('/school/website')->put('/__boom', [], ['X-Inertia' => 'true'])
+            ->assertRedirect('/school/website')->assertSessionHas('error');
     }
 
     public function test_text_stays_readable_on_any_colour(): void
