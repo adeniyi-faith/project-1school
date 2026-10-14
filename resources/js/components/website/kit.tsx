@@ -275,9 +275,9 @@ export function GooglePreview({ url, title, description, checks, children }: { u
 /** The bar that stays at the bottom while editing: unsaved state and the main buttons */
 export function SaveBar({ dirty, children }: { dirty: boolean; children: ReactNode }) {
     return (
-        <div className="sticky bottom-16 z-10 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur md:bottom-3 dark:border-white/10 dark:bg-slate-900/95">
+        <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:bg-slate-900">
             <span className="text-sm text-slate-500">{dirty ? 'You have changes that are not saved yet.' : 'Everything is saved.'}</span>
-            <div className="flex flex-wrap gap-2">{children}</div>
+            <div className="flex flex-wrap gap-2 [&>*]:flex-1 sm:[&>*]:flex-none">{children}</div>
         </div>
     );
 }

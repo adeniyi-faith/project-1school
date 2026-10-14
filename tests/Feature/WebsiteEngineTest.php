@@ -368,7 +368,7 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->actingAs($this->makeUser($this->makeSchool('Boom School'), 'school-admin'));
 
         $this->from('/school/website')->put('/__boom', [], ['X-Inertia' => 'true'])
-            ->assertRedirect('/school/website')->assertSessionHas('error');
+            ->assertStatus(303)->assertRedirect('/school/website')->assertSessionHas('error'); // 303, or the browser would repeat the PUT and show a blank pop-up
     }
 
     public function test_text_stays_readable_on_any_colour(): void

@@ -62,7 +62,8 @@ return Application::configure(basePath: dirname(__DIR__))
             };
 
             if (! $request->isMethod('GET')) {
-                return back()->with('error', $message);
+                // 303 so the browser asks for the page again with GET; a plain 302 would repeat the PUT and fail
+                return back(303)->with('error', $message);
             }
 
             return \Inertia\Inertia::render('Error', ['message' => $message, 'title' => $status === 404 ? 'Not found' : 'Something went wrong', 'kind' => 'error'])

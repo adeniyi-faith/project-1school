@@ -31,9 +31,9 @@ export default function WebsiteSettings({ shell, site, school, socialNames, site
 
             <Panel title="About your school" description="Your name, logo, address, phone and email come from your school profile.">
                 <div className="space-y-4 text-sm">
-                    <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3 dark:bg-white/5">
-                        {school.logo ? <img src={school.logo} alt="" className="size-12 rounded object-contain" /> : <span className="grid size-12 place-items-center rounded bg-slate-200 text-xs text-slate-500 dark:bg-white/10">No logo</span>}
-                        <div className="min-w-0 text-xs">
+                    <div className="flex items-start gap-3 rounded-lg bg-slate-50 p-3 dark:bg-white/5">
+                        {school.logo ? <img src={school.logo} alt="" className="size-12 shrink-0 rounded object-contain" /> : <span className="grid size-12 shrink-0 place-items-center text-center leading-tight rounded bg-slate-200 text-xs text-slate-500 dark:bg-white/10">No logo</span>}
+                        <div className="min-w-0 break-words text-xs">
                             <p className="text-sm font-semibold">{school.name}</p>
                             <p>{school.address || <span className="text-amber-700">Address not added</span>} · {school.phone || <span className="text-amber-700">Phone not added</span>} · {school.email || <span className="text-amber-700">Email not added</span>}</p>
                             <Link href="/school/settings" className="text-indigo-600 hover:underline">Change these in Settings</Link>

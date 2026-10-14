@@ -25,7 +25,7 @@ class DemoReadOnly
             && ! $request->routeIs('logout', 'demo.enter', 'school.report-card-designs.try', 'school.certificate-designs.try', 'school.website.preview', 'school.website.posts.preview')
         ) {
             if ($request->header('X-Inertia') || ! $request->expectsJson()) {
-                return back()->with('error', 'This is a read-only demo. Register your school to make changes.');
+                return back(303)->with('error', 'This is a read-only demo. Register your school to make changes.');
             }
 
             abort(403, 'This is a read-only demo.');
