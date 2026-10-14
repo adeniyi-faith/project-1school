@@ -20,6 +20,7 @@ class SettingsController extends Controller
         return Inertia::render('SchoolAdmin/Settings/Index', [
             'school'   => $school->only('id','name','email','phone','address','city','state','country','timezone','currency','language','logo'),
             'logoUrl'  => $school->logo_url,
+            'logoColors' => \App\Support\LogoColors::for($school),
             'settings' => $s,
         ]);
     }

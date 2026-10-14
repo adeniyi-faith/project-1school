@@ -425,6 +425,40 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->post('/apply/'.$school->id, ['student_name' => ''])->assertSessionHasErrors('student_name');
     }
 
+    public function test_a_new_online_application_rings_the_bell_and_shows_a_number_on_the_menu(): void
+    {
+        $school = $this->makeSchool('Bell School');
+        $admin = $this->makeUser($school, 'school-admin');
+        $parent = $this->makeUser($school, 'parent');
+
+        $this->post('/apply/'.$school->id, ['student_name' => 'Ada Obi', 'class_interested' => 'JSS 1', 'guardian_name' => 'Mr Obi', 'guardian_phone' => '08011112222'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('school_notifications', ['user_id' => $admin->id, 'type' => 'admission_inquiry']);
+
+        $this->assertSame(1, \App\Support\NavBadges::for($admin)['/school/admissions/inquiries'] ?? 0);
+        $this->actingAs($admin)->getJson('/school/communication/notifications/feed')->assertOk()->assertJsonPath('unread', 1)
+            ->assertJsonPath('items.0.title', 'New application: Ada Obi');
+        // someone who may not see inquiries sees no number
+        $this->assertSame([], \App\Support\NavBadges::for($parent));
+    }
+
+    public function test_colours_are_suggested_from_the_logo_and_greys_and_whites_are_ignored(): void
+    {
+        $img = imagecreatetruecolor(40, 40);
+        imagefill($img, 0, 0, imagecolorallocate($img, 255, 255, 255));
+        imagefilledrectangle($img, 0, 0, 29, 39, imagecolorallocate($img, 153, 0, 0));
+        imagefilledrectangle($img, 30, 0, 39, 39, imagecolorallocate($img, 255, 204, 0));
+        ob_start();
+        imagepng($img);
+        $png = ob_get_clean();
+
+        $colors = \App\Support\LogoColors::fromBytes($png);
+        $this->assertCount(2, $colors);
+        $this->assertSame('#990000', $colors[0]);
+        $this->assertSame('#ffcc00', $colors[1]);
+    }
+
     public function test_starter_pages_nobody_edited_get_the_richer_text_and_edited_ones_are_kept(): void
     {
         $school = $this->makeSchool('Fresh School');

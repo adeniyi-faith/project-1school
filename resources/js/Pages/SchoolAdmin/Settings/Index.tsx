@@ -21,6 +21,7 @@ interface SchoolData {
 interface Props {
     school: SchoolData;
     logoUrl: string | null;
+    logoColors?: string[];
     settings: Record<string, string>;
 }
 
@@ -182,7 +183,7 @@ async function shrinkPicture(file: File, maxSide: number): Promise<File> {
     }
 }
 
-function BrandingTab({ logoUrl, settings }: { logoUrl: string | null; settings: Record<string, string> }) {
+function BrandingTab({ logoUrl, logoColors, settings }: { logoUrl: string | null; logoColors: string[]; settings: Record<string, string> }) {
     const form = useForm<{
         logo: File | null; favicon: File | null;
         tagline: string; footer_text: string; primary_color: string;
@@ -284,6 +285,20 @@ function BrandingTab({ logoUrl, settings }: { logoUrl: string | null; settings: 
                                     onChange={e => form.setData('primary_color', e.target.value)}
                                     className="font-mono" placeholder="#6366f1" />
                             </div>
+                            {logoColors.length > 0 && (
+                                <div className="mt-2">
+                                    <p className="text-xs text-slate-500 mb-1.5">Colours found in your logo. Tap one to use it:</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {logoColors.map(c => (
+                                            <button key={c} type="button" onClick={() => form.setData('primary_color', c)} title={c}
+                                                className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-mono ${form.data.primary_color.toLowerCase() === c ? 'border-slate-900 dark:border-white' : 'border-slate-200 dark:border-white/20'}`}>
+                                                <i className="size-4 rounded-full border border-white/60" style={{ background: c }} />{c}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-slate-400 mt-1.5">Your website and report cards can use these too (Website &gt; Themes).</p>
+                                </div>
+                            )}
                         </div>
                         <div className="sm:col-span-2">
                             <Label>Footer Text</Label>
@@ -439,7 +454,7 @@ function NotificationsTab({ settings }: { settings: Record<string, string> }) {
 }
 
 /* ── Main Page ── */
-export default function SchoolSettingsIndex({ school, logoUrl, settings }: Props) {
+export default function SchoolSettingsIndex({ school, logoUrl, logoColors = [], settings }: Props) {
     const [activeTab, setActiveTab] = useState<TabId>('general');
 
     return (
@@ -474,7 +489,7 @@ export default function SchoolSettingsIndex({ school, logoUrl, settings }: Props
                     {/* Tab content */}
                     <div className="flex-1 min-w-0">
                         {activeTab === 'general'       && <GeneralTab school={school} />}
-                        {activeTab === 'branding'      && <BrandingTab logoUrl={logoUrl} settings={settings} />}
+                        {activeTab === 'branding'      && <BrandingTab logoUrl={logoUrl} logoColors={logoColors} settings={settings} />}
                         {activeTab === 'academic'      && <AcademicTab settings={settings} />}
                         {activeTab === 'notifications' && <NotificationsTab settings={settings} />}
                     </div>

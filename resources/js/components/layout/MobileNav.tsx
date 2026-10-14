@@ -13,6 +13,8 @@ export default function MobileNav() {
     const { url } = usePage();
     const { mobileNavOpen, setMobileNavOpen } = useUIStore();
     const tabs = tabsForRole(auth.user?.role ?? '', auth.paths, !!acting_school);
+    const badges = auth.badges ?? {};
+    const moreWaiting = Object.entries(badges).some(([href, n]) => n > 0 && !tabs.some((t) => t.href === href));
     const onTab = tabs.some((t) => isNavActive(url, t.href, t.exact));
 
     useEffect(() => { setMobileNavOpen(false); }, [url, setMobileNavOpen]);
@@ -34,16 +36,18 @@ export default function MobileNav() {
                     const active = isNavActive(url, tab.href, tab.exact);
                     return (
                         <Link key={tab.href} href={tab.href} aria-current={active ? 'page' : undefined} className="flex flex-1 flex-col items-center gap-0.5 py-1 text-[11px] font-medium outline-none">
-                            <span className={cn('flex h-7 w-14 items-center justify-center rounded-full transition-colors', active ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200' : 'text-muted-foreground')}>
+                            <span className={cn('relative flex h-7 w-14 items-center justify-center rounded-full transition-colors', active ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200' : 'text-muted-foreground')}>
                                 <tab.icon className="size-5" strokeWidth={active ? 2.1 : 1.75} />
+                                {(badges[tab.href] ?? 0) > 0 && <span className="absolute right-3 top-0 size-2.5 rounded-full bg-red-500 ring-2 ring-card" aria-label="Something is waiting" />}
                             </span>
                             <span className={active ? 'text-indigo-700 dark:text-indigo-200' : 'text-muted-foreground'}>{tab.label}</span>
                         </Link>
                     );
                 })}
                 <button onClick={() => setMobileNavOpen(true)} aria-haspopup="dialog" className="flex flex-1 flex-col items-center gap-0.5 py-1 text-[11px] font-medium outline-none">
-                    <span className={cn('flex h-7 w-14 items-center justify-center rounded-full transition-colors', !onTab ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200' : 'text-muted-foreground')}>
+                    <span className={cn('relative flex h-7 w-14 items-center justify-center rounded-full transition-colors', !onTab ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200' : 'text-muted-foreground')}>
                         <LayoutGrid className="size-5" strokeWidth={1.75} />
+                        {moreWaiting && <span className="absolute right-3 top-0 size-2.5 rounded-full bg-red-500 ring-2 ring-card" aria-label="Something is waiting" />}
                     </span>
                     <span className={!onTab ? 'text-indigo-700 dark:text-indigo-200' : 'text-muted-foreground'}>More</span>
                 </button>

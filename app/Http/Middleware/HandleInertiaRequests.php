@@ -52,6 +52,8 @@ class HandleInertiaRequests extends Middleware
                 // What this person may do: page buttons check `permissions`, the menu checks `paths`
                 'permissions' => fn () => $request->user() ? NavAccess::permissions($request->user()) : [],
                 'paths' => fn () => $request->user() ? NavAccess::paths($request->user()) : [],
+                // Numbers shown beside menu items that have something waiting (page address => count)
+                'badges' => fn () => $request->user() ? \App\Support\NavBadges::for($request->user()) : [],
             ],
             // Set while the platform owner is working inside one school
             'acting_school' => fn () => ($id = \App\Support\ActingSchool::id())

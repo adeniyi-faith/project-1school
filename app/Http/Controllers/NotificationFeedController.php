@@ -40,6 +40,7 @@ class NotificationFeedController extends Controller
                 $items->push([
                     'key' => 'n' . $n->id, 'title' => $n->title, 'body' => $n->body,
                     'when' => $n->created_at, 'unread' => $n->read_at === null, 'kind' => 'Notification',
+                    'url' => is_array($n->data) ? ($n->data['url'] ?? null) : null,
                 ]);
             }
         }

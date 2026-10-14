@@ -22,6 +22,7 @@ class WebsiteThemeController extends WebsiteBase
         return Inertia::render('SchoolAdmin/Website/Themes', $this->shell($school, $site) + [
             'themes' => Themes::options(),
             'palettes' => Themes::PALETTES,
+            'logoColors' => \App\Support\LogoColors::for($school),
             'current' => ['theme' => $site->theme, 'color' => $site->color, 'color2' => $site->color2],
         ]);
     }

@@ -8,7 +8,8 @@ import { isNavActive, navGroupsForRole, type NavItem } from '@/components/layout
 import type { PageProps } from '@/Types';
 
 function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: boolean; onNavigate?: () => void }) {
-    const { url } = usePage();
+    const { url, props } = usePage<PageProps>();
+    const waiting = (props.auth?.badges ?? {})[item.href] ?? 0;
     const isActive = isNavActive(url, item.href, item.exact);
 
     const link = (
@@ -31,6 +32,11 @@ function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: bo
                 className={cn('size-[17px] shrink-0 transition-colors', isActive ? 'text-indigo-300' : 'text-white/45 group-hover:text-white/80')}
             />
             {!collapsed && <span className="truncate">{item.label}</span>}
+            {waiting > 0 && (
+                collapsed
+                    ? <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-red-500" aria-label={`${waiting} waiting`} />
+                    : <span className="ml-auto grid min-w-5 place-items-center rounded-full bg-red-500 px-1.5 text-[10.5px] font-semibold leading-5 text-white" aria-label={`${waiting} waiting`}>{waiting > 99 ? '99+' : waiting}</span>
+            )}
         </Link>
     );
 

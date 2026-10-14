@@ -42,10 +42,22 @@ class PublicAdmissionController extends Controller
 
         // A hidden box real people never see: a robot that fills it in is thanked and ignored
         if (! $request->filled('company_site')) {
-            AdmissionInquiry::create(array_merge($data, [
+            $inquiry = AdmissionInquiry::create(array_merge($data, [
                 'school_id' => $school->id,
                 'source'    => 'online',
             ]));
+
+            // Tell the staff who deal with admissions: a line in their bell (and the menu shows a number)
+            \App\Models\User::permission('students.view')->where('school_id', $school->id)->get()
+                ->each(fn ($u) => \App\Models\SchoolNotification::create([
+                    'school_id' => $school->id,
+                    'user_id'   => $u->id,
+                    'type'      => 'admission_inquiry',
+                    'title'     => 'New application: '.$data['student_name'],
+                    'body'      => "For {$data['class_interested']}. Parent: {$data['guardian_name']}, {$data['guardian_phone']}. Open Admissions > Inquiries to follow up.",
+                    'data'      => ['url' => '/school/admissions/inquiries/'.$inquiry->id],
+                    'channel'   => 'in-app',
+                ]));
         }
 
         return back()->with('applied', 'Your application has been submitted. We will contact you soon.');
