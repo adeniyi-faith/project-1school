@@ -27,6 +27,15 @@ class PublicSiteController extends Controller
         return SiteRenderer::render($school, $site, $current, $pages);
     }
 
+    /** One sign-in page for parents, students and staff, drawn in the school's look. It posts to the normal login. */
+    public function signIn(string $slug)
+    {
+        [$school, $site] = $this->live($slug);
+
+        return SiteRenderer::renderPlain($school, $site, $this->pages($school), 'website.sign-in', 'sign-in', 'Sign in',
+            'Parents, students and staff: sign in to see results, fees, notices and your school tools.');
+    }
+
     public function news(Request $request, string $slug)
     {
         [$school, $site] = $this->live($slug);

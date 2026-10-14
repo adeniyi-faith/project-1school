@@ -20,7 +20,7 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->get('/school/website')->assertOk(); // first visit writes a starter site, already switched on
         auth()->logout();
 
-        $this->get('/s/bright-stars')->assertOk()->assertSee('Welcome to Bright Stars')->assertSee('Apply online');
+        $this->get('/s/bright-stars')->assertOk()->assertSee('Where every child is known')->assertSee('Apply online');
         $this->get('/s/bright-stars/about')->assertOk();
         $this->get('/s/bright-stars/nope')->assertNotFound();
 
@@ -342,7 +342,7 @@ class WebsiteEngineTest extends SecurityTestCase
     public function test_theme_pictures_draw_the_school_site_without_saving(): void
     {
         [$school] = $this->liveSite('Sample School', 'heritage');
-        $this->get('/school/website/themes/modern/sample?color=%23123456')->assertOk()->assertSee('data-theme="modern"', false)->assertSee('--brand:#123456', false)->assertSee('Welcome to Sample School');
+        $this->get('/school/website/themes/modern/sample?color=%23123456')->assertOk()->assertSee('data-theme="modern"', false)->assertSee('--brand:#123456', false)->assertSee('Where every child is known');
         $this->get('/school/website/themes/current/sample')->assertOk()->assertSee('data-theme="heritage"', false);
         $this->get('/school/website/themes/nope/sample')->assertNotFound();
         $this->assertSame('heritage', \App\Models\SchoolSite::first()->theme);
@@ -392,5 +392,51 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->assertSame('#1c1917', Themes::ink('#ffcc00'));
         $this->assertSame('#1c1917', Themes::vars('heritage', '#ffffff', '#fefefe')['brand2-ink']);
         $this->assertSame('#ffffff', Themes::vars('heritage', '#000000', '#111111')['brand2-ink']);
+    }
+
+    public function test_the_site_footer_credits_schoolruns_and_links_to_sign_in(): void
+    {
+        [$school] = $this->liveSite('Foot School');
+        auth()->logout();
+        $this->get('/s/foot-school')->assertOk()->assertSee('School platform powered by', false)->assertSee('SchoolRuns')->assertSee('/s/foot-school/sign-in', false);
+    }
+
+    public function test_the_sign_in_page_uses_the_site_look_and_posts_to_the_normal_login(): void
+    {
+        [$school] = $this->liveSite('Sign School', 'modern');
+        auth()->logout();
+        $this->get('/s/sign-school/sign-in')->assertOk()->assertSee('data-theme="modern"', false)->assertSee('action="'.url('/login').'"', false)->assertSee('Parent')->assertSee('Staff');
+        $this->put('/school/website', ['enabled' => false]);
+    }
+
+    public function test_the_apply_form_uses_the_site_look_saves_inquiries_and_ignores_robots(): void
+    {
+        [$school] = $this->liveSite('Apply School', 'warm');
+        auth()->logout();
+        $this->get('/apply/'.$school->id)->assertOk()->assertSee('data-theme="warm"', false)->assertSee('Admission form');
+
+        $form = ['student_name' => 'Ada Obi', 'class_interested' => 'JSS 1', 'guardian_name' => 'Mr Obi', 'guardian_phone' => '08011112222'];
+        $this->post('/apply/'.$school->id, $form)->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('admission_inquiries', ['school_id' => $school->id, 'student_name' => 'Ada Obi', 'source' => 'online']);
+
+        $this->post('/apply/'.$school->id, ['student_name' => 'Robot', 'company_site' => 'x'] + $form)->assertSessionHasNoErrors();
+        $this->assertDatabaseMissing('admission_inquiries', ['student_name' => 'Robot']);
+
+        $this->post('/apply/'.$school->id, ['student_name' => ''])->assertSessionHasErrors('student_name');
+    }
+
+    public function test_starter_pages_nobody_edited_get_the_richer_text_and_edited_ones_are_kept(): void
+    {
+        $school = $this->makeSchool('Fresh School');
+        $site = \App\Website\SiteStarter::ensure($school);
+        $home = SchoolSitePage::withoutGlobalScopes()->where('school_id', $school->id)->where('slug', 'home')->first();
+        $about = SchoolSitePage::withoutGlobalScopes()->where('school_id', $school->id)->where('slug', 'about')->first();
+        $old = [['type' => 'text', 'heading' => 'Old text', 'body' => 'x']];
+        SchoolSitePage::withoutGlobalScopes()->whereKey($home->id)->update(['blocks' => json_encode($old), 'updated_at' => $home->created_at]);
+        SchoolSitePage::withoutGlobalScopes()->whereKey($about->id)->update(['blocks' => json_encode($old), 'updated_at' => $about->created_at->copy()->addHour()]);
+
+        $this->assertSame(4, \App\Website\SiteStarter::refreshUntouched($school));
+        $this->assertSame('hero', SchoolSitePage::withoutGlobalScopes()->find($home->id)->blocks[0]['type']);
+        $this->assertSame('Old text', SchoolSitePage::withoutGlobalScopes()->find($about->id)->blocks[0]['heading']);
     }
 }

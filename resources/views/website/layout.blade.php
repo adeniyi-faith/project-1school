@@ -25,6 +25,19 @@
 <body id="sheet" data-theme="{{ $theme }}">
 <a class="skip" href="#main">Skip to content</a>
 
+<div class="top">
+    <div class="wrap top-in">
+        <div class="top-info">
+            @if ($school->phone)<a href="tel:{{ preg_replace('/[^0-9+]/', '', $school->phone) }}">{{ $school->phone }}</a>@endif
+            @if ($school->email)<a href="mailto:{{ $school->email }}">{{ $school->email }}</a>@endif
+        </div>
+        <div class="top-links">
+            @if ($site->option('apply_button'))<a href="{{ route('public.admission.show', $school) }}">Admissions</a>@endif
+            <a href="{{ $homeUrl }}/sign-in">Parent, student and staff sign in</a>
+        </div>
+    </div>
+</div>
+
 <header class="hdr">
     <div class="wrap hdr-in">
         <a class="brand" href="{{ $homeUrl }}">
@@ -36,6 +49,7 @@
             @foreach ($menu as $item)
                 <a href="{{ $item['url'] }}" @if ($item['current']) aria-current="page" @endif>{{ $item['label'] }}</a>
             @endforeach
+            <a class="menu-signin" href="{{ $homeUrl }}/sign-in" @if (($current ?? '') === 'sign-in') aria-current="page" @endif>Sign in</a>
             @if ($site->option('apply_button'))<a class="btn btn--solid" href="{{ route('public.admission.show', $school) }}">Apply online</a>@endif
         </nav>
     </div>
@@ -72,11 +86,14 @@
                 <ul>
                     @foreach ($menu->take(6) as $item)<li><a href="{{ $item['url'] }}">{{ $item['label'] }}</a></li>@endforeach
                     <li><a href="{{ route('public.admission.show', $school) }}">Apply online</a></li>
-                    <li><a href="{{ route('login') }}">Sign in</a></li>
+                    <li><a href="{{ $homeUrl }}/sign-in">Sign in</a></li>
                 </ul>
             </div>
         </div>
-        <p class="legal">@if ($site->footer_text){{ $site->footer_text }} &middot; @endif&copy; {{ now()->year }} {{ $school->name }}</p>
+        <div class="legal">
+            <p>@if ($site->footer_text){{ $site->footer_text }} &middot; @endif&copy; {{ now()->year }} {{ $school->name }}</p>
+            <p class="powered">School platform powered by <a href="{{ url('/') }}" rel="noopener">SchoolRuns</a></p>
+        </div>
     </div>
 </footer>
 

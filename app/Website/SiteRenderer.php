@@ -84,6 +84,26 @@ class SiteRenderer
         ]);
     }
 
+    /**
+     * A page the website draws itself (the apply form, the sign-in page) in the school's own look,
+     * with the same header, menu and footer as every other page.
+     */
+    public static function renderPlain(School $school, SchoolSite $site, Collection $pages, string $view, string $slug, string $title, string $description, array $data = []): View
+    {
+        $url = self::homeUrl($school).'/'.$slug;
+        $ctx = self::context($school, $site, $pages, false, $url, $slug);
+
+        return view($view, $ctx + $data + [
+            'title' => $title.' | '.$school->name, 'description' => $description, 'ogImage' => $ctx['logo'], 'ogType' => 'website',
+            'pageTitle' => $title, 'pageLead' => $description,
+            'schema' => ['@context' => 'https://schema.org', '@graph' => [
+                self::organisation($school, $site, $description, $ctx['logo'], $ctx['social']),
+                self::webPage($school, $title.' | '.$school->name, $url, $description),
+                self::breadcrumbs($school, [[$title, $url]]),
+            ]],
+        ]);
+    }
+
     /** The news and events list */
     public static function renderNews(School $school, SchoolSite $site, Collection $pages, LengthAwarePaginator $posts, ?string $category): View
     {
@@ -182,7 +202,7 @@ class SiteRenderer
         $contactPage = $pages->firstWhere('slug', 'contact');
 
         return [
-            'school' => $school, 'site' => $site, 'preview' => $preview, 'menu' => $menu->values(), 'homeUrl' => $home, 'pageUrl' => $url,
+            'current' => $current, 'school' => $school, 'site' => $site, 'preview' => $preview, 'menu' => $menu->values(), 'homeUrl' => $home, 'pageUrl' => $url,
             'contactUrl' => $contactPage ? self::pageUrl($school, $contactPage) : ($school->email ? 'mailto:'.$school->email : null),
             'newsUrl' => $hasPosts ? self::newsUrl($school) : null,
             'style' => Themes::style($site->theme, $site->color, $site->color2), 'theme' => $site->theme,

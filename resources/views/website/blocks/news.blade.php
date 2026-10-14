@@ -2,6 +2,7 @@
     $tag = ($b['_h1'] ?? false) ? 'h1' : 'h2';
     $items = $news->when(($b['category'] ?? 'all') !== 'all', fn ($c) => $c->where('category', $b['category']))->take($b['count'])->values();
 @endphp
+@if ($items->isNotEmpty() || $preview)
 <section class="sec"><div class="wrap">
     <div class="sec-head sec-head--row">
         @if ($b['heading'])<{{ $tag }}>{{ $b['heading'] }}</{{ $tag }}>@endif
@@ -15,3 +16,4 @@
         </div>
     @endif
 </div></section>
+@endif
