@@ -46,7 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // used to show Inertia's blank white pop-up with the raw error page in it. Now a save goes back to the
         // form with a plain message, and a page that cannot open shows a plain page. The error is still logged.
         $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $e, \Illuminate\Http\Request $request) {
-            if (! $request->header('X-Inertia') || $response->getStatusCode() < 400 || $response->getStatusCode() === 403
+            if (! $request->header('X-Inertia') || ! $request->hasSession() || $response->getStatusCode() < 400 || $response->getStatusCode() === 403
                 || $response->getStatusCode() === 422 || $response->getStatusCode() === 409 || $response->headers->has('X-Inertia')) {
                 return $response;
             }

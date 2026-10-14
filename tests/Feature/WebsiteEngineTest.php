@@ -371,6 +371,21 @@ class WebsiteEngineTest extends SecurityTestCase
             ->assertStatus(303)->assertRedirect('/school/website')->assertSessionHas('error'); // 303, or the browser would repeat the PUT and show a blank pop-up
     }
 
+    public function test_a_save_sent_as_post_with_the_method_override_works_like_a_put(): void
+    {
+        $school = $this->makeSchool('Override School');
+        $this->actingAs($this->makeUser($school, 'school-admin'));
+        $this->get('/school/website');
+
+        // the live web server refuses real PUT requests, so the browser sends POST plus this header and a _method field
+        $this->postJson('/school/website', ['_method' => 'PUT', 'enabled' => false, 'tagline' => 'Sent as a post'], ['X-Inertia' => 'true', 'X-HTTP-Method-Override' => 'PUT'])
+            ->assertStatus(303);
+        $this->assertSame('Sent as a post', \App\Models\SchoolSite::withoutGlobalScopes()->where('school_id', $school->id)->value('tagline'));
+
+        $this->post('/school/website', ['enabled' => true, 'tagline' => 'Header only'], ['X-Inertia' => 'true', 'X-HTTP-Method-Override' => 'PUT'])->assertStatus(303);
+        $this->assertSame('Header only', \App\Models\SchoolSite::withoutGlobalScopes()->where('school_id', $school->id)->value('tagline'));
+    }
+
     public function test_text_stays_readable_on_any_colour(): void
     {
         $this->assertSame('#ffffff', Themes::ink('#990000'));
