@@ -307,8 +307,10 @@ class SiteRenderer
         }
 
         $contactPage = $pages->firstWhere('slug', 'contact');
+        $privacyPage = $pages->firstWhere('slug', 'privacy-policy');
 
         return [
+            'privacyUrl' => $privacyPage ? self::pageUrl($school, $privacyPage) : null,
             'current' => $current, 'school' => $school, 'site' => $site, 'preview' => $preview, 'menu' => $menu->values(), 'homeUrl' => $home, 'pageUrl' => $url,
             'contactUrl' => $contactPage ? self::pageUrl($school, $contactPage) : ($school->email ? 'mailto:'.$school->email : null),
             'newsUrl' => $hasPosts ? self::newsUrl($school) : null,

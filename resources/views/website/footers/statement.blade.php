@@ -29,7 +29,7 @@
             </div>
         </div>
         <div class="legal">
-            <p>@if ($site->footer_text){{ $site->footer_text }} &middot; @endif&copy; {{ now()->year }} {{ $school->name }}</p>
+            <p>@if ($site->footer_text){{ $site->footer_text }} &middot; @endif&copy; {{ now()->year }} {{ $school->name }}@if ($privacyUrl) &middot; <a href="{{ $privacyUrl }}">Privacy Policy</a>@endif</p>
             <p class="powered">School platform powered by <a href="{{ url('/') }}" rel="noopener">SchoolRuns</a>@if ($site->tagline) <span aria-hidden="true">|</span> {{ $site->tagline }}@endif</p>
         </div>
     </div>

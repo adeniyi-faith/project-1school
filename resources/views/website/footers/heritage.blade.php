@@ -39,6 +39,7 @@
 
         <ul class="fh-legal">
             <li><a href="{{ $homeUrl }}/sign-in">Staff sign in</a></li>
+            @if ($privacyUrl)<li><a href="{{ $privacyUrl }}">Privacy Policy</a></li>@endif
             <li><a href="{{ $homeUrl }}/sitemap.xml">Sitemap</a></li>
         </ul>
         <p class="fh-copy">@if ($site->footer_text){{ $site->footer_text }} &middot; @endif Copyright &copy; {{ now()->year }} {{ $school->name }}</p>

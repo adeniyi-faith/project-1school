@@ -469,7 +469,7 @@ class WebsiteEngineTest extends SecurityTestCase
         SchoolSitePage::withoutGlobalScopes()->whereKey($home->id)->update(['blocks' => json_encode($old), 'updated_at' => $home->created_at]);
         SchoolSitePage::withoutGlobalScopes()->whereKey($about->id)->update(['blocks' => json_encode($old), 'updated_at' => $about->created_at->copy()->addHour()]);
 
-        $this->assertSame(4, \App\Website\SiteStarter::refreshUntouched($school));
+        $this->assertSame(5, \App\Website\SiteStarter::refreshUntouched($school));
         $this->assertSame('hero', SchoolSitePage::withoutGlobalScopes()->find($home->id)->blocks[0]['type']);
         $this->assertSame('Old text', SchoolSitePage::withoutGlobalScopes()->find($about->id)->blocks[0]['heading']);
     }
@@ -676,5 +676,19 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->get('/apply/'.$school->id)->assertOk()->assertSee('mo-form', false);
         $this->get('/s/navy-school/search?q=school')->assertOk()->assertSee('mo-search', false);
         $this->get('/s/navy-school/gallery')->assertOk()->assertSee('class="mo-head"', false);
+    }
+
+    public function test_every_theme_has_a_privacy_policy_link_and_a_cookie_notice_that_can_be_switched_off(): void
+    {
+        foreach (array_keys(Themes::ALL) as $theme) {
+            [$school, $admin] = $this->liveSite("Cookie {$theme} School", $theme);
+            $slug = $school->slug;
+            auth()->logout();
+            $this->get("/s/{$slug}")->assertOk()->assertSee('id="cookie"', false)->assertSee("/s/{$slug}/privacy-policy", false);
+            $this->get("/s/{$slug}/privacy-policy")->assertOk()->assertSee('Nigeria Data Protection Act')->assertSee('Your rights and how to reach us');
+            $this->actingAs($admin)->put('/school/website', ['cookie_notice' => false])->assertSessionHasNoErrors();
+            auth()->logout();
+            $this->get("/s/{$slug}")->assertOk()->assertDontSee('id="cookie"', false)->assertSee('Privacy Policy');
+        }
     }
 }
