@@ -19,6 +19,8 @@ class ThemeColourSafetyTest extends TestCase
                     $this->assertGreaterThanOrEqual(4.5, Themes::contrast($v['brand-t'], $v['bg']), "$theme $one $two brand text");
                     $this->assertGreaterThanOrEqual(4.5, Themes::contrast($v['band'], '#ffffff'), "$theme $one $two band");
                     $this->assertGreaterThanOrEqual(7, Themes::contrast($v['deep'], '#ffffff'), "$theme $one $two deep");
+                    $this->assertGreaterThanOrEqual(4.5, Themes::contrast($v['fill'], $v['fill-ink']), "$theme $one $two fill");
+                    $this->assertGreaterThanOrEqual(3.0, Themes::contrast($v['fill-lg'], $v['fill-lg-ink']), "$theme $one $two big fill");
                 }
             }
         }
