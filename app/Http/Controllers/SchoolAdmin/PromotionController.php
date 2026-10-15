@@ -9,6 +9,8 @@ use App\Models\SchoolClass;
 use App\Models\SchoolSetting;
 use App\Models\Section;
 use App\Models\Student;
+use App\Models\StudentPromotion;
+use App\Services\FeeLedgerService;
 use App\Services\PromotionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -98,6 +100,25 @@ class PromotionController extends Controller
 
         return redirect()->route('school.promotions.index', ['year_id' => $year->id])
             ->with('success', 'Done: '.implode(', ', $parts).'.');
+    }
+
+    /** After the move: bill this term's fees for the students who stay at the school (moved up or repeating). Safe to run again. */
+    public function billFees(Request $request, PromotionBatch $promotionBatch, FeeLedgerService $ledger): RedirectResponse
+    {
+        if ($promotionBatch->undone_at) {
+            return back()->with('error', 'This move was undone, so there is nothing to bill.');
+        }
+
+        $ids = StudentPromotion::where('promotion_batch_id', $promotionBatch->id)->whereIn('outcome', ['promoted', 'repeated'])->pluck('student_id')->all();
+        $result = $ledger->billCurrentTerm($promotionBatch->school_id, $ids, $request->user());
+
+        if ($result['period'] === null) {
+            return back()->with('error', 'No current term is set. Set the new term first (School Setup > Terms), then bill the fees.');
+        }
+
+        return back()->with('success', $result['made'] > 0
+            ? "{$result['made']} fee invoice".($result['made'] === 1 ? '' : 's')." made for {$result['period']}."
+            : "Nothing new to bill for {$result['period']}: either the fees are not set up for these classes or the invoices already exist.");
     }
 
     public function undo(Request $request, PromotionBatch $promotionBatch): RedirectResponse

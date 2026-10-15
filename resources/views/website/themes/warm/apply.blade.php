@@ -8,6 +8,7 @@
         <div class="wa-thanks">
             <h2 class="wa-h2">Thank you. We have your application.</h2>
             <p>{{ session('applied') }}</p>
+@include('website.partials.apply-status-link')
             <p><a class="btn btn--solid" href="{{ $homeUrl }}">Back to the school website</a></p>
         </div>
     @else
@@ -24,6 +25,7 @@
                 <label class="wa-field"><span>Phone number *</span><input type="tel" name="guardian_phone" value="{{ old('guardian_phone') }}" required maxlength="25" autocomplete="tel">@error('guardian_phone')<small class="err">{{ $message }}</small>@enderror</label>
                 <label class="wa-field"><span>Email (optional)</span><input type="email" name="guardian_email" value="{{ old('guardian_email') }}" maxlength="150" autocomplete="email">@error('guardian_email')<small class="err">{{ $message }}</small>@enderror</label>
             </div>
+            @include('website.partials.apply-extra', ['fc' => 'wa-field', 'sr' => false])
             <label class="wa-field"><span>Anything we should know? (optional)</span><textarea name="notes" maxlength="1000">{{ old('notes') }}</textarea>@error('notes')<small class="err">{{ $message }}</small>@enderror</label>
             <button class="btn btn--solid" type="submit">Send application</button>
             <p class="wa-fine">Your details go directly to our admissions office.@if ($school->phone) Questions? Call <a href="tel:{{ preg_replace('/[^0-9+]/', '', $school->phone) }}">{{ $school->phone }}</a>.@endif</p>

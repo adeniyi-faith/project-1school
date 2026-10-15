@@ -249,9 +249,9 @@ body[data-theme=modern].menu-open .hdr,body[data-theme=modern].search-open .hdr{
 .mo-note{margin:0 0 1.5rem;color:var(--muted);font-size:1rem}
 .mo-field{display:block;margin:0 0 1.25rem}
 .mo-field>span{display:block;margin-bottom:.5rem;font:800 .72rem/1.3 var(--body-font);letter-spacing:.2em;text-transform:uppercase;color:var(--brand-t)}
-.mo-field input,.mo-field textarea{display:block;width:100%;min-height:3.4rem;padding:.7rem 1rem;border:1px solid #b6bdc9;border-radius:0;background:#fff;color:var(--text);font:inherit;font-size:1rem}
+.mo-field input,.mo-field select,.mo-field textarea{display:block;width:100%;min-height:3.4rem;padding:.7rem 1rem;border:1px solid #b6bdc9;border-radius:0;background:#fff;color:var(--text);font:inherit;font-size:1rem}
 .mo-field textarea{min-height:8rem;resize:vertical}
-.mo-field input:focus,.mo-field textarea:focus{outline:0;border-color:var(--brand2);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand2) 22%,transparent)}
+.mo-field input:focus,.mo-field select:focus,.mo-field textarea:focus{outline:0;border-color:var(--brand2);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand2) 22%,transparent)}
 .mo-field .err{display:block;margin-top:.35rem;color:#b91c1c;font-size:.9rem;font-weight:600}
 .mo-two{display:grid;gap:0 1.25rem}
 @media (min-width:40rem){.mo-two{grid-template-columns:1fr 1fr}}

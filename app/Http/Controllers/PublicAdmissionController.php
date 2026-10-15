@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AdmissionInquiry;
+use App\Models\SchoolNotification;
+use App\Models\User;
+use App\Services\FamilyNotice;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\SchoolSitePage;
@@ -37,15 +40,22 @@ class PublicAdmissionController extends Controller
             'guardian_name'    => 'required|string|max:150',
             'guardian_phone'   => 'required|string|max:25',
             'guardian_email'   => 'nullable|email|max:150',
+            'student_gender'   => 'nullable|in:male,female,other',
+            'student_dob'      => 'nullable|date|before:today|after:1990-01-01',
             'notes'            => 'nullable|string|max:1000',
         ]);
 
         // A hidden box real people never see: a robot that fills it in is thanked and ignored
+        $reference = null;
         if (! $request->filled('company_site')) {
             $inquiry = AdmissionInquiry::create(array_merge($data, [
                 'school_id' => $school->id,
                 'source'    => 'online',
             ]));
+            $reference = $inquiry->fresh()->reference;
+
+            // A copy for the parent, when they gave an email (a failed email never stops the application)
+            app(FamilyNotice::class)->applicationReceived($inquiry->fresh(), $school);
 
             // Tell the staff who deal with admissions: a line in their bell (and the menu shows a number)
             \App\Models\User::permission('students.view')->where('school_id', $school->id)->get()
@@ -60,6 +70,70 @@ class PublicAdmissionController extends Controller
                 ]));
         }
 
-        return back()->with('applied', 'Your application has been submitted. We will contact you soon.');
+        return back()->with('applied', 'Your application has been submitted.'.($reference ? " Your reference is {$reference}: keep it to check your application later." : '').' We will contact you soon.');
+    }
+
+    /** The family checks where their application stands: reference plus the phone number they gave */
+    public function status(Request $request, School $school)
+    {
+        abort_if($school->status !== 'active', 404);
+
+        $inquiry = null;
+        $notFound = false;
+        if ($request->filled('reference') || $request->filled('phone')) {
+            $inquiry = $this->findInquiry($school, (string) $request->input('reference'), (string) $request->input('phone'));
+            $notFound = $inquiry === null;
+        }
+
+        return $this->page($school, 'website.apply-status', 'apply/status', 'Check your application', 'Enter the reference we gave you and the phone number you applied with.', [
+            'inquiry' => $inquiry, 'stage' => $inquiry?->familyStage($school->name), 'notFound' => $notFound,
+            'reference' => (string) $request->input('reference'), 'phone' => (string) $request->input('phone'),
+        ]);
+    }
+
+    /** The family says yes to the offered place */
+    public function accept(Request $request, School $school)
+    {
+        abort_if($school->status !== 'active', 404);
+
+        $inquiry = $this->findInquiry($school, (string) $request->input('reference'), (string) $request->input('phone'));
+        abort_if($inquiry === null || $inquiry->status !== 'accepted', 404);
+
+        if (! $inquiry->family_accepted_at) {
+            $inquiry->forceFill(['family_accepted_at' => now()])->save();
+            User::permission('admissions.manage')->where('school_id', $school->id)->get()->each(fn ($u) => SchoolNotification::create([
+                'school_id' => $school->id, 'user_id' => $u->id, 'type' => 'admission_accepted',
+                'title' => 'Offer accepted: '.$inquiry->student_name,
+                'body' => "{$inquiry->guardian_name} accepted the place for {$inquiry->student_name}. Enrol them when they are ready to start.",
+                'data' => ['url' => '/school/admissions/inquiries/'.$inquiry->id], 'channel' => 'in-app',
+            ]));
+        }
+
+        return redirect()->route('public.admission.status', ['school' => $school, 'reference' => $inquiry->reference, 'phone' => $request->input('phone')]);
+    }
+
+    private function findInquiry(School $school, string $reference, string $phone): ?AdmissionInquiry
+    {
+        $reference = strtoupper(trim($reference));
+        $digits = preg_replace('/\D+/', '', $phone);
+        if ($reference === '' || strlen($digits) < 7) {
+            return null;
+        }
+
+        $inquiry = AdmissionInquiry::withoutGlobalScopes()->where('school_id', $school->id)->where('reference', $reference)->first();
+        // The phone must match on its last 7 digits, so +234 and 0 spellings both work
+        $theirs = preg_replace('/\D+/', '', (string) $inquiry?->guardian_phone);
+
+        return $inquiry && strlen($theirs) >= 7 && substr($theirs, -7) === substr($digits, -7) ? $inquiry : null;
+    }
+
+    private function page(School $school, string $view, string $slug, string $title, string $lead, array $data)
+    {
+        $site = SiteStarter::ensure($school);
+        $pages = SchoolSitePage::withoutGlobalScopes()
+            ->where('school_id', $school->id)->where('is_published', true)->whereNull('deleted_at')
+            ->orderBy('position')->orderBy('id')->get();
+
+        return SiteRenderer::renderPlain($school, $site, $pages, $view, $slug, $title, $lead, $data);
     }
 }

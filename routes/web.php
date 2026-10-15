@@ -286,6 +286,7 @@ Route::middleware('auth')->group(function () {
             // ── Year-end promotion: move a class up, keep some back, graduate the top class ──
             Route::get('promotions',                        [PromotionController::class, 'index'])->middleware('permission:students.promote')->name('promotions.index');
             Route::post('promotions',                       [PromotionController::class, 'store'])->middleware('permission:students.promote')->name('promotions.store');
+            Route::post('promotions/{promotionBatch}/bill-fees', [PromotionController::class, 'billFees'])->middleware('permission:fees.structure')->name('promotions.bill-fees');
             Route::post('promotions/{promotionBatch}/undo', [PromotionController::class, 'undo'])->middleware('permission:students.promote')->name('promotions.undo');
 
             // Exams
@@ -853,3 +854,5 @@ Route::get('/s/{slug}/search', [PublicSiteController::class, 'search'])->where('
 Route::get('/s/{slug}/{page?}', [PublicSiteController::class, 'show'])->where('slug', '[a-z0-9-]+')->where('page', '[a-z0-9_-]+')->middleware('throttle:120,1')->name('site.show');
 Route::get('/apply/{school}',  [PublicAdmissionController::class, 'show'])->name('public.admission.show');
 Route::post('/apply/{school}', [PublicAdmissionController::class, 'submit'])->middleware('throttle:10,1')->name('public.admission.submit');
+Route::get('/apply/{school}/status',  [PublicAdmissionController::class, 'status'])->middleware('throttle:30,1')->name('public.admission.status');
+Route::post('/apply/{school}/status/accept', [PublicAdmissionController::class, 'accept'])->middleware('throttle:10,1')->name('public.admission.accept');
