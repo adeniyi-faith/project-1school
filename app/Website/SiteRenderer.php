@@ -287,9 +287,15 @@ class SiteRenderer
     private static function context(School $school, SchoolSite $site, Collection $pages, bool $preview, string $url, string $current): array
     {
         $home = self::homeUrl($school);
-        $menu = $pages->where('show_in_menu', true)->values()->map(fn ($p) => [
-            'label' => $p->title, 'url' => self::pageUrl($school, $p), 'current' => $current === ($p->is_home ? 'home' : $p->slug), 'slug' => $p->slug,
-        ]);
+        $inMenu = $pages->where('show_in_menu', true)->values();
+        $item = fn ($p) => ['label' => $p->title, 'url' => self::pageUrl($school, $p), 'current' => $current === ($p->is_home ? 'home' : $p->slug), 'slug' => $p->slug];
+        $kids = $inMenu->filter(fn ($p) => $p->parent_id && $inMenu->contains('id', $p->parent_id))->groupBy('parent_id');
+        // pages under another page sit in that page's sub-menu; one whose parent is hidden or gone stays in the main menu
+        $menu = $inMenu->reject(fn ($p) => $p->parent_id && $inMenu->contains('id', $p->parent_id))->values()->map(function ($p) use ($item, $kids) {
+            $children = ($kids[$p->id] ?? collect())->map($item)->values();
+
+            return $item($p) + ['children' => $children->all(), 'open' => $children->contains('current', true)];
+        });
 
         $hasPosts = SchoolSitePost::withoutGlobalScopes()->where('school_id', $school->id)->whereNull('deleted_at')->live()->exists();
         if ($hasPosts && $site->option('news_in_menu')) {

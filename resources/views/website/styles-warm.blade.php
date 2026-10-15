@@ -261,4 +261,12 @@ a.wa-act:hover{transform:translateY(-3px);box-shadow:0 22px 44px -22px rgba(60,1
 .wa-results .result{border-color:var(--rule)}
 [data-theme=warm] .wa-results .result h2{margin:.2rem 0 .4rem;font-size:1.25rem}
 .wa-results .tag{color:var(--link)}
+
+/* testimonials: soft rounded cards, serif italic words, orange rule above the name */
+[data-theme=warm] .tcard{border-radius:var(--radius-lg);background:#fff;border:1px solid var(--rule)}
+[data-theme=warm] .tcard blockquote{font-family:var(--head-font);font-size:clamp(1.2rem,3.4vw,1.45rem)}
+[data-theme=warm] .tcard figcaption{padding-top:1.1rem;border-top:3px solid var(--brand2)}
+[data-theme=warm] .tcard-who b{font:600 1.05rem/1.2 var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--brand-t)}
+[data-theme=warm] .sec--dark .tcard{background:#fff;color:var(--text)}
+[data-theme=warm] .sec--dark .tcard-who span{color:var(--muted);opacity:1}
 @endverbatim

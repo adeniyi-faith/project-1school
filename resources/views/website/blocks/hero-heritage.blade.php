@@ -3,7 +3,7 @@
     @if ($b['image'])<img class="hh-img" src="{{ asset('storage/'.$b['image']) }}" alt="" fetchpriority="high" decoding="async">@endif
     <div class="wrap hh-in">
         @if ($eyebrow !== '')<p class="hh-tag">{{ $eyebrow }}</p>@endif
-        <{{ $tag }}>{!! \App\Website\Prose::accent($b["heading"]) !!}</{{ $tag }}>
+        <{{ $tag }}>{!! \App\Website\Prose::heroHeading($b) !!}</{{ $tag }}>
         @if ($b['subheading'])<p class="hh-sub">{{ $b['subheading'] }}</p>@endif
         <div class="hh-btns">
             @include('website.partials.button', ['kind' => $b['button'], 'variant' => 'ghost'])

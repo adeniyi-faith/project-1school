@@ -11,7 +11,7 @@ class SchoolSitePage extends Model
 {
     use BelongsToSchool, SoftDeletes;
 
-    protected $fillable = ['school_id', 'slug', 'title', 'seo_title', 'seo_description', 'blocks', 'is_published', 'is_home', 'show_in_menu', 'position'];
+    protected $fillable = ['school_id', 'slug', 'title', 'seo_title', 'seo_description', 'blocks', 'is_published', 'is_home', 'show_in_menu', 'position', 'parent_id'];
 
     protected $casts = [
         'blocks'       => 'array',

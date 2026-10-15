@@ -13,6 +13,7 @@ import type { Block, BlockType, MediaItem, SitePage, WebsiteShell } from '@/Type
 
 interface Props {
     shell: WebsiteShell; page: SitePage; blockTypes: BlockType[]; media: MediaItem[];
+    parentOptions: { id: number; title: string }[]; hasChildren: boolean;
     site: { tagline: string | null; theme: string };
     school: { name: string; phone: string | null; address: string | null };
 }
@@ -27,11 +28,11 @@ function summary(b: Block) {
     return t.length > 70 ? `${t.slice(0, 70)}…` : t;
 }
 
-export default function WebsitePageEdit({ shell, page, blockTypes, media, site, school }: Props) {
+export default function WebsitePageEdit({ shell, page, blockTypes, media, site, school, parentOptions, hasChildren }: Props) {
     const canEdit = shell.canEdit;
     const form = useForm({
         title: page.title, slug: page.slug, seo_title: page.seo_title ?? '', seo_description: page.seo_description ?? '',
-        is_published: page.is_published, is_home: page.is_home, show_in_menu: page.show_in_menu,
+        is_published: page.is_published, is_home: page.is_home, show_in_menu: page.show_in_menu, parent_id: page.parent_id ? String(page.parent_id) : '',
     });
     // the sections live beside the form (they are too deeply nested for the form helper's types) and are added when saving
     const [blocks, setBlocks] = useState<Block[]>(page.blocks ?? []);
@@ -132,6 +133,10 @@ export default function WebsitePageEdit({ shell, page, blockTypes, media, site, 
                                                     <span className="block text-sm font-semibold">{t.label}</span><span className="block text-xs text-slate-500">{t.help}</span>
                                                 </button>
                                             ))}
+                                            <div aria-disabled="true" className="rounded-lg border border-dashed border-slate-300 bg-slate-50/60 p-3 text-left opacity-80 dark:border-white/15 dark:bg-white/5">
+                                                <span className="flex items-center gap-2 text-sm font-semibold">Video <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-400/20 dark:text-amber-200">Coming soon</span></span>
+                                                <span className="block text-xs text-slate-500">Play a school film or event video right on the page. We are still building this one.</span>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -152,6 +157,15 @@ export default function WebsitePageEdit({ shell, page, blockTypes, media, site, 
                             </label>
                             <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 dark:border-white/10">Visible to visitors <Switch label="Visible to visitors" disabled={!canEdit || d.is_home} on={d.is_published || d.is_home} onChange={v => form.setData('is_published', v)} /></label>
                             <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 dark:border-white/10">Show in the menu <Switch label="Show in the menu" disabled={!canEdit} on={d.show_in_menu} onChange={v => form.setData('show_in_menu', v)} /></label>
+                            {d.show_in_menu && !d.is_home && !hasChildren && parentOptions.length > 0 && (
+                                <label className="block space-y-1"><span className="font-medium">Show under</span>
+                                    <select disabled={!canEdit} className="w-full rounded-lg border border-input bg-transparent px-2 py-2 text-sm" value={d.parent_id} onChange={e => form.setData('parent_id', e.target.value)}>
+                                        <option value="">Nothing (top of the menu)</option>
+                                        {parentOptions.map(o => <option key={o.id} value={o.id}>{o.title}</option>)}
+                                    </select>
+                                    <span className="block text-xs text-slate-500">Pick a page to make this one appear in a drop-down under it.</span>
+                                </label>
+                            )}
                             <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 dark:border-white/10">Home page <Switch label="Home page" disabled={!canEdit || page.is_home} on={d.is_home} onChange={v => form.setData('is_home', v)} /></label>
                         </div>
                     </Panel>

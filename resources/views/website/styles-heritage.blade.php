@@ -296,4 +296,12 @@
 [data-theme=heritage] .result p{color:var(--ink);font-size:1.08rem;line-height:1.6}
 [data-theme=heritage] .result mark{background:var(--brand2);color:var(--ink)}
 [data-theme=heritage] .result-pic img{aspect-ratio:16/9;border-radius:0}
+
+/* testimonials: white rounded cards, a red serif quote mark, red name */
+[data-theme=heritage] .tcard{border-radius:var(--radius-lg);background:#fff;box-shadow:0 14px 34px -22px rgba(0,0,0,.35)}
+[data-theme=heritage] .tcard::before{content:"\201C";font:700 4rem/.6 var(--head-font);color:var(--brand2-t)}
+[data-theme=heritage] .tcard blockquote{font-style:normal;font-size:clamp(1.15rem,3.2vw,1.4rem)}
+[data-theme=heritage] .tcard-who b{font-family:var(--head-font);color:var(--brand-t);font-size:1.15rem}
+[data-theme=heritage] .sec--dark .tcard{background:#fff;color:var(--text)}
+[data-theme=heritage] .sec--dark .tcard-who span{color:var(--muted);opacity:1}
 @endverbatim

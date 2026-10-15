@@ -26,7 +26,7 @@
         <nav class="menu" id="menu" aria-label="Main">
             <div class="menu-main">
                 @foreach ($primary as $item)
-                    <a href="{{ $item['url'] }}" @if ($item['current']) aria-current="page" @endif><span>{{ $item['label'] }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+                    @if (! empty($item['children']))<div class="menu-item"><a href="{{ $item['url'] }}" @if ($item['current']) aria-current="page" @endif><span>{{ $item['label'] }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>@include('website.partials.menu-sub')</div>@else<a href="{{ $item['url'] }}" @if ($item['current']) aria-current="page" @endif><span>{{ $item['label'] }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>@endif
                 @endforeach
             </div>
             @if ($alt->isNotEmpty())

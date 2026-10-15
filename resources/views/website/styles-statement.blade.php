@@ -99,4 +99,11 @@ a.sp-card:hover b{text-decoration:underline}
 .sp-results .result h2{font:700 1.55rem/1.2 var(--head-font);color:var(--brand-t)}
 .sp-results .result p{color:var(--text)}
 .sp-results .result mark{background:var(--gold-lt);color:var(--deep)}
+
+/* testimonials: plain cards with a gold bar down the side, big serif words */
+[data-theme=statement] .tcard{border-radius:.5rem;border:0;border-left:.35rem solid var(--brand2);background:#fff}
+[data-theme=statement] .tcard blockquote{font-family:var(--head-font);font-size:clamp(1.25rem,3.4vw,1.6rem)}
+[data-theme=statement] .tcard-who b{font-family:var(--head-font);font-size:1.15rem;color:var(--brand-t)}
+[data-theme=statement] .sec--dark .tcard{background:rgba(255,255,255,.07);border-left-color:var(--brand2-d)}
+@media (max-width:59.99rem){[data-theme=statement] .menu .menu-sub{margin-left:3.4rem}}
 @endverbatim
