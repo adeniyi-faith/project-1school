@@ -17,7 +17,7 @@ class SchoolSite extends Model
     /** One site option (news menu label, show news in menu ...) with its default */
     public function option(string $key): mixed
     {
-        $defaults = ['news_label' => 'News', 'news_in_menu' => true, 'apply_button' => true, 'announcement' => '', 'cookie_notice' => true, 'logo_badge' => 'auto', 'logo_badge_shape' => 'rounded', 'logo_badge_colour' => 'white'];
+        $defaults = ['news_label' => 'News', 'news_in_menu' => true, 'apply_button' => true, 'announcement' => '', 'cookie_notice' => true, 'logo_badge' => 'auto', 'logo_badge_shape' => 'rounded', 'logo_badge_colour' => 'white', 'whatsapp' => '', 'whatsapp_text' => ''];
 
         return ($this->options ?? [])[$key] ?? $defaults[$key] ?? null;
     }

@@ -39,6 +39,34 @@ class PublicSiteController extends Controller
             'Parents, students and staff: sign in to see results, fees, notices and your school tools.');
     }
 
+    /** The website's message form: it lands in Admissions > Inquiries so nothing is lost, and staff get a bell notice */
+    public function contact(Request $request, string $slug)
+    {
+        [$school] = $this->live($slug);
+
+        $data = $request->validate([
+            'name' => 'required|string|max:150', 'phone' => 'required|string|max:25',
+            'email' => 'nullable|email|max:150', 'message' => 'required|string|max:1000',
+        ]);
+
+        // A hidden box real people never see: a robot that fills it in is thanked and ignored
+        if (! $request->filled('company_site')) {
+            $inquiry = \App\Models\AdmissionInquiry::create([
+                'school_id' => $school->id, 'student_name' => 'General question', 'class_interested' => 'Not stated',
+                'guardian_name' => $data['name'], 'guardian_phone' => $data['phone'], 'guardian_email' => $data['email'] ?? null,
+                'notes' => $data['message'], 'source' => 'website',
+            ]);
+            \App\Models\User::permission('students.view')->where('school_id', $school->id)->get()
+                ->each(fn ($u) => \App\Models\SchoolNotification::create([
+                    'school_id' => $school->id, 'user_id' => $u->id, 'type' => 'admission_inquiry',
+                    'title' => 'Website message from '.$data['name'], 'body' => \Illuminate\Support\Str::limit($data['message'], 120).' Phone: '.$data['phone'],
+                    'data' => ['url' => '/school/admissions/inquiries/'.$inquiry->id], 'channel' => 'in-app',
+                ]));
+        }
+
+        return redirect(url()->previous().'#message')->with('contacted', 'Thank you. Your message has been sent and the office will get back to you.');
+    }
+
     /** Search the school's own pages, stories and albums */
     public function search(Request $request, string $slug)
     {
