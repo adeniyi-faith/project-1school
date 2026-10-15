@@ -16,11 +16,14 @@ import type { Department, Designation } from '@/Types';
 interface Props {
     departments: Department[];
     designations: Designation[];
+    loginRoles: string[];
 }
 
 const STEPS = ['Personal Info', 'Employment Details', 'Notes & Status'];
 
-export default function StaffCreate({ departments, designations }: Props) {
+const roleLabel = (r: string) => r.replace(/-/g, ' ').replace(/^./, c => c.toUpperCase());
+
+export default function StaffCreate({ departments, designations, loginRoles }: Props) {
     const [step, setStep] = useState(0);
 
     const { data, setData, post, processing, errors } = useForm({
@@ -41,6 +44,9 @@ export default function StaffCreate({ departments, designations }: Props) {
         salary:         '',
         status:         'active',
         notes: '',
+        create_login:   false,
+        login_role:     'teacher',
+        login_password: '',
     });
 
     function next() { setStep(s => Math.min(s + 1, STEPS.length - 1)); }
@@ -236,7 +242,7 @@ export default function StaffCreate({ departments, designations }: Props) {
                                         </Select>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label>Salary (BDT)</Label>
+                                        <Label>Salary (₦)</Label>
                                         <Input type="number" min="0" value={data.salary} onChange={e => setData('salary', e.target.value)} placeholder="e.g. 25000" />
                                         {errors.salary && <p className="text-xs text-red-500">{errors.salary}</p>}
                                     </div>
@@ -267,6 +273,34 @@ export default function StaffCreate({ departments, designations }: Props) {
                                         rows={4}
                                         placeholder="Any internal notes about this staff member..."
                                     />
+                                </div>
+
+                                <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-4 space-y-3">
+                                    <label className="flex items-start gap-3 cursor-pointer">
+                                        <input type="checkbox" className="mt-1 h-4 w-4" checked={data.create_login} onChange={e => setData('create_login', e.target.checked)} />
+                                        <span>
+                                            <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">Let them sign in</span>
+                                            <span className="block text-xs text-slate-500">Makes their login now, so you do not have to add them twice. Uses the email from the first step.</span>
+                                        </span>
+                                    </label>
+                                    {data.create_login && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-1.5">
+                                                <Label>What can they do? <span className="text-red-500">*</span></Label>
+                                                <Select value={data.login_role} onValueChange={v => setData('login_role', v ?? 'teacher')}>
+                                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                                    <SelectContent>{loginRoles.map(r => <SelectItem key={r} value={r}>{roleLabel(r)}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                                {errors.login_role && <p className="text-xs text-red-500">{errors.login_role}</p>}
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label>Password (optional)</Label>
+                                                <Input type="text" autoComplete="off" value={data.login_password} onChange={e => setData('login_password', e.target.value)} placeholder="Leave empty to make one" />
+                                                {errors.login_password && <p className="text-xs text-red-500">{errors.login_password}</p>}
+                                            </div>
+                                            {errors.email && <p className="text-xs text-red-500 sm:col-span-2">{errors.email}</p>}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-4 text-sm space-y-2">

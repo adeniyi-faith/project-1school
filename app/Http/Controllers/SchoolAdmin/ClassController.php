@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ClassSubject;
 use App\Models\SchoolClass;
+use App\Models\Staff;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,13 +17,21 @@ class ClassController extends Controller
     public function index(): Response
     {
         $classes = SchoolClass::withCount(['sections', 'subjects'])
+            ->with(['subjectLines' => fn ($q) => $q->with('subject:id,name')->orderBy('id')])
             ->orderBy('numeric_name')
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->map(fn (SchoolClass $c) => array_merge($c->toArray(), [
+                'subject_teachers' => $c->subjectLines->map(fn (ClassSubject $l) => [
+                    'id' => $l->id, 'subject' => $l->subject?->name ?? 'Subject', 'teacher_id' => $l->teacher_id,
+                ])->sortBy('subject', SORT_NATURAL | SORT_FLAG_CASE)->values(),
+            ]));
 
         return Inertia::render('SchoolAdmin/Classes/Index', [
             'classes' => $classes,
             'levels' => SchoolClass::LEVELS,
+            'staff' => Staff::where('status', 'active')->orderBy('first_name')->get(['id', 'first_name', 'last_name'])
+                ->map(fn (Staff $s) => ['id' => $s->id, 'name' => $s->full_name]),
         ]);
     }
 
@@ -58,5 +68,25 @@ class ClassController extends Controller
         $class->delete();
 
         return back()->with('success', 'Class deleted.');
+    }
+
+    /** Who is the class teacher, and who teaches each subject of this class */
+    public function teachers(Request $request, SchoolClass $class): RedirectResponse
+    {
+        $sid = $class->school_id;
+        $staffRule = Rule::exists('staff', 'id')->where('school_id', $sid)->whereNull('deleted_at');
+        $data = $request->validate([
+            'class_teacher_staff_id' => ['nullable', $staffRule],
+            'subjects'               => 'nullable|array|max:100',
+            'subjects.*.id'          => ['required', Rule::exists('class_subjects', 'id')->where('school_id', $sid)->where('class_id', $class->id)],
+            'subjects.*.teacher_id'  => ['nullable', $staffRule],
+        ]);
+
+        $class->update(['class_teacher_staff_id' => $data['class_teacher_staff_id'] ?? null]);
+        foreach ($data['subjects'] ?? [] as $line) {
+            ClassSubject::where('class_id', $class->id)->whereKey($line['id'])->update(['teacher_id' => $line['teacher_id'] ?? null]);
+        }
+
+        return back()->with('success', "Teachers saved for {$class->name}.");
     }
 }

@@ -32,6 +32,7 @@ use App\Http\Controllers\SchoolAdmin\DesignationController;
 use App\Http\Controllers\SchoolAdmin\HolidayController;
 use App\Http\Controllers\SchoolAdmin\SectionController;
 use App\Http\Controllers\SchoolAdmin\ShiftController;
+use App\Http\Controllers\SchoolAdmin\MyClassesController;
 use App\Http\Controllers\SchoolAdmin\StaffController;
 use App\Http\Controllers\SchoolAdmin\StudentController;
 use App\Http\Controllers\SchoolAdmin\StudentImportController;
@@ -132,7 +133,7 @@ Route::middleware('auth')->group(function () {
         return match (true) {
             $user->hasRole('super-admin')                                   => redirect()->route('super-admin.dashboard'),
             $user->hasRole('school-admin') || $user->hasRole('principal')   => redirect()->route('school.reports.dashboard'),
-            $user->hasRole('teacher')                                        => redirect()->route('school.reports.dashboard'),
+            $user->hasRole('teacher')                                        => redirect()->route('school.my-classes'),
             $user->hasRole('student')                                        => redirect()->route('student.dashboard'),
             $user->hasRole('parent')                                         => redirect()->route('parent.dashboard'),
             $user->can('reports.view')                                       => redirect()->route('school.reports.dashboard'),
@@ -204,6 +205,9 @@ Route::middleware('auth')->group(function () {
                 Route::resource($name, $controller)->only(['index']);
                 Route::resource($name, $controller)->only(['store', 'update', 'destroy'])->middleware('permission:settings.edit');
             }
+
+            Route::get('my-classes', [MyClassesController::class, 'index'])->middleware('permission:attendance.view')->name('my-classes');
+            Route::post('classes/{class}/teachers', [ClassController::class, 'teachers'])->middleware('permission:settings.edit')->name('classes.teachers');
 
             // Bulk adding of students and bulk sign-in details (before the students/{student} routes below)
             Route::get('students/import',                       [StudentImportController::class, 'index'])->middleware('permission:students.import')->name('students.import');
@@ -682,6 +686,8 @@ Route::middleware('auth')->group(function () {
             Route::resource('staff', StaffController::class)->only(['index', 'show'])->middleware('permission:staff.view');
             Route::resource('staff', StaffController::class)->only(['edit', 'update'])->middleware('permission:staff.edit');
             Route::resource('staff', StaffController::class)->only(['destroy'])->middleware('permission:staff.delete');
+            Route::post('staff/{staff}/login',             [StaffController::class, 'giveLogin'])->middleware('permission:users.create')->name('staff.login.give');
+            Route::post('staff/{staff}/login/reset',       [StaffController::class, 'resetLogin'])->middleware('permission:users.edit')->name('staff.login.reset');
             Route::post('staff/{staff}/documents',         [StaffController::class, 'uploadDocument'])->middleware('permission:staff.edit')->name('staff.documents.upload');
             Route::delete('staff/documents/{document}',    [StaffController::class, 'deleteDocument'])->middleware('permission:staff.edit')->name('staff.documents.delete');
             Route::get('staff/documents/{document}/download', [StaffController::class, 'downloadDocument'])->middleware('permission:staff.view')->name('staff.documents.download');

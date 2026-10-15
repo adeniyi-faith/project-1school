@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { useForm, router } from '@inertiajs/react';
+import { useForm, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ interface Role { name: string; }
 interface UserRow {
     id: number; name: string; email: string; phone: string | null;
     status: string; roles: Role[]; created_at: string; last_login_at: string | null;
+    staff_profile?: { id: number } | null;
 }
 interface Meta { total: number; per_page: number; current_page: number; last_page: number; }
 interface Props {
@@ -99,7 +100,7 @@ export default function Admins({ users, roles, filters }: Props) {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">User Management</h1>
-                        <p className="text-sm text-slate-500 mt-0.5">Manage staff accounts and roles within your school</p>
+                        <p className="text-sm text-slate-500 mt-0.5">Sign-in accounts and roles. Anyone with a staff role (teacher, accountant ...) also appears in <Link href="/school/staff" className="text-indigo-600 hover:underline">Staff</Link>, where you keep their details.</p>
                     </div>
                     <Button onClick={openCreate} className="gap-2">
                         <Plus className="w-4 h-4" /> Add User
@@ -166,7 +167,9 @@ export default function Admins({ users, roles, filters }: Props) {
                                     )}
                                     {users.data.map(u => (
                                         <tr key={u.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                                            <td className="py-3 px-4 font-medium text-slate-900 dark:text-white">{u.name}</td>
+                                            <td className="py-3 px-4 font-medium text-slate-900 dark:text-white">
+                                                {u.staff_profile ? <Link href={`/school/staff/${u.staff_profile.id}`} className="hover:underline">{u.name}</Link> : u.name}
+                                            </td>
                                             <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{u.email}</td>
                                             <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{u.phone ?? '—'}</td>
                                             <td className="py-3 px-4">

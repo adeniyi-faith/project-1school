@@ -16,7 +16,7 @@ class SchoolClass extends Model
     protected $table = 'classes';
 
     protected $fillable = [
-        'school_id', 'name', 'numeric_name', 'level', 'capacity', 'class_teacher_id',
+        'school_id', 'name', 'numeric_name', 'level', 'capacity', 'class_teacher_id', 'class_teacher_staff_id',
         'assessment_scheme_id', 'grading_scheme_id', 'report_card_design_id',
     ];
 
@@ -32,7 +32,13 @@ class SchoolClass extends Model
     public function subjects(): BelongsToMany
     {
         return $this->belongsToMany(Subject::class, 'class_subjects', 'class_id', 'subject_id')
-            ->withPivot(['departments', 'assessment_scheme_id'])->withTimestamps();
+            ->withPivot(['departments', 'assessment_scheme_id', 'teacher_id'])->withTimestamps();
+    }
+
+    /** The staff member in charge of the class */
+    public function classTeacher(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class, 'class_teacher_staff_id');
     }
 
     public function subjectLines(): HasMany

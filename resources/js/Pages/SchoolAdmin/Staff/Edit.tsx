@@ -184,7 +184,7 @@ export default function StaffEdit({ staff, departments, designations }: Props) {
                                     </Select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label>Salary (BDT)</Label>
+                                    <Label>Salary (₦)</Label>
                                     <Input type="number" min="0" value={data.salary} onChange={e => setData('salary', e.target.value)} />
                                     {errors.salary && <p className="text-xs text-red-500">{errors.salary}</p>}
                                 </div>
