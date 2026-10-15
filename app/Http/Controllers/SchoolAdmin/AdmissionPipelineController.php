@@ -6,9 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\AdmissionAssessment;
 use App\Models\AdmissionInquiry;
 use App\Models\Guardian;
+use App\Models\InquiryFollowup;
+use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Student;
+use App\Services\FamilyNotice;
+use App\Services\FeeLedgerService;
+use App\Services\StudentLoginService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +45,10 @@ class AdmissionPipelineController extends Controller
                 'guardian_phone' => $inquiry->guardian_phone,
                 'guardian_email' => $inquiry->guardian_email,
                 'status' => $inquiry->status,
+                'reference' => $inquiry->reference,
+                'student_gender' => $inquiry->student_gender,
+                'student_dob' => $inquiry->student_dob?->toDateString(),
+                'family_accepted_at' => $inquiry->family_accepted_at?->toDateString(),
                 'source' => $inquiry->source,
                 'notes' => $inquiry->notes,
                 'created_at' => $inquiry->created_at?->toDateString(),
@@ -133,9 +142,23 @@ class AdmissionPipelineController extends Controller
         activity('admissions')->causedBy($request->user())->performedOn($admissionInquiry)
             ->withProperties(['decision' => $data['decision']])->log($data['decision'] === 'accept' ? 'Admission offered' : 'Admission declined');
 
-        return back()->with('success', $data['decision'] === 'accept'
+        // Tell the family. With no email on record, the note says to phone them, so nobody is left waiting.
+        $school = School::find($admissionInquiry->school_id);
+        $notice = app(FamilyNotice::class);
+        $emailed = $data['decision'] === 'accept'
+            ? $notice->offer($admissionInquiry, $school)
+            : $notice->decline($admissionInquiry, $school, $data['note'] ?? null);
+        InquiryFollowup::create([
+            'inquiry_id' => $admissionInquiry->id, 'staff_id' => $request->user()->id,
+            'note' => ($data['decision'] === 'accept' ? 'Offer' : 'Decline').($emailed
+                ? " email sent to {$admissionInquiry->guardian_email}."
+                : ' not emailed (no email address on record). Please phone the family on '.$admissionInquiry->guardian_phone.'.'),
+        ]);
+        $told = $emailed ? ' The family has been emailed.' : ' There is no email on record, so please phone the family.';
+
+        return back()->with('success', ($data['decision'] === 'accept'
             ? "{$admissionInquiry->student_name} has been offered a place. Enrol them when they are ready to start."
-            : 'Application declined.');
+            : 'Application declined.').$told);
     }
 
     /** Turn an accepted inquiry into an enrolled student, in one step. */
@@ -153,6 +176,9 @@ class AdmissionPipelineController extends Controller
             'section_id' => ['nullable', Rule::exists('sections', 'id')->where('school_id', $sid)->where('class_id', $request->input('class_id'))->whereNull('deleted_at')],
             'guardian_id' => ['nullable', Rule::exists('guardians', 'id')->where('school_id', $sid)->whereNull('deleted_at')],
             'guardian_relation' => 'required_without:guardian_id|nullable|string|max:50',
+            // Do the rest of the job in the same step (both on unless unticked)
+            'make_parent_login' => 'nullable|boolean',
+            'bill_fees' => 'nullable|boolean',
         ]);
 
         $student = DB::transaction(function () use ($admissionInquiry, $data, $sid, $request) {
@@ -200,8 +226,41 @@ class AdmissionPipelineController extends Controller
             return $student;
         });
 
-        return redirect()->route('school.students.show', $student)
-            ->with('success', "{$student->full_name} is enrolled with admission number {$student->admission_no}.");
+        $done = ["{$student->full_name} is enrolled with admission number {$student->admission_no}."];
+        $flash = [];
+
+        // A login for the parent, so they can see fees and results straight away
+        $username = null;
+        if ($request->boolean('make_parent_login', true)) {
+            $result = app(StudentLoginService::class)->run($sid, [$student->id], parents: true, reset: false, students: false);
+            if ($result['lines'] !== []) {
+                $line = $result['lines'][0];
+                $username = $line['username'];
+                $flash = [['name' => $line['name'], 'email' => $line['username'], 'password' => $line['password']]];
+                $done[] = 'A parent login was made.';
+            } elseif ($result['problems'] !== []) {
+                $done[] = 'The parent login could not be made. You can make it from Students > Login details.';
+            } else {
+                $done[] = 'The parent already has a login.';
+            }
+        }
+
+        // This term's fees for the class
+        if ($request->boolean('bill_fees', true)) {
+            $billed = app(FeeLedgerService::class)->billCurrentTerm($sid, [$student->id], $request->user());
+            $done[] = $billed['period'] === null
+                ? 'Fees were not billed: no current term is set.'
+                : ($billed['made'] > 0 ? "{$billed['made']} fee invoice".($billed['made'] === 1 ? '' : 's')." made for {$billed['period']}." : "No fees are set up for {$student->schoolClass?->name} yet, so nothing was billed.");
+        }
+
+        $guardian = $student->guardian;
+        if (app(FamilyNotice::class)->welcome($student, School::find($sid), $guardian?->email, $guardian?->name, $username)) {
+            $done[] = 'A welcome email was sent.';
+        }
+
+        $redirect = redirect()->route('school.students.show', $student)->with('success', implode(' ', $done));
+
+        return $flash ? $redirect->with('login_details', $flash) : $redirect;
     }
 
     private function validatedAssessment(Request $request): array

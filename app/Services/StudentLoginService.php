@@ -41,20 +41,22 @@ class StudentLoginService
      * @param  list<int>  $studentIds
      * @return array{lines: list<array<string, string>>, skipped: int, problems: list<string>}
      */
-    public function run(int $schoolId, array $studentIds, bool $parents, bool $reset): array
+    public function run(int $schoolId, array $studentIds, bool $parents, bool $reset, bool $students = true): array
     {
         $school = School::find($schoolId);
-        $students = Student::where('school_id', $schoolId)->whereIn('id', $studentIds)->with(['schoolClass:id,name', 'section:id,name', 'guardian'])->get();
+        $pupils = Student::where('school_id', $schoolId)->whereIn('id', $studentIds)->with(['schoolClass:id,name', 'section:id,name', 'guardian'])->get();
         $lines = [];
         $problems = [];
         $skipped = 0;
         $doneGuardians = [];
 
-        foreach ($students as $student) {
+        foreach ($pupils as $student) {
             $class = trim(($student->schoolClass?->name ?? '').($student->section ? ' '.$student->section->name : ''));
 
             try {
-                if ($student->user_id && ! $reset) {
+                if (! $students) {
+                    // Parent logins only
+                } elseif ($student->user_id && ! $reset) {
                     $skipped++;
                 } else {
                     $line = $this->account($school, $student->user_id, 'student', $student->full_name, $student->email, $this->address($school, 'students', $student->admission_no ?: 'student'.$student->id), $student->phone);

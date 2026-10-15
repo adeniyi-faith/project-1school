@@ -242,9 +242,9 @@ a.wa-act:hover{transform:translateY(-3px);box-shadow:0 22px 44px -22px rgba(60,1
 .wa-note{margin:0 0 1.5rem;color:var(--muted)}
 .wa-field{display:block;margin:0 0 1.25rem}
 .wa-field>span{display:block;margin-bottom:.45rem;font:600 .74rem/1.3 var(--body-font);letter-spacing:.16em;text-transform:uppercase;color:var(--brand-t)}
-.wa-field input,.wa-field textarea{display:block;width:100%;min-height:3.3rem;padding:.7rem 1rem;border:1px solid #cdc3be;border-radius:.6rem;background:#fff;color:var(--text);font:inherit;font-size:1rem}
+.wa-field input,.wa-field select,.wa-field textarea{display:block;width:100%;min-height:3.3rem;padding:.7rem 1rem;border:1px solid #cdc3be;border-radius:.6rem;background:#fff;color:var(--text);font:inherit;font-size:1rem}
 .wa-field textarea{min-height:8rem;resize:vertical}
-.wa-field input:focus,.wa-field textarea:focus{outline:0;border-color:var(--brand2);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand2) 25%,transparent)}
+.wa-field input:focus,.wa-field select:focus,.wa-field textarea:focus{outline:0;border-color:var(--brand2);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand2) 25%,transparent)}
 .wa-field .err{display:block;margin-top:.35rem;color:#b91c1c;font-size:.9rem;font-weight:600}
 .wa-two{display:grid;gap:0 1.25rem}
 @media (min-width:40rem){.wa-two{grid-template-columns:1fr 1fr}}

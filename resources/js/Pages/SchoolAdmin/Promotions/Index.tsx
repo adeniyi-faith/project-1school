@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState, PageHeader, Panel, Pill, StatStrip } from '@/components/app/kit';
-import { ArrowUpRight, GraduationCap, History, Undo2 } from 'lucide-react';
+import { ArrowUpRight, Banknote, GraduationCap, History, Undo2 } from 'lucide-react';
+import { useCan } from '@/lib/can';
 import type { PromotionBatchRow, PromotionCandidate, PromotionOutcome } from '@/Types';
 
 interface ClassOption { id: number; name: string; waiting: number }
@@ -39,6 +40,7 @@ const NONE = 'none';
 const OUTCOME_LABELS: Record<Choice, string> = { promoted: 'Move up', repeated: 'Repeat', graduated: 'Graduate', skip: 'Leave for now' };
 
 export default function Promotions({ years, yearId, classes, sections, selected, batches }: Props) {
+    const can = useCan();
     const [undoing, setUndoing] = useState<PromotionBatchRow | null>(null);
 
     function visit(params: Record<string, string | number | null | undefined>) {
@@ -118,7 +120,12 @@ export default function Promotions({ years, yearId, classes, sections, selected,
                                             <TableCell className="pr-5 text-right">
                                                 {b.undone
                                                     ? <Pill>Undone by {b.undone.by} · {b.undone.at}</Pill>
-                                                    : <Button variant="ghost" size="sm" onClick={() => setUndoing(b)}><Undo2 className="size-4" /> Undo</Button>}
+                                                    : <div className="flex justify-end gap-1">
+                                                        {can('fees.structure') && (b.promoted > 0 || b.repeated > 0) && (
+                                                            <Button variant="ghost" size="sm" onClick={() => { if (confirm('Bill this term\'s fees for the students in this move? Students who already have the invoice are skipped.')) router.post(`/school/promotions/${b.id}/bill-fees`); }}><Banknote className="size-4" /> Bill fees</Button>
+                                                        )}
+                                                        <Button variant="ghost" size="sm" onClick={() => setUndoing(b)}><Undo2 className="size-4" /> Undo</Button>
+                                                    </div>}
                                             </TableCell>
                                         </TableRow>
                                     ))}

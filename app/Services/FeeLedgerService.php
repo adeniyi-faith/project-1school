@@ -27,11 +27,12 @@ class FeeLedgerService
      * Bill every active student in the fee's class for one period.
      * Students who already have this invoice are skipped. Returns how many were made.
      */
-    public function issueInvoices(FeeStructure $structure, string $period, ?Term $term, ?string $dueDate, User $by): int
+    public function issueInvoices(FeeStructure $structure, string $period, ?Term $term, ?string $dueDate, User $by, ?array $onlyStudentIds = null): int
     {
         $students = Student::where('school_id', $structure->school_id)
             ->where('class_id', $structure->class_id)
             ->where('status', 'active')
+            ->when($onlyStudentIds !== null, fn ($q) => $q->whereIn('id', $onlyStudentIds))
             ->pluck('id');
 
         $already = Invoice::where('fee_structure_id', $structure->id)->where('period', $period)->pluck('student_id')->flip();
@@ -70,6 +71,38 @@ class FeeLedgerService
         });
 
         return $made;
+    }
+
+    /**
+     * Bill some students for the school's current term: every active fee of their class for this year
+     * (per-term and one-time fees; yearly fees only in the first term). Students who already have an invoice
+     * for a fee are skipped, so this is safe to run again.
+     *
+     * @param  list<int>  $studentIds
+     * @return array{made: int, period: ?string}
+     */
+    public function billCurrentTerm(int $schoolId, array $studentIds, User $by): array
+    {
+        $term = Term::with('academicYear:id,name')->where('school_id', $schoolId)->where('is_current', true)->first();
+        if (! $term || $studentIds === []) {
+            return ['made' => 0, 'period' => null];
+        }
+
+        $year = $term->academicYear?->name;
+        $period = trim(($year ?? '').' · '.$term->name, ' ·');
+        $classIds = Student::where('school_id', $schoolId)->whereIn('id', $studentIds)->pluck('class_id')->unique();
+        $made = 0;
+
+        $structures = FeeStructure::with('feeCategory')->where('school_id', $schoolId)->where('is_active', true)->whereIn('class_id', $classIds)
+            ->where(fn ($q) => $q->whereNull('academic_year')->orWhere('academic_year', '')->orWhere('academic_year', $year))
+            ->get()
+            ->filter(fn (FeeStructure $f) => $f->frequency !== 'annual' || (int) $term->sequence === 1);
+
+        foreach ($structures as $structure) {
+            $made += $this->issueInvoices($structure, $period, $term, null, $by, $studentIds);
+        }
+
+        return ['made' => $made, 'period' => $period];
     }
 
     public function recordPayment(Invoice $invoice, float $amount, string $method, string $date, ?string $reference, ?string $note, User $by): LedgerEntry
