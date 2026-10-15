@@ -413,7 +413,7 @@ class WebsiteEngineTest extends SecurityTestCase
     {
         [$school] = $this->liveSite('Apply School', 'warm');
         auth()->logout();
-        $this->get('/apply/'.$school->id)->assertOk()->assertSee('data-theme="warm"', false)->assertSee('Admission form');
+        $this->get('/apply/'.$school->id)->assertOk()->assertSee('data-theme="warm"', false)->assertSee('Apply to '.$school->name);
 
         $form = ['student_name' => 'Ada Obi', 'class_interested' => 'JSS 1', 'guardian_name' => 'Mr Obi', 'guardian_phone' => '08011112222'];
         $this->post('/apply/'.$school->id, $form)->assertSessionHasNoErrors();
@@ -662,7 +662,7 @@ class WebsiteEngineTest extends SecurityTestCase
         [$school, $admin] = $this->liveSite('Bar School', 'warm');
         $this->actingAs($admin)->put('/school/website', ['announcement' => 'School is closed on Friday']);
         auth()->logout();
-        $this->get('/s/bar-school')->assertOk()->assertSee('School is closed on Friday')->assertSee('<footer class="ftr">', false)->assertDontSee('<footer class="ftr ftr--statement">', false);
+        $this->get('/s/bar-school')->assertOk()->assertSee('School is closed on Friday')->assertSee('<footer class="ftr ftr--warm">', false)->assertDontSee('<footer class="ftr ftr--statement">', false);
     }
 
     public function test_the_modern_theme_has_its_own_menu_footer_and_inner_pages(): void

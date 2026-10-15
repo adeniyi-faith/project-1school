@@ -15,6 +15,8 @@ class Themes
     private const CRIMSON = "'Crimson Pro','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const MONTSERRAT = "'Montserrat','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
     private const GARAMOND = "'EB Garamond','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
+    private const LORA = "'Lora','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
+    private const BARLOW = "'Barlow','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
     private const SANS = "'Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
 
     public const ALL = [
@@ -33,11 +35,11 @@ class Themes
             'hdr' => 'brand', 'ftr' => 'slate',
         ],
         'warm' => [
-            'label' => 'Warm', 'note' => 'Friendly and playful: centred header, soft shapes, an arched picture, bright rounded cards.',
-            'brand' => '#c2410c', 'brand2' => '#fbbf24', 'bg' => '#fffaf3', 'soft' => '#fdf0dc', 'text' => '#292524',
-            'head' => self::SERIF, 'body' => self::SANS,
-            'radius' => '1.25rem', 'radius_lg' => '2rem', 'btn_radius' => '999px', 'btn_case' => 'none', 'btn_track' => '.01em', 'btn_style' => 'solid',
-            'hdr' => 'bg', 'ftr' => 'dark',
+            'label' => 'Warm', 'note' => 'Friendly independent-school look: white bar with Menu and Apply, full-screen white menu, photo banner with a serif headline, maroon bands with orange headings and a maroon footer.',
+            'brand' => '#7a1f33', 'brand2' => '#e8852b', 'bg' => '#ffffff', 'soft' => '#f6f1ee', 'text' => '#3d4452',
+            'head' => self::LORA, 'body' => self::BARLOW, 'fonts' => 'Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500|Barlow:wght@400;500;600;700|Barlow+Condensed:wght@500;600;700',
+            'radius' => '1.25rem', 'radius_lg' => '1.5rem', 'btn_radius' => '.35rem', 'btn_case' => 'uppercase', 'btn_track' => '.12em', 'btn_style' => 'outline',
+            'hdr' => 'bg', 'ftr' => 'brand',
         ],
         'statement' => [
             'label' => 'Statement', 'note' => 'Bold and serious: deep colour bands, huge serif headlines, numbered commitments and pillars.',
@@ -90,7 +92,7 @@ class Themes
 
         $hdr = match ($t['hdr']) { 'brand2' => $brand2, 'brand' => $brand, default => $t['bg'] };
         $deep = self::shade($brand, .55);
-        $ftr = match ($t['ftr']) { 'brand2' => $brand2, 'deep' => $deep, 'slate' => self::tint($brand, .14), default => '#171717' };
+        $ftr = match ($t['ftr']) { 'brand2' => $brand2, 'brand' => $brand, 'deep' => $deep, 'slate' => self::tint($brand, .14), default => '#171717' };
         $hdrInk = self::ink($hdr);
 
         return [

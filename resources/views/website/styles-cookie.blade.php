@@ -32,8 +32,10 @@
 [data-theme=modern] .cookie-ok{background:var(--brand2);border-color:var(--brand2);color:var(--brand2-ink);border-radius:0;font:500 .8rem/1 var(--body-font);letter-spacing:.26em;text-transform:uppercase}
 @media (min-width:56rem){[data-theme=modern] .cookie-in{grid-template-columns:auto 1fr auto;align-items:center;gap:2rem}[data-theme=modern] .cookie-ok{width:auto;padding:0 2.4rem}}
 
-/* Warm: soft rounded card, pill button */
-[data-theme=warm] .cookie{border-radius:1.75rem;background:#fff;box-shadow:0 26px 60px -20px rgba(80,30,0,.45)}
-[data-theme=warm] .cookie-ok{border-radius:999px}
+/* Warm: white card, orange edge, maroon button */
+[data-theme=warm] .cookie{border-radius:1.5rem;border:2px solid var(--brand2);box-shadow:0 26px 60px -20px rgba(60,15,25,.5)}
+[data-theme=warm] .cookie-title{font-family:var(--head-font);font-weight:600;color:var(--brand)}
+[data-theme=warm] .cookie-ok{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);border-radius:.35rem;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase}
+[data-theme=warm] .cookie-ok:hover{background:var(--brand2);border-color:var(--brand2);color:var(--brand2-ink);filter:none}
 @media print{.cookie{display:none}}
 @endverbatim
