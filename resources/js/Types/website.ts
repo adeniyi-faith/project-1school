@@ -19,9 +19,9 @@ export interface Palette { name: string; color: string; color2: string }
 
 export interface SitePage {
     id: number; slug: string; title: string; seo_title: string | null; seo_description: string | null; blocks: Block[] | null;
-    is_published: boolean; is_home: boolean; show_in_menu: boolean;
+    is_published: boolean; is_home: boolean; show_in_menu: boolean; parent_id: number | null;
 }
-export interface PageRow { id: number; slug: string; title: string; is_published: boolean; is_home: boolean; show_in_menu: boolean; sections: number; updated_at: string; url: string }
+export interface PageRow { id: number; slug: string; title: string; is_published: boolean; is_home: boolean; show_in_menu: boolean; parent_id: number | null; sections: number; updated_at: string; url: string }
 export interface PageTemplate { key: string; label: string; help: string }
 
 export type PostStatus = 'draft' | 'published' | 'scheduled';

@@ -55,6 +55,12 @@
     nav.querySelectorAll('.tsl-btn').forEach(function(x){x.addEventListener('click',function(){go(cur()+parseInt(x.getAttribute('data-dir'),10));});});
     tr.addEventListener('scroll',function(){window.requestAnimationFrame(mark);},{passive:true});mark();
   });
+  var still=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('[data-rotate]').forEach(function(el){
+    var list;try{list=JSON.parse(el.getAttribute('data-rotate'));}catch(e){return;}
+    if(!list||list.length<2||still)return;var i=0;
+    setInterval(function(){el.classList.add('rot-out');setTimeout(function(){i=(i+1)%list.length;el.textContent=list[i];el.classList.remove('rot-out');},350);},3200);
+  });
   var sc=function(){body.classList.toggle('scrolled',window.scrollY>8);};sc();window.addEventListener('scroll',sc,{passive:true});
   document.querySelectorAll('.menu a').forEach(function(a){a.addEventListener('click',function(){body.classList.remove('menu-open');});});
   @if ($preview)

@@ -513,6 +513,38 @@ class WebsiteEngineTest extends SecurityTestCase
         }
     }
 
+    public function test_banner_words_can_take_turns(): void
+    {
+        $html = \App\Website\Prose::heroHeading(['heading' => 'Where every child is *known*', 'phrases' => "valued\n<b>loved</b>\n\nvalued"]);
+        $this->assertStringContainsString('Where every child is <em data-rotate="', $html);
+        $this->assertStringContainsString('&quot;known&quot;,&quot;valued&quot;,&quot;&lt;b&gt;loved&lt;\/b&gt;&quot;', str_replace('\\/', '\/', $html));
+        $this->assertStringNotContainsString('<b>', $html);
+        $this->assertSame('Welcome home', \App\Website\Prose::heroHeading(['heading' => 'Welcome home', 'phrases' => 'a']));
+        $this->assertSame('Where every child is <em>known</em>', \App\Website\Prose::heroHeading(['heading' => 'Where every child is *known*', 'phrases' => '']));
+    }
+
+    public function test_pages_can_sit_under_another_page_in_the_menu(): void
+    {
+        [$school, $admin] = $this->liveSite('Menu School');
+        $about = SchoolSitePage::where('slug', 'about')->first();
+        $acad = SchoolSitePage::where('slug', 'academics')->first();
+        $this->actingAs($admin)->put('/school/website/pages/'.$acad->id, [
+            'title' => $acad->title, 'slug' => $acad->slug, 'is_published' => true, 'is_home' => false, 'show_in_menu' => true, 'parent_id' => $about->id, 'blocks' => $acad->blocks ?? [],
+        ])->assertSessionHasNoErrors();
+        $this->assertSame($about->id, $acad->fresh()->parent_id);
+        // a page with pages under it cannot itself go under another page
+        $this->actingAs($admin)->put('/school/website/pages/'.$about->id, [
+            'title' => $about->title, 'slug' => $about->slug, 'is_published' => true, 'is_home' => false, 'show_in_menu' => true, 'parent_id' => SchoolSitePage::where('slug', 'contact')->value('id'), 'blocks' => $about->blocks ?? [],
+        ])->assertSessionHasErrors('parent_id');
+        auth()->logout();
+
+        foreach (array_keys(Themes::ALL) as $theme) {
+            \App\Models\SchoolSite::withoutGlobalScopes()->where('school_id', $school->id)->update(['theme' => $theme]);
+            $html = $this->get('/s/menu-school')->assertOk()->getContent();
+            $this->assertStringContainsString('class="menu-sub"', $html, $theme);
+        }
+    }
+
     public function test_the_gallery_has_albums_a_public_page_and_keeps_schools_apart(): void
     {
         [$school, $admin] = $this->liveSite('Gal School');

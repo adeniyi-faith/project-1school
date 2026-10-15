@@ -10,7 +10,7 @@
             <p class="menu-kick">{{ $school->name }}</p>
             <ol class="menu-list">
                 @foreach ($menu as $item)
-                    <li><a href="{{ $item['url'] }}" @if ($item['current']) aria-current="page" @endif><b>{{ $roman[$loop->index] ?? $loop->iteration }}</b><span>{{ $item['label'] }}</span></a></li>
+                    <li class="menu-item"><a href="{{ $item['url'] }}" @if ($item['current']) aria-current="page" @endif><b>{{ $roman[$loop->index] ?? $loop->iteration }}</b><span>{{ $item['label'] }}</span></a>@include('website.partials.menu-sub')</li>
                 @endforeach
             </ol>
             <div class="menu-foot">

@@ -110,4 +110,22 @@ class Prose
 
         return implode(' ', $words).' <em>'.$tail.'</em>';
     }
+
+    /**
+     * The banner headline. When the banner has "words that take turns" (one per line), the accented part of the
+     * headline cycles through them (the page script does the swapping); without scripts the accented words stay.
+     */
+    public static function heroHeading(array $block, bool $auto = false): string
+    {
+        $html = self::accent((string) ($block['heading'] ?? ''), $auto);
+        $phrases = collect(preg_split('/\R/', (string) ($block['phrases'] ?? '')))
+            ->map(fn ($l) => trim((string) $l))->filter()->map(fn ($l) => mb_substr($l, 0, 60))->take(6)->values();
+
+        if ($phrases->isEmpty() || ! preg_match('#<em>(.*?)</em>#', $html, $m)) {
+            return $html;
+        }
+        $list = $phrases->prepend(html_entity_decode($m[1], ENT_QUOTES))->unique()->values();
+
+        return preg_replace('#<em>.*?</em>#', '<em data-rotate="'.e(json_encode($list, JSON_UNESCAPED_UNICODE)).'">'.$m[1].'</em>', $html, 1);
+    }
 }

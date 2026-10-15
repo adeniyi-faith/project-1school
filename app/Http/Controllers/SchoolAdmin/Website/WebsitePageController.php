@@ -23,10 +23,10 @@ class WebsitePageController extends WebsiteBase
         $site = $this->site($school);
 
         return Inertia::render('SchoolAdmin/Website/Pages', $this->shell($school, $site) + [
-            'pages' => SchoolSitePage::orderBy('position')->orderBy('id')->get(['id', 'slug', 'title', 'blocks', 'is_published', 'is_home', 'show_in_menu', 'updated_at'])
+            'pages' => SchoolSitePage::orderBy('position')->orderBy('id')->get(['id', 'slug', 'title', 'blocks', 'is_published', 'is_home', 'show_in_menu', 'parent_id', 'updated_at'])
                 ->map(fn ($p) => [
                     'id' => $p->id, 'slug' => $p->slug, 'title' => $p->title, 'is_published' => $p->is_published, 'is_home' => $p->is_home,
-                    'show_in_menu' => $p->show_in_menu, 'sections' => count($p->blocks ?? []), 'updated_at' => $p->updated_at,
+                    'show_in_menu' => $p->show_in_menu, 'parent_id' => $p->parent_id, 'sections' => count($p->blocks ?? []), 'updated_at' => $p->updated_at,
                     'url' => SiteRenderer::pageUrl($school, $p),
                 ]),
             'templates' => PageTemplates::options(),
@@ -40,7 +40,10 @@ class WebsitePageController extends WebsiteBase
         $row = SchoolSitePage::findOrFail($page);
 
         return Inertia::render('SchoolAdmin/Website/PageEdit', $this->shell($school, $site) + [
-            'page' => $row->only(['id', 'slug', 'title', 'seo_title', 'seo_description', 'blocks', 'is_published', 'is_home', 'show_in_menu']),
+            'page' => $row->only(['id', 'slug', 'title', 'seo_title', 'seo_description', 'blocks', 'is_published', 'is_home', 'show_in_menu', 'parent_id']),
+            // a page can sit under a top-level page, but a page that already has pages under it stays top level
+            'parentOptions' => SchoolSitePage::whereNull('parent_id')->where('id', '!=', $row->id)->where('is_home', false)->orderBy('position')->get(['id', 'title'])->map->only(['id', 'title'])->values(),
+            'hasChildren' => SchoolSitePage::where('parent_id', $row->id)->exists(),
             'blockTypes' => Blocks::catalogue(),
             'media' => $this->media(),
             'site' => ['tagline' => $site->tagline, 'theme' => Themes::ALL[$site->theme]['label'] ?? 'Heritage'],
@@ -77,11 +80,19 @@ class WebsitePageController extends WebsiteBase
             'is_published' => 'required|boolean',
             'is_home' => 'required|boolean',
             'show_in_menu' => 'required|boolean',
+            'parent_id' => 'nullable|integer',
             'blocks' => 'present|array|max:'.Blocks::MAX_BLOCKS,
         ], ['slug.not_in' => 'That web address is used by the website itself. Pick another one.']);
 
         if ($row->is_home && ! $data['is_home']) {
             return back()->withErrors(['is_home' => 'A website always needs a home page. Make another page the home page instead.']);
+        }
+        $parentId = $data['parent_id'] ?? null;
+        if ($parentId) {
+            $parent = SchoolSitePage::whereNull('parent_id')->where('is_home', false)->find($parentId);
+            if (! $parent || $parent->id === $row->id || $data['is_home'] || SchoolSitePage::where('parent_id', $row->id)->exists()) {
+                return back()->withErrors(['parent_id' => 'Pick a different page to show this one under. A page that has pages under it, or the home page, cannot sit under another page.']);
+            }
         }
         if ($data['is_home']) {
             SchoolSitePage::where('id', '!=', $row->id)->update(['is_home' => false]);
@@ -91,7 +102,7 @@ class WebsitePageController extends WebsiteBase
         $row->update([
             'title' => $data['title'], 'slug' => Str::lower($data['slug']),
             'seo_title' => $data['seo_title'] ?? null, 'seo_description' => $data['seo_description'] ?? null,
-            'is_published' => $data['is_published'], 'is_home' => $data['is_home'], 'show_in_menu' => $data['show_in_menu'],
+            'is_published' => $data['is_published'], 'is_home' => $data['is_home'], 'show_in_menu' => $data['show_in_menu'], 'parent_id' => $parentId,
             'blocks' => Blocks::clean($data['blocks'], $row->school_id),
         ]);
 

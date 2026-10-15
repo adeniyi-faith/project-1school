@@ -12,7 +12,7 @@
         <div class="eg-menu-in">
             <ul class="menu-list">
                 @foreach ($menu as $item)
-                    <li><a href="{{ $item['url'] }}" @if ($item['current']) aria-current="page" @endif><span>{{ $item['label'] }}</span>{!! $arrow !!}</a></li>
+                    <li class="menu-item"><a href="{{ $item['url'] }}" @if ($item['current']) aria-current="page" @endif><span>{{ $item['label'] }}</span>{!! $arrow !!}</a>@include('website.partials.menu-sub')</li>
                 @endforeach
             </ul>
             <ul class="eg-menu-small">

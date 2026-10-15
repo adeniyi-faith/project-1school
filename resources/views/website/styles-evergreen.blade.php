@@ -49,6 +49,7 @@
 .eg-menu-in{max-width:44rem;margin:0 auto;padding:1.25rem 1.5rem 3.5rem}
 [data-theme=evergreen] .menu-list{list-style:none;margin:0;padding:0}
 [data-theme=evergreen] .menu .menu-list a{display:flex;align-items:center;justify-content:space-between;padding:1.15rem 0;border-bottom:1px solid rgba(255,255,255,.22);font:600 .95rem/1.2 var(--body-font);letter-spacing:.16em;text-transform:uppercase}
+[data-theme=evergreen] .menu .menu-list a{border-radius:0;background:none}
 [data-theme=evergreen] .menu .menu-list a svg{width:1.1rem;height:1.1rem;flex:none}
 [data-theme=evergreen] .menu .menu-list a[aria-current]{text-decoration:none;color:var(--brand2-d)}
 [data-theme=evergreen] .menu .menu-list a:hover{color:var(--brand2-d)}

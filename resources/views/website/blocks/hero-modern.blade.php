@@ -7,7 +7,7 @@
     <img class="hero-img" src="{{ $photo }}" alt="" fetchpriority="high" decoding="async">
     <div class="wrap hero-in">
         @if ($eyebrow !== '')<p class="hero-kick">{{ $eyebrow }}</p>@endif
-        <{{ $tag }}>{!! \App\Website\Prose::accent($b['heading']) !!}</{{ $tag }}>
+        <{{ $tag }}>{!! \App\Website\Prose::heroHeading($b) !!}</{{ $tag }}>
         @if ($b['subheading'])<p class="hero-sub">{{ $b['subheading'] }}</p>@endif
         <div class="btns">
             @include('website.partials.button', ['kind' => $b['button'], 'variant' => 'solid'])

@@ -105,4 +105,5 @@ a.sp-card:hover b{text-decoration:underline}
 [data-theme=statement] .tcard blockquote{font-family:var(--head-font);font-size:clamp(1.25rem,3.4vw,1.6rem)}
 [data-theme=statement] .tcard-who b{font-family:var(--head-font);font-size:1.15rem;color:var(--brand-t)}
 [data-theme=statement] .sec--dark .tcard{background:rgba(255,255,255,.07);border-left-color:var(--brand2-d)}
+@media (max-width:59.99rem){[data-theme=statement] .menu .menu-sub{margin-left:3.4rem}}
 @endverbatim

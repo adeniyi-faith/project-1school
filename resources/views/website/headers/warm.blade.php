@@ -23,7 +23,7 @@
                 </form>
                 <ul class="menu-list">
                     @foreach ($menu as $item)
-                        <li><a href="{{ $item['url'] }}" @if ($item['current']) aria-current="page" @endif>{{ $item['label'] }}</a></li>
+                        <li class="menu-item"><a href="{{ $item['url'] }}" @if ($item['current']) aria-current="page" @endif>{{ $item['label'] }}</a>@include('website.partials.menu-sub')</li>
                     @endforeach
                 </ul>
                 <div class="wa-menu-foot">

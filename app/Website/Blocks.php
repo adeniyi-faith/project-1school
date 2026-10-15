@@ -37,6 +37,7 @@ class Blocks
                     ['key' => 'eyebrow', 'label' => 'Small line above the heading', 'kind' => 'text', 'max' => 80],
                     $heading('Big heading'),
                     ['key' => 'lead', 'label' => 'Short line in italics (only the Statement theme shows it)', 'kind' => 'text', 'max' => 160],
+                    ['key' => 'phrases', 'label' => 'Words that take turns in the heading (optional)', 'kind' => 'textarea', 'max' => 300, 'hint' => 'One per line, up to 6. They swap in place of the words you put between *stars* in the heading, for example: Where every child is *known*. Leave empty to keep the heading still.'],
                     ['key' => 'subheading', 'label' => 'One line, or a short paragraph, under it', 'kind' => 'textarea', 'max' => 400],
                     ['key' => 'image', 'label' => 'Photo', 'kind' => 'image', 'hint' => 'A wide, bright photo works best. Without one, your colours are used.'],
                     ['key' => 'foot', 'label' => 'Line at the bottom of the banner (only the Statement theme shows it)', 'kind' => 'text', 'max' => 80, 'hint' => 'For example a motto. Shown next to a row of small dots.'],
@@ -47,7 +48,7 @@ class Blocks
                     ['key' => 'button', 'label' => 'First button', 'kind' => 'select', 'options' => self::BUTTONS],
                     ['key' => 'button2', 'label' => 'Second button', 'kind' => 'select', 'options' => self::BUTTONS],
                 ],
-                'default' => ['eyebrow' => '', 'heading' => 'Welcome', 'lead' => '', 'subheading' => '', 'image' => '', 'foot' => '', 'facts' => [], 'button' => 'apply', 'button2' => 'none'],
+                'default' => ['eyebrow' => '', 'heading' => 'Welcome', 'phrases' => '', 'lead' => '', 'subheading' => '', 'image' => '', 'foot' => '', 'facts' => [], 'button' => 'apply', 'button2' => 'none'],
             ],
             'text' => [
                 'label' => 'Text and picture', 'help' => 'A heading, some paragraphs, and an optional picture beside them.',

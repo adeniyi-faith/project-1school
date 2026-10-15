@@ -8,7 +8,7 @@
     <div class="wrap hero-grid">
         <div class="hero-copy">
             @if (($b['eyebrow'] ?? '') !== '')<p class="hero-kicker">{{ $b['eyebrow'] }}</p>@endif
-            <{{ $tag }}>{!! \App\Website\Prose::accent($b['heading'], true) !!}</{{ $tag }}>
+            <{{ $tag }}>{!! \App\Website\Prose::heroHeading($b, true) !!}</{{ $tag }}>
             @if (($b['lead'] ?? '') !== '')<p class="hero-lead">{{ $b['lead'] }}</p>@endif
             @if ($b['subheading'])<p class="hero-sub">{{ $b['subheading'] }}</p>@endif
             @if (! $hasCard)

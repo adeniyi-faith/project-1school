@@ -379,4 +379,21 @@ a.action:hover .action-go{transform:translateX(4px)}
 .tsl-dots i{width:.55rem;height:.55rem;border-radius:50%;background:currentColor;opacity:.25;transition:opacity .2s,transform .2s}
 .tsl-dots i.on{opacity:1;transform:scale(1.25)}
 @media (min-width:60rem){.tsl-item{flex-basis:calc((100% - 1.25rem)/2)}}
+
+/* sub-menus: the pages that sit under a menu item, shown indented under it in the full-screen menus */
+.menu-sub{list-style:none;margin:0 0 .6rem;padding:0 0 0 1rem;border-left:2px solid color-mix(in srgb,currentColor 30%,transparent)}
+body[data-theme] .menu .menu-sub li{margin:0;padding:0;border:0}
+body[data-theme] .menu .menu-sub a{display:block;padding:.55rem .75rem;border:0;border-radius:0;background:none;font:500 1rem/1.3 var(--body-font);letter-spacing:0;text-transform:none;text-decoration:none;opacity:.92}
+body[data-theme] .menu .menu-sub a:hover,body[data-theme] .menu .menu-sub a[aria-current]{opacity:1;text-decoration:underline;text-underline-offset:.25em;background:none}
+@media (min-width:60rem){
+  /* on wide screens where the menu sits in the bar, the sub-menu drops down when the item is hovered or tabbed to */
+  [data-theme=heritage] .menu-item,[data-theme=modern] .menu-item,[data-theme=statement] .menu-item{position:relative;display:flex;align-items:center}
+  [data-theme=heritage] .menu .menu-sub,[data-theme=modern] .menu .menu-sub,[data-theme=statement] .menu .menu-sub{display:none;position:absolute;top:100%;left:0;z-index:80;min-width:14rem;margin:0;padding:.5rem 0;border:0;background:#fff;color:#222;box-shadow:0 18px 40px -16px rgba(0,0,0,.45)}
+  [data-theme=heritage] .menu-item:hover>.menu-sub,[data-theme=heritage] .menu-item:focus-within>.menu-sub,[data-theme=modern] .menu-item:hover>.menu-sub,[data-theme=modern] .menu-item:focus-within>.menu-sub,[data-theme=statement] .menu-item:hover>.menu-sub,[data-theme=statement] .menu-item:focus-within>.menu-sub{display:block}
+  body[data-theme=heritage] .menu .menu-sub a,body[data-theme=modern] .menu .menu-sub a,body[data-theme=statement] .menu .menu-sub a{padding:.7rem 1.2rem;color:#222;font-size:.95rem;opacity:1;white-space:nowrap;text-transform:none;letter-spacing:0}
+  body[data-theme=heritage] .menu .menu-sub a:hover,body[data-theme=modern] .menu .menu-sub a:hover,body[data-theme=statement] .menu .menu-sub a:hover{background:#f1f1f1;text-decoration:none}
+}
+em[data-rotate]{display:inline-block;transition:opacity .35s ease}
+em[data-rotate].rot-out{opacity:0}
+@media (min-width:60rem){body[data-theme=statement] .menu .menu-sub{margin-left:0}}
 @endverbatim
