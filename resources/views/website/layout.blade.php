@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="{{ $fontsUrl }}">
     @endif
     <style>:root{ {!! $style !!} }</style>
-    <style>@include('website.styles')@include('website.styles-themes')@include('website.styles-heritage')@include('website.styles-statement')@include('website.styles-modern')@include('website.styles-cookie')</style>
+    <style>@include('website.styles')@include('website.styles-themes')@include('website.styles-heritage')@include('website.styles-statement')@include('website.styles-modern')@include('website.styles-warm')@include('website.styles-cookie')</style>
     <noscript><style>.burger{display:none}.menu{display:block;position:static;background:none;color:inherit;padding:0}.menu a{font-size:1rem;display:inline-block;border:0;margin-right:1rem}</style></noscript>
     <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 </head>
