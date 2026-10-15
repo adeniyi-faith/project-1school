@@ -58,13 +58,13 @@
 [data-theme=crest] .hdr .sbar button:hover{background:var(--fill);color:var(--fill-ink)}
 
 /* the menu: a coral sheet under the bar, plain white words, hairlines, crimson chevrons */
-[data-theme=crest] .menu{inset:var(--hdr-h) 0 0 0;padding:0;background:var(--fill-lg);color:var(--fill-lg-ink);z-index:60}
+[data-theme=crest] .menu{inset:var(--menu-top,var(--hdr-h)) 0 0 0;padding:0;background:var(--fill-lg);color:var(--fill-lg-ink);z-index:60}
 body[data-theme=crest] .menu .menu-sub a{font:700 1.2rem/1.3 var(--body-font);opacity:1}
 .cr-menu-in{max-width:46rem;margin:0 auto;padding:.5rem 2.25rem 4rem}
 @media (min-width:40rem){.cr-menu-in{padding-left:3rem;padding-right:3rem}}
 @media (min-width:60rem){
   [data-theme=crest] .burger{display:inline-flex}
-  [data-theme=crest] .menu{display:none;position:fixed;inset:var(--hdr-h) 0 0 0;align-items:normal;gap:0;background:var(--fill-lg);color:var(--fill-lg-ink);padding:0;overflow:auto}
+  [data-theme=crest] .menu{display:none;position:fixed;inset:var(--menu-top,var(--hdr-h)) 0 0 0;align-items:normal;gap:0;background:var(--fill-lg);color:var(--fill-lg-ink);padding:0;overflow:auto}
   body.menu-open[data-theme=crest] .menu{display:block}
 }
 [data-theme=crest] .menu-list{list-style:none;margin:0;padding:0}

@@ -45,7 +45,10 @@
   var fit=function(){body.classList.remove('nav-tight');var n=document.querySelector('.hdr .brand span');
     if(n&&window.matchMedia('(min-width:72rem)').matches&&(n.scrollWidth>n.clientWidth+1||n.scrollHeight>n.clientHeight+1)){body.classList.add('nav-tight');}};
   fit();window.addEventListener('resize',function(){window.requestAnimationFrame(fit);});window.addEventListener('load',fit);
-  b.addEventListener('click',function(){var o=body.classList.toggle('menu-open');b.setAttribute('aria-expanded',o?'true':'false');});
+  // the phone menu starts exactly where the header ends, even with an announcement bar above it
+  var place=function(){var h=document.querySelector('.hdr');if(h){body.style.setProperty('--menu-top',Math.max(0,Math.round(h.getBoundingClientRect().bottom))+'px');}};
+  b.addEventListener('click',function(){place();var o=body.classList.toggle('menu-open');b.setAttribute('aria-expanded',o?'true':'false');});
+  window.addEventListener('resize',function(){if(body.classList.contains('menu-open')){place();}});
   var st=document.querySelector('[data-search-toggle]'),sb=document.getElementById('sbar');
   if(st&&sb){st.addEventListener('click',function(e){e.preventDefault();var o=sb.hidden;sb.hidden=!o;body.classList.toggle('search-open',o);st.setAttribute('aria-expanded',o?'true':'false');if(o){body.classList.remove('menu-open');sb.querySelector('input').focus();}});
     document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sb.hidden){sb.hidden=true;body.classList.remove('search-open');st.setAttribute('aria-expanded','false');st.focus();}});}

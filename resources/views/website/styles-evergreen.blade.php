@@ -45,7 +45,7 @@
 @media (min-width:60rem){.eg-bar{grid-template-columns:5.5rem minmax(0,1fr) 5.5rem}}
 
 /* the menu: a deep green sheet under the bar, capitals with arrows, small links and round social icons */
-[data-theme=evergreen] .menu{inset:var(--hdr-h) 0 0 0;padding:0;background:var(--deep);color:#fff;z-index:60}
+[data-theme=evergreen] .menu{inset:var(--menu-top,var(--hdr-h)) 0 0 0;padding:0;background:var(--deep);color:#fff;z-index:60}
 .eg-menu-in{max-width:44rem;margin:0 auto;padding:1.25rem 1.5rem 3.5rem}
 [data-theme=evergreen] .menu-list{list-style:none;margin:0;padding:0}
 [data-theme=evergreen] .menu .menu-list a{display:flex;align-items:center;justify-content:space-between;padding:1.15rem 0;border-bottom:1px solid rgba(255,255,255,.22);font:600 .95rem/1.2 var(--body-font);letter-spacing:.16em;text-transform:uppercase}
