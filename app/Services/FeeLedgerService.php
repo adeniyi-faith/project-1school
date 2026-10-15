@@ -112,7 +112,7 @@ class FeeLedgerService
             throw ValidationException::withMessages(['amount' => 'Enter an amount above zero.']);
         }
 
-        return DB::transaction(function () use ($invoice, $amount, $method, $date, $reference, $note, $by) {
+        $entry = DB::transaction(function () use ($invoice, $amount, $method, $date, $reference, $note, $by) {
             // Lock the invoice so two people paying at once cannot both pass the "not more than owed" check
             $invoice = Invoice::whereKey($invoice->id)->lockForUpdate()->firstOrFail();
             $this->ensureOpen($invoice);
@@ -133,6 +133,14 @@ class FeeLedgerService
 
             return $entry;
         });
+
+        // Tell the school's own system (if it set one up) once the payment is safely saved
+        app(\App\Services\WebhookService::class)->dispatch((int) $invoice->school_id, 'payment.received', [
+            'invoice_no' => $invoice->invoice_no, 'student_id' => $invoice->student_id, 'amount' => $amount, 'method' => $method,
+            'reference' => $entry->reference, 'date' => $date, 'balance' => (float) $invoice->fresh()->balance,
+        ]);
+
+        return $entry;
     }
 
     public function addFine(Invoice $invoice, float $amount, ?string $note, User $by): LedgerEntry

@@ -9,6 +9,8 @@ namespace App\Website;
  */
 class Themes
 {
+    private static ?array $found = null;
+
     private const SERIF = "'Source Serif 4','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const NEWSREADER = "'Newsreader','Source Serif 4','Iowan Old Style',Georgia,serif";
     private const INSTRUMENT = "'Instrument Sans','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
@@ -85,12 +87,74 @@ class Themes
     /** The theme to draw with: the saved one, or Heritage when the name is not known */
     public static function key(?string $theme): string
     {
-        return isset(self::ALL[$theme]) ? $theme : 'heritage';
+        if ($theme !== null && isset(self::ALL[$theme])) {
+            return $theme;
+        }
+
+        // a theme a developer added is drawn with the markup of the built-in theme it is based on
+        return ($theme !== null ? (self::custom()[$theme]['base'] ?? null) : null) ?? 'heritage';
+    }
+
+    /** Built-in themes plus any theme folders developers added under resources/website-themes */
+    public static function all(): array
+    {
+        return self::ALL + self::custom();
+    }
+
+    /**
+     * Theme folders: resources/website-themes/{key}/theme.json (label, note, base, colours, fonts) and an optional
+     * style.css. A custom theme is a built-in one with its own colours, fonts and extra CSS. Bad files are ignored.
+     */
+    public static function custom(): array
+    {
+        if (self::$found !== null) {
+            return self::$found;
+        }
+        $found = [];
+
+        foreach (glob(resource_path('website-themes/*/theme.json')) ?: [] as $file) {
+            $key = basename(dirname($file));
+            $json = json_decode((string) file_get_contents($file), true);
+            if (! preg_match('/^[a-z][a-z0-9-]{1,30}$/', $key) || isset(self::ALL[$key]) || ! is_array($json) || ! isset(self::ALL[$json['base'] ?? ''])) {
+                continue;
+            }
+            $def = self::ALL[$json['base']];
+            foreach (['brand', 'brand2', 'bg', 'soft', 'text'] as $c) {
+                if (self::isHex($json[$c] ?? null)) {
+                    $def[$c] = strtolower($json[$c]);
+                }
+            }
+            foreach (['head', 'body'] as $f) {
+                if (isset($json[$f]) && is_string($json[$f]) && preg_match('/^[\w\s,\'"-]{3,160}$/', $json[$f])) {
+                    $def[$f] = $json[$f];
+                }
+            }
+            if (isset($json['fonts']) && is_string($json['fonts']) && preg_match('/^[A-Za-z0-9+:;,@.|_-]{3,300}$/', $json['fonts'])) {
+                $def['fonts'] = $json['fonts'];
+            }
+            $css = dirname($file).'/style.css';
+            $found[$key] = ['label' => mb_substr((string) ($json['label'] ?? ucfirst($key)), 0, 40), 'note' => mb_substr((string) ($json['note'] ?? 'A theme added by a developer.'), 0, 200),
+                'base' => $json['base'], 'css' => is_file($css) ? SafeCss::clean((string) file_get_contents($css), 20000) : ''] + $def;
+        }
+
+        return self::$found = $found;
+    }
+
+    /** Forget what was read from folders (used by tests and after files change) */
+    public static function flush(): void
+    {
+        self::$found = null;
+    }
+
+    /** Extra CSS that comes with a custom theme (already cleaned) */
+    public static function css(?string $theme): string
+    {
+        return self::custom()[$theme ?? '']['css'] ?? '';
     }
 
     public static function options(): array
     {
-        return collect(self::ALL)->map(fn ($t, $key) => [
+        return collect(self::all())->map(fn ($t, $key) => [
             'key' => $key, 'label' => $t['label'], 'note' => $t['note'], 'brand' => $t['brand'], 'brand2' => $t['brand2'],
             'bg' => $t['bg'], 'soft' => $t['soft'], 'serif' => $t['head'] === self::SERIF,
         ])->values()->all();
@@ -104,7 +168,7 @@ class Themes
     /** The CSS variables for a site: the theme, with the school's own colours on top when it chose some */
     public static function vars(string $theme, ?string $color, ?string $color2): array
     {
-        $t = self::ALL[$theme] ?? self::ALL['heritage'];
+        $t = self::all()[$theme] ?? self::ALL['heritage'];
         $brand = self::isHex($color) ? strtolower($color) : $t['brand'];
         $brand2 = self::isHex($color2) ? strtolower($color2) : $t['brand2'];
 
@@ -124,7 +188,7 @@ class Themes
         $band = self::readable($brand, '#ffffff', 4.5);
         $brand2D = self::onDark($brand2, [$band, $deep]);
         // the full-screen menu on a phone has its own background in each theme
-        $menuBg = match ($theme) { 'heritage' => $band, 'modern' => $brand, 'warm' => '#ffffff', default => $deep };
+        $menuBg = match (self::key($theme)) { 'heritage' => $band, 'modern' => $brand, 'warm' => '#ffffff', default => $deep };
 
         // the second colour as a flat fill that carries writing: for buttons (small writing, 4.5) and big menus (large writing, 3)
         [$fill, $fillInk] = self::fillFor($brand2, 4.5);
@@ -213,7 +277,7 @@ class Themes
     /** The Google Fonts address a theme needs, if it uses fonts that are not on every device */
     public static function fontsUrl(?string $theme): ?string
     {
-        $fonts = (self::ALL[self::key($theme)])['fonts'] ?? null;
+        $fonts = (self::all()[$theme ?? ''] ?? self::ALL[self::key($theme)])['fonts'] ?? null;
 
         return $fonts ? 'https://fonts.googleapis.com/css2?'.collect(explode('|', $fonts))->map(fn ($f) => 'family='.$f)->implode('&').'&display=swap' : null;
     }

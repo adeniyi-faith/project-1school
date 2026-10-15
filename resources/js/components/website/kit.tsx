@@ -32,6 +32,7 @@ const TABS = [
     { href: '/school/website/themes', label: 'Themes' },
     { href: '/school/website/media', label: 'Pictures' },
     { href: '/school/website/settings', label: 'Settings' },
+    { href: '/school/website/developer', label: 'Developer' },
 ];
 
 /** The frame around every website screen: title, live status, link to the site and the website tabs */

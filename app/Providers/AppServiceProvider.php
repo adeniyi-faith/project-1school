@@ -25,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
         // A server without PHP's fileinfo add-on would fail every upload; build the local disks without it
         \App\Support\SafeLocalDisk::register();
 
+        // Sections that developers add as folders (resources/website-blocks/{type}/view.blade.php)
+        \Illuminate\Support\Facades\View::addNamespace('siteblocks', resource_path('website-blocks'));
+
         // The platform owner can do everything
         // Stamp every audit-trail entry with the school it belongs to, so a school
         // only ever sees its own history.
