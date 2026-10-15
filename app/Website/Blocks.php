@@ -9,6 +9,8 @@ namespace App\Website;
  */
 class Blocks
 {
+    private static ?array $found = null;
+
     public const MAX_BLOCKS = 30;
     /** Page addresses the website uses for itself */
     public const RESERVED_SLUGS = ['news', 'sitemap', 'feed', 'gallery', 'apply', 'login', 'sign-in', 'search', 'admin'];
@@ -25,8 +27,14 @@ class Blocks
         'chat' => 'Chat', 'clipboard' => 'Checklist', 'user' => 'Person',
     ];
 
-    /** field kinds: text, textarea, select (options), number, image (an uploaded picture), list (repeating rows of fields) */
+    /** Built-in sections plus any a developer added under resources/website-blocks (see custom()) */
     public static function types(): array
+    {
+        return self::builtIn() + self::custom();
+    }
+
+    /** field kinds: text, textarea, select (options), number, image (an uploaded picture), list (repeating rows of fields) */
+    private static function builtIn(): array
     {
         $heading = fn (string $label = 'Heading') => ['key' => 'heading', 'label' => $label, 'kind' => 'text', 'max' => 120];
 
@@ -314,5 +322,82 @@ class Blocks
         $v = trim(is_scalar($value) ? (string) $value : '');
 
         return preg_match('#^https://[^\s<>"\']+$#i', $v) ? mb_substr($v, 0, $max) : '';
+    }
+
+    /**
+     * Sections added by developers: resources/website-blocks/{type}/block.json (label, help, fields, default) and
+     * view.blade.php. Files that are not valid are ignored, so a typo never breaks a school's website.
+     */
+    public static function custom(): array
+    {
+        if (self::$found !== null) {
+            return self::$found;
+        }
+        $found = [];
+        $builtIn = self::builtIn();
+
+        foreach (glob(resource_path('website-blocks/*/block.json')) ?: [] as $file) {
+            $type = basename(dirname($file));
+            $json = json_decode((string) file_get_contents($file), true);
+            if (! preg_match('/^[a-z][a-z0-9_]{1,30}$/', $type) || isset($builtIn[$type]) || ! is_array($json) || ! is_file(dirname($file).'/view.blade.php')) {
+                continue;
+            }
+            $fields = self::cleanDefinition($json['fields'] ?? []);
+            $default = [];
+            foreach ($fields as $f) {
+                $default[$f['key']] = $json['default'][$f['key']] ?? match ($f['kind']) { 'number' => $f['min'], 'select' => array_key_first($f['options']), 'list' => [], default => '' };
+            }
+            $found[$type] = [
+                'label' => mb_substr((string) ($json['label'] ?? ucfirst($type)), 0, 60), 'help' => mb_substr((string) ($json['help'] ?? 'A section added by a developer.'), 0, 300),
+                'fields' => $fields, 'default' => $default, 'custom' => true,
+            ];
+        }
+
+        return self::$found = $found;
+    }
+
+    /** Forget what was read from folders (used by tests and after files change) */
+    public static function flush(): void
+    {
+        self::$found = null;
+    }
+
+    /** Only the known field kinds and well-formed keys are kept from a developer's block.json */
+    private static function cleanDefinition(mixed $fields, int $depth = 0): array
+    {
+        $out = [];
+        foreach (is_array($fields) ? array_slice($fields, 0, 20) : [] as $f) {
+            if (! is_array($f) || ! preg_match('/^[a-z][a-z0-9_]{0,30}$/', (string) ($f['key'] ?? '')) || ! in_array($f['kind'] ?? '', ['text', 'textarea', 'select', 'number', 'image', 'list'], true)) {
+                continue;
+            }
+            $def = ['key' => $f['key'], 'label' => mb_substr((string) ($f['label'] ?? $f['key']), 0, 80), 'kind' => $f['kind'], 'max' => max(1, min(6000, (int) ($f['max'] ?? 200)))];
+            if (! empty($f['hint']) && is_string($f['hint'])) {
+                $def['hint'] = mb_substr($f['hint'], 0, 200);
+            }
+            if ($f['kind'] === 'select') {
+                $options = collect(is_array($f['options'] ?? null) ? $f['options'] : [])->filter(fn ($v) => is_string($v))->take(20)->all();
+                if ($options === []) {
+                    continue;
+                }
+                $def['options'] = $options;
+            }
+            if ($f['kind'] === 'number') {
+                $def['min'] = (int) ($f['min'] ?? 0);
+                $def['max'] = max($def['min'], (int) ($f['max'] ?? 100));
+            }
+            if ($f['kind'] === 'list') {
+                if ($depth > 0) {
+                    continue; // lists inside lists are not supported
+                }
+                $inner = self::cleanDefinition($f['fields'] ?? [], 1);
+                if ($inner === []) {
+                    continue;
+                }
+                $def += ['limit' => max(1, min(20, (int) ($f['limit'] ?? 8))), 'noun' => mb_substr((string) ($f['noun'] ?? 'item'), 0, 20), 'fields' => $inner];
+            }
+            $out[] = $def;
+        }
+
+        return $out;
     }
 }

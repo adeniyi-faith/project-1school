@@ -53,6 +53,10 @@ class PublicAdmissionController extends Controller
                 'source'    => 'online',
             ]));
             $reference = $inquiry->fresh()->reference;
+            app(\App\Services\WebhookService::class)->dispatch($school->id, 'inquiry.created', [
+                'id' => $inquiry->id, 'reference' => $reference, 'student_name' => $inquiry->student_name, 'class_interested' => $inquiry->class_interested,
+                'guardian_name' => $inquiry->guardian_name, 'guardian_phone' => $inquiry->guardian_phone, 'guardian_email' => $inquiry->guardian_email, 'source' => 'online',
+            ]);
 
             // A copy for the parent, when they gave an email (a failed email never stops the application)
             app(FamilyNotice::class)->applicationReceived($inquiry->fresh(), $school);

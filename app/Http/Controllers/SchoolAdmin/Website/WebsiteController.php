@@ -24,7 +24,7 @@ class WebsiteController extends WebsiteBase
         $home = SchoolSitePage::where('is_home', true)->first();
 
         return Inertia::render('SchoolAdmin/Website/Overview', $this->shell($school, $site) + [
-            'theme' => Themes::ALL[$site->theme]['label'] ?? 'Heritage',
+            'theme' => Themes::all()[$site->theme]['label'] ?? 'Heritage',
             'counts' => [
                 'pages' => SchoolSitePage::count(),
                 'published' => SchoolSitePost::where('status', 'published')->count(),

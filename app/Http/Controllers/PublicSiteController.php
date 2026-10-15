@@ -6,6 +6,8 @@ use App\Models\School;
 use App\Models\SchoolSite;
 use App\Models\SchoolSiteAlbum;
 use App\Models\SchoolSitePage;
+use App\Website\LiveData;
+use App\Website\Themes;
 use App\Models\SchoolSitePost;
 use App\Website\Prose;
 use App\Website\SiteRenderer;
@@ -55,6 +57,10 @@ class PublicSiteController extends Controller
                 'school_id' => $school->id, 'student_name' => 'General question', 'class_interested' => 'Not stated',
                 'guardian_name' => $data['name'], 'guardian_phone' => $data['phone'], 'guardian_email' => $data['email'] ?? null,
                 'notes' => $data['message'], 'source' => 'website',
+            ]);
+            app(\App\Services\WebhookService::class)->dispatch($school->id, 'inquiry.created', [
+                'id' => $inquiry->id, 'reference' => $inquiry->fresh()->reference, 'student_name' => $inquiry->student_name, 'guardian_name' => $inquiry->guardian_name,
+                'guardian_phone' => $inquiry->guardian_phone, 'guardian_email' => $inquiry->guardian_email, 'message' => $data['message'], 'source' => 'website',
             ]);
             \App\Models\User::permission('students.view')->where('school_id', $school->id)->get()
                 ->each(fn ($u) => \App\Models\SchoolNotification::create([
@@ -138,6 +144,54 @@ class PublicSiteController extends Controller
             'school' => $school, 'site' => $site, 'posts' => $posts,
             'summary' => fn ($p) => $p->excerpt ?: Prose::plain($p->body, 300),
         ])->header('Content-Type', 'application/rss+xml; charset=UTF-8');
+    }
+
+    /** The whole public site as data, for developers building their own pages or apps on top of the school's content */
+    public function siteJson(string $slug)
+    {
+        [$school, $site] = $this->live($slug);
+        $theme = Themes::all()[$site->theme] ?? Themes::ALL['heritage'];
+        $date = fn ($d) => $d?->toDateString();
+
+        return $this->json([
+            'school' => [
+                'name' => $school->name, 'slug' => $school->slug, 'tagline' => $site->tagline, 'logo' => $school->logo ? $school->logo_url : null,
+                'address' => collect([$school->address, $school->city, $school->state])->filter()->implode(', '), 'phone' => $school->phone, 'email' => $school->email,
+                'social' => $site->social ?? [], 'url' => SiteRenderer::homeUrl($school),
+            ],
+            'theme' => ['key' => $site->theme, 'label' => $theme['label'], 'brand' => $site->color ?: $theme['brand'], 'brand2' => $site->color2 ?: $theme['brand2']],
+            'pages' => $this->pages($school)->map(fn ($p) => [
+                'title' => $p->title, 'slug' => $p->slug, 'url' => SiteRenderer::pageUrl($school, $p), 'is_home' => $p->is_home, 'in_menu' => $p->show_in_menu,
+                'description' => $p->seo_description, 'blocks' => $p->blocks,
+            ])->values(),
+            'live' => [
+                'fees' => LiveData::fees($school)->map(fn ($c) => ['class' => $c['class'], 'lines' => $c['lines'], 'term_total' => $c['term_total']])->values(),
+                'terms' => collect(LiveData::dates($school)['terms'])->map(fn ($t) => ['name' => $t['name'], 'year' => $t['year'], 'start' => $date($t['start']), 'end' => $date($t['end'])])->values(),
+                'holidays' => collect(LiveData::dates($school)['holidays'])->map(fn ($h) => ['name' => $h['name'], 'date' => $date($h['date'])])->values(),
+                'team' => LiveData::team($school)->values(),
+                'events' => LiveData::events($school, 12)->map(fn ($e) => ['title' => $e['title'], 'date' => $date($e['date']), 'place' => $e['place'], 'url' => $e['url']])->values(),
+            ],
+        ]);
+    }
+
+    /** News and events as data */
+    public function newsJson(Request $request, string $slug)
+    {
+        [$school] = $this->live($slug);
+        $posts = $this->posts($school)->when($request->query('category'), fn ($q, $c) => $q->where('category', (string) $c))
+            ->orderByDesc('published_at')->limit(50)->get();
+
+        return $this->json(['posts' => $posts->map(fn ($p) => [
+            'title' => $p->title, 'slug' => $p->slug, 'url' => SiteRenderer::postUrl($school, $p), 'category' => $p->category,
+            'summary' => $p->excerpt ?: Prose::plain($p->body, 300), 'cover' => SiteRenderer::image($p->cover_image),
+            'published_at' => $p->published_at?->toIso8601String(), 'event_date' => $p->event_date?->toDateString(), 'event_place' => $p->event_place,
+        ])->values()]);
+    }
+
+    /** Public data: anyone may read it from any website, and it may be kept for five minutes */
+    private function json(array $data)
+    {
+        return response()->json($data, 200, ['Access-Control-Allow-Origin' => '*', 'Cache-Control' => 'public, max-age=300'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
     /** @return array{0: School, 1: SchoolSite} */
