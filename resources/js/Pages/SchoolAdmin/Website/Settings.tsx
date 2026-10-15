@@ -8,7 +8,7 @@ import type { WebsiteShell } from '@/Types/website';
 
 interface Props {
     shell: WebsiteShell; socialNames: Record<string, string>; sitemapUrl: string; feedUrl: string;
-    site: { enabled: boolean; tagline: string | null; meta_description: string | null; footer_text: string | null; social: Record<string, string>; news_label: string; news_in_menu: boolean; apply_button: boolean; announcement: string };
+    site: { enabled: boolean; tagline: string | null; meta_description: string | null; footer_text: string | null; social: Record<string, string>; news_label: string; news_in_menu: boolean; apply_button: boolean; announcement: string; cookie_notice: boolean };
     school: { name: string; phone: string | null; email: string | null; address: string | null; logo: string | null };
 }
 
@@ -18,7 +18,7 @@ export default function WebsiteSettings({ shell, site, school, socialNames, site
     const canEdit = shell.canEdit;
     const form = useForm({
         enabled: site.enabled, tagline: site.tagline ?? '', meta_description: site.meta_description ?? '', footer_text: site.footer_text ?? '',
-        social: site.social, news_label: site.news_label, news_in_menu: site.news_in_menu, apply_button: site.apply_button, announcement: site.announcement ?? '',
+        social: site.social, news_label: site.news_label, news_in_menu: site.news_in_menu, apply_button: site.apply_button, announcement: site.announcement ?? '', cookie_notice: site.cookie_notice ?? true,
     });
     const d = form.data;
 
@@ -47,6 +47,10 @@ export default function WebsiteSettings({ shell, site, school, socialNames, site
 
             <Panel title="Announcement bar" description="One short line in a coloured bar at the very top of every page, for example the date of an open day. Leave it empty to hide the bar.">
                 <label className="block space-y-1 text-sm"><span className="font-medium">Announcement</span><Input disabled={!canEdit} maxLength={200} placeholder="Open day: Saturday 14 March, 10am. Come and meet our teachers." value={d.announcement} onChange={e => form.setData('announcement', e.target.value)} /></label>
+            </Panel>
+
+            <Panel title="Cookie notice" description="A small box at the bottom of your public website that tells visitors you use cookies and links to your Privacy Policy. Each visitor sees it once and can close it with one tap.">
+                <label className={row}><span>Show the cookie notice <span className="block text-xs text-slate-500">Matches your website theme. Turn it off if you do not want it.</span></span><Switch label="Cookie notice" disabled={!canEdit} on={d.cookie_notice} onChange={v => form.setData('cookie_notice', v)} /></label>
             </Panel>
 
             <Panel title="Menu and buttons">
