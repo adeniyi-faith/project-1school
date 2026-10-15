@@ -12,8 +12,8 @@
   var box=document.getElementById('cookie');if(!box)return;
   var key='cookie-ok-{{ $school->id }}';
   try{if(localStorage.getItem(key)==='1')return;}catch(e){}
-  box.hidden=false;
-  box.querySelector('.cookie-ok').addEventListener('click',function(){box.hidden=true;try{localStorage.setItem(key,'1');}catch(e){}});
+  box.hidden=false;document.body.classList.add('cookie-open');
+  box.querySelector('.cookie-ok').addEventListener('click',function(){box.hidden=true;document.body.classList.remove('cookie-open');try{localStorage.setItem(key,'1');}catch(e){}});
 })();
 </script>
 @endif
