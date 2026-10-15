@@ -17,5 +17,5 @@
             @if ($apply)<a class="btn btn--solid menu-apply" href="{{ $apply }}">Apply online</a>@endif
         </nav>
     </div>
+    @include('website.partials.search-bar')
 </header>
-@include('website.partials.search-bar')

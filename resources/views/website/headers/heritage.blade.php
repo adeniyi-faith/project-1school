@@ -41,5 +41,5 @@
             </div>
         </nav>
     </div>
+    @include('website.partials.search-bar')
 </header>
-@include('website.partials.search-bar')

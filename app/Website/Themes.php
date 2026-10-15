@@ -92,13 +92,25 @@ class Themes
 
         $hdr = match ($t['hdr']) { 'brand2' => $brand2, 'brand' => $brand, default => $t['bg'] };
         $deep = self::shade($brand, .55);
+        // white writing sits on the deep shade, so a pale main colour still gets a properly dark one
+        for ($i = 0; $i < 20 && self::contrast($deep, '#ffffff') < 7; $i++) {
+            $deep = self::shade($deep, .9);
+        }
         $ftr = match ($t['ftr']) { 'brand2' => $brand2, 'brand' => $brand, 'deep' => $deep, 'slate' => self::tint($brand, .14), default => '#171717' };
         $hdrInk = self::ink($hdr);
 
+        // Text colours that stay readable whatever two colours a school picks. A pale or white main colour
+        // would otherwise vanish when used for writing on a white page, or gold on a gold band.
+        $brandT = self::readable($brand, $t['bg'], 4.5);
+        $brand2T = self::readable($brand2, $t['bg'], 3.0);
+        $band = self::readable($brand, '#ffffff', 4.5);
+        $brand2D = self::onDark($brand2, [$band, $deep]);
+
         return [
+            'band' => $band, 'brand-t' => $brandT, 'brand2-t' => $brand2T, 'brand2-d' => $brand2D,
             'brand' => $brand, 'brand-ink' => self::ink($brand),
             'brand2' => $brand2, 'brand2-ink' => self::ink($brand2),
-            'deep' => $deep, 'deep-ink' => self::ink($deep), 'deep-mid' => self::shade($brand, .8), 'gold-lt' => self::tint($brand2, .42),
+            'deep' => $deep, 'deep-ink' => self::ink($deep), 'deep-mid' => self::shade($brand, .8), 'gold-lt' => self::onDark(self::tint($brand2, .42), [$band, $deep]),
             'bg' => $t['bg'], 'soft' => $t['soft'], 'text' => $t['text'],
             'muted' => self::ink($t['bg']) === '#ffffff' ? '#d4d4d8' : '#57534e',
             'line' => 'rgba(0,0,0,.1)',
@@ -123,6 +135,34 @@ class Themes
     public static function btnStyle(string $theme): string
     {
         return (self::ALL[$theme] ?? self::ALL['heritage'])['btn_style'];
+    }
+
+    /** The colour itself if it reads on this background, else the nearest darker shade that does */
+    public static function readable(string $hex, string $on, float $need): string
+    {
+        $c = $hex;
+        for ($i = 0; $i < 24 && self::contrast($c, $on) < $need; $i++) {
+            $c = self::shade($c, .88);
+        }
+
+        return $c;
+    }
+
+    /** A colour for writing or drawing on the dark bands (the main colour or its deep shade): the colour itself if it shows, else the best of a lighter tint, white or near-black */
+    public static function onDark(string $hex, array $backs): string
+    {
+        $score = fn (string $c) => min(array_map(fn ($b) => self::contrast($c, $b), $backs));
+        $best = $hex;
+        foreach ([$hex, self::tint($hex, .5), '#ffffff', '#1c1917'] as $c) {
+            if ($score($c) >= 3.0) {
+                return $c;
+            }
+            if ($score($c) > $score($best)) {
+                $best = $c;
+            }
+        }
+
+        return $best;
     }
 
     /** A lighter tint of a colour: $amount is how far it moves towards white (0.4 = 40%) */
