@@ -38,7 +38,10 @@ class ReportController extends Controller
             default                                         => $this->adminDashboard($sid),
         };
 
-        return Inertia::render('SchoolAdmin/Reports/Dashboard', array_merge($data, ['role' => $role]));
+        // A new school administrator sees what is left to set up, until everything is done
+        $setup = $role === 'school-admin' ? \App\Support\SetupChecklist::for($sid) : null;
+
+        return Inertia::render('SchoolAdmin/Reports/Dashboard', array_merge($data, ['role' => $role, 'setup' => $setup && $setup['done'] < $setup['total'] ? $setup : null]));
     }
 
     private function adminDashboard(int $sid): array

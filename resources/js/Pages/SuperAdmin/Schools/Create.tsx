@@ -25,6 +25,10 @@ const schema = z.object({
     currency: z.string().default('NGN'),
     language: z.string().default('en'),
     status:   z.enum(['active', 'inactive', 'suspended']).default('active'),
+    admin_name:     z.string().optional(),
+    admin_email:    z.string().email('Invalid email').optional().or(z.literal('')),
+    admin_password: z.string().min(8, 'At least 8 characters').optional().or(z.literal('')),
+    school_type:    z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -163,6 +167,31 @@ export default function CreateSchool() {
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">Get the school started (optional)</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div className="space-y-1.5 sm:col-span-2">
+                                <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Kind of school</Label>
+                                <Select onValueChange={(v) => setValue('school_type', v === 'none' ? '' : v)}>
+                                    <SelectTrigger className="h-9"><SelectValue placeholder="Add its classes, subjects, terms and grades" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Leave empty for now</SelectItem>
+                                        <SelectItem value="nigerian">Nigerian (Nursery to SS3, WAEC grades)</SelectItem>
+                                        <SelectItem value="british">British (Nursery to Year 13)</SelectItem>
+                                        <SelectItem value="american">American (Pre-K to Grade 12)</SelectItem>
+                                        <SelectItem value="montessori">Montessori</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <p className="text-xs text-slate-500 sm:col-span-2">The first administrator is made now, so the school can sign in at once. Leave the password empty to have one made for you; it is shown once after saving.</p>
+                            <Field name="admin_name" label="Administrator's name" placeholder="Mrs Ade Bello" />
+                            <Field name="admin_email" label="Administrator's email" placeholder="head@school.edu" type="email" />
+                            <Field name="admin_password" label="Password" placeholder="made for you if empty" />
                         </CardContent>
                     </Card>
 
