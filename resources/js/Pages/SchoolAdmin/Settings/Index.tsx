@@ -185,10 +185,8 @@ async function shrinkPicture(file: File, maxSide: number): Promise<File> {
 
 function BrandingTab({ logoUrl, logoColors, settings }: { logoUrl: string | null; logoColors: string[]; settings: Record<string, string> }) {
     const form = useForm<{
-        logo: File | null; favicon: File | null;
         tagline: string; footer_text: string; primary_color: string;
     }>({
-        logo: null, favicon: null,
         tagline:      settings.tagline      ?? '',
         footer_text:  settings.footer_text  ?? '',
         primary_color: settings.primary_color ?? '#6366f1',
@@ -201,19 +199,50 @@ function BrandingTab({ logoUrl, logoColors, settings }: { logoUrl: string | null
     const faviconRef = useRef<HTMLInputElement>(null);
     const { flash }  = usePage<any>().props;
 
+    const [colors, setColors] = useState<string[]>(logoColors);
+    const [busy, setBusy] = useState<'logo' | 'favicon' | null>(null);
+    const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+
+    /** The picture goes up on its own, right after it is chosen, so a problem shows here and never loses the other fields */
     async function handleFile(field: 'logo' | 'favicon', picked: File | null) {
         if (!picked) return;
-        // Make big phone photos small before sending, so the upload is quick and never hits the server's size limit
-        const file = await shrinkPicture(picked, field === 'logo' ? 600 : 128);
-        form.setData(field, file);
-        const url = URL.createObjectURL(file);
-        if (field === 'logo')    setLogoPreview(url);
-        if (field === 'favicon') setFaviconPreview(url);
+        setBusy(field);
+        setNote(null);
+        try {
+            // Make big phone photos small before sending, so the upload is quick and never hits the server's size limit
+            const file = await shrinkPicture(picked, field === 'logo' ? 600 : 128);
+            const body = new FormData();
+            body.append('kind', field);
+            body.append('image', file);
+            const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+            const res = await fetch('/school/settings/brand-image', {
+                method: 'POST', body, credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!res.ok) {
+                let why = '';
+                try { why = (await res.json())?.message ?? ''; } catch { /* the server gave no details */ }
+                const text = res.status === 413 ? 'That picture is too big. Try one under 10 MB.'
+                    : res.status === 419 ? 'This page has been open too long. Reload it, then try again.'
+                    : res.status === 422 ? 'That file is not a picture we can use. Try a JPG or PNG under 10 MB.'
+                    : `The ${field} could not be saved (code ${res.status}).${why ? ` Reason: ${why}` : ''}`;
+                setNote({ ok: false, text });
+                return;
+            }
+            const data = await res.json() as { url: string; colors: string[] };
+            if (field === 'logo')    { setLogoPreview(data.url); setColors(data.colors ?? []); }
+            if (field === 'favicon') setFaviconPreview(data.url);
+            setNote({ ok: true, text: field === 'logo' ? 'Logo saved.' : 'Favicon saved.' });
+        } catch {
+            setNote({ ok: false, text: 'We could not reach the server. Check your internet connection and try again.' });
+        } finally {
+            setBusy(null);
+        }
     }
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        form.post('/school/settings/branding', { forceFormData: true });
+        form.post('/school/settings/branding', { preserveScroll: true });
     }
 
     return (
@@ -225,6 +254,8 @@ function BrandingTab({ logoUrl, logoColors, settings }: { logoUrl: string | null
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {flash?.success && <SuccessBanner message={flash.success} />}
+                    {busy && <p className="text-sm text-slate-500">Uploading your {busy}…</p>}
+                    {note && <p className={`text-sm ${note.ok ? 'text-emerald-600' : 'text-red-600'}`} role="status">{note.text}</p>}
 
                     {/* Logo */}
                     <div>
@@ -285,11 +316,11 @@ function BrandingTab({ logoUrl, logoColors, settings }: { logoUrl: string | null
                                     onChange={e => form.setData('primary_color', e.target.value)}
                                     className="font-mono" placeholder="#6366f1" />
                             </div>
-                            {logoColors.length > 0 && (
+                            {colors.length > 0 && (
                                 <div className="mt-2">
                                     <p className="text-xs text-slate-500 mb-1.5">Colours found in your logo. Tap one to use it:</p>
                                     <div className="flex flex-wrap gap-2">
-                                        {logoColors.map(c => (
+                                        {colors.map(c => (
                                             <button key={c} type="button" onClick={() => form.setData('primary_color', c)} title={c}
                                                 className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-mono ${form.data.primary_color.toLowerCase() === c ? 'border-slate-900 dark:border-white' : 'border-slate-200 dark:border-white/20'}`}>
                                                 <i className="size-4 rounded-full border border-white/60" style={{ background: c }} />{c}

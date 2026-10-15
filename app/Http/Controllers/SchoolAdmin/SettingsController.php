@@ -85,6 +85,51 @@ class SettingsController extends Controller
         return back()->with('success', 'Branding saved.');
     }
 
+    /**
+     * The logo (or favicon) on its own small step: the page sends just the picture here, right after it is
+     * chosen, and gets back the new picture and the colours found in it. If anything breaks, the answer says
+     * what, so the person sees the real reason on screen instead of a blank error.
+     */
+    public function saveBrandImage(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'kind'  => 'required|in:logo,favicon',
+            'image' => 'required|image|max:10240',
+        ]);
+
+        try {
+            $sid    = $this->getSchoolId();
+            $school = School::findOrFail($sid);
+            $file   = $request->file('image');
+
+            if ($request->input('kind') === 'logo') {
+                $path = \App\Support\ImageShrinker::store($file, "schools/{$sid}", 'public', 600);
+                $old  = $school->logo;
+                $school->update(['logo' => $path]);
+                if ($old && $old !== $path) {
+                    Storage::disk('public')->delete($old);
+                }
+                $url = $school->fresh()->logo_url;
+
+                return response()->json(['kind' => 'logo', 'url' => $url, 'colors' => \App\Support\LogoColors::for($school->fresh())]);
+            }
+
+            $old  = SchoolSetting::get($sid, 'favicon');
+            $path = \App\Support\ImageShrinker::store($file, "schools/{$sid}", 'public', 128);
+            SchoolSetting::set($sid, 'favicon', $path, 'branding');
+            if ($old && $old !== $path) {
+                Storage::disk('public')->delete($old);
+            }
+
+            return response()->json(['kind' => 'favicon', 'url' => '/storage/'.$path, 'colors' => []]);
+        } catch (\Throwable $e) {
+            report($e);
+            $what = str_replace(base_path().'/', '', class_basename($e).': '.$e->getMessage());
+
+            return response()->json(['message' => mb_substr($what, 0, 250)], 500);
+        }
+    }
+
     public function saveAcademic(Request $request)
     {
         $sid = $this->getSchoolId();

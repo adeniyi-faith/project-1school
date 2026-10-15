@@ -13,6 +13,8 @@ class Themes
     private const NEWSREADER = "'Newsreader','Source Serif 4','Iowan Old Style',Georgia,serif";
     private const INSTRUMENT = "'Instrument Sans','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
     private const CRIMSON = "'Crimson Pro','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
+    private const MONTSERRAT = "'Montserrat','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
+    private const GARAMOND = "'EB Garamond','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const SANS = "'Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
 
     public const ALL = [
@@ -24,11 +26,11 @@ class Themes
             'hdr' => 'brand2', 'ftr' => 'brand2',
         ],
         'modern' => [
-            'label' => 'Modern', 'note' => 'Floating menu bar, a split banner with a big picture, a bento grid of cards and a timeline.',
-            'brand' => '#4338ca', 'brand2' => '#f59e0b', 'bg' => '#ffffff', 'soft' => '#f5f6ff', 'text' => '#0f172a',
-            'head' => self::SANS, 'body' => self::SANS,
-            'radius' => '1rem', 'radius_lg' => '1.5rem', 'btn_radius' => '999px', 'btn_case' => 'none', 'btn_track' => '0', 'btn_style' => 'solid',
-            'hdr' => 'bg', 'ftr' => 'dark',
+            'label' => 'Modern', 'note' => 'Crisp preparatory-school look: solid navy bar, full-screen photo banner, square red buttons, slanted panel edges and a blue footer.',
+            'brand' => '#002855', 'brand2' => '#c10230', 'bg' => '#ffffff', 'soft' => '#f3f5f9', 'text' => '#3b3b3b',
+            'head' => self::MONTSERRAT, 'body' => self::MONTSERRAT, 'fonts' => 'Montserrat:wght@400;500;600;700;800|EB+Garamond:ital,wght@0,400;0,500;1,400',
+            'radius' => '0', 'radius_lg' => '0', 'btn_radius' => '0', 'btn_case' => 'uppercase', 'btn_track' => '.26em', 'btn_style' => 'solid',
+            'hdr' => 'brand', 'ftr' => 'slate',
         ],
         'warm' => [
             'label' => 'Warm', 'note' => 'Friendly and playful: centred header, soft shapes, an arched picture, bright rounded cards.',
@@ -86,9 +88,9 @@ class Themes
         $brand = self::isHex($color) ? strtolower($color) : $t['brand'];
         $brand2 = self::isHex($color2) ? strtolower($color2) : $t['brand2'];
 
-        $hdr = $t['hdr'] === 'brand2' ? $brand2 : $t['bg'];
+        $hdr = match ($t['hdr']) { 'brand2' => $brand2, 'brand' => $brand, default => $t['bg'] };
         $deep = self::shade($brand, .55);
-        $ftr = match ($t['ftr']) { 'brand2' => $brand2, 'deep' => $deep, default => '#171717' };
+        $ftr = match ($t['ftr']) { 'brand2' => $brand2, 'deep' => $deep, 'slate' => self::tint($brand, .14), default => '#171717' };
         $hdrInk = self::ink($hdr);
 
         return [
@@ -105,6 +107,7 @@ class Themes
             // the school name takes the main colour when that reads well on the header, else plain text
             'hdr-name' => self::contrast($brand, $hdr) >= 3.5 ? $brand : $hdrInk,
             'ftr-bg' => $ftr, 'ftr-ink' => self::ink($ftr),
+            'serif-font' => self::GARAMOND,
             // links in running text: the main colour, unless it is too faint on the page background
             'link' => self::contrast($brand, $t['bg']) >= 4.5 ? $brand : $t['text'],
         ];
