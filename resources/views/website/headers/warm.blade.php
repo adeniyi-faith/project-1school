@@ -13,7 +13,7 @@
         <nav class="menu" id="menu" aria-label="Main">
             <div class="wrap wa-menu-in">
                 <div class="menu-top">
-                    @include('website.partials.brand')
+                    @include('website.partials.brand', ['inMenu' => true])
                     <button class="menu-x" type="button" data-menu-close aria-label="Close menu"><span>Close</span><svg class="wa-dots" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 3 10 10M13 3 3 13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
                 </div>
                 <form class="wa-msearch" role="search" method="get" action="{{ $homeUrl }}/search">

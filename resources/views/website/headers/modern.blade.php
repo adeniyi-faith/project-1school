@@ -5,7 +5,7 @@
         <div class="hdr-tools">@include('website.partials.search-icon')<button class="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu"><i></i><i></i><i></i></button></div>
         <nav class="menu" id="menu" aria-label="Main">
             <div class="menu-top">
-                @include('website.partials.brand')
+                @include('website.partials.brand', ['inMenu' => true])
                 <button class="menu-x" type="button" data-menu-close aria-label="Close menu">X</button>
             </div>
             <ul class="menu-list">

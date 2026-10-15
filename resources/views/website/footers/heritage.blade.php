@@ -6,7 +6,7 @@
 @endphp
 <footer class="ftr ftr--heritage">
     <div class="wrap">
-        <a class="fh-brand" href="{{ $homeUrl }}">@if ($logo)<img src="{{ $logo }}" alt="" width="64" height="64">@endif<span>{{ $school->name }}</span></a>
+        <a class="fh-brand" href="{{ $homeUrl }}">@if ($logo)<img class="{{ $logoFit->classes('ftr') }}" src="{{ $logo }}" alt="{{ $school->name }} logo" width="64" height="64">@endif<span>{{ $school->name }}</span></a>
 
         <div class="fh-visit">
             @if ($place)<p><a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($school->name.' '.$place) }}" target="_blank" rel="noopener">{{ $place }} (Map)</a></p>@endif

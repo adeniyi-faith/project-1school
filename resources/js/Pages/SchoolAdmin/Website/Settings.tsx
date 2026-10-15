@@ -7,18 +7,20 @@ import { ErrorList, SaveBar, Switch, WebsiteLayout } from '@/components/website/
 import type { WebsiteShell } from '@/Types/website';
 
 interface Props {
-    shell: WebsiteShell; socialNames: Record<string, string>; sitemapUrl: string; feedUrl: string;
-    site: { enabled: boolean; tagline: string | null; meta_description: string | null; footer_text: string | null; social: Record<string, string>; news_label: string; news_in_menu: boolean; apply_button: boolean; announcement: string; cookie_notice: boolean };
+    shell: WebsiteShell; socialNames: Record<string, string>; logoOptions: { modes: Record<string, string>; shapes: Record<string, string>; colours: Record<string, string> }; sitemapUrl: string; feedUrl: string;
+    site: { enabled: boolean; tagline: string | null; meta_description: string | null; footer_text: string | null; social: Record<string, string>; news_label: string; news_in_menu: boolean; apply_button: boolean; announcement: string; cookie_notice: boolean; logo_badge: string; logo_badge_shape: string; logo_badge_colour: string };
     school: { name: string; phone: string | null; email: string | null; address: string | null; logo: string | null };
 }
 
+const select = 'w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm dark:border-white/10 dark:bg-transparent';
 const row = 'flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 dark:border-white/10';
 
-export default function WebsiteSettings({ shell, site, school, socialNames, sitemapUrl, feedUrl }: Props) {
+export default function WebsiteSettings({ shell, site, school, socialNames, logoOptions, sitemapUrl, feedUrl }: Props) {
     const canEdit = shell.canEdit;
     const form = useForm({
         enabled: site.enabled, tagline: site.tagline ?? '', meta_description: site.meta_description ?? '', footer_text: site.footer_text ?? '',
         social: site.social, news_label: site.news_label, news_in_menu: site.news_in_menu, apply_button: site.apply_button, announcement: site.announcement ?? '', cookie_notice: site.cookie_notice ?? true,
+        logo_badge: site.logo_badge ?? 'auto', logo_badge_shape: site.logo_badge_shape ?? 'rounded', logo_badge_colour: site.logo_badge_colour ?? 'white',
     });
     const d = form.data;
 
@@ -43,6 +45,18 @@ export default function WebsiteSettings({ shell, site, school, socialNames, site
                     <label className="block space-y-1"><span className="font-medium">Short description for Google</span><Textarea disabled={!canEdit} maxLength={300} placeholder="A caring nursery, primary and secondary school in Lekki, Lagos, with strong WAEC results." value={d.meta_description} onChange={e => form.setData('meta_description', e.target.value)} /><span className="block text-xs text-slate-500">Used for any page that has no description of its own.</span></label>
                     <label className="block space-y-1"><span className="font-medium">Line at the bottom of every page</span><Input disabled={!canEdit} maxLength={300} placeholder="Approved by the Lagos State Ministry of Education" value={d.footer_text} onChange={e => form.setData('footer_text', e.target.value)} /></label>
                 </div>
+            </Panel>
+
+            <Panel title="Logo on your website (advanced)" description="Some logos are hard to see on certain colours, for example a white logo on a white bar, or a dark logo on a dark footer. In Automatic, we check each place your logo appears and put it on a soft badge only where it would be hard to see. Your logo itself is never changed.">
+                <div className="grid gap-3 text-sm sm:grid-cols-3">
+                    <label className="block space-y-1"><span className="font-medium">Badge behind the logo</span>
+                        <select className={select} disabled={!canEdit} value={d.logo_badge} onChange={e => form.setData('logo_badge', e.target.value)}>{Object.entries(logoOptions.modes).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+                    <label className="block space-y-1"><span className="font-medium">Badge shape</span>
+                        <select className={select} disabled={!canEdit || d.logo_badge === 'never'} value={d.logo_badge_shape} onChange={e => form.setData('logo_badge_shape', e.target.value)}>{Object.entries(logoOptions.shapes).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+                    <label className="block space-y-1"><span className="font-medium">Badge colour</span>
+                        <select className={select} disabled={!canEdit || d.logo_badge === 'never'} value={d.logo_badge_colour} onChange={e => form.setData('logo_badge_colour', e.target.value)}>{Object.entries(logoOptions.colours).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+                </div>
+                <p className="mt-2 text-xs text-slate-500">A very light logo gets a dark badge so it still shows. Check the result on your website with the Preview button.</p>
             </Panel>
 
             <Panel title="Announcement bar" description="One short line in a coloured bar at the very top of every page, for example the date of an open day. Leave it empty to hide the bar.">

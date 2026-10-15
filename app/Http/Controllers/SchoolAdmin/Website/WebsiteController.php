@@ -5,10 +5,12 @@ namespace App\Http\Controllers\SchoolAdmin\Website;
 use App\Models\SchoolSiteMedia;
 use App\Models\SchoolSitePage;
 use App\Models\SchoolSitePost;
+use App\Website\LogoFit;
 use App\Website\SiteRenderer;
 use App\Website\Themes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -53,8 +55,10 @@ class WebsiteController extends WebsiteBase
                 'enabled' => $site->enabled, 'tagline' => $site->tagline, 'meta_description' => $site->meta_description, 'footer_text' => $site->footer_text,
                 'social' => array_merge(array_fill_keys(array_keys(SiteRenderer::SOCIAL), ''), $site->social ?? []),
                 'news_label' => $site->option('news_label'), 'news_in_menu' => (bool) $site->option('news_in_menu'), 'apply_button' => (bool) $site->option('apply_button'), 'announcement' => (string) $site->option('announcement'), 'cookie_notice' => (bool) $site->option('cookie_notice'),
+                'logo_badge' => $site->option('logo_badge'), 'logo_badge_shape' => $site->option('logo_badge_shape'), 'logo_badge_colour' => $site->option('logo_badge_colour'),
             ],
             'socialNames' => SiteRenderer::SOCIAL,
+            'logoOptions' => ['modes' => LogoFit::MODES, 'shapes' => LogoFit::SHAPES, 'colours' => LogoFit::COLOURS],
             'school' => ['name' => $school->name, 'phone' => $school->phone, 'email' => $school->email, 'address' => collect([$school->address, $school->city, $school->state])->filter()->implode(', '), 'logo' => $school->logo ? $school->logo_url : null],
             'sitemapUrl' => SiteRenderer::homeUrl($school).'/sitemap.xml',
             'feedUrl' => SiteRenderer::homeUrl($school).'/feed.xml',
@@ -75,15 +79,19 @@ class WebsiteController extends WebsiteBase
             'apply_button' => 'sometimes|boolean',
             'announcement' => 'sometimes|nullable|string|max:200',
             'cookie_notice' => 'sometimes|boolean',
+            'logo_badge' => ['sometimes', Rule::in(array_keys(LogoFit::MODES))],
+            'logo_badge_shape' => ['sometimes', Rule::in(array_keys(LogoFit::SHAPES))],
+            'logo_badge_colour' => ['sometimes', Rule::in(array_keys(LogoFit::COLOURS))],
         ]);
 
         $site = $this->site();
         $options = $site->options ?? [];
-        foreach (['news_label', 'news_in_menu', 'apply_button', 'announcement', 'cookie_notice'] as $key) {
+        foreach (['news_label', 'news_in_menu', 'apply_button', 'announcement', 'cookie_notice', 'logo_badge', 'logo_badge_shape', 'logo_badge_colour'] as $key) {
             if (array_key_exists($key, $data)) {
                 $options[$key] = match ($key) {
                     'news_label' => trim((string) $data[$key]) ?: 'News',
                     'announcement' => trim((string) $data[$key]),
+                    'logo_badge', 'logo_badge_shape', 'logo_badge_colour' => (string) $data[$key],
                     default => (bool) $data[$key],
                 };
                 unset($data[$key]);

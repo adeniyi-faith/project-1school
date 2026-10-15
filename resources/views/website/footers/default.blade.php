@@ -2,7 +2,7 @@
     <div class="wrap">
         <div class="ftr-grid">
             <div>
-                <div class="ftr-brand">@if ($logo)<img src="{{ $logo }}" alt="" width="52" height="42">@endif<span>{{ $school->name }}</span></div>
+                <div class="ftr-brand">@if ($logo)<img class="{{ $logoFit->classes('ftr') }}" src="{{ $logo }}" alt="{{ $school->name }} logo" width="52" height="42">@endif<span>{{ $school->name }}</span></div>
                 @if ($site->tagline)<p class="ftr-tag">{{ $site->tagline }}</p>@endif
                 @if (count($social))
                     <ul class="social">

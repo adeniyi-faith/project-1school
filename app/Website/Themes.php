@@ -114,6 +114,8 @@ class Themes
         $brand2T = self::readable($brand2, $t['bg'], 3.0);
         $band = self::readable($brand, '#ffffff', 4.5);
         $brand2D = self::onDark($brand2, [$band, $deep]);
+        // the full-screen menu on a phone has its own background in each theme
+        $menuBg = match ($theme) { 'heritage' => $band, 'modern' => $brand, 'warm' => '#ffffff', default => $deep };
 
         return [
             'band' => $band, 'brand-t' => $brandT, 'brand2-t' => $brand2T, 'brand2-d' => $brand2D,
@@ -126,7 +128,7 @@ class Themes
             'head-font' => $t['head'], 'body-font' => $t['body'],
             'radius' => $t['radius'], 'radius-lg' => $t['radius_lg'],
             'btn-radius' => $t['btn_radius'], 'btn-case' => $t['btn_case'], 'btn-track' => $t['btn_track'],
-            'hdr-bg' => $hdr, 'hdr-ink' => $hdrInk,
+            'hdr-bg' => $hdr, 'hdr-ink' => $hdrInk, 'menu-bg' => $menuBg,
             // the school name takes the main colour when that reads well on the header, else plain text
             'hdr-name' => self::contrast($brand, $hdr) >= 3.5 ? $brand : $hdrInk,
             'ftr-bg' => $ftr, 'ftr-ink' => self::ink($ftr),
@@ -201,7 +203,8 @@ class Themes
     /** Readable text colour (dark or white) for writing on this background */
     public static function ink(string $hex): string
     {
-        return self::luminance($hex) > 0.45 ? '#1c1917' : '#ffffff';
+        // whichever of dark or white reads better on this colour (the old fixed cut-off gave white on orange and gold)
+        return self::contrast('#1c1917', $hex) >= self::contrast('#ffffff', $hex) ? '#1c1917' : '#ffffff';
     }
 
     public static function luminance(string $hex): float
