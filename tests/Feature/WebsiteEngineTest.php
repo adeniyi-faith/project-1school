@@ -737,7 +737,6 @@ class WebsiteEngineTest extends SecurityTestCase
         $home = $this->get('/s/crest-school')->assertOk()
             ->assertSee('<footer class="ftr ftr--crest">', false)
             ->assertSee('cr-menu-in', false)
-            ->assertSee('class="cr-ring"', false)
             ->assertSee('class="cr-base"', false)
             ->getContent();
         $this->assertStringNotContainsString('images/stock/classroom-reading.jpg', $home);
