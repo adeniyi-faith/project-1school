@@ -6,7 +6,7 @@
     <div class="mf-main">
         <div class="wrap">
             <div class="mf-brand">
-                @if ($logo)<a href="{{ $homeUrl }}" class="mf-logo"><img src="{{ $logo }}" alt="" width="64" height="64" loading="lazy" decoding="async"></a>@endif
+                @if ($logo)<a href="{{ $homeUrl }}" class="mf-logo"><img class="{{ $logoFit->classes('ftr') }}" src="{{ $logo }}" alt="{{ $school->name }} logo" width="64" height="64" loading="lazy" decoding="async"></a>@endif
                 <a href="{{ $homeUrl }}" class="mf-name">{{ $school->name }}</a>
                 @if ($site->tagline)<p class="mf-tag">{{ $site->tagline }}</p>@endif
             </div>

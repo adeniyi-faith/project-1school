@@ -322,6 +322,7 @@ class SiteRenderer
             'newsUrl' => $hasPosts ? self::newsUrl($school) : null,
             'style' => Themes::style($site->theme, $site->color, $site->color2), 'theme' => $site->theme,
             'logo' => $school->logo ? $school->logo_url : null,
+            'logoFit' => LogoFit::for($school, $site, Themes::vars($site->theme, $site->color, $site->color2)),
             'social' => collect($site->social ?? [])->filter(fn ($u) => is_string($u) && preg_match('#^https://#', $u))->all(),
             'place' => collect([$school->address, $school->city, $school->state])->filter()->implode(', '),
         ];

@@ -78,13 +78,13 @@ class SiteStarter
 
         return [
             [['slug' => 'home', 'title' => 'Home', 'is_home' => true], [
-                ['type' => 'hero', 'eyebrow' => 'Admission is open', 'heading' => 'Where every child is known, challenged and cared for', 'subheading' => $n.' gives your child a strong start: good teaching, a safe campus and a community that cheers every pupil on.', 'button' => 'apply', 'button2' => 'contact'],
+                ['type' => 'hero', 'eyebrow' => 'Admission is open', 'heading' => 'Where every child is known, challenged and cared for', 'subheading' => $n.' welcomes children from pre-school and nursery through primary and secondary school, with good teaching, a safe campus and a community that cheers every pupil on.', 'button' => 'apply', 'button2' => 'contact'],
                 ['type' => 'actions', 'items' => [
                     ['icon' => 'clipboard', 'title' => 'Apply online', 'body' => 'A short form, about two minutes.', 'link' => 'apply'],
                     ['icon' => 'users', 'title' => 'Parent, student and staff sign in', 'body' => 'Results, fees and notices in one place.', 'link' => 'login'],
                     ['icon' => 'chat', 'title' => 'Talk to us', 'body' => 'Visit the campus or ask a question.', 'link' => 'contact'],
                 ]],
-                ['type' => 'text', 'eyebrow' => 'Welcome', 'heading' => 'A school that knows your child', 'body' => "At {$n} we believe every child can do well when they feel safe, known and challenged. Our teachers take time to understand how each pupil learns, so that no child is left behind and no child is held back.\n\n- Small, friendly classes\n- Qualified, caring teachers\n- Clear termly report cards you can read on your phone\n- Close contact between school and home"],
+                ['type' => 'text', 'eyebrow' => 'Welcome', 'heading' => 'A school that knows your child', 'body' => "From nursery to senior secondary, at {$n} we believe every child can do well when they feel safe, known and challenged. Our teachers take time to understand how each pupil learns, so that no child is left behind and no child is held back.\n\n- Small, friendly classes\n- Qualified, caring teachers\n- Clear termly report cards you can read on your phone\n- Close contact between school and home"],
                 ['type' => 'features', 'eyebrow' => 'Why families choose us', 'heading' => 'Everything a good school should offer', 'intro' => 'Six reasons parents trust us with their children.', 'items' => [
                     ['icon' => 'book', 'title' => 'Strong academics', 'body' => 'A full curriculum taught well, with regular tests and honest feedback.'],
                     ['icon' => 'heart', 'title' => 'Caring teachers', 'body' => 'Staff who know every child by name and celebrate their progress.'],
@@ -99,7 +99,7 @@ class SiteStarter
                     ['number' => '100%', 'label' => 'Report cards online'],
                     ['number' => '24/7', 'label' => 'Parent portal access'],
                 ]],
-                ['type' => 'steps', 'eyebrow' => 'Joining us', 'heading' => 'Joining is simple', 'intro' => 'Four easy steps from your first question to your child\'s first day.', 'items' => [
+                ['type' => 'steps', 'eyebrow' => 'Joining us', 'heading' => 'Joining is simple', 'intro' => 'Four easy steps from your first question to your child\'s first day, at any stage from nursery to senior secondary.', 'items' => [
                     ['title' => 'Apply online', 'body' => 'Fill in the short form with your child\'s details.'],
                     ['title' => 'Meet us', 'body' => 'Visit the school, and your child may sit a short assessment.'],
                     ['title' => 'Receive an offer', 'body' => 'We send you a place offer with the fees and what to bring.'],
@@ -121,10 +121,12 @@ class SiteStarter
             [['slug' => 'academics', 'title' => 'Academics'], [
                 ['type' => 'text', 'eyebrow' => 'Learning', 'heading' => 'Teaching that builds understanding', 'body' => "Our lessons follow a clear scheme of work for every subject and term. Pupils are tested regularly, and we use continuous assessment (marks from class work and tests through the term, not only the final exam) so that you can see progress early and not be surprised at the end.\n\n- Core subjects taught by qualified teachers\n- Homework that practises what was taught\n- Computer and digital skills\n- Creative arts, sports and clubs"],
                 ['type' => 'features', 'eyebrow' => 'Stages', 'heading' => 'Learning for every age', 'items' => [
-                    ['icon' => 'sprout', 'title' => 'Early years', 'body' => 'Play, phonics, number work and social skills in a warm setting.'],
-                    ['icon' => 'book', 'title' => 'Primary', 'body' => 'Strong reading, writing and mathematics with science and the arts.'],
-                    ['icon' => 'laptop', 'title' => 'Junior secondary', 'body' => 'Broader subjects, study habits and digital skills.'],
-                    ['icon' => 'cap', 'title' => 'Senior secondary', 'body' => 'Focused preparation for national exams and the next step.'],
+                    ['icon' => 'sprout', 'title' => 'Pre-school and nursery', 'body' => 'Play, songs, phonics, early number work and social skills in a warm, safe setting.'],
+                    ['icon' => 'book', 'title' => 'Primary', 'body' => 'Strong reading, writing and mathematics, with science, languages and the arts.'],
+                    ['icon' => 'laptop', 'title' => 'Junior secondary', 'body' => 'Broader subjects, good study habits and digital skills.'],
+                    ['icon' => 'cap', 'title' => 'Senior secondary', 'body' => 'Focused preparation for external exams such as WAEC, NECO, IGCSE or A-levels, and for the next step.'],
+                    ['icon' => 'users', 'title' => 'Day and boarding', 'body' => 'Where we offer boarding: supervised hostels, study time, meals and care away from home.'],
+                    ['icon' => 'heart', 'title' => 'Character and faith', 'body' => 'Moral and religious education, assemblies and values that shape kind, honest young people.'],
                 ]],
                 ['type' => 'apply', 'heading' => 'See our classrooms for yourself', 'body' => 'Book a visit or apply online.', 'button' => 'apply', 'button2' => 'contact'],
             ]],
@@ -137,7 +139,7 @@ class SiteStarter
                 ]],
                 ['type' => 'faq', 'heading' => 'Questions parents ask', 'items' => [
                     ['question' => 'How do I apply?', 'answer' => 'Use the Apply online button. Fill in a short form and our office will contact you.'],
-                    ['question' => 'Which classes can I apply for?', 'answer' => 'The form lists the classes we admit into. If you are not sure which fits your child, ask the office.'],
+                    ['question' => 'Which classes can I apply for?', 'answer' => 'We take children from pre-school and nursery up to senior secondary, depending on the classes we run. The form lists the classes open for admission. If you are not sure which fits your child, ask the office.'],
                     ['question' => 'When does the new term start?', 'answer' => 'Please contact the school office for the exact dates of the coming term.'],
                     ['question' => 'How are school fees paid?', 'answer' => 'Fees are charged each term. After enrolment you can see what is owed and pay online from the parent portal, in full or in parts where the school allows it.'],
                     ['question' => 'How will I follow my child\'s progress?', 'answer' => 'Sign in to the parent portal to see attendance, results and notices, and to download the report card each term.'],

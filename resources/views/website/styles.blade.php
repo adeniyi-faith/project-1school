@@ -397,3 +397,17 @@ em[data-rotate]{display:inline-block;transition:opacity .35s ease}
 em[data-rotate].rot-out{opacity:0}
 @media (min-width:60rem){body[data-theme=statement] .menu .menu-sub{margin-left:0}}
 @endverbatim
+
+/* Logo fitting: wide logos get a wider box; a logo that would be hard to see sits on a soft badge (see App\Website\LogoFit) */
+[data-theme] .brand img.logo--wide{max-width:min(9.5rem,36vw)}
+[data-theme] .ftr-brand img.logo--wide,[data-theme] .fh-brand img.logo--wide{max-width:min(14rem,70vw);height:auto;max-height:4rem}
+[data-theme] .mf-logo img.logo--wide{max-width:min(18rem,80vw)}
+[data-theme] img.logo--boxed{border-radius:.4rem}
+[data-theme] img.logo--badge{box-sizing:content-box;padding:.3rem;border-radius:.6rem;box-shadow:0 0 0 1px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.12);object-fit:contain}
+[data-theme] img.logo--badge-white{background:#fff}
+[data-theme] img.logo--badge-cream{background:#fbf6ea}
+[data-theme] img.logo--badge-dark{background:var(--deep);box-shadow:0 0 0 1px rgba(255,255,255,.18),0 2px 8px rgba(0,0,0,.2)}
+[data-theme] img.logo--badge.logo--rounded{border-radius:.6rem}
+[data-theme] img.logo--badge.logo--square{border-radius:0}
+[data-theme] img.logo--badge.logo--circle{border-radius:50%;padding:.45rem}
+[data-theme=modern] .brand img.logo--badge{border-right:0;margin-right:.85rem;padding:.3rem}

@@ -757,4 +757,51 @@ class WebsiteEngineTest extends SecurityTestCase
             $this->get("/s/{$slug}")->assertOk()->assertDontSee('id="cookie"', false)->assertSee('Privacy Policy');
         }
     }
+
+    private function whiteLogo(): string
+    {
+        $im = imagecreatetruecolor(120, 120);
+        imagealphablending($im, false);
+        imagesavealpha($im, true);
+        imagefill($im, 0, 0, imagecolorallocatealpha($im, 0, 0, 0, 127));
+        imagefilledellipse($im, 60, 60, 100, 100, imagecolorallocate($im, 255, 255, 255));
+        ob_start();
+        imagepng($im);
+
+        return ob_get_clean();
+    }
+
+    public function test_a_logo_that_would_vanish_sits_on_a_badge_and_the_school_can_turn_that_off(): void
+    {
+        Storage::fake('public');
+        [$school, $admin] = $this->liveSite('Badge School', 'warm'); // warm has a white header, so a white logo cannot be seen
+        Storage::disk('public')->put('logos/white.png', $this->whiteLogo());
+        $school->update(['logo' => 'logos/white.png']);
+        auth()->logout();
+
+        $this->get('/s/badge-school')->assertOk()->assertSee('class="logo logo--badge logo--badge-dark logo--rounded"', false)->assertSee('alt="Badge School logo"', false);
+
+        // the school switches the badge off in its site settings
+        $this->actingAs($admin)->put('/school/website', ['logo_badge' => 'never'])->assertSessionHasNoErrors();
+        auth()->logout();
+        $this->get('/s/badge-school')->assertOk()->assertSee('class="logo"', false)->assertDontSee('class="logo logo--badge', false);
+
+        // or asks for it everywhere, in a chosen shape and colour
+        $this->actingAs($admin)->put('/school/website', ['logo_badge' => 'always', 'logo_badge_shape' => 'circle', 'logo_badge_colour' => 'cream'])->assertSessionHasNoErrors();
+        auth()->logout();
+        $this->get('/s/badge-school')->assertOk()->assertSee('class="logo logo--badge logo--badge-cream logo--circle"', false);
+
+        // a made-up setting is refused
+        $this->actingAs($admin)->put('/school/website', ['logo_badge' => 'sparkly'])->assertSessionHasErrors('logo_badge');
+    }
+
+    public function test_the_starter_site_speaks_to_every_kind_of_school(): void
+    {
+        $school = $this->makeSchool('Every Kind School');
+        $this->actingAs($this->makeUser($school, 'school-admin'))->get('/school/website');
+        auth()->logout();
+
+        $this->get('/s/every-kind-school')->assertSee('pre-school and nursery', false);
+        $this->get('/s/every-kind-school/academics')->assertSee('Pre-school and nursery')->assertSee('Day and boarding')->assertSee('Character and faith');
+    }
 }
