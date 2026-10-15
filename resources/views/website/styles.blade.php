@@ -91,7 +91,7 @@ body.menu-open{overflow:hidden}
 .hero{position:relative;color:#fff;overflow:hidden;isolation:isolate;display:flex;align-items:center;min-height:min(86svh,44rem);background:
     radial-gradient(46rem 28rem at 88% -8%,color-mix(in srgb,var(--brand2) 42%,transparent),transparent 62%),
     radial-gradient(38rem 26rem at -8% 112%,color-mix(in srgb,#fff 16%,transparent),transparent 60%),
-    linear-gradient(135deg,color-mix(in srgb,var(--brand) 88%,#fff),var(--brand) 38%,color-mix(in srgb,var(--brand) 55%,#000))}
+    linear-gradient(135deg,color-mix(in srgb,var(--brand) 88%,#fff),var(--brand) 38%,color-mix(in srgb,var(--band) 55%,#000))}
 .hero--photo::before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.45) 55%,rgba(0,0,0,.2) 100%);z-index:-1}
 .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
 .hero--plain::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.5;background-image:radial-gradient(rgba(255,255,255,.22) 1.2px,transparent 1.4px);background-size:26px 26px;-webkit-mask-image:linear-gradient(100deg,transparent 0%,#000 70%);mask-image:linear-gradient(100deg,transparent 0%,#000 70%)}
@@ -263,7 +263,7 @@ a.action:hover .action-go{transform:translateX(4px)}
 /* pages that are not built from sections (apply, sign in) */
 .pagehero{position:relative;color:#fff;overflow:hidden;isolation:isolate;padding:clamp(2.6rem,7vw,4.5rem) 0 clamp(4.5rem,11vw,6.5rem);background:
     radial-gradient(34rem 20rem at 92% -10%,color-mix(in srgb,var(--brand2) 40%,transparent),transparent 62%),
-    linear-gradient(135deg,color-mix(in srgb,var(--brand) 88%,#fff),var(--brand) 40%,color-mix(in srgb,var(--brand) 55%,#000))}
+    linear-gradient(135deg,color-mix(in srgb,var(--brand) 88%,#fff),var(--brand) 40%,color-mix(in srgb,var(--band) 55%,#000))}
 .pagehero::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.45;background-image:radial-gradient(rgba(255,255,255,.22) 1.2px,transparent 1.4px);background-size:26px 26px;-webkit-mask-image:linear-gradient(100deg,transparent 0%,#000 75%);mask-image:linear-gradient(100deg,transparent 0%,#000 75%)}
 .pagehero h1{color:#fff;font-size:clamp(2rem,6vw,3.2rem);margin-bottom:.4em;max-width:20ch}
 .pagehero .hero-tag{font-size:.78rem;opacity:1;margin:0 0 1.1rem}
@@ -324,7 +324,7 @@ a.action:hover .action-go{transform:translateX(4px)}
 @media (min-width:44rem){.photos{columns:3;column-gap:1rem}.photo{margin-bottom:1rem}}
 @media (min-width:64rem){.photos{columns:4}}
 .albums{display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fill,minmax(min(100%,17rem),1fr))}
-.album{position:relative;display:block;aspect-ratio:4/3;overflow:hidden;border-radius:var(--radius-lg);background:var(--brand);color:#fff;text-decoration:none}
+.album{position:relative;display:block;aspect-ratio:4/3;overflow:hidden;border-radius:var(--radius-lg);background:var(--band);color:#fff;text-decoration:none}
 .album img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .4s}
 .album:hover img{transform:scale(1.05)}
 .album-body{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;gap:.15rem;padding:2.5rem 1.1rem 1rem;background:linear-gradient(transparent,rgba(0,0,0,.78))}
@@ -348,7 +348,7 @@ a.action:hover .action-go{transform:translateX(4px)}
 @media (min-width:60rem){.notice p{text-align:center}}
 .sec--dark{background:var(--deep);color:var(--deep-ink)}
 .sec--dark h1,.sec--dark h2,.sec--dark h3{color:inherit}
-.sec--dark .eyebrow{color:var(--brand2)}
+.sec--dark .eyebrow{color:var(--brand2-d)}
 .sec--dark .sec-head p{color:inherit;opacity:.88}
 .sec--quote{padding-top:0}
 .sec--tint{background:var(--soft)}

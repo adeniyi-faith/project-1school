@@ -13,8 +13,8 @@
 
 /* Heritage: white card, thick gold top edge, outlined capital button */
 [data-theme=heritage] .cookie{border-radius:var(--radius);border-top:5px solid var(--brand2);box-shadow:0 24px 60px -18px rgba(0,0,0,.45)}
-[data-theme=heritage] .cookie-title{font-family:var(--head-font);font-size:1.5rem;font-weight:600;color:var(--brand)}
-[data-theme=heritage] .cookie-ok{background:transparent;color:var(--brand);border-color:var(--brand);border-radius:.75rem;font-size:.85rem;letter-spacing:.16em;text-transform:uppercase}
+[data-theme=heritage] .cookie-title{font-family:var(--head-font);font-size:1.5rem;font-weight:600;color:var(--brand-t)}
+[data-theme=heritage] .cookie-ok{background:transparent;color:var(--brand-t);border-color:var(--brand);border-radius:.75rem;font-size:.85rem;letter-spacing:.16em;text-transform:uppercase}
 [data-theme=heritage] .cookie-ok:hover{background:var(--brand);color:var(--brand-ink);filter:none}
 
 /* Statement: deep sheet, gold button */
@@ -34,7 +34,7 @@
 
 /* Warm: white card, orange edge, maroon button */
 [data-theme=warm] .cookie{border-radius:1.5rem;border:2px solid var(--brand2);box-shadow:0 26px 60px -20px rgba(60,15,25,.5)}
-[data-theme=warm] .cookie-title{font-family:var(--head-font);font-weight:600;color:var(--brand)}
+[data-theme=warm] .cookie-title{font-family:var(--head-font);font-weight:600;color:var(--brand-t)}
 [data-theme=warm] .cookie-ok{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);border-radius:.35rem;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase}
 [data-theme=warm] .cookie-ok:hover{background:var(--brand2);border-color:var(--brand2);color:var(--brand2-ink);filter:none}
 @media print{.cookie{display:none}}
