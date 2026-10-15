@@ -8,7 +8,7 @@
 <link rel="icon" href="{{ asset('favicon.ico') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Figtree:wght@400;500;600&family=Caveat:wght@600;700&display=swap">
 @verbatim
 <style>
 /* Layout: Helium-style marketing page. Header sits transparent on the hero and turns navy on scroll; hero with dotted globe; white card; navy statement; tinted numbered product cards; CTA card; navy footer. Single committed look, colours set explicitly. */
@@ -186,6 +186,29 @@ p{margin:0}
 .ops{list-style:none;margin:0;padding:0;border-top:1px solid rgba(14,26,58,.1)}
 .ops li{display:flex;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid rgba(14,26,58,.1);font-size:16px;font-weight:600}
 .ops li span{font-weight:400;color:var(--muted);font-size:14px;text-align:right}
+
+/* ---------- Real screenshots and playful touches ---------- */
+.shotframe{margin:0;background:#fff;border-radius:16px;padding:8px;box-shadow:0 0 0 1px rgba(51,70,224,.07),0 18px 44px -16px rgba(31,100,242,.32),0 6px 16px -10px rgba(12,23,56,.2)}
+.shotframe img{display:block;width:100%;height:auto;border-radius:9px;border:1px solid var(--line)}
+.card .shotframe+.shotframe{margin-top:-4px}
+.screen{background:none;padding:0}
+.screen .shotframe{border-radius:20px 20px 0 0;padding:12px 12px 0}
+.screen .shotframe img{border-bottom:0;border-radius:10px 10px 0 0}
+.phonerow{display:flex;justify-content:center;gap:10px;align-items:flex-end;padding:4px 0 0}
+.phoneframe{margin:0;flex:1;max-width:170px}
+.phoneframe:nth-child(2){transform:translateY(-14px)}
+.phoneframe .ph{display:block;background:#0E1A3A;border-radius:20px;padding:4px;box-shadow:0 18px 40px -14px rgba(12,23,56,.5)}
+.phoneframe .ph img{display:block;width:100%;height:auto;border-radius:16px}
+.scribble{font-family:"Caveat","Segoe Print",cursive;font-weight:700;font-size:clamp(28px,7vw,38px);line-height:1.1;color:var(--coral);transform:rotate(-2deg);transform-origin:left;margin-top:12px}
+.ul{position:relative;display:inline-block}
+.ul svg{position:absolute;left:0;bottom:-.28em;width:100%;height:.34em}
+.step-list .n{display:grid;place-items:center;width:40px;height:40px;border:2.5px solid var(--coral);border-radius:52% 48% 55% 45%/48% 55% 45% 52%;transform:rotate(-6deg);font-family:"Caveat","Segoe Print",cursive;font-size:28px;color:var(--coral);padding-bottom:3px}
+.step-list li:nth-child(2) .n{border-color:var(--brass);color:var(--brass);transform:rotate(5deg)}
+.step-list li:nth-child(3) .n{border-color:var(--tide);color:var(--tide)}
+.reach-card .scribble{color:#FFD7A0;transform-origin:center;margin-top:10px}
+.shotframe.short img{aspect-ratio:2.1!important;object-fit:cover;object-position:62% 0!important}
+@media (max-width:899px){.shotframe img{aspect-ratio:1.12;object-fit:cover;object-position:62% 0}.screen .shotframe img{aspect-ratio:1.05}}
+@media (min-width:900px){.phoneframe{max-width:150px}.card .phonerow{gap:14px}}
 
 /* ---------- Roles ---------- */
 .roles{padding-block:56px 72px}
@@ -390,39 +413,9 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
       <h2>A school runs on hundreds of small workflows. <span>SchoolRuns keeps every one of them moving, from the first admission form to the last report card of the session.</span></h2>
       <p class="lead">One record for every student. One ledger for every naira. One place for every parent to check in. Each person sees only what their role allows, and every change is logged.</p>
     </div>
-    <div class="stage" aria-label="Preview of the SchoolRuns bursary dashboard">
+    <div class="stage">
       <div class="screen">
-        <div class="chrome"><i></i><i></i><i></i><span>app.schoolruns.com/bursary</span></div>
-        <div class="dash">
-          <div class="dash-side">
-            <span>Overview</span><span class="on">Bursary</span><span>Students</span><span>Results</span><span>Attendance</span><span>Admissions</span><span>Staff</span>
-          </div>
-          <div class="dash-main">
-            <div class="kpis">
-              <div class="kpi"><span>Collected, 1st term</span><b>₦48.2m</b><div class="bar"><i style="width:72%;background:var(--tide)"></i></div></div>
-              <div class="kpi"><span>Outstanding</span><b>₦18.7m</b><div class="bar"><i style="width:28%;background:var(--coral)"></i></div></div>
-              <div class="kpi"><span>Paid online</span><b>81%</b><div class="bar"><i style="width:81%;background:var(--cobalt)"></i></div></div>
-              <div class="kpi"><span>Attendance today</span><b>94.6%</b><div class="bar"><i style="width:94%;background:var(--brass)"></i></div></div>
-            </div>
-            <div class="dash-two">
-              <div class="panel">
-                <h4>Recent payments <span class="sample">Sample data</span></h4>
-                <div class="row"><span>JSS 2B · Tuition</span><span class="amt">₦185,000</span><span class="pill ok">Paid</span></div>
-                <div class="row"><span>SS 1A · Tuition + Bus</span><span class="amt">₦96,500</span><span class="pill part">Part-paid</span></div>
-                <div class="row"><span>Primary 4 · Uniform</span><span class="amt">₦32,000</span><span class="pill ok">Paid</span></div>
-                <div class="row"><span>SS 3C · Exam levy</span><span class="amt">₦45,000</span><span class="pill due">Overdue</span></div>
-              </div>
-              <div class="panel chartpanel">
-                <h4>Collections by week <span>1st term</span></h4>
-                <svg viewBox="0 0 260 110" width="100%" height="110" role="img" aria-label="Sample weekly collections bar chart">
-                  <rect x="0" y="99" width="260" height="1" fill="#E4E8F2"/>
-                  <g fill="#3346E0"><rect x="6" y="20" width="18" height="79" rx="3"/><rect x="38" y="38" width="18" height="61" rx="3"/><rect x="70" y="52" width="18" height="47" rx="3"/><rect x="102" y="62" width="18" height="37" rx="3"/><rect x="134" y="70" width="18" height="29" rx="3"/><rect x="166" y="66" width="18" height="33" rx="3"/><rect x="198" y="76" width="18" height="23" rx="3"/></g>
-                  <rect x="230" y="72" width="18" height="27" rx="3" fill="#0F9F8F"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
+        <figure class="shotframe"><img src="{{ asset('images/landing/fees.jpg') }}" width="1500" height="927" alt="The SchoolRuns invoices screen with money still owed, collected and overdue" loading="lazy"></figure>
       </div>
     </div>
   </div>
@@ -432,7 +425,8 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
 <section class="pillars" id="products">
   <div class="wrap">
     <div class="sec-head">
-      <h2>Everything your school runs on</h2>
+      <h2>Everything your school <span class="ul">runs on<svg viewBox="0 0 300 18" preserveAspectRatio="none" aria-hidden="true"><path d="M3 11c30-9 52 6 82-1s55-8 85 0 58 5 85-2 36-3 42 0" fill="none" stroke="#0F9F8F" stroke-width="5" stroke-linecap="round"/></svg></span></h2>
+      <div class="scribble">one record, nothing typed twice</div>
       <p>Four connected products that share one student record, so nothing is typed twice.</p>
     </div>
     <div class="cards">
@@ -440,12 +434,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
         <div class="num">01</div>
         <h3>Online Fee Payments</h3>
         <p class="desc">Parents pay by <b>card, bank transfer or USSD</b>. Each payment is matched to the right invoice automatically, so your bursar no longer chases receipts.</p>
-        <div class="mock paybox" aria-label="Example parent fee payment screen">
-          <div class="payhead"><span>1st term fees · Adaeze O.</span><span class="sample">Sample</span></div>
-          <div class="payhead"><b>₦185,000</b><span class="pill part">₦60,000 paid</span></div>
-          <div class="methods"><span class="on">Card</span><span>Bank transfer</span><span>USSD</span><span>Instalment</span></div>
-          <div class="paybtn">Pay ₦125,000 balance</div>
-        </div>
+        <figure class="shotframe short"><img src="{{ asset('images/landing/payment-plans.jpg') }}" width="1500" height="927" alt="Payment plans that split a term fee into dated parts" loading="lazy"></figure>
         <ul class="feat">
           <li>Bulk invoices by class, term or session</li>
           <li>Sibling discounts, scholarships and instalments</li>
@@ -458,23 +447,8 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
         <div class="num">02</div>
         <h3>AI Lesson Notes &amp; Exam Questions</h3>
         <p class="desc">A teacher picks the subject, class and topic. SchoolRuns drafts a <b>full lesson note</b> and a <b>set of exam questions</b> that follow the scheme of work. The teacher reviews and approves before anything is used.</p>
-        <div class="mock" aria-label="Example AI lesson note generator">
-          <div class="gen-in">
-            <div><small>Subject</small><span>Basic Science</span></div>
-            <div><small>Class</small><span>JSS 1</span></div>
-            <div><small>Term · Week</small><span>1st · Week 4</span></div>
-            <div><small>Topic</small><span>States of matter</span></div>
-          </div>
-          <div class="gen-out">
-            <h5>Lesson note · 40 minutes</h5>
-            <p><b>Objectives:</b> By the end of the lesson, students should be able to name the three states of matter and give two everyday examples of each.</p>
-            <p><b>Introduction:</b> Show ice, water and steam from a kettle<span class="typing"></span></p>
-          </div>
-          <div class="qs">
-            <div class="q"><em>Objective</em>Which of these is a gas at room temperature?</div>
-            <div class="q"><em>Theory</em>Explain what happens to particles when ice melts.</div>
-          </div>
-        </div>
+        <figure class="shotframe"><img src="{{ asset('images/landing/questions.jpg') }}" width="1500" height="927" alt="A question bank with objective and theory questions and a marking guide" loading="lazy"></figure>
+        <figure class="shotframe"><img src="{{ asset('images/landing/lesson-notes.jpg') }}" width="1500" height="927" alt="Lesson notes waiting for approval, approved or sent back" loading="lazy"></figure>
         <ul class="feat">
           <li>Lesson notes in your school's own format</li>
           <li>Objective and theory questions with marking guides</li>
@@ -487,19 +461,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
         <div class="num">03</div>
         <h3>Portals for Parents, Students &amp; Staff</h3>
         <p class="desc">Everyone signs in to their own view. <b>Parents</b> see results, fees and attendance. <b>Students</b> see homework and timetables. <b>Staff</b> see their classes, leave and payslips.</p>
-        <div class="mock" style="background:#F6FCFA">
-          <div class="phone" aria-label="Example parent portal on a phone">
-            <div class="ph-top"><div class="avatar">AO</div><div><b>Adaeze Okafor</b><span>JSS 2B · 1st term</span></div></div>
-            <div class="ph-tiles">
-              <div><b>A</b><span>Mid-term average</span></div>
-              <div><b>97%</b><span>Attendance</span></div>
-              <div><b>₦125k</b><span>Fees balance</span></div>
-              <div><b>3</b><span>Homework due</span></div>
-            </div>
-            <div class="notice">The 1st term report card is ready to view.</div>
-            <span class="sample" style="justify-self:center">Sample data</span>
-          </div>
-        </div>
+        <div class="phonerow"><figure class="phoneframe"><span class="ph"><img src="{{ asset('images/landing/parent-home.jpg') }}" width="585" height="1170" alt="A parent home screen on a phone" loading="lazy"></span></figure><figure class="phoneframe"><span class="ph"><img src="{{ asset('images/landing/parent-results.jpg') }}" width="585" height="1170" alt="A child term results on a phone" loading="lazy"></span></figure><figure class="phoneframe"><span class="ph"><img src="{{ asset('images/landing/parent-fees.jpg') }}" width="585" height="1170" alt="A parent fee status on a phone" loading="lazy"></span></figure></div>
         <ul class="feat">
           <li>Works in any phone browser and uses little data</li>
           <li>One parent login for all their children</li>
@@ -512,6 +474,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
         <div class="num">04</div>
         <h3>School Operations</h3>
         <p class="desc">The daily running of the school in one place. Scores entered by teachers become <b>report cards</b> automatically, and new admissions go straight into class lists.</p>
+        <figure class="shotframe"><img src="{{ asset('images/landing/admissions.jpg') }}" width="1500" height="927" alt="Admission inquiries moving from new to exam booked" loading="lazy"></figure>
         <ul class="ops">
           <li>Results &amp; report cards <span>CA, exams, positions</span></li>
           <li>Attendance <span>Daily registers</span></li>
@@ -529,7 +492,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
 <!-- ============ ROLES ============ -->
 <section class="roles" id="roles">
   <div class="wrap">
-    <div class="sec-head"><h2>One platform, every role</h2></div>
+    <div class="sec-head"><h2>One platform, every role</h2><div class="scribble">everyone gets their own login</div></div>
     <ul class="role-list">
       <li><h3>Proprietors</h3><p>See fees, enrolment and performance across one school or a whole group.</p></li>
       <li><h3>Bursars</h3><p>Invoices, online payments and debtor lists that stay up to date on their own.</p></li>
@@ -544,6 +507,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
   <div class="wrap">
     <div class="sec-head">
       <h2>Get started in three steps</h2>
+      <div class="scribble">easy as 1, 2, 3!</div>
       <p>Your school can register itself today. Our team helps you bring your records across.</p>
     </div>
     <ol class="step-list">
@@ -559,6 +523,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
   <div class="wrap">
     <div class="reach-card" id="contact">
       <h2>Reach out to us</h2>
+      <div class="scribble">we would love to meet you</div>
       <p>Register your school in minutes, or book a guided demo with our team first.</p>
       <div class="hero-ctas">
         <a href="{{ route('register') }}" class="btn btn-white">Register your school</a>
