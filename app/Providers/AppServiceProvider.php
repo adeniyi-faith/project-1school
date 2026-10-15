@@ -22,6 +22,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // A server without PHP's fileinfo add-on would fail every upload; build the local disks without it
+        \App\Support\SafeLocalDisk::register();
+
         // The platform owner can do everything
         // Stamp every audit-trail entry with the school it belongs to, so a school
         // only ever sees its own history.
