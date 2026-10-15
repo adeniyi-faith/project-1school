@@ -133,6 +133,23 @@ export default function StaffShow({ staff, login, loginRoles }: Props) {
                     </CardContent>
                 </Card>
 
+                {/* Website: shown in the "Our team" section */}
+                {can('staff.edit') && (
+                    <Card className="border-slate-200 dark:border-slate-800">
+                        <CardContent className="p-5 flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white">Show on the school website</p>
+                                <p className="text-xs text-slate-500">Their name, role and photo appear in the "Our team" section, if your website has one.</p>
+                            </div>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" className="size-4" checked={!!staff.show_on_website}
+                                    onChange={(e) => router.post(`/school/staff/${staff.id}/website`, { show: e.target.checked }, { preserveScroll: true })} />
+                                {staff.show_on_website ? 'Shown' : 'Hidden'}
+                            </label>
+                        </CardContent>
+                    </Card>
+                )}
+
                 <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader><DialogTitle>Give {staff.full_name} a login</DialogTitle></DialogHeader>

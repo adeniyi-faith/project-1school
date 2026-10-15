@@ -689,6 +689,7 @@ Route::middleware('auth')->group(function () {
             Route::resource('staff', StaffController::class)->only(['destroy'])->middleware('permission:staff.delete');
             Route::post('staff/{staff}/login',             [StaffController::class, 'giveLogin'])->middleware('permission:users.create')->name('staff.login.give');
             Route::post('staff/{staff}/login/reset',       [StaffController::class, 'resetLogin'])->middleware('permission:users.edit')->name('staff.login.reset');
+            Route::post('staff/{staff}/website',           [StaffController::class, 'toggleWebsite'])->middleware('permission:staff.edit')->name('staff.website');
             Route::post('staff/{staff}/documents',         [StaffController::class, 'uploadDocument'])->middleware('permission:staff.edit')->name('staff.documents.upload');
             Route::delete('staff/documents/{document}',    [StaffController::class, 'deleteDocument'])->middleware('permission:staff.edit')->name('staff.documents.delete');
             Route::get('staff/documents/{document}/download', [StaffController::class, 'downloadDocument'])->middleware('permission:staff.view')->name('staff.documents.download');
@@ -850,6 +851,7 @@ Route::get('/s/{slug}/gallery', [PublicSiteController::class, 'gallery'])->where
 Route::get('/s/{slug}/gallery/{album}', [PublicSiteController::class, 'album'])->where('slug', '[a-z0-9-]+')->where('album', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.album');
 Route::get('/s/{slug}/sitemap.xml', [PublicSiteController::class, 'sitemap'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.sitemap');
 Route::get('/s/{slug}/sign-in', [PublicSiteController::class, 'signIn'])->where('slug', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.sign-in');
+Route::post('/s/{slug}/contact', [PublicSiteController::class, 'contact'])->where('slug', '[a-z0-9-]+')->middleware('throttle:6,1')->name('site.contact');
 Route::get('/s/{slug}/search', [PublicSiteController::class, 'search'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.search');
 Route::get('/s/{slug}/{page?}', [PublicSiteController::class, 'show'])->where('slug', '[a-z0-9-]+')->where('page', '[a-z0-9_-]+')->middleware('throttle:120,1')->name('site.show');
 Route::get('/apply/{school}',  [PublicAdmissionController::class, 'show'])->name('public.admission.show');

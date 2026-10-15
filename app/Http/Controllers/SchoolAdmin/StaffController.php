@@ -130,6 +130,16 @@ class StaffController extends Controller
         ]);
     }
 
+    /** Show or hide this person on the school website's "Our team" section */
+    public function toggleWebsite(Request $request, Staff $staff): RedirectResponse
+    {
+        $staff->forceFill(['show_on_website' => $request->boolean('show')])->save();
+
+        return back()->with('success', $staff->show_on_website
+            ? "{$staff->full_name} now shows in the Our team section of your website."
+            : "{$staff->full_name} is no longer shown on your website.");
+    }
+
     public function edit(Staff $staff): Response
     {
         return Inertia::render('SchoolAdmin/Staff/Edit', [
