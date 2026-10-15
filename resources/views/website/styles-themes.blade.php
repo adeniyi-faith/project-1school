@@ -14,17 +14,19 @@
 [data-theme=statement] p{text-wrap:wrap}
 [data-theme=statement] .hdr-in{position:relative}
 @media (max-width:59.99rem){[data-theme=statement] .hdr-tools{position:absolute;right:.45rem;top:50%;transform:translateY(-50%)}}
-[data-theme=statement] .brand{flex:1 1 auto;padding-right:2.4rem}
+[data-theme=statement] .brand{flex:1 1 auto;padding-right:6.4rem}
 [data-theme=statement] h1,[data-theme=statement] h2,[data-theme=statement] h3{font-weight:700;letter-spacing:-.015em;font-optical-sizing:auto}
 [data-theme=statement] .notice{background:var(--brand2);color:var(--deep)}
 [data-theme=statement] .notice p{font:600 .9rem/1.55 var(--body-font)}
 [data-theme=statement] .hdr{background:var(--bg);box-shadow:none;border-bottom:3px solid var(--brand);color:var(--brand-t)}
 [data-theme=statement] .hdr-in{min-height:4.7rem;padding-top:1rem;padding-bottom:1rem}
-[data-theme=statement] .brand{flex-direction:column;align-items:flex-start;gap:0}
-[data-theme=statement] .brand span{display:block}
-[data-theme=statement] .brand img{width:auto;max-width:none;height:3.1rem;margin:0 0 .5rem;object-position:left center}
+[data-theme=statement] .brand{flex-direction:row;align-items:center;gap:.8rem}
+[data-theme=statement] .brand span{display:block;min-width:0}
+[data-theme=statement] .brand img{flex:none;width:auto;max-width:4rem;height:3rem;margin:0;object-fit:contain}
 [data-theme=statement] .brand span{font:700 1.2rem/1.2 var(--head-font);letter-spacing:0;color:var(--hdr-name);overflow:visible;text-overflow:clip}
-[data-theme=statement] .brand small{margin-top:.5rem;color:var(--olive);opacity:1;font:600 .66rem/1.2 var(--body-font);letter-spacing:.2em}
+[data-theme=statement] .brand small{margin-top:.3rem;color:var(--olive);opacity:1;font:600 .62rem/1.25 var(--body-font);letter-spacing:.16em}
+[data-theme=statement] .sbar-in{padding-top:1rem;padding-bottom:1rem}
+@media (max-width:36rem){[data-theme=statement] .brand small{display:none}}
 [data-theme=statement] .burger{color:var(--brand-t)}
 [data-theme=statement] .menu a{font-family:var(--head-font);font-weight:600;white-space:nowrap}
 @media (min-width:60rem){
