@@ -35,7 +35,7 @@ body[data-theme=modern].menu-open .hdr,body[data-theme=modern].search-open .hdr{
 [data-theme=modern] main>.hero--modern:first-of-type{margin-top:calc(var(--hdr-h) * -1)}
 [data-theme=modern] .brand{color:var(--hc);gap:0}
 [data-theme=modern] .brand img{box-sizing:content-box;height:2.7rem;width:auto;max-width:3.2rem;padding-right:.85rem;margin-right:.85rem;border-right:1px solid color-mix(in srgb,var(--hc) 55%,transparent)}
-[data-theme=modern] .brand span{font:500 1.1rem/1.1 var(--serif-font);letter-spacing:.07em;text-transform:uppercase;white-space:normal;overflow:visible;max-width:12rem}
+[data-theme=modern] .brand span{font:500 clamp(.88rem,3.6vw,1.1rem)/1.15 var(--serif-font);letter-spacing:.05em;text-transform:uppercase;white-space:normal;overflow:visible;max-width:min(15rem,calc(100vw - 12.5rem))}
 [data-theme=modern] .sbtn,[data-theme=modern] .burger{color:var(--hc)}
 [data-theme=modern] .burger{width:3.4rem;padding:.8rem .55rem;gap:.35rem}
 [data-theme=modern] .burger i{height:3px;border-radius:0}
@@ -177,10 +177,10 @@ body[data-theme=modern].menu-open .hdr,body[data-theme=modern].search-open .hdr{
 .ftr--modern{background:none;padding:0;text-align:center}
 .mf-main{background:var(--ftr-bg) repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 2px,transparent 2px 18px);color:var(--ftr-ink);padding:clamp(3.5rem,8vw,5.5rem) 0 3.25rem}
 .mf-brand{margin-bottom:3rem}
-.mf-logo{display:inline-block;margin-bottom:1.25rem;padding:.65rem;background:#fff}
-.mf-logo img{height:3.6rem;width:auto}
+.mf-logo{display:block;margin:0 auto 1.5rem;width:fit-content}
+.mf-logo img{display:block;height:clamp(5rem,22vw,6.5rem);width:auto;max-width:14rem;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(0,0,0,.28))}
 .mf-name{display:inline-block;padding-top:.5rem;border-top:1px solid color-mix(in srgb,currentColor 60%,transparent);font:500 clamp(1.6rem,6vw,2.4rem)/1.1 var(--serif-font);letter-spacing:.05em;text-transform:uppercase;color:inherit;text-decoration:none}
-.mf-tag{margin:1rem 0 0;opacity:.85}
+.mf-tag{margin:1rem auto 0;max-width:22rem;line-height:1.5;opacity:.85}
 .mf-cols{display:grid;gap:2.75rem}
 .mf-cols h2{margin:0 0 1.1rem;color:inherit;font:800 clamp(1.35rem,5vw,1.7rem)/1.1 var(--body-font);letter-spacing:0;text-transform:uppercase}
 .mf-cols p{margin:0 0 1.1rem;font-size:1.05rem;line-height:1.45}
