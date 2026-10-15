@@ -49,6 +49,7 @@ class PageTemplates
             ],
             'fees' => [
                 ['type' => 'text', 'heading' => 'School fees', 'body' => "Fees are paid each term. They cover tuition, books and most activities.\n\nParents can pay online from the parent portal, in full or in parts."],
+                ['type' => 'live_fees', 'heading' => 'School fees', 'intro' => 'Fees for the current school year.', 'note' => ''],
                 ['type' => 'faq', 'heading' => 'Questions about fees', 'items' => [['question' => 'Can I pay in instalments?', 'answer' => 'Yes. Ask the bursary about a payment plan that suits your family.'], ['question' => 'How do I pay online?', 'answer' => 'Sign in to the parent portal and press Pay next to the invoice.']]],
                 ['type' => 'apply', 'heading' => 'Questions about fees?', 'body' => 'Our bursary is happy to help.', 'button' => 'contact', 'button2' => 'none'],
             ],
@@ -58,6 +59,7 @@ class PageTemplates
             ],
             'contact' => [
                 ['type' => 'contact', 'heading' => 'Get in touch'],
+                ['type' => 'contact_form', 'heading' => 'Send us a message', 'intro' => 'Ask anything. Our office will call or email you back.'],
                 ['type' => 'text', 'heading' => 'Visit us', 'body' => "Our office is open Monday to Friday, 8am to 4pm. You are welcome to visit and see the school.", 'align' => 'center'],
                 ['type' => 'apply', 'heading' => 'Thinking about '.$n.'?', 'body' => 'Start with a short online form.', 'button' => 'apply', 'button2' => 'none'],
             ],
