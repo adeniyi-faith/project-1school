@@ -38,10 +38,22 @@
 [data-theme=warm] .cookie-ok{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);border-radius:.35rem;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase}
 [data-theme=warm] .cookie-ok:hover{background:var(--brand2);border-color:var(--brand2);color:var(--brand2-ink);filter:none}
 @media print{.cookie{display:none}}
+
+/* Crest: flat white card with a thick coral top edge, capital title, chevron-free flat button */
+[data-theme=crest] .cookie{border-radius:0;border-top:6px solid var(--brand2);box-shadow:0 22px 50px -20px rgba(0,0,0,.5)}
+[data-theme=crest] .cookie-title{font-family:var(--head-font);font-weight:800;font-size:1.15rem;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-t)}
+[data-theme=crest] .cookie-ok{background:var(--band);border-color:var(--band);color:#fff;border-radius:0;font-size:.8rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase}
+[data-theme=crest] .cookie-ok:hover{background:var(--fill);border-color:var(--fill);color:var(--fill-ink);filter:none}
 @endverbatim
 @verbatim
 [data-theme=evergreen] .cookie{border-radius:0;border:1px solid var(--brand);box-shadow:0 22px 50px -20px rgba(10,30,20,.5)}
 [data-theme=evergreen] .cookie-title{font-family:var(--head-font);font-weight:400;color:var(--brand-t)}
 [data-theme=evergreen] .cookie-ok{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);border-radius:0;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase}
 [data-theme=evergreen] .cookie-ok:hover{background:var(--brand2);border-color:var(--brand2);color:var(--brand2-ink);filter:none}
+
+/* Crest: flat white card with a thick coral top edge, capital title, chevron-free flat button */
+[data-theme=crest] .cookie{border-radius:0;border-top:6px solid var(--brand2);box-shadow:0 22px 50px -20px rgba(0,0,0,.5)}
+[data-theme=crest] .cookie-title{font-family:var(--head-font);font-weight:800;font-size:1.15rem;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-t)}
+[data-theme=crest] .cookie-ok{background:var(--band);border-color:var(--band);color:#fff;border-radius:0;font-size:.8rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase}
+[data-theme=crest] .cookie-ok:hover{background:var(--fill);border-color:var(--fill);color:var(--fill-ink);filter:none}
 @endverbatim

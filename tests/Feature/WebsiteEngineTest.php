@@ -478,7 +478,7 @@ class WebsiteEngineTest extends SecurityTestCase
     {
         [$school] = $this->liveSite('Look School');
         auth()->logout();
-        $marks = ['heritage' => '<section class="hh hh--', 'modern' => '<section class="hero hero--modern', 'warm' => '<section class="hero hero--warm', 'evergreen' => '<section class="hero hero--evergreen', 'statement' => '<section class="hero hero--statement'];
+        $marks = ['heritage' => '<section class="hh hh--', 'modern' => '<section class="hero hero--modern', 'warm' => '<section class="hero hero--warm', 'evergreen' => '<section class="hero hero--evergreen', 'crest' => '<section class="hero hero--crest', 'statement' => '<section class="hero hero--statement'];
         $this->assertSame(array_keys($marks), array_keys(Themes::ALL));
         foreach ($marks as $theme => $mark) {
             \App\Models\SchoolSite::withoutGlobalScopes()->where('school_id', $school->id)->update(['theme' => $theme]);
@@ -728,6 +728,21 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->get('/apply/'.$school->id)->assertOk()->assertSee('mo-form', false);
         $this->get('/s/navy-school/search?q=school')->assertOk()->assertSee('mo-search', false);
         $this->get('/s/navy-school/gallery')->assertOk()->assertSee('class="mo-head"', false);
+    }
+
+    public function test_the_crest_theme_has_its_own_menu_banner_and_footer(): void
+    {
+        [$school] = $this->liveSite('Crest School', 'crest');
+        auth()->logout();
+        $home = $this->get('/s/crest-school')->assertOk()
+            ->assertSee('<footer class="ftr ftr--crest">', false)
+            ->assertSee('cr-menu-in', false)
+            ->assertSee('class="cr-ring"', false)
+            ->assertSee('class="cr-base"', false)
+            ->getContent();
+        $this->assertStringNotContainsString('images/stock/classroom-reading.jpg', $home);
+        $this->get('/s/crest-school/news')->assertOk()->assertSee('data-theme="crest"', false);
+        $this->get('/apply/'.$school->id)->assertOk()->assertSee('data-theme="crest"', false);
     }
 
     public function test_every_theme_has_a_privacy_policy_link_and_a_cookie_notice_that_can_be_switched_off(): void
