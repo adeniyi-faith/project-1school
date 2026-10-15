@@ -16,6 +16,8 @@ class Themes
     private const MONTSERRAT = "'Montserrat','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
     private const CASLON = "'Libre Caslon Text','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const FIGTREE = "'Figtree','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
+    private const OUTFIT = "'Outfit','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
+    private const NUNITO = "'Nunito Sans','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
     private const GARAMOND = "'EB Garamond','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const LORA = "'Lora','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const BARLOW = "'Barlow','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
@@ -49,6 +51,13 @@ class Themes
             'head' => self::CASLON, 'body' => self::FIGTREE, 'fonts' => 'Libre+Caslon+Text:ital,wght@0,400;0,700;1,400|Figtree:wght@400;500;600;700',
             'radius' => '0', 'radius_lg' => '0', 'btn_radius' => '0', 'btn_case' => 'uppercase', 'btn_track' => '.14em', 'btn_style' => 'solid',
             'hdr' => 'brand', 'ftr' => 'brand',
+        ],
+        'crest' => [
+            'label' => 'Crest', 'note' => 'Bold and friendly: white bar with a round menu button, coral full-screen menu, crimson banner with a big ring and arrow shape, huge capital headlines and chevron-cornered buttons.',
+            'brand' => '#ad0040', 'brand2' => '#ff4b52', 'bg' => '#ffffff', 'soft' => '#f8f1f3', 'text' => '#595a60',
+            'head' => self::OUTFIT, 'body' => self::NUNITO, 'fonts' => 'Outfit:wght@400;500;600;700;800|Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400',
+            'radius' => '0', 'radius_lg' => '0', 'btn_radius' => '0', 'btn_case' => 'uppercase', 'btn_track' => '.26em', 'btn_style' => 'solid',
+            'hdr' => 'bg', 'ftr' => 'brand',
         ],
         'statement' => [
             'label' => 'Statement', 'note' => 'Bold and serious: deep colour bands, huge serif headlines, numbered commitments and pillars.',
@@ -117,7 +126,12 @@ class Themes
         // the full-screen menu on a phone has its own background in each theme
         $menuBg = match ($theme) { 'heritage' => $band, 'modern' => $brand, 'warm' => '#ffffff', default => $deep };
 
+        // the second colour as a flat fill that carries writing: for buttons (small writing, 4.5) and big menus (large writing, 3)
+        [$fill, $fillInk] = self::fillFor($brand2, 4.5);
+        [$fillLg, $fillLgInk] = self::fillFor($brand2, 3.0);
+
         return [
+            'fill' => $fill, 'fill-ink' => $fillInk, 'fill-lg' => $fillLg, 'fill-lg-ink' => $fillLgInk,
             'band' => $band, 'brand-t' => $brandT, 'brand2-t' => $brand2T, 'brand2-d' => $brand2D,
             'brand' => $brand, 'brand-ink' => self::ink($brand),
             'brand2' => $brand2, 'brand2-ink' => self::ink($brand2),
@@ -146,6 +160,18 @@ class Themes
     public static function btnStyle(string $theme): string
     {
         return (self::ALL[$theme] ?? self::ALL['heritage'])['btn_style'];
+    }
+
+    /** The colour (made a little darker or lighter if it has to) and the writing colour that reads on it with at least $need contrast */
+    public static function fillFor(string $hex, float $need): array
+    {
+        $ink = self::ink($hex);
+        $fill = $hex;
+        for ($i = 0; $i < 60 && self::contrast($fill, $ink) < $need; $i++) {
+            $fill = $ink === '#ffffff' ? self::shade($fill, .97) : self::tint($fill, .04);
+        }
+
+        return [$fill, $ink];
     }
 
     /** The colour itself if it reads on this background, else the nearest darker shade that does */
