@@ -125,6 +125,21 @@ class Blocks
                 ],
                 'default' => ['text' => '', 'who' => ''],
             ],
+            'testimonials' => [
+                'label' => 'Testimonials', 'help' => 'What parents, pupils or old pupils say about the school, up to 8, shown one at a time that visitors swipe through. Only add words people have really said and agreed to share.',
+                'fields' => [
+                    ['key' => 'eyebrow', 'label' => 'Small label above the heading', 'kind' => 'text', 'max' => 40],
+                    $heading(),
+                    ['key' => 'band', 'label' => 'Background', 'kind' => 'select', 'options' => self::BANDS],
+                    ['key' => 'items', 'label' => 'Testimonials', 'kind' => 'list', 'limit' => 8, 'noun' => 'testimonial', 'fields' => [
+                        ['key' => 'text', 'label' => 'What they said', 'kind' => 'textarea', 'max' => 500],
+                        ['key' => 'name', 'label' => 'Name', 'kind' => 'text', 'max' => 80],
+                        ['key' => 'role', 'label' => 'Who they are (for example Parent of a Year 3 pupil)', 'kind' => 'text', 'max' => 100],
+                        ['key' => 'image', 'label' => 'Photo (optional)', 'kind' => 'image'],
+                    ]],
+                ],
+                'default' => ['eyebrow' => '', 'heading' => 'What families say', 'band' => 'plain', 'items' => []],
+            ],
             'profile' => [
                 'label' => 'Person profile', 'help' => 'A photo with a coloured panel under it: a name, a role and a few paragraphs. Good for the head teacher, founder or convener.',
                 'fields' => [

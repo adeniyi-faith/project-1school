@@ -39,3 +39,9 @@
 [data-theme=warm] .cookie-ok:hover{background:var(--brand2);border-color:var(--brand2);color:var(--brand2-ink);filter:none}
 @media print{.cookie{display:none}}
 @endverbatim
+@verbatim
+[data-theme=evergreen] .cookie{border-radius:0;border:1px solid var(--brand);box-shadow:0 22px 50px -20px rgba(10,30,20,.5)}
+[data-theme=evergreen] .cookie-title{font-family:var(--head-font);font-weight:400;color:var(--brand-t)}
+[data-theme=evergreen] .cookie-ok{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);border-radius:0;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase}
+[data-theme=evergreen] .cookie-ok:hover{background:var(--brand2);border-color:var(--brand2);color:var(--brand2-ink);filter:none}
+@endverbatim

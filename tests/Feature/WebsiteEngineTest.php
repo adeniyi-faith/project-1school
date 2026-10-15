@@ -478,7 +478,7 @@ class WebsiteEngineTest extends SecurityTestCase
     {
         [$school] = $this->liveSite('Look School');
         auth()->logout();
-        $marks = ['heritage' => '<section class="hh hh--', 'modern' => '<section class="hero hero--modern', 'warm' => '<section class="hero hero--warm', 'statement' => '<section class="hero hero--statement'];
+        $marks = ['heritage' => '<section class="hh hh--', 'modern' => '<section class="hero hero--modern', 'warm' => '<section class="hero hero--warm', 'evergreen' => '<section class="hero hero--evergreen', 'statement' => '<section class="hero hero--statement'];
         $this->assertSame(array_keys($marks), array_keys(Themes::ALL));
         foreach ($marks as $theme => $mark) {
             \App\Models\SchoolSite::withoutGlobalScopes()->where('school_id', $school->id)->update(['theme' => $theme]);
@@ -491,6 +491,26 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->assertSame('<em>cared for</em>', substr(\App\Website\Prose::accent('Known and *cared for*'), -18));
         $this->assertStringContainsString('<em>', \App\Website\Prose::accent('Where every child is known and cared for', true));
         $this->assertStringNotContainsString('<em>', \App\Website\Prose::accent('Short title'));
+    }
+
+    public function test_testimonials_show_in_every_theme_and_are_cleaned(): void
+    {
+        [$school] = $this->liveSite('Voices School');
+        $home = SchoolSitePage::where('is_home', true)->first();
+        $home->blocks = Blocks::clean([['type' => 'testimonials', 'heading' => 'What families say', 'items' => [
+            ['text' => 'A <b>wonderful</b> school.', 'name' => 'Mrs Ade', 'role' => 'Parent', 'image' => '../../.env'],
+            ['text' => '', 'name' => '', 'role' => '', 'image' => ''],
+        ]]], $school->id);
+        $home->save();
+        $this->assertCount(1, $home->blocks[0]['items']);
+        $this->assertSame('', $home->blocks[0]['items'][0]['image']);
+        auth()->logout();
+
+        foreach (array_keys(Themes::ALL) as $theme) {
+            \App\Models\SchoolSite::withoutGlobalScopes()->where('school_id', $school->id)->update(['theme' => $theme]);
+            $this->get('/s/voices-school')->assertOk()->assertSee('What families say')->assertSee('Mrs Ade')
+                ->assertSee('A &lt;b&gt;wonderful&lt;/b&gt; school.', false)->assertSee('class="tsl"', false);
+        }
     }
 
     public function test_the_gallery_has_albums_a_public_page_and_keeps_schools_apart(): void

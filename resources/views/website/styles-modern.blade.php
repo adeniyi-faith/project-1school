@@ -271,6 +271,15 @@ body[data-theme=modern].menu-open .hdr,body[data-theme=modern].search-open .hdr{
 [data-theme=modern] .mo-results .result h2{margin:.2rem 0 .4rem;font-size:1.1rem;letter-spacing:.02em}
 .mo-results .result h2 a{color:var(--brand2-t)}
 .mo-results .tag{color:var(--brand-t)}
+
+/* testimonials: white tiles with a heavy navy quote mark and capital names */
+[data-theme=modern] .tcard{border-radius:0;border:0;border-top:.3rem solid var(--brand2);background:#fff;box-shadow:0 18px 40px -26px rgba(10,20,60,.5)}
+[data-theme=modern] .tcard::before{content:"\201C";font:700 4.5rem/.5 var(--head-font);color:var(--brand-t)}
+[data-theme=modern] .tcard blockquote{font-family:var(--body-font);font-style:normal;font-size:1.15rem;line-height:1.65}
+[data-theme=modern] .tcard-who b{font:700 .85rem/1.3 var(--body-font);letter-spacing:.14em;text-transform:uppercase;color:var(--brand-t)}
+[data-theme=modern] .tsl-btn{border-radius:0}
+[data-theme=modern] .sec--dark .tcard{background:#fff;color:var(--text)}
+[data-theme=modern] .sec--dark .tcard-who span{color:var(--muted);opacity:1}
 @endverbatim
 
 /* ===== refinements: footer icons, back to top, sticky Apply, focus, tap size ===== */

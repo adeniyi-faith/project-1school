@@ -355,4 +355,28 @@ a.action:hover .action-go{transform:translateX(4px)}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 @media print{.hdr,.menu,.cta{display:none}}
+
+/* testimonials: one card at a time that visitors swipe through; arrows and dots appear when scripts run */
+.tsl-track{display:flex;gap:1.25rem;margin:0;padding:0 0 .5rem;list-style:none;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tsl-track::-webkit-scrollbar{display:none}
+.tsl-item{flex:0 0 100%;min-width:0;scroll-snap-align:start}
+.tcard{margin:0;height:100%;padding:clamp(1.75rem,5vw,2.75rem);background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-lg);display:flex;flex-direction:column;gap:1.5rem}
+.sec--soft .tcard{border-color:transparent}
+.tcard blockquote{margin:0;font:italic 400 clamp(1.2rem,3.4vw,1.55rem)/1.5 var(--head-font)}
+.tcard blockquote p{margin:0}
+.tcard figcaption{display:flex;align-items:center;gap:.9rem;margin-top:auto}
+.tcard figcaption img{width:3.25rem;height:3.25rem;border-radius:50%;object-fit:cover;flex:none}
+.tcard-who{display:flex;flex-direction:column;gap:.15rem;line-height:1.3}
+.tcard-who b{font-weight:700}
+.tcard-who span{color:var(--muted);font-size:.95rem}
+.sec--dark .tcard{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:inherit}
+.sec--dark .tcard-who span{color:inherit;opacity:.8}
+.tsl-nav{display:flex;align-items:center;justify-content:center;gap:1rem;margin-top:1.25rem}
+.tsl-btn{display:grid;place-items:center;width:2.9rem;height:2.9rem;border-radius:50%;border:1px solid currentColor;background:transparent;color:var(--link);cursor:pointer}
+.sec--dark .tsl-btn{color:#fff}
+.tsl-btn svg{width:1.2rem;height:1.2rem}
+.tsl-dots{display:flex;gap:.5rem}
+.tsl-dots i{width:.55rem;height:.55rem;border-radius:50%;background:currentColor;opacity:.25;transition:opacity .2s,transform .2s}
+.tsl-dots i.on{opacity:1;transform:scale(1.25)}
+@media (min-width:60rem){.tsl-item{flex-basis:calc((100% - 1.25rem)/2)}}
 @endverbatim

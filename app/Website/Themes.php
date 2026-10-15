@@ -14,6 +14,8 @@ class Themes
     private const INSTRUMENT = "'Instrument Sans','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
     private const CRIMSON = "'Crimson Pro','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const MONTSERRAT = "'Montserrat','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
+    private const CASLON = "'Libre Caslon Text','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
+    private const FIGTREE = "'Figtree','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
     private const GARAMOND = "'EB Garamond','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const LORA = "'Lora','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const BARLOW = "'Barlow','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
@@ -40,6 +42,13 @@ class Themes
             'head' => self::LORA, 'body' => self::BARLOW, 'fonts' => 'Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500|Barlow:wght@400;500;600;700|Barlow+Condensed:wght@500;600;700',
             'radius' => '1.25rem', 'radius_lg' => '1.5rem', 'btn_radius' => '.35rem', 'btn_case' => 'uppercase', 'btn_track' => '.12em', 'btn_style' => 'outline',
             'hdr' => 'bg', 'ftr' => 'brand',
+        ],
+        'evergreen' => [
+            'label' => 'Evergreen', 'note' => 'Calm and classic: three-part bar with menu and search, deep green menu and banner panel, cream pages, serif headlines with an underlined italic phrase, square capital buttons.',
+            'brand' => '#14472e', 'brand2' => '#00a062', 'bg' => '#f0ede2', 'soft' => '#ffffff', 'text' => '#2b2f2b',
+            'head' => self::CASLON, 'body' => self::FIGTREE, 'fonts' => 'Libre+Caslon+Text:ital,wght@0,400;0,700;1,400|Figtree:wght@400;500;600;700',
+            'radius' => '0', 'radius_lg' => '0', 'btn_radius' => '0', 'btn_case' => 'uppercase', 'btn_track' => '.14em', 'btn_style' => 'solid',
+            'hdr' => 'brand', 'ftr' => 'brand',
         ],
         'statement' => [
             'label' => 'Statement', 'note' => 'Bold and serious: deep colour bands, huge serif headlines, numbered commitments and pillars.',
