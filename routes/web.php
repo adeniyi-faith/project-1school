@@ -584,6 +584,7 @@ Route::middleware('auth')->group(function () {
             Route::get('settings',                              [SchoolSettingsController::class, 'index'])->middleware('permission:settings.view')->name('settings.index');
             Route::post('settings/general',                     [SchoolSettingsController::class, 'saveGeneral'])->middleware('permission:settings.edit')->name('settings.general');
             Route::post('settings/branding',                    [SchoolSettingsController::class, 'saveBranding'])->middleware('permission:settings.edit')->name('settings.branding');
+            Route::post('settings/brand-image',                 [SchoolSettingsController::class, 'saveBrandImage'])->middleware('permission:settings.edit')->name('settings.brand-image');
             Route::post('settings/academic',                    [SchoolSettingsController::class, 'saveAcademic'])->middleware('permission:settings.edit')->name('settings.academic');
             Route::post('settings/notifications',               [SchoolSettingsController::class, 'saveNotifications'])->middleware('permission:settings.edit')->name('settings.notifications');
             Route::get('settings/ai',                           [AiSettingsController::class, 'index'])->middleware('permission:settings.view')->name('settings.ai');
