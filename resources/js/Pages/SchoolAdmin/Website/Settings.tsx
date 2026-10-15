@@ -8,7 +8,7 @@ import type { WebsiteShell } from '@/Types/website';
 
 interface Props {
     shell: WebsiteShell; socialNames: Record<string, string>; logoOptions: { modes: Record<string, string>; shapes: Record<string, string>; colours: Record<string, string> }; sitemapUrl: string; feedUrl: string;
-    site: { enabled: boolean; tagline: string | null; meta_description: string | null; footer_text: string | null; social: Record<string, string>; news_label: string; news_in_menu: boolean; apply_button: boolean; announcement: string; cookie_notice: boolean; logo_badge: string; logo_badge_shape: string; logo_badge_colour: string };
+    site: { enabled: boolean; tagline: string | null; meta_description: string | null; footer_text: string | null; social: Record<string, string>; news_label: string; news_in_menu: boolean; apply_button: boolean; announcement: string; cookie_notice: boolean; whatsapp: string; whatsapp_text: string; logo_badge: string; logo_badge_shape: string; logo_badge_colour: string };
     school: { name: string; phone: string | null; email: string | null; address: string | null; logo: string | null };
 }
 
@@ -19,7 +19,7 @@ export default function WebsiteSettings({ shell, site, school, socialNames, logo
     const canEdit = shell.canEdit;
     const form = useForm({
         enabled: site.enabled, tagline: site.tagline ?? '', meta_description: site.meta_description ?? '', footer_text: site.footer_text ?? '',
-        social: site.social, news_label: site.news_label, news_in_menu: site.news_in_menu, apply_button: site.apply_button, announcement: site.announcement ?? '', cookie_notice: site.cookie_notice ?? true,
+        social: site.social, news_label: site.news_label, news_in_menu: site.news_in_menu, apply_button: site.apply_button, announcement: site.announcement ?? '', cookie_notice: site.cookie_notice ?? true, whatsapp: site.whatsapp ?? '', whatsapp_text: site.whatsapp_text ?? '',
         logo_badge: site.logo_badge ?? 'auto', logo_badge_shape: site.logo_badge_shape ?? 'rounded', logo_badge_colour: site.logo_badge_colour ?? 'white',
     });
     const d = form.data;
@@ -65,6 +65,13 @@ export default function WebsiteSettings({ shell, site, school, socialNames, logo
 
             <Panel title="Cookie notice" description="A small box at the bottom of your public website that tells visitors you use cookies and links to your Privacy Policy. Each visitor sees it once and can close it with one tap.">
                 <label className={row}><span>Show the cookie notice <span className="block text-xs text-slate-500">Matches your website theme. Turn it off if you do not want it.</span></span><Switch label="Cookie notice" disabled={!canEdit} on={d.cookie_notice} onChange={v => form.setData('cookie_notice', v)} /></label>
+            </Panel>
+
+            <Panel title="WhatsApp chat button" description="A green button on every page that opens a WhatsApp chat with your school. Leave the number empty to hide it.">
+                <div className="grid gap-3 text-sm sm:grid-cols-2">
+                    <label className="block space-y-1"><span className="font-medium">WhatsApp number</span><Input disabled={!canEdit} maxLength={20} placeholder="08031234567" value={d.whatsapp} onChange={e => form.setData('whatsapp', e.target.value)} /><span className="block text-xs text-slate-500">A Nigerian number starting with 0 is turned into +234 for you.</span></label>
+                    <label className="block space-y-1"><span className="font-medium">First message (optional)</span><Input disabled={!canEdit} maxLength={160} placeholder="Hello, I have a question about admission." value={d.whatsapp_text} onChange={e => form.setData('whatsapp_text', e.target.value)} /></label>
+                </div>
             </Panel>
 
             <Panel title="Menu and buttons">

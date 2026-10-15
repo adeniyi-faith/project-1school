@@ -226,6 +226,10 @@ class AdmissionPipelineController extends Controller
             return $student;
         });
 
+        app(\App\Services\WebhookService::class)->dispatch($sid, 'student.enrolled', [
+            'id' => $student->id, 'admission_no' => $student->admission_no, 'name' => $student->full_name, 'class' => $student->schoolClass?->name,
+        ]);
+
         $done = ["{$student->full_name} is enrolled with admission number {$student->admission_no}."];
         $flash = [];
 

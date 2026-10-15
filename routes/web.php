@@ -83,6 +83,7 @@ use App\Http\Controllers\SchoolAdmin\Website\WebsiteMediaController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsitePageController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsitePostController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteThemeController;
+use App\Http\Controllers\SchoolAdmin\Website\WebsiteDeveloperController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\ParentPortalController;
 use App\Http\Controllers\SuperAdmin\CouponController;
@@ -606,8 +607,18 @@ Route::middleware('auth')->group(function () {
                 Route::put('/',                        [WebsiteController::class, 'update'])->middleware($edit)->name('update');
 
                 Route::get('themes',                   [WebsiteThemeController::class, 'index'])->middleware($view)->name('themes');
-                Route::get('themes/{theme}/sample',    [WebsiteThemeController::class, 'sample'])->where('theme', '[a-z]+')->middleware($view)->name('themes.sample');
+                Route::get('themes/{theme}/sample',    [WebsiteThemeController::class, 'sample'])->where('theme', '[a-z0-9-]+')->middleware($view)->name('themes.sample');
                 Route::put('themes',                   [WebsiteThemeController::class, 'update'])->middleware($edit)->name('themes.update');
+
+                Route::get('developer',                [WebsiteDeveloperController::class, 'index'])->middleware($view)->name('developer');
+                Route::put('developer/settings',       [WebsiteDeveloperController::class, 'saveSettings'])->middleware($edit)->name('developer.settings');
+                Route::post('developer/webhook',       [WebsiteDeveloperController::class, 'saveWebhook'])->middleware($edit)->name('developer.webhook');
+                Route::post('developer/webhook/test',  [WebsiteDeveloperController::class, 'testWebhook'])->middleware($edit)->name('developer.webhook.test');
+                Route::post('developer/webhook/remove', [WebsiteDeveloperController::class, 'removeWebhook'])->middleware($edit)->name('developer.webhook.remove');
+                Route::post('developer/tokens',        [WebsiteDeveloperController::class, 'makeToken'])->middleware($edit)->name('developer.tokens.make');
+                Route::post('developer/tokens/{token}/revoke', [WebsiteDeveloperController::class, 'revokeToken'])->whereNumber('token')->middleware($edit)->name('developer.tokens.revoke');
+                Route::get('export',                   [WebsiteDeveloperController::class, 'export'])->middleware($view)->name('export');
+                Route::post('import',                  [WebsiteDeveloperController::class, 'import'])->middleware($edit)->name('import');
 
                 Route::get('pages',                    [WebsitePageController::class, 'index'])->middleware($view)->name('pages.index');
                 Route::post('pages',                   [WebsitePageController::class, 'store'])->middleware($edit)->name('pages.store');
@@ -689,6 +700,7 @@ Route::middleware('auth')->group(function () {
             Route::resource('staff', StaffController::class)->only(['destroy'])->middleware('permission:staff.delete');
             Route::post('staff/{staff}/login',             [StaffController::class, 'giveLogin'])->middleware('permission:users.create')->name('staff.login.give');
             Route::post('staff/{staff}/login/reset',       [StaffController::class, 'resetLogin'])->middleware('permission:users.edit')->name('staff.login.reset');
+            Route::post('staff/{staff}/website',           [StaffController::class, 'toggleWebsite'])->middleware('permission:staff.edit')->name('staff.website');
             Route::post('staff/{staff}/documents',         [StaffController::class, 'uploadDocument'])->middleware('permission:staff.edit')->name('staff.documents.upload');
             Route::delete('staff/documents/{document}',    [StaffController::class, 'deleteDocument'])->middleware('permission:staff.edit')->name('staff.documents.delete');
             Route::get('staff/documents/{document}/download', [StaffController::class, 'downloadDocument'])->middleware('permission:staff.view')->name('staff.documents.download');
@@ -837,6 +849,9 @@ Route::prefix('exam')->name('exam.')->controller(CandidateCbtController::class)-
     Route::get('images/{question}', 'image')->whereNumber('question')->name('image');
 });
 
+// Guides for schools and developers: open to everyone, signed in or not
+Route::get('/docs', [\App\Http\Controllers\DocsController::class, 'index'])->middleware('throttle:120,1')->name('docs.index');
+Route::get('/docs/{slug}', [\App\Http\Controllers\DocsController::class, 'show'])->where('slug', '[a-z0-9-]+')->middleware('throttle:120,1')->name('docs.show');
 // Public admission form (no auth)
 // Anyone can check that a testimonial or transfer certificate is genuine, using the code printed on it
 // What a student ID card's QR opens: staff of the school go to the scan screen, anyone else sees if the card is valid
@@ -848,10 +863,18 @@ Route::get('/s/{slug}/news', [PublicSiteController::class, 'news'])->where('slug
 Route::get('/s/{slug}/news/{post}', [PublicSiteController::class, 'post'])->where('slug', '[a-z0-9-]+')->where('post', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.post');
 Route::get('/s/{slug}/gallery', [PublicSiteController::class, 'gallery'])->where('slug', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.gallery');
 Route::get('/s/{slug}/gallery/{album}', [PublicSiteController::class, 'album'])->where('slug', '[a-z0-9-]+')->where('album', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.album');
+Route::get('/s/{slug}/site.json', [PublicSiteController::class, 'siteJson'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.json');
+Route::get('/s/{slug}/news.json', [PublicSiteController::class, 'newsJson'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.news-json');
 Route::get('/s/{slug}/sitemap.xml', [PublicSiteController::class, 'sitemap'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.sitemap');
 Route::get('/s/{slug}/sign-in', [PublicSiteController::class, 'signIn'])->where('slug', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.sign-in');
+Route::post('/s/{slug}/contact', [PublicSiteController::class, 'contact'])->where('slug', '[a-z0-9-]+')->middleware('throttle:6,1')->name('site.contact');
 Route::get('/s/{slug}/search', [PublicSiteController::class, 'search'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.search');
 Route::get('/s/{slug}/{page?}', [PublicSiteController::class, 'show'])->where('slug', '[a-z0-9-]+')->where('page', '[a-z0-9_-]+')->middleware('throttle:120,1')->name('site.show');
+// Read-only data for a school's own scripts, with the key from Website > Developer
+Route::middleware(['school.token', 'throttle:60,1'])->prefix('api/school')->group(function () {
+    Route::get('me', [\App\Http\Controllers\Api\SchoolApiController::class, 'me']);
+    Route::get('inquiries', [\App\Http\Controllers\Api\SchoolApiController::class, 'inquiries']);
+});
 Route::get('/apply/{school}',  [PublicAdmissionController::class, 'show'])->name('public.admission.show');
 Route::post('/apply/{school}', [PublicAdmissionController::class, 'submit'])->middleware('throttle:10,1')->name('public.admission.submit');
 Route::get('/apply/{school}/status',  [PublicAdmissionController::class, 'status'])->middleware('throttle:30,1')->name('public.admission.status');

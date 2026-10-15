@@ -46,7 +46,7 @@ class WebsitePageController extends WebsiteBase
             'hasChildren' => SchoolSitePage::where('parent_id', $row->id)->exists(),
             'blockTypes' => Blocks::catalogue(),
             'media' => $this->media(),
-            'site' => ['tagline' => $site->tagline, 'theme' => Themes::ALL[$site->theme]['label'] ?? 'Heritage'],
+            'site' => ['tagline' => $site->tagline, 'theme' => Themes::all()[$site->theme]['label'] ?? 'Heritage'],
             'school' => ['name' => $school->name, 'phone' => $school->phone, 'address' => $school->address],
         ]);
     }
@@ -167,7 +167,7 @@ class WebsitePageController extends WebsiteBase
             'page_id' => 'required|integer',
             'page' => 'array', 'page.title' => 'nullable|string|max:120', 'page.seo_title' => 'nullable|string|max:80', 'page.seo_description' => 'nullable|string|max:200',
             'page.has_blocks' => 'nullable|boolean', 'page.blocks' => 'nullable|array|max:'.Blocks::MAX_BLOCKS,
-            'site' => 'array', 'site.theme' => ['nullable', Rule::in(array_keys(Themes::ALL))],
+            'site' => 'array', 'site.theme' => ['nullable', Rule::in(array_keys(Themes::all()))],
             'site.color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'], 'site.color2' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
         ]);
 
