@@ -79,8 +79,8 @@ body[data-theme=crest] .menu .menu-sub a{font:700 1.2rem/1.3 var(--body-font);op
 [data-theme=crest] .hero--crest{display:block;min-height:0;padding:0;background:var(--band);color:#fff;overflow:hidden}
 [data-theme=crest] .hero--crest::before,[data-theme=crest] .hero--crest::after{display:none}
 .cr-chev{position:absolute;left:0;right:0;top:0;height:5.5rem;background:var(--cr-art);opacity:.85;-webkit-mask:var(--cr-v1) 0 .6rem/3.1rem 2rem repeat-x,var(--cr-v1) 1.55rem 3.2rem/3.1rem 2rem repeat-x;mask:var(--cr-v1) 0 .6rem/3.1rem 2rem repeat-x,var(--cr-v1) 1.55rem 3.2rem/3.1rem 2rem repeat-x;pointer-events:none}
-.cr-ring{position:absolute;top:-1vw;left:50%;width:min(98vw,50rem);aspect-ratio:1;transform:translateX(-50%);border-radius:50%;border:min(18vw,9rem) solid var(--cr-art);box-sizing:border-box;pointer-events:none}
-[data-theme=crest] .hero--crest .cr-in{position:relative;z-index:2;padding-top:clamp(13rem,62vw,25rem);padding-bottom:0;text-align:center}
+.cr-ring{position:absolute;top:1.75rem;left:50%;width:min(62vw,26rem);aspect-ratio:1;transform:translateX(-50%);border-radius:50%;border:min(8vw,3.25rem) solid color-mix(in srgb,var(--cr-art) 62%,var(--band));box-sizing:border-box;pointer-events:none}
+[data-theme=crest] .hero--crest .cr-in{position:relative;z-index:2;padding-top:clamp(12rem,68vw,28rem);padding-bottom:0;text-align:center}
 .cr-kick{margin:0 0 .5rem;font:400 clamp(1.4rem,5.4vw,2.1rem)/1.2 var(--body-font);text-shadow:0 1px 14px rgba(0,0,0,.25)}
 [data-theme=crest] .hero--crest h1,[data-theme=crest] .hero--crest h2{max-width:14ch;margin:0 auto;color:#fff;font-weight:800;font-size:clamp(2.6rem,11.5vw,6rem);line-height:1.02;letter-spacing:0;text-shadow:0 2px 22px rgba(0,0,0,.28)}
 [data-theme=crest] .hero--crest em{color:inherit}
@@ -97,8 +97,8 @@ body[data-theme=crest] .menu .menu-sub a{font:700 1.2rem/1.3 var(--body-font);op
 .cr-base:has(img){min-height:0;padding:0;aspect-ratio:16/10;max-height:34rem}
 .cr-base img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 @media (min-width:60rem){
-  .cr-ring{width:48rem;border-width:8rem}
-  [data-theme=crest] .hero--crest .cr-in{padding-top:23rem}
+  .cr-ring{width:22rem;border-width:3.5rem}
+  [data-theme=crest] .hero--crest .cr-in{padding-top:26rem}
   .cr-arrow{height:14rem;margin-top:-6rem}
   .cr-base{min-height:11rem}
 }
