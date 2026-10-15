@@ -659,9 +659,22 @@ class WebsiteEngineTest extends SecurityTestCase
 
     public function test_other_themes_show_the_announcement_bar_and_keep_their_own_footer(): void
     {
-        [$school, $admin] = $this->liveSite('Bar School', 'modern');
+        [$school, $admin] = $this->liveSite('Bar School', 'warm');
         $this->actingAs($admin)->put('/school/website', ['announcement' => 'School is closed on Friday']);
         auth()->logout();
         $this->get('/s/bar-school')->assertOk()->assertSee('School is closed on Friday')->assertSee('<footer class="ftr">', false)->assertDontSee('<footer class="ftr ftr--statement">', false);
+    }
+
+    public function test_the_modern_theme_has_its_own_menu_footer_and_inner_pages(): void
+    {
+        [$school] = $this->liveSite('Navy School', 'modern');
+        auth()->logout();
+        $home = $this->get('/s/navy-school')->assertOk()->assertSee('<footer class="ftr ftr--modern">', false)->assertSee('data-menu-close', false)->assertSee('images/stock/classroom-reading.jpg', false)->getContent();
+        $this->assertStringNotContainsString('hero-art', $home);
+        $this->get('/s/navy-school/news')->assertOk()->assertSee('class="mo-head"', false);
+        $this->get('/s/navy-school/sign-in')->assertOk()->assertSee('mo-who', false);
+        $this->get('/apply/'.$school->id)->assertOk()->assertSee('mo-form', false);
+        $this->get('/s/navy-school/search?q=school')->assertOk()->assertSee('mo-search', false);
+        $this->get('/s/navy-school/gallery')->assertOk()->assertSee('class="mo-head"', false);
     }
 }

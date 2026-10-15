@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="{{ $fontsUrl }}">
     @endif
     <style>:root{ {!! $style !!} }</style>
-    <style>@include('website.styles')@include('website.styles-themes')@include('website.styles-heritage')@include('website.styles-statement')</style>
+    <style>@include('website.styles')@include('website.styles-themes')@include('website.styles-heritage')@include('website.styles-statement')@include('website.styles-modern')</style>
     <noscript><style>.burger{display:none}.menu{display:block;position:static;background:none;color:inherit;padding:0}.menu a{font-size:1rem;display:inline-block;border:0;margin-right:1rem}</style></noscript>
     <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 </head>
@@ -45,6 +45,8 @@
   var st=document.querySelector('[data-search-toggle]'),sb=document.getElementById('sbar');
   if(st&&sb){st.addEventListener('click',function(e){e.preventDefault();var o=sb.hidden;sb.hidden=!o;st.setAttribute('aria-expanded',o?'true':'false');if(o){body.classList.remove('menu-open');sb.querySelector('input').focus();}});
     document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sb.hidden){sb.hidden=true;st.setAttribute('aria-expanded','false');st.focus();}});}
+  document.querySelectorAll('[data-menu-close]').forEach(function(x){x.addEventListener('click',function(){body.classList.remove('menu-open');b.setAttribute('aria-expanded','false');});});
+  var sc=function(){body.classList.toggle('scrolled',window.scrollY>8);};sc();window.addEventListener('scroll',sc,{passive:true});
   document.querySelectorAll('.menu a').forEach(function(a){a.addEventListener('click',function(){body.classList.remove('menu-open');});});
   @if ($preview)
   document.addEventListener('click',function(e){var a=e.target.closest('a');if(a){e.preventDefault();}});
