@@ -191,6 +191,52 @@ class Blocks
                 ],
                 'default' => ['heading' => 'Questions parents ask', 'items' => []],
             ],
+            'live_fees' => [
+                'label' => 'Fees by class (live)', 'help' => 'Your fee list by class, read from Fees > Fee structures for the current school year. It updates by itself and stays hidden until fees are set.',
+                'fields' => [
+                    $heading(),
+                    ['key' => 'intro', 'label' => 'A sentence under the heading', 'kind' => 'text', 'max' => 300],
+                    ['key' => 'note', 'label' => 'Note under the list (for example how to pay)', 'kind' => 'textarea', 'max' => 400],
+                ],
+                'default' => ['heading' => 'School fees', 'intro' => 'Fees for the current school year.', 'note' => 'Parents can pay online from the parent portal, in full or in parts.'],
+            ],
+            'live_dates' => [
+                'label' => 'Term dates and holidays (live)', 'help' => 'Your term start and end dates and coming holidays, read from School Setup. It updates by itself.',
+                'fields' => [$heading()],
+                'default' => ['heading' => 'Term dates'],
+            ],
+            'team' => [
+                'label' => 'Our team (live)', 'help' => 'The staff you tick "Show on the school website" on their staff page: name, role and photo.',
+                'fields' => [$heading(), ['key' => 'intro', 'label' => 'A sentence under the heading', 'kind' => 'text', 'max' => 300]],
+                'default' => ['heading' => 'Meet our team', 'intro' => ''],
+            ],
+            'events' => [
+                'label' => 'Upcoming events (live)', 'help' => 'Events you publish in News and events, soonest first. Past events drop off by themselves.',
+                'fields' => [
+                    $heading(),
+                    ['key' => 'count', 'label' => 'How many to show (1 to 12)', 'kind' => 'number', 'min' => 1, 'max' => 12],
+                ],
+                'default' => ['heading' => 'Upcoming events', 'count' => 6],
+            ],
+            'downloads' => [
+                'label' => 'Downloads', 'help' => 'Forms and documents parents can download, such as the prospectus or the admission form. Paste the link to each file (for example from Google Drive).',
+                'fields' => [
+                    $heading(),
+                    ['key' => 'items', 'label' => 'Files', 'kind' => 'list', 'limit' => 12, 'noun' => 'file', 'fields' => [
+                        ['key' => 'title', 'label' => 'Name (for example Prospectus 2026)', 'kind' => 'text', 'max' => 100],
+                        ['key' => 'link', 'label' => 'Link to the file (starts with https://)', 'kind' => 'text', 'max' => 400],
+                    ]],
+                ],
+                'default' => ['heading' => 'Downloads', 'items' => []],
+            ],
+            'contact_form' => [
+                'label' => 'Message form', 'help' => 'A short form visitors fill in. Messages land in Admissions > Inquiries and staff get a bell notice.',
+                'fields' => [
+                    $heading(),
+                    ['key' => 'intro', 'label' => 'A sentence under the heading', 'kind' => 'text', 'max' => 300],
+                ],
+                'default' => ['heading' => 'Send us a message', 'intro' => 'Ask anything. Our office will call or email you back.'],
+            ],
             'contact' => [
                 'label' => 'Contact details', 'help' => 'Your address, phone and email, taken from your school profile.',
                 'fields' => [$heading()],
@@ -255,10 +301,18 @@ class Blocks
                     ->map(fn ($row) => self::cleanFields($f['fields'], $row, $schoolId))
                     ->filter(fn ($row) => collect($row)->contains(fn ($v) => $v !== ''))
                     ->values()->all(),
-                default => mb_substr(trim(is_scalar($value) ? (string) $value : ''), 0, $f['max']),
+                default => $f['key'] === 'link' ? self::safeLink($value, $f['max']) : mb_substr(trim(is_scalar($value) ? (string) $value : ''), 0, $f['max']),
             };
         }
 
         return $clean;
+    }
+
+    /** Only an https address is kept, so a download link can never run a script */
+    private static function safeLink(mixed $value, int $max): string
+    {
+        $v = trim(is_scalar($value) ? (string) $value : '');
+
+        return preg_match('#^https://[^\s<>"\']+$#i', $v) ? mb_substr($v, 0, $max) : '';
     }
 }

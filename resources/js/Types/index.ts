@@ -253,6 +253,7 @@ export interface Staff {
     id: number;
     school_id: number;
     user_id: number | null;
+    show_on_website?: boolean;
     department_id: number | null;
     designation_id: number | null;
     emp_id: string;
