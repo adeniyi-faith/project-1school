@@ -54,7 +54,7 @@ body[data-theme=modern].menu-open .hdr,body[data-theme=modern].search-open .hdr{
 [data-theme=modern] .menu .menu-list a[aria-current] span::before{content:"";display:inline-block;width:.55rem;height:.55rem;margin-right:.75rem;background:var(--brand2-d)}
 [data-theme=modern] .menu-list svg{flex:none;width:1.7rem;height:1.7rem}
 [data-theme=modern] .menu .menu-apply{display:flex;margin:2rem 0 0;width:100%;background:var(--brand2);color:var(--brand2-ink)}
-@media (min-width:60rem){
+@media (min-width:72rem){
   [data-theme=modern] .menu,[data-theme=modern].menu-open .menu{position:static;inset:auto;display:flex;align-items:center;background:none;color:var(--hc);padding:0}
   [data-theme=modern] .menu-top{display:none}
   [data-theme=modern] .menu-list{display:flex;align-items:center;gap:.1rem}

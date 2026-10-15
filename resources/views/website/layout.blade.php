@@ -41,6 +41,10 @@
 <script>
 (function(){
   var b=document.querySelector('.burger'),body=document.body;
+  // keep the top menu on one line: when the school name had to be cut short, tighten the menu spacing
+  var fit=function(){body.classList.remove('nav-tight');var n=document.querySelector('.hdr .brand span');
+    if(n&&window.matchMedia('(min-width:72rem)').matches&&(n.scrollWidth>n.clientWidth+1||n.scrollHeight>n.clientHeight+1)){body.classList.add('nav-tight');}};
+  fit();window.addEventListener('resize',function(){window.requestAnimationFrame(fit);});window.addEventListener('load',fit);
   b.addEventListener('click',function(){var o=body.classList.toggle('menu-open');b.setAttribute('aria-expanded',o?'true':'false');});
   var st=document.querySelector('[data-search-toggle]'),sb=document.getElementById('sbar');
   if(st&&sb){st.addEventListener('click',function(e){e.preventDefault();var o=sb.hidden;sb.hidden=!o;body.classList.toggle('search-open',o);st.setAttribute('aria-expanded',o?'true':'false');if(o){body.classList.remove('menu-open');sb.querySelector('input').focus();}});

@@ -29,7 +29,7 @@
 @media (max-width:36rem){[data-theme=statement] .brand small{display:none}}
 [data-theme=statement] .burger{color:var(--brand-t)}
 [data-theme=statement] .menu a{font-family:var(--head-font);font-weight:600;white-space:nowrap}
-@media (min-width:60rem){
+@media (min-width:72rem){
   [data-theme=statement] .brand{padding-right:0}
   [data-theme=statement] .menu{flex:none}
   [data-theme=statement] .menu a{font:700 .74rem/1 var(--body-font);letter-spacing:.1em;text-transform:uppercase;border-radius:0;padding:.7rem .6rem;border-bottom:3px solid transparent;color:var(--text)}
