@@ -40,7 +40,7 @@ p{margin:0 0 1em;text-wrap:pretty}
 .menu a[aria-current]{text-decoration:underline;text-underline-offset:.3em}
 .menu .btn{margin-top:1.5rem;width:100%;font-size:1rem;border-color:currentColor;color:inherit}
 body.menu-open{overflow:hidden}
-@media (min-width:60rem){
+@media (min-width:72rem){
   .burger{display:none}
   .menu,.menu-open .menu{display:flex;align-items:center;gap:.25rem;position:static;background:none;color:inherit;padding:0;overflow:visible}
   .menu a{font:600 .95rem/1 var(--body-font);padding:.7rem .85rem;border:0;border-radius:999px;opacity:.9}
@@ -48,6 +48,17 @@ body.menu-open{overflow:hidden}
   .menu a[aria-current]{opacity:1;background:rgba(0,0,0,.08);text-decoration:none}
   .menu-signin{margin-left:.25rem}
   .menu .btn{margin:0 0 0 .5rem;width:auto;min-height:2.5rem;padding:.5rem 1.2rem;font-size:.85rem;background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+}
+
+/* the bar never wraps its words: items stay on one line, the bar gets more room, and when it is still tight the spacing shrinks (see nav-tight in layout) */
+.hdr .menu a,.hdr .menu .btn,.hdr .menu-signin{white-space:nowrap}
+@media (min-width:72rem){
+  .hdr .wrap.hdr-in{max-width:92rem;padding-left:clamp(1.25rem,3vw,2.5rem);padding-right:clamp(1.25rem,3vw,2.5rem)}
+  .hdr .brand{flex:0 1 auto;min-width:0}
+  .hdr .brand span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+  .hdr .menu{flex:none}
+  body.nav-tight .hdr .menu a,body.nav-tight .hdr .menu .menu-list a,body.nav-tight .hdr .menu-main a{padding-left:.4rem!important;padding-right:.4rem!important;letter-spacing:.04em!important}
+  body.nav-tight .hdr .menu .btn,body.nav-tight .hdr .menu .menu-apply{padding-left:.8rem!important;padding-right:.8rem!important;margin-left:.25rem!important;letter-spacing:.04em!important}
 }
 
 /* site search: the icon in the header and the box that drops down under it (every theme) */
@@ -385,7 +396,7 @@ a.action:hover .action-go{transform:translateX(4px)}
 body[data-theme] .menu .menu-sub li{margin:0;padding:0;border:0}
 body[data-theme] .menu .menu-sub a{display:block;padding:.55rem .75rem;border:0;border-radius:0;background:none;font:500 1rem/1.3 var(--body-font);letter-spacing:0;text-transform:none;text-decoration:none;opacity:.92}
 body[data-theme] .menu .menu-sub a:hover,body[data-theme] .menu .menu-sub a[aria-current]{opacity:1;text-decoration:underline;text-underline-offset:.25em;background:none}
-@media (min-width:60rem){
+@media (min-width:72rem){
   /* on wide screens where the menu sits in the bar, the sub-menu drops down when the item is hovered or tabbed to */
   [data-theme=heritage] .menu-item,[data-theme=modern] .menu-item,[data-theme=statement] .menu-item{position:relative;display:flex;align-items:center}
   [data-theme=heritage] .menu .menu-sub,[data-theme=modern] .menu .menu-sub,[data-theme=statement] .menu .menu-sub{display:none;position:absolute;top:100%;left:0;z-index:80;min-width:14rem;margin:0;padding:.5rem 0;border:0;background:#fff;color:#222;box-shadow:0 18px 40px -16px rgba(0,0,0,.45)}
@@ -395,7 +406,7 @@ body[data-theme] .menu .menu-sub a:hover,body[data-theme] .menu .menu-sub a[aria
 }
 em[data-rotate]{display:inline-block;transition:opacity .35s ease}
 em[data-rotate].rot-out{opacity:0}
-@media (min-width:60rem){body[data-theme=statement] .menu .menu-sub{margin-left:0}}
+@media (min-width:72rem){body[data-theme=statement] .menu .menu-sub{margin-left:0}}
 @endverbatim
 
 /* Logo fitting: wide logos get a wider box; a logo that would be hard to see sits on a soft badge (see App\Website\LogoFit) */
