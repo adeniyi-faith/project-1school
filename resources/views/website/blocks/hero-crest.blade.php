@@ -6,7 +6,6 @@
 @endphp
 <section class="hero hero--crest">
     <i class="cr-chev" aria-hidden="true"></i>
-    <i class="cr-ring" aria-hidden="true"></i>
     <div class="wrap cr-in">
         @if ($eyebrow !== '')<p class="cr-kick">{{ $eyebrow }}</p>@endif
         <{{ $tag }}>{!! \App\Website\Prose::heroHeading($b) !!}</{{ $tag }}>
