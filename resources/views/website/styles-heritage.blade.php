@@ -277,7 +277,6 @@
 [data-theme=heritage] .sbar input:focus{box-shadow:inset 0 -4px 0 var(--brand2)}
 [data-theme=heritage] .sbar button,[data-theme=heritage] .hp-search button{background:var(--brand2);color:var(--brand2-ink);border-radius:0;font:700 .95rem/1 var(--body-font);letter-spacing:.14em;text-transform:uppercase}
 [data-theme=heritage] .sbar button{padding:0 1.5rem}
-@media (max-width:30rem){[data-theme=heritage] .sbar-in{flex-direction:column}}
 @media (min-width:60rem){[data-theme=heritage] .hdr-tools{order:3;margin-left:.75rem;margin-right:0}[data-theme=heritage] .menu{order:2;margin-left:auto}}
 [data-theme=heritage] .hp-search{display:flex;gap:.75rem;max-width:42rem;margin-top:1.25rem}
 [data-theme=heritage] .hp-search input{flex:1;min-width:0;min-height:3.4rem;padding:.6rem 1rem;border:1px solid var(--ink);border-radius:0;background:#fff;color:var(--ink);font:400 1.3rem/1.2 var(--head-font)}

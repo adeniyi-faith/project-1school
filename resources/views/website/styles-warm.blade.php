@@ -84,7 +84,7 @@ body.menu-open{overflow:hidden}
 [data-theme=warm] .hero-sub{max-width:36rem;margin:1.25rem auto 0;font-size:1.15rem;opacity:.95}
 [data-theme=warm] .hero .btns{justify-content:center;gap:.8rem;margin-top:2rem}
 [data-theme=warm] .hero .btn--solid{background:transparent;box-shadow:none}
-.hero-tab{position:absolute;right:0;bottom:clamp(1.5rem,5vw,3rem);display:flex;align-items:center;gap:1rem;padding:.55rem .6rem .55rem 1.4rem;border-radius:2rem 0 0 2rem;background:var(--brand);color:#fff;font:600 .85rem/1 var(--body-font);letter-spacing:.2em;text-transform:uppercase;text-decoration:none;box-shadow:0 12px 28px -12px rgba(0,0,0,.6)}
+.hero-tab{position:absolute;right:0;bottom:calc(clamp(2rem,6vw,3.2rem) + 1.75rem);display:flex;align-items:center;gap:1rem;padding:.55rem .6rem .55rem 1.4rem;border-radius:2rem 0 0 2rem;background:var(--brand);color:#fff;font:600 .85rem/1 var(--body-font);letter-spacing:.2em;text-transform:uppercase;text-decoration:none;box-shadow:0 12px 28px -12px rgba(0,0,0,.6)}
 .hero-tab i,.wa-go{display:grid;place-items:center;flex:none;width:2.8rem;height:2.8rem;border-radius:50%;background:var(--brand2);color:var(--brand2-ink)}
 .hero-tab svg,.wa-go svg{width:1.3rem;height:1.3rem}
 .hero-tab:hover i{filter:brightness(1.1)}

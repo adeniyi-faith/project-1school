@@ -29,9 +29,9 @@
 /* header: solid bar; see-through over a photo banner until the page is scrolled */
 [data-theme=modern] .hdr{--hc:var(--hdr-ink);background:var(--brand);color:var(--hc);border:0;box-shadow:none;transition:background .25s}
 [data-theme=modern] .hdr-in{min-height:var(--hdr-h)}
-body:has(main>.hero--modern:first-of-type) .hdr{--hc:#fff;background:transparent}
-body.scrolled:has(main>.hero--modern:first-of-type) .hdr{--hc:var(--hdr-ink);background:var(--brand)}
-body.menu-open .hdr{background:var(--brand)!important;--hc:var(--hdr-ink)!important}
+body[data-theme=modern]:has(main>.hero--modern:first-of-type) .hdr{--hc:#fff;background:transparent}
+body[data-theme=modern].scrolled:has(main>.hero--modern:first-of-type) .hdr{--hc:var(--hdr-ink);background:var(--brand)}
+body[data-theme=modern].menu-open .hdr,body[data-theme=modern].search-open .hdr{background:var(--brand)!important;--hc:var(--hdr-ink)!important}
 [data-theme=modern] main>.hero--modern:first-of-type{margin-top:calc(var(--hdr-h) * -1)}
 [data-theme=modern] .brand{color:var(--hc);gap:0}
 [data-theme=modern] .brand img{box-sizing:content-box;height:2.7rem;width:auto;max-width:3.2rem;padding-right:.85rem;margin-right:.85rem;border-right:1px solid color-mix(in srgb,var(--hc) 55%,transparent)}
@@ -67,7 +67,7 @@ body.menu-open .hdr{background:var(--brand)!important;--hc:var(--hdr-ink)!import
   [data-theme=modern] .hdr-tools{order:3}
   [data-theme=modern] .menu{order:2;margin-left:auto}
 }
-[data-theme=modern] .sbar{border-bottom:0}
+[data-theme=modern] .sbar{border-top-color:rgba(255,255,255,.22)}
 [data-theme=modern] .sbar input,[data-theme=modern] .sbar-page input{border-radius:0}
 [data-theme=modern] .sbar button{border-radius:0;background:var(--brand2);color:var(--brand2-ink);font:500 .8rem/1 var(--body-font);letter-spacing:.24em;text-transform:uppercase}
 
