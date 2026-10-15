@@ -6,6 +6,7 @@ import Topbar from '@/components/layout/Topbar';
 import MobileNav from '@/components/layout/MobileNav';
 import { StackTables } from '@/components/layout/StackTables';
 import PageProgress from '@/components/layout/PageProgress';
+import LoginDetailsDialog from '@/components/layout/LoginDetailsDialog';
 import { useAuthStore } from '@/Stores/useAuthStore';
 import type { PageProps } from '@/Types';
 
@@ -50,6 +51,7 @@ export default function AppLayout({ children, title, breadcrumbs }: AppLayoutPro
     return (
         <div className="flex h-dvh overflow-hidden bg-background">
             <PageProgress />
+            <LoginDetailsDialog />
             <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-card focus:px-3 focus:py-2 focus:text-sm focus:shadow-lg">
                 Skip to content
             </a>

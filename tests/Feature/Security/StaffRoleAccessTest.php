@@ -88,7 +88,13 @@ class StaffRoleAccessTest extends SecurityTestCase
 
     public function test_staff_with_the_dashboard_still_go_there(): void
     {
-        $this->actingAs($this->makeUser($this->school, 'teacher'));
+        $this->actingAs($this->makeUser($this->school, 'principal'));
         $this->get('/dashboard')->assertRedirect(route('school.reports.dashboard'));
+    }
+
+    public function test_teachers_start_on_their_own_classes_page(): void
+    {
+        $this->actingAs($this->makeUser($this->school, 'teacher'));
+        $this->get('/dashboard')->assertRedirect(route('school.my-classes'));
     }
 }

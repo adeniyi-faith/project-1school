@@ -16,7 +16,7 @@ import type { AdmissionAssessment, AssessmentOutcome, InquiryStatus } from '@/Ty
 interface Props {
     inquiry: {
         id: number; student_name: string; class_interested: string; guardian_name: string; guardian_phone: string;
-        guardian_email: string | null; status: InquiryStatus; source: string; notes: string | null; created_at: string | null;
+        guardian_email: string | null; status: InquiryStatus; reference: string | null; student_gender: string | null; student_dob: string | null; family_accepted_at: string | null; source: string; notes: string | null; created_at: string | null;
         decision: { by: string | null; at: string; note: string | null } | null;
         enrolled: { id: number; name: string; admission_no: string; class: string | null; by: string | null; at: string | null } | null;
         followups: { id: number; note: string; next_date: string | null; by: string | null; at: string | null }[];
@@ -43,6 +43,7 @@ type AssessmentForm = {
 type EnrolForm = {
     first_name: string; last_name: string; gender: string; date_of_birth: string; admission_date: string; previous_school: string;
     class_id: string; section_id: string; guardian_id: string; guardian_relation: string;
+    make_parent_login: boolean; bill_fees: boolean;
 };
 
 function ErrorText({ children }: { children?: string }) {
@@ -102,9 +103,10 @@ export default function Inquiry({ inquiry, assessments, matchingGuardians, class
     const [first, ...rest] = inquiry.student_name.trim().split(/\s+/);
     const guessedClass = classes.find(c => c.name.toLowerCase().replace(/\s/g, '') === inquiry.class_interested.toLowerCase().replace(/\s/g, ''));
     const enrol = useForm<EnrolForm>({
-        first_name: first ?? '', last_name: rest.join(' '), gender: '', date_of_birth: '', admission_date: today(), previous_school: '',
+        first_name: first ?? '', last_name: rest.join(' '), gender: inquiry.student_gender === 'male' || inquiry.student_gender === 'female' ? inquiry.student_gender : '', date_of_birth: inquiry.student_dob ?? '', admission_date: today(), previous_school: '',
         class_id: guessedClass ? String(guessedClass.id) : '', section_id: '',
         guardian_id: matchingGuardians[0] ? String(matchingGuardians[0].id) : NEW_GUARDIAN, guardian_relation: '',
+        make_parent_login: true, bill_fees: true,
     });
     const classSections = sections.filter(s => String(s.class_id) === enrol.data.class_id);
     const failed = assessments.filter(a => a.outcome === 'failed' || a.outcome === 'absent');
@@ -177,6 +179,13 @@ export default function Inquiry({ inquiry, assessments, matchingGuardians, class
                         ))}
                     </ol>
                 )}
+
+                {inquiry.family_accepted_at && inquiry.status === 'accepted' && (
+                    <Panel>
+                        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">The family accepted the offer on {inquiry.family_accepted_at}. You can enrol the child when they are ready to start.</p>
+                    </Panel>
+                )}
+                {inquiry.reference && <p className="text-xs text-slate-500">Reference {inquiry.reference}. The family can check their status on the school's application status page.</p>}
 
                 {inquiry.enrolled && (
                     <Panel>
@@ -416,6 +425,11 @@ export default function Inquiry({ inquiry, assessments, matchingGuardians, class
                                 <ErrorText>{enrol.errors.guardian_relation}</ErrorText>
                             </div>
                         )}
+                        <div className="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-white/10">
+                            <p className="text-sm font-medium">Finish the job now</p>
+                            <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-0.5 h-4 w-4" checked={enrol.data.make_parent_login} onChange={e => enrol.setData('make_parent_login', e.target.checked)} /><span>Make a parent login, so they can see fees and results. You will get the sign-in details to hand over.</span></label>
+                            <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-0.5 h-4 w-4" checked={enrol.data.bill_fees} onChange={e => enrol.setData('bill_fees', e.target.checked)} /><span>Bill this term's fees for the class.</span></label>
+                        </div>
                         <ErrorText>{(enrol.errors as Record<string, string>).inquiry}</ErrorText>
                         <DialogFooter>
                             <Button type="button" variant="ghost" onClick={() => setEnrolOpen(false)}>Cancel</Button>

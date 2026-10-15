@@ -21,6 +21,7 @@ export const navGroups: NavGroup[] = [
         title: 'System',
         items: [
             { label: 'Dashboard',   href: '/school/reports/dashboard',  icon: LayoutDashboard, roles: ['school-admin','principal','teacher','accountant','librarian'] },
+            { label: 'My Classes',  href: '/school/my-classes',         icon: GraduationCap,   roles: ['teacher'] },
             { label: 'Home',        href: '/school/home',               icon: LayoutDashboard, roles: ['receptionist','driver','warden','store-manager'] },
             { label: 'Dashboard',   href: '/super-admin/dashboard',     icon: LayoutDashboard, roles: ['super-admin'], exact: true },
             { label: 'My Dashboard',href: '/school/student/dashboard',  icon: LayoutDashboard, roles: ['student'] },
@@ -214,7 +215,7 @@ export const bottomTabs: Record<string, BottomTab[]> = {
         { label: 'Fees',       href: '/school/fees/invoices',     icon: Banknote },
     ],
     teacher: [
-        { label: 'Home',       href: '/school/reports/dashboard', icon: LayoutDashboard },
+        { label: 'My Classes', href: '/school/my-classes',        icon: GraduationCap },
         { label: 'Attendance', href: '/school/attendance',        icon: ClipboardList },
         { label: 'Exams',      href: '/school/exams',             icon: BookOpen },
         { label: 'Timetable',  href: '/school/timetable',         icon: CalendarDays },

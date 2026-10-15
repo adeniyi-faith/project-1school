@@ -4,9 +4,9 @@ namespace App\Http\Controllers\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\StaffAccountService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,7 +32,7 @@ class SchoolUserController extends Controller
     {
         $sid = $this->sid();
 
-        $users = User::with('roles')
+        $users = User::with(['roles', 'staffProfile:id,user_id'])
             ->where('school_id', $sid)
             ->when($request->search, fn ($q) => $q->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
@@ -74,22 +74,19 @@ class SchoolUserController extends Controller
             'status'   => 'required|in:active,inactive',
         ]);
 
-        $user = User::create([
-            'name'      => $data['name'],
-            'email'     => $data['email'],
-            'phone'     => $data['phone'] ?? null,
-            'password'  => Hash::make($data['password']),
-            'school_id' => $sid,
-            'status'    => $data['status'],
-        ]);
+        $accounts = app(StaffAccountService::class);
+        $user = $accounts->createLogin($sid, $data['name'], $data['email'], $data['phone'] ?? null, $data['role'], $data['password'], $data['status']);
 
-        $user->assignRole($data['role']);
+        // Someone with a staff role also belongs on the Staff list, so they can be picked for timetable, homework and so on
+        $staff = $accounts->syncFromLogin($user, $data['role']);
 
         activity('users')->causedBy(auth()->user())->performedOn($user)
             ->withProperties(['school_id' => $sid, 'role' => $data['role']])
             ->log('Role assigned');
 
-        return back()->with('success', 'User created successfully.');
+        return back()->with('success', $staff
+            ? 'User created. They also appear in Staff, where you can complete their details.'
+            : 'User created successfully.');
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -115,12 +112,17 @@ class SchoolUserController extends Controller
             'status' => $data['status'],
         ]);
 
+        $accounts = app(StaffAccountService::class);
         if (!blank($data['password'] ?? null)) {
-            $user->update(['password' => Hash::make($data['password'])]);
+            $accounts->resetPassword($user, $data['password']);
         }
 
         $oldRole = $user->roles()->pluck('name')->first();
         $user->syncRoles([$data['role']]);
+
+        $accounts->syncFromLogin($user, $data['role']);
+        // Keep the staff card in step with the login
+        $user->staffProfile()?->update(['email' => $data['email'], 'phone' => $data['phone'] ?? null]);
 
         if ($oldRole !== $data['role']) {
             activity('users')->causedBy(auth()->user())->performedOn($user)

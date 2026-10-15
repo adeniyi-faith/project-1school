@@ -52,4 +52,10 @@ class User extends Authenticatable
             ->useLogName('users')
             ->setDescriptionForEvent(fn (string $event) => "User account {$event}");
     }
+
+    /** The staff record (HR card) that goes with this login, if any */
+    public function staffProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Staff::class);
+    }
 }

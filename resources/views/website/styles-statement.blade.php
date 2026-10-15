@@ -39,10 +39,10 @@
 .sp-note{margin:0 0 1.25rem;color:var(--olive);font-size:1rem;line-height:1.6}
 .sp-form{max-width:36rem}
 .sp-field{display:block;margin:0 0 .9rem}
-.sp-field input,.sp-field textarea{display:block;width:100%;min-height:3.5rem;padding:.85rem 1rem;background:#fff;border:1px solid #e6dccb;border-left:4px solid var(--brand2);border-radius:.15rem;color:var(--brand-t);font:500 1rem/1.4 var(--body-font)}
+.sp-field input,.sp-field select,.sp-field textarea{display:block;width:100%;min-height:3.5rem;padding:.85rem 1rem;background:#fff;border:1px solid #e6dccb;border-left:4px solid var(--brand2);border-radius:.15rem;color:var(--brand-t);font:500 1rem/1.4 var(--body-font)}
 .sp-field textarea{min-height:8rem;resize:vertical}
 .sp-field input::placeholder,.sp-field textarea::placeholder{color:var(--brand-t);opacity:.85}
-.sp-field input:focus,.sp-field textarea:focus{outline:0;border-color:var(--brand);border-left-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 15%,transparent)}
+.sp-field input:focus,.sp-field select:focus,.sp-field textarea:focus{outline:0;border-color:var(--brand);border-left-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 15%,transparent)}
 .sp-field .err{display:block;margin-top:.3rem;color:#b91c1c;font-weight:600;font-size:.9rem}
 .sp-form .btn--solid{margin-top:.6rem;min-height:3.5rem;padding:0 2rem;border-radius:.3rem;font:700 1rem/1 var(--body-font)}
 .sp-fine{margin:1.1rem 0 0;color:var(--olive);font-size:.92rem;line-height:1.65}

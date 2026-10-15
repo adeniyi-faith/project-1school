@@ -60,6 +60,7 @@ export interface PageProps {
         success?: string;
         error?: string;
         info?: string;
+        login_details?: { name: string; email: string; password: string }[];
     };
     faviconUrl: string | null;
     /** Set while the platform owner is working inside one school */

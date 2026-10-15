@@ -67,6 +67,8 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => session('success'),
                 'error'   => fn () => session('error'),
                 'info'    => fn () => session('info'),
+                // New login details shown once on screen (never stored); see LoginDetailsDialog
+                'login_details' => fn () => session('login_details'),
             ],
             'faviconUrl' => fn () => once(function () {
                 $path = PlatformSetting::get('platform_favicon');

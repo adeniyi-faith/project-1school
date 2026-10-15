@@ -11,10 +11,14 @@ import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import { ArrowLeft, Pencil, User, Briefcase, FileText, Upload, Trash2 } from 'lucide-react';
+import { KeyRound } from 'lucide-react';
+import { useCan } from '@/lib/can';
 import type { Staff, StaffDocument } from '@/Types';
 
 interface Props {
     staff: Staff;
+    login: { id: number; email: string; status: string; role: string | null } | null;
+    loginRoles: string[];
 }
 
 const statusColors: Record<string, string> = {
@@ -33,7 +37,12 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
     );
 }
 
-export default function StaffShow({ staff }: Props) {
+const roleLabel = (r: string) => r.replace(/-/g, ' ').replace(/^./, c => c.toUpperCase());
+
+export default function StaffShow({ staff, login, loginRoles }: Props) {
+    const can = useCan();
+    const [loginOpen, setLoginOpen] = useState(false);
+    const loginForm = useForm({ role: 'teacher', email: staff.email ?? '', password: '' });
     const [docOpen, setDocOpen] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm<{ title: string; file: File | null }>({
@@ -96,6 +105,63 @@ export default function StaffShow({ staff }: Props) {
                     </CardContent>
                 </Card>
 
+                {/* Login: one person, one record */}
+                <Card className="border-slate-200 dark:border-slate-800">
+                    <CardContent className="p-5 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                            <KeyRound className="w-5 h-5 mt-0.5 text-slate-400" />
+                            {login ? (
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Can sign in as {login.role ? roleLabel(login.role) : 'staff'}</p>
+                                    <p className="text-xs text-slate-500">{login.email}{login.status !== 'active' ? ` · ${login.status}` : ''}</p>
+                                </div>
+                            ) : (
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">No login yet</p>
+                                    <p className="text-xs text-slate-500">This person cannot sign in until you give them a login.</p>
+                                </div>
+                            )}
+                        </div>
+                        {login && can('users.edit') && (
+                            <Button variant="outline" size="sm" onClick={() => { if (confirm(`Make a new password for ${staff.full_name}? The old one stops working.`)) router.post(`/school/staff/${staff.id}/login/reset`); }}>
+                                New password
+                            </Button>
+                        )}
+                        {!login && can('users.create') && (
+                            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => setLoginOpen(true)}>Give login</Button>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader><DialogTitle>Give {staff.full_name} a login</DialogTitle></DialogHeader>
+                        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); loginForm.post(`/school/staff/${staff.id}/login`, { onSuccess: () => setLoginOpen(false) }); }}>
+                            <div className="space-y-1.5">
+                                <Label>Email (what they sign in with)</Label>
+                                <Input type="email" value={loginForm.data.email} onChange={e => loginForm.setData('email', e.target.value)} />
+                                {loginForm.errors.email && <p className="text-xs text-red-500">{loginForm.errors.email}</p>}
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>What can they do?</Label>
+                                <select className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-transparent px-3 text-sm" value={loginForm.data.role} onChange={e => loginForm.setData('role', e.target.value)}>
+                                    {loginRoles.map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}
+                                </select>
+                                {loginForm.errors.role && <p className="text-xs text-red-500">{loginForm.errors.role}</p>}
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Password (optional)</Label>
+                                <Input type="text" autoComplete="off" value={loginForm.data.password} onChange={e => loginForm.setData('password', e.target.value)} placeholder="Leave empty to make one" />
+                                {loginForm.errors.password && <p className="text-xs text-red-500">{loginForm.errors.password}</p>}
+                            </div>
+                            <DialogFooter>
+                                <Button type="button" variant="outline" onClick={() => setLoginOpen(false)}>Cancel</Button>
+                                <Button type="submit" disabled={loginForm.processing} className="bg-indigo-600 hover:bg-indigo-700 text-white">Create login</Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
                 {/* Tabs */}
                 <Tabs defaultValue="personal">
                     <TabsList className="w-full sm:w-auto">
@@ -128,7 +194,7 @@ export default function StaffShow({ staff }: Props) {
                                 <InfoRow label="Designation"   value={staff.designation?.name} />
                                 <InfoRow label="Joining Date"  value={staff.joining_date ? new Date(staff.joining_date).toLocaleDateString() : undefined} />
                                 <InfoRow label="Salary Type"   value={staff.salary_type === 'fixed' ? 'Fixed Monthly' : 'Hourly'} />
-                                <InfoRow label="Salary"        value={staff.salary ? `BDT ${Number(staff.salary).toLocaleString()}` : undefined} />
+                                <InfoRow label="Salary"        value={staff.salary ? `₦${Number(staff.salary).toLocaleString()}` : undefined} />
                                 <InfoRow label="Status"        value={staff.status.replace('_', ' ')} />
                                 {staff.notes && <InfoRow label="Notes" value={staff.notes} />}
                             </CardContent>

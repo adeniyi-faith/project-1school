@@ -7,9 +7,13 @@ use App\Models\Department;
 use App\Models\Designation;
 use App\Models\Staff;
 use App\Models\StaffDocument;
+use App\Models\User;
+use App\Services\StaffAccountService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -64,6 +68,7 @@ class StaffController extends Controller
         return Inertia::render('SchoolAdmin/Staff/Create', [
             'departments'  => Department::orderBy('name')->get(['id', 'name']),
             'designations' => Designation::orderBy('name')->get(['id', 'department_id', 'name']),
+            'loginRoles'   => StaffAccountService::STAFF_ROLES,
         ]);
     }
 
@@ -78,7 +83,7 @@ class StaffController extends Controller
             'religion'       => 'nullable|string|max:50',
             'nationality'    => 'nullable|string|max:50',
             'phone'          => 'nullable|string|max:20',
-            'email'          => 'nullable|email|max:150',
+            'email'          => 'nullable|required_if:create_login,true|email|max:150',
             'address'        => 'nullable|string|max:500',
             'department_id'  => 'nullable|exists:departments,id',
             'designation_id' => 'nullable|exists:designations,id',
@@ -87,9 +92,28 @@ class StaffController extends Controller
             'salary'         => 'nullable|numeric|min:0',
             'status'         => 'required|in:active,resigned,terminated,on_leave',
             'notes'          => 'nullable|string|max:1000',
-        ]);
+            // Optional: make their login in the same step
+            'create_login'   => 'nullable|boolean',
+            'login_role'     => ['nullable', 'required_if:create_login,true', Rule::in(StaffAccountService::STAFF_ROLES)],
+            'login_password' => 'nullable|string|min:8|max:100',
+        ], ['email.required_if' => 'A login needs an email address: it is what they sign in with.', 'login_role.required_if' => 'Choose what they can do (their role).']);
 
-        Staff::create($data);
+        $wantsLogin = (bool) ($data['create_login'] ?? false);
+        if ($wantsLogin) {
+            $this->assertLoginEmailFree($data['email'] ?? null);
+        }
+        unset($data['create_login'], $data['login_role'], $data['login_password']);
+
+        $staff = Staff::create($data);
+
+        if ($wantsLogin) {
+            $user = app(StaffAccountService::class)->giveLogin($staff, (string) $request->input('login_role'), null, $request->input('login_password'));
+            activity('users')->causedBy($request->user())->performedOn($user)
+                ->withProperties(['school_id' => $user->school_id, 'role' => $request->input('login_role')])->log('Role assigned');
+
+            return redirect()->route('school.staff.show', $staff)->with('success', 'Staff registered with a login.')
+                ->with('login_details', [['name' => $staff->full_name, 'email' => $user->email, 'password' => $user->plain_password]]);
+        }
 
         return redirect()->route('school.staff.index')->with('success', 'Staff registered successfully.');
     }
@@ -97,9 +121,12 @@ class StaffController extends Controller
     public function show(Staff $staff): Response
     {
         $staff->load(['department', 'designation', 'documents']);
+        $login = $staff->user_id ? User::with('roles:id,name')->find($staff->user_id) : null;
 
         return Inertia::render('SchoolAdmin/Staff/Show', [
             'staff' => $staff,
+            'login' => $login ? ['id' => $login->id, 'email' => $login->email, 'status' => $login->status, 'role' => $login->roles->pluck('name')->first()] : null,
+            'loginRoles' => StaffAccountService::STAFF_ROLES,
         ]);
     }
 
@@ -137,6 +164,57 @@ class StaffController extends Controller
         $staff->update($data);
 
         return redirect()->route('school.staff.show', $staff)->with('success', 'Staff updated.');
+    }
+
+    /** Give a staff member who has no login one, and show the details once */
+    public function giveLogin(Request $request, Staff $staff): RedirectResponse
+    {
+        if ($staff->user_id && User::whereKey($staff->user_id)->exists()) {
+            return back()->with('error', 'This person already has a login.');
+        }
+
+        $data = $request->validate([
+            'role'     => ['required', Rule::in(StaffAccountService::STAFF_ROLES)],
+            'email'    => 'nullable|email|max:150',
+            'password' => 'nullable|string|min:8|max:100',
+        ], ['role.required' => 'Choose what they can do (their role).']);
+
+        $email = $data['email'] ?? $staff->email;
+        if (blank($email)) {
+            throw ValidationException::withMessages(['email' => 'A login needs an email address: it is what they sign in with.']);
+        }
+        $this->assertLoginEmailFree($email);
+
+        $user = app(StaffAccountService::class)->giveLogin($staff, $data['role'], $email, $data['password'] ?? null);
+        activity('users')->causedBy($request->user())->performedOn($user)
+            ->withProperties(['school_id' => $user->school_id, 'role' => $data['role']])->log('Role assigned');
+
+        return back()->with('success', 'Login created.')
+            ->with('login_details', [['name' => $staff->full_name, 'email' => $user->email, 'password' => $user->plain_password]]);
+    }
+
+    /** New password for a staff member's login, shown once */
+    public function resetLogin(Request $request, Staff $staff): RedirectResponse
+    {
+        $user = $staff->user_id ? User::find($staff->user_id) : null;
+        if (! $user) {
+            return back()->with('error', 'This person has no login yet.');
+        }
+
+        $password = app(StaffAccountService::class)->resetPassword($user);
+        activity('users')->causedBy($request->user())->performedOn($user)->withProperties(['school_id' => $user->school_id])->log('Password reset');
+
+        return back()->with('success', 'New password made.')
+            ->with('login_details', [['name' => $staff->full_name, 'email' => $user->email, 'password' => $password]]);
+    }
+
+    private function assertLoginEmailFree(?string $email): void
+    {
+        if (blank($email) || User::withTrashed()->whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])->exists()) {
+            throw ValidationException::withMessages(['email' => blank($email)
+                ? 'A login needs an email address: it is what they sign in with.'
+                : 'Someone already has a login with this email.']);
+        }
     }
 
     public function destroy(Staff $staff): RedirectResponse

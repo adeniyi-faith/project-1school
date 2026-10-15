@@ -12,6 +12,7 @@
         <div class="sp-thanks">
             <h2>Thank you. We have your application.</h2>
             <p>{{ session('applied') }}</p>
+@include('website.partials.apply-status-link')
             <p><a class="btn btn--solid" href="{{ $homeUrl }}">Back to the school website</a></p>
         </div>
     @else
@@ -26,6 +27,7 @@
             <label class="sp-field"><span class="sr">Parent or guardian name</span><input name="guardian_name" value="{{ old('guardian_name') }}" placeholder="Parent or guardian name *" required maxlength="150" autocomplete="name">@error('guardian_name')<small class="err">{{ $message }}</small>@enderror</label>
             <label class="sp-field"><span class="sr">Phone number</span><input type="tel" name="guardian_phone" value="{{ old('guardian_phone') }}" placeholder="Phone number *" required maxlength="25" autocomplete="tel">@error('guardian_phone')<small class="err">{{ $message }}</small>@enderror</label>
             <label class="sp-field"><span class="sr">Email</span><input type="email" name="guardian_email" value="{{ old('guardian_email') }}" placeholder="Email address (optional)" maxlength="150" autocomplete="email">@error('guardian_email')<small class="err">{{ $message }}</small>@enderror</label>
+            @include('website.partials.apply-extra', ['fc' => 'sp-field', 'sr' => true])
             <label class="sp-field"><span class="sr">Anything we should know?</span><textarea name="notes" placeholder="Anything we should know? (optional)" maxlength="1000">{{ old('notes') }}</textarea>@error('notes')<small class="err">{{ $message }}</small>@enderror</label>
             <button class="btn btn--solid" type="submit">Send application</button>
             <p class="sp-fine">Your details go directly to our admissions office.@if ($school->phone) Questions? Call <a href="tel:{{ preg_replace('/[^0-9+]/', '', $school->phone) }}">{{ $school->phone }}</a>.@endif</p>

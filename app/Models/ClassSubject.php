@@ -16,12 +16,13 @@ class ClassSubject extends Model
 
     protected $table = 'class_subjects';
 
-    protected $fillable = ['school_id', 'class_id', 'subject_id', 'departments', 'assessment_scheme_id'];
+    protected $fillable = ['school_id', 'class_id', 'subject_id', 'departments', 'assessment_scheme_id', 'teacher_id'];
 
     protected $casts = ['departments' => 'array'];
 
     public function schoolClass(): BelongsTo { return $this->belongsTo(SchoolClass::class, 'class_id'); }
     public function subject(): BelongsTo     { return $this->belongsTo(Subject::class); }
+    public function teacher(): BelongsTo     { return $this->belongsTo(Staff::class, 'teacher_id'); }
 
     /** Whether a student in an arm of this department takes the subject */
     public function takenBy(?string $department): bool
