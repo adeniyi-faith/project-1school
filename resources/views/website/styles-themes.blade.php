@@ -22,6 +22,7 @@
 [data-theme=statement] .hdr-in{min-height:4.7rem;padding-top:1rem;padding-bottom:1rem}
 [data-theme=statement] .brand{flex-direction:column;align-items:flex-start;gap:0}
 [data-theme=statement] .brand span{display:block}
+[data-theme=statement] .brand img{width:auto;max-width:none;height:3.1rem;margin:0 0 .5rem;object-position:left center}
 [data-theme=statement] .brand span{font:700 1.2rem/1.2 var(--head-font);letter-spacing:0;color:var(--hdr-name);overflow:visible;text-overflow:clip}
 [data-theme=statement] .brand small{margin-top:.5rem;color:var(--olive);opacity:1;font:600 .66rem/1.2 var(--body-font);letter-spacing:.2em}
 [data-theme=statement] .burger{color:var(--brand-t)}

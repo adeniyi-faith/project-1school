@@ -105,12 +105,18 @@
 [data-theme=heritage] .card-body{padding:1.5rem 1.6rem 2rem}
 [data-theme=heritage] .card h3{font-size:1.65rem;line-height:1.12;margin-bottom:.5rem}
 [data-theme=heritage] .card p{color:#3d3a36;font-size:1.05rem;line-height:1.55}
-[data-theme=heritage] .card-ico{border-radius:0;background:none;color:var(--brand-t);width:auto;height:auto;margin-bottom:.9rem}
+[data-theme=heritage] .card-ico{display:flex;justify-content:flex-start;border-radius:0;background:none;color:var(--brand-t);width:auto;height:auto;margin-bottom:.9rem}
 [data-theme=heritage] .card-ico .ico{width:2.4rem;height:2.4rem}
 [data-theme=heritage] .card--plain::before{height:.4rem;background:var(--brand)}
 [data-theme=heritage] .sec--soft .card{border:1px solid #e4ddcf}
 [data-theme=heritage] .cards--pillars .card,[data-theme=heritage] .cards--panels .card{border-radius:0}
 [data-theme=heritage] .pillar-n{font:700 .85rem/1 var(--body-font);letter-spacing:.18em;text-transform:uppercase;color:var(--brand-t);margin-bottom:.6rem}
+/* on a plain page, cards in the swipe row are told apart by a thin upright line, not boxes */
+@media (max-width:51.99rem){
+  [data-theme=heritage] .sec:not(.sec--dark):not(.sec--soft) .cards .card:not(:has(img)){border-radius:0}
+  [data-theme=heritage] .sec:not(.sec--dark):not(.sec--soft) .cards .card:not(:has(img))+.card:not(:has(img)){border-left:1px solid #d6cdbb}
+  [data-theme=heritage] .sec:not(.sec--dark):not(.sec--soft) .cards .card:not(:has(img)):first-child .card-body{padding-left:0}
+}
 @media (min-width:52rem){
   [data-theme=heritage] .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(15.5rem,1fr));overflow:visible;margin:0;padding:0}
   [data-theme=heritage] .card{flex:none}
