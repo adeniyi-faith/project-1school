@@ -28,6 +28,9 @@ class DeveloperKitTest extends SecurityTestCase
         WebhookService::$resolver = null;
         File::deleteDirectory(resource_path('website-blocks'));
         File::deleteDirectory(resource_path('website-themes'));
+        // the real folder is kept in git (.gitkeep); put it back as it was
+        File::ensureDirectoryExists(resource_path('website-blocks'));
+        File::put(resource_path('website-blocks/.gitkeep'), '');
         Blocks::flush();
         Themes::flush();
         parent::tearDown();
