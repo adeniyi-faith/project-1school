@@ -39,6 +39,7 @@
     @yield('main')
 </main>
 
+@include('website.partials.footer-signup')
 @include('website.footers.'.(view()->exists('website.footers.'.\App\Website\Themes::key($theme)) ? \App\Website\Themes::key($theme) : 'default'))
 
 <script>

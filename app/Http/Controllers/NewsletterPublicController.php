@@ -23,32 +23,34 @@ class NewsletterPublicController extends Controller
         [$school] = $this->live($slug);
         abort_unless(Extensions::enabled($school->id, 'newsletter') && NewsletterSettings::resolve($school->id), 404);
 
-        $data = $request->validate([
-            'email' => 'required|email:rfc|max:150', 'name' => 'nullable|string|max:100',
+        // the footer sign-up has its own error box and its own thank-you, so the two forms on one page never mix
+        $from = $request->input('from') === 'footer' ? 'footer' : 'default';
+        $data = $request->validateWithBag($from, [
+            'email' => 'required|email:rfc|max:150', 'name' => 'nullable|string|max:100', 'from' => 'nullable|string|max:10',
             'interests' => 'nullable|array', 'interests.*' => 'string|max:20',
             'consent' => 'accepted',
         ], ['consent.accepted' => 'Please tick the box to say you agree to receive the newsletter.', 'email.required' => 'Please enter your email address.', 'email.email' => 'That does not look like an email address.']);
 
         $verdict = Visitor::inspect($request, $school->id, 'newsletter', 5, 300);
         if ($verdict === Visitor::ROBOT) {
-            return $this->thanks($data['email']); // thanked and ignored
+            return $this->thanks($from); // thanked and ignored
         }
         if ($verdict !== Visitor::OK) {
-            return back()->withInput()->withErrors(['email' => Visitor::message($verdict)]);
+            return back()->withInput()->withErrors(['email' => Visitor::message($verdict)], $from);
         }
 
         $page = parse_url((string) $request->headers->get('referer'), PHP_URL_PATH) ?: null;
         $result = $this->newsletter->subscribe($school, $data['email'], $data['name'] ?? null, (array) ($data['interests'] ?? []), (string) $request->ip(), $page);
         if ($result === 'error') {
-            return back()->withInput()->withErrors(['email' => 'We could not send the confirmation email just now. Please try again later.']);
+            return back()->withInput()->withErrors(['email' => 'We could not send the confirmation email just now. Please try again later.'], $from);
         }
 
-        return $this->thanks($data['email']);
+        return $this->thanks($from);
     }
 
-    private function thanks(string $email)
+    private function thanks(string $from)
     {
-        return redirect(url()->previous().'#newsletter')->with('newsletter', 'Almost done. If this address can receive the newsletter, we have sent it an email. Open it and tap "Confirm my email".');
+        return redirect(url()->previous().($from === 'footer' ? '#footer-signup' : '#newsletter'))->with('newsletter_at', $from)->with('newsletter', 'Almost done. If this address can receive the newsletter, we have sent it an email. Open it and tap "Confirm my email".');
     }
 
     /** The link in the email only shows a button: mail scanners open links on their own, and that must not sign anyone up */

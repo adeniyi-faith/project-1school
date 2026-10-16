@@ -7,19 +7,19 @@ import { ErrorList, SaveBar, Switch, WebsiteLayout } from '@/components/website/
 import type { WebsiteShell } from '@/Types/website';
 
 interface Props {
-    shell: WebsiteShell; socialNames: Record<string, string>; logoOptions: { modes: Record<string, string>; shapes: Record<string, string>; colours: Record<string, string> }; sitemapUrl: string; feedUrl: string;
-    site: { enabled: boolean; tagline: string | null; meta_description: string | null; footer_text: string | null; social: Record<string, string>; news_label: string; news_in_menu: boolean; apply_button: boolean; announcement: string; cookie_notice: boolean; whatsapp: string; whatsapp_text: string; logo_badge: string; logo_badge_shape: string; logo_badge_colour: string };
+    shell: WebsiteShell; socialNames: Record<string, string>; logoOptions: { modes: Record<string, string>; shapes: Record<string, string>; colours: Record<string, string> }; sitemapUrl: string; feedUrl: string; newsletterOn: boolean;
+    site: { enabled: boolean; tagline: string | null; meta_description: string | null; footer_text: string | null; social: Record<string, string>; news_label: string; news_in_menu: boolean; apply_button: boolean; announcement: string; cookie_notice: boolean; footer_signup: boolean; footer_signup_text: string; whatsapp: string; whatsapp_text: string; logo_badge: string; logo_badge_shape: string; logo_badge_colour: string };
     school: { name: string; phone: string | null; email: string | null; address: string | null; logo: string | null };
 }
 
 const select = 'w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm dark:border-white/10 dark:bg-transparent';
 const row = 'flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 dark:border-white/10';
 
-export default function WebsiteSettings({ shell, site, school, socialNames, logoOptions, sitemapUrl, feedUrl }: Props) {
+export default function WebsiteSettings({ shell, site, school, socialNames, logoOptions, sitemapUrl, feedUrl, newsletterOn }: Props) {
     const canEdit = shell.canEdit;
     const form = useForm({
         enabled: site.enabled, tagline: site.tagline ?? '', meta_description: site.meta_description ?? '', footer_text: site.footer_text ?? '',
-        social: site.social, news_label: site.news_label, news_in_menu: site.news_in_menu, apply_button: site.apply_button, announcement: site.announcement ?? '', cookie_notice: site.cookie_notice ?? true, whatsapp: site.whatsapp ?? '', whatsapp_text: site.whatsapp_text ?? '',
+        social: site.social, news_label: site.news_label, news_in_menu: site.news_in_menu, apply_button: site.apply_button, announcement: site.announcement ?? '', cookie_notice: site.cookie_notice ?? true, footer_signup: site.footer_signup ?? false, footer_signup_text: site.footer_signup_text ?? '', whatsapp: site.whatsapp ?? '', whatsapp_text: site.whatsapp_text ?? '',
         logo_badge: site.logo_badge ?? 'auto', logo_badge_shape: site.logo_badge_shape ?? 'rounded', logo_badge_colour: site.logo_badge_colour ?? 'white',
     });
     const d = form.data;
@@ -66,6 +66,13 @@ export default function WebsiteSettings({ shell, site, school, socialNames, logo
             <Panel title="Cookie notice" description="A small box at the bottom of your public website that tells visitors you use cookies and links to your Privacy Policy. Each visitor sees it once and can close it with one tap.">
                 <label className={row}><span>Show the cookie notice <span className="block text-xs text-slate-500">Matches your website theme. Turn it off if you do not want it.</span></span><Switch label="Cookie notice" disabled={!canEdit} on={d.cookie_notice} onChange={v => form.setData('cookie_notice', v)} /></label>
             </Panel>
+
+            {newsletterOn && (
+                <Panel title="Newsletter sign-up above the footer" description="A small email box at the bottom of every page, above the footer, in your theme's colours. People agree and confirm by email, the same as the sign-up section. It stays hidden until your email service is ready.">
+                    <label className={row}><span>Show it on every page <span className="block text-xs text-slate-500">Not needed if you only want the sign-up section on one page.</span></span><Switch label="Footer sign-up" disabled={!canEdit} on={d.footer_signup} onChange={v => form.setData('footer_signup', v)} /></label>
+                    {d.footer_signup && <label className="mt-3 block space-y-1 text-sm"><span className="font-medium">Heading</span><Input disabled={!canEdit} maxLength={120} placeholder="Get our newsletter" value={d.footer_signup_text} onChange={e => form.setData('footer_signup_text', e.target.value)} /></label>}
+                </Panel>
+            )}
 
             <Panel title="WhatsApp chat button" description="A green button on every page that opens a WhatsApp chat with your school. Leave the number empty to hide it.">
                 <div className="grid gap-3 text-sm sm:grid-cols-2">

@@ -82,6 +82,7 @@ use App\Http\Controllers\SchoolAdmin\Website\WebsiteExtensionController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteGalleryController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteMediaController;
+use App\Http\Controllers\SchoolAdmin\Website\WebsiteFormsController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteNewsletterController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsitePageController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsitePostController;
@@ -634,6 +635,20 @@ Route::middleware('auth')->group(function () {
                 Route::post('newsletter/campaigns/{campaign}/retry', [WebsiteNewsletterController::class, 'retry'])->whereNumber('campaign')->middleware($nlSend)->name('newsletter.campaigns.retry');
                 Route::post('newsletter/campaigns/{campaign}/delete', [WebsiteNewsletterController::class, 'destroyCampaign'])->whereNumber('campaign')->middleware($nlSend)->name('newsletter.campaigns.destroy');
 
+                // custom forms (Forms extension)
+                $fView = 'permission:forms.view';
+                $fManage = 'permission:forms.manage';
+                Route::get('forms',                                [WebsiteFormsController::class, 'index'])->middleware($fView)->name('forms');
+                Route::post('forms',                               [WebsiteFormsController::class, 'store'])->middleware($fManage)->name('forms.store');
+                Route::get('forms/{form}',                         [WebsiteFormsController::class, 'edit'])->whereNumber('form')->middleware($fView)->name('forms.edit');
+                Route::post('forms/{form}',                        [WebsiteFormsController::class, 'update'])->whereNumber('form')->middleware($fManage)->name('forms.update');
+                Route::post('forms/{form}/delete',                 [WebsiteFormsController::class, 'destroy'])->whereNumber('form')->middleware($fManage)->name('forms.destroy');
+                Route::get('forms/{form}/answers',                 [WebsiteFormsController::class, 'answers'])->whereNumber('form')->middleware($fView)->name('forms.answers');
+                Route::get('forms/{form}/export',                  [WebsiteFormsController::class, 'export'])->whereNumber('form')->middleware($fView)->name('forms.export');
+                Route::post('forms/{form}/answers/read-all',       [WebsiteFormsController::class, 'markAllRead'])->whereNumber('form')->middleware($fManage)->name('forms.answers.readall');
+                Route::post('forms/{form}/answers/{submission}/read',   [WebsiteFormsController::class, 'markRead'])->whereNumber('form')->whereNumber('submission')->middleware($fManage)->name('forms.answers.read');
+                Route::post('forms/{form}/answers/{submission}/delete', [WebsiteFormsController::class, 'removeAnswer'])->whereNumber('form')->whereNumber('submission')->middleware($fManage)->name('forms.answers.delete');
+
                 Route::get('developer',                [WebsiteDeveloperController::class, 'index'])->middleware($view)->name('developer');
                 Route::put('developer/settings',       [WebsiteDeveloperController::class, 'saveSettings'])->middleware($edit)->name('developer.settings');
                 Route::post('developer/webhook',       [WebsiteDeveloperController::class, 'saveWebhook'])->middleware($edit)->name('developer.webhook');
@@ -900,6 +915,8 @@ Route::get('/s/{slug}/news.json', [PublicSiteController::class, 'newsJson'])->wh
 Route::get('/s/{slug}/sitemap.xml', [PublicSiteController::class, 'sitemap'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.sitemap');
 Route::get('/s/{slug}/sign-in', [PublicSiteController::class, 'signIn'])->where('slug', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.sign-in');
 Route::post('/s/{slug}/contact', [PublicSiteController::class, 'contact'])->where('slug', '[a-z0-9-]+')->middleware('throttle:6,1')->name('site.contact');
+Route::get('/s/{slug}/form/{form}', [\App\Http\Controllers\SiteFormPublicController::class, 'show'])->where('slug', '[a-z0-9-]+')->whereNumber('form')->middleware('throttle:60,1')->name('site.form.show');
+Route::post('/s/{slug}/form/{form}', [\App\Http\Controllers\SiteFormPublicController::class, 'submit'])->where('slug', '[a-z0-9-]+')->whereNumber('form')->middleware('throttle:20,1')->name('site.form.submit');
 Route::post('/s/{slug}/newsletter', [NewsletterPublicController::class, 'subscribe'])->where('slug', '[a-z0-9-]+')->middleware('throttle:20,1')->name('site.newsletter.subscribe');
 Route::get('/s/{slug}/newsletter/confirm/{token}', [NewsletterPublicController::class, 'confirmPage'])->where('slug', '[a-z0-9-]+')->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:30,1')->name('site.newsletter.confirm');
 Route::post('/s/{slug}/newsletter/confirm/{token}', [NewsletterPublicController::class, 'confirm'])->where('slug', '[a-z0-9-]+')->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:30,1')->name('site.newsletter.confirm.do');

@@ -51,6 +51,6 @@ class WebsiteExtensionController extends WebsiteBase
         $ext = Extensions::find($key);
         abort_if(! $ext || ! $ext['ready'], 404);
 
-        return redirect($key === 'newsletter' ? '/school/website/newsletter' : '/school/website/extensions');
+        return redirect(match ($key) { 'newsletter' => '/school/website/newsletter', 'forms' => '/school/website/forms', default => '/school/website/extensions' });
     }
 }

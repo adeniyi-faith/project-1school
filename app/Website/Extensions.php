@@ -42,9 +42,9 @@ class Extensions
                 'blocks' => ['newsletter_signup'],
             ],
             'forms' => [
-                'name' => 'Forms and surveys', 'ready' => false, 'needs' => null,
-                'description' => 'Build your own forms (prospectus request, job application, parent survey) and see the answers in one place.',
-                'blocks' => [],
+                'name' => 'Forms and surveys', 'ready' => true, 'needs' => null,
+                'description' => 'Build your own forms (prospectus request, job application, parent survey) with the questions and privacy ticks you choose, put them on any page, and see the answers in one place.',
+                'blocks' => ['custom_form'],
             ],
             'gallery_plus' => [
                 'name' => 'Advanced gallery', 'ready' => false, 'needs' => null,
