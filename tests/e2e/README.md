@@ -10,7 +10,7 @@ not only that the page opened. They also flag error pages, console errors, faile
 npm install                      # once
 npm run build                    # the app's front end must be built
 npm run e2e                      # all phases
-npm run e2e -- --phase 1         # one phase (1 = money and people)
+npm run e2e -- --phase 1         # one phase (1 = money and people, 2 = daily work, 3 = roles)
 ```
 
 - It makes its own throw-away database in `tests/e2e/.work/` (filled with the demo schools), starts the app on port 8765
@@ -34,6 +34,7 @@ never calculated with the app's own formula.
 | `run.mjs` | starts everything, runs the chosen phases, prints the problem list |
 | `lib/harness.mjs` | sign-in, error watching, page visit checks, form helpers, database reader |
 | `phase1.mjs` | money and people: sign-in, admissions to enrolment, admitting students, staff, fees and payments, permissions, parent view |
+| `phase3.mjs` | every role's view: sign-in checks (wrong password, throttle, sign out), platform owner and acting-in-a-school, each of the 11 roles (landing page, menu has/has-not, every menu link opens, forbidden screens show the plain not-allowed page), buttons follow permissions, parent and student see the right figures for the right child, demo is read-only |
 | `phase2.mjs` | daily school work: classes, attendance, score entry with hand-worked totals/grades/positions, report card and broadsheet files, CBT and timetable screens, teacher and student demo views |
 | `lib/php83-polyfill.php`, `lib/router.php` | only used on a machine with PHP older than 8.4 (the app needs 8.4) |
 

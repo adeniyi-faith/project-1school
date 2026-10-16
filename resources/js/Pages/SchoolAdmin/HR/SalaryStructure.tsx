@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Minus, ArrowLeft } from 'lucide-react';
 import type { PageProps, PaginatedResponse } from '@/Types';
 
+import { naira } from '@/lib/format';
 interface SalaryItem { label: string; amount: number; }
 interface SalaryStruct { basic_salary: string; allowances: SalaryItem[] | null; deductions: SalaryItem[] | null; }
 interface StaffRow {
@@ -130,10 +131,10 @@ export default function SalaryStructurePage({ staffList, departments, filters }:
                                             <p className="text-xs text-slate-400">{s.emp_id}</p>
                                         </TableCell>
                                         <TableCell className="text-slate-500 text-sm">{s.department?.name} · {s.designation?.name}</TableCell>
-                                        <TableCell className="text-right text-sm">{struct ? `₦${Number(struct.basic_salary).toLocaleString()}` : '—'}</TableCell>
-                                        <TableCell className="text-right text-sm text-green-600">{struct ? `₦${allowTotal.toLocaleString()}` : '—'}</TableCell>
-                                        <TableCell className="text-right text-sm text-red-600">{struct ? `₦${dedTotal.toLocaleString()}` : '—'}</TableCell>
-                                        <TableCell className="text-right font-bold text-indigo-600">{netSal != null ? `₦${netSal.toLocaleString()}` : <Badge className="bg-amber-100 text-amber-700 border-0 text-xs">Not Set</Badge>}</TableCell>
+                                        <TableCell className="text-right text-sm">{struct ? naira(Number(struct.basic_salary)) : '—'}</TableCell>
+                                        <TableCell className="text-right text-sm text-green-600">{struct ? naira(allowTotal) : '—'}</TableCell>
+                                        <TableCell className="text-right text-sm text-red-600">{struct ? naira(dedTotal) : '—'}</TableCell>
+                                        <TableCell className="text-right font-bold text-indigo-600">{netSal != null ? naira(netSal) : <Badge className="bg-amber-100 text-amber-700 border-0 text-xs">Not Set</Badge>}</TableCell>
                                         <TableCell>
                                             <Button size="sm" variant="outline" className="text-xs" onClick={() => openEdit(s)}>Edit</Button>
                                         </TableCell>
@@ -192,10 +193,10 @@ export default function SalaryStructurePage({ staffList, departments, filters }:
 
                         {/* Summary */}
                         <div className="rounded-lg bg-slate-50 dark:bg-slate-900 p-3 space-y-1 text-sm">
-                            <div className="flex justify-between"><span className="text-slate-500">Gross Salary</span><span className="font-medium">₦{grossSalary.toLocaleString()}</span></div>
-                            <div className="flex justify-between text-red-600"><span>Total Deductions</span><span>- ₦{totalDeductions.toLocaleString()}</span></div>
+                            <div className="flex justify-between"><span className="text-slate-500">Gross Salary</span><span className="font-medium">{naira(grossSalary)}</span></div>
+                            <div className="flex justify-between text-red-600"><span>Total Deductions</span><span>- {naira(totalDeductions)}</span></div>
                             <div className="flex justify-between font-bold text-base border-t border-slate-200 dark:border-slate-700 pt-1 mt-1">
-                                <span>Net Salary</span><span className="text-indigo-600">₦{netSalary.toLocaleString()}</span>
+                                <span>Net Salary</span><span className="text-indigo-600">{naira(netSalary)}</span>
                             </div>
                         </div>
                     </div>

@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Pencil, Trash2, Eye, Banknote, CheckCircle2, Wrench } from 'lucide-react';
 import type { PageProps, PaginatedResponse } from '@/Types';
 
+import { naira } from '@/lib/format';
 interface Asset {
     id: number; name: string; asset_code: string; category: string | null;
     purchase_date: string | null; purchase_price: string; current_value: string;
@@ -101,7 +102,7 @@ export default function Assets({ assets, categories, filters, stats }: Props) {
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {[
-                        { label: 'Total Value', value: `₦${stats.total_value.toLocaleString()}`, color: 'text-indigo-600', icon: Banknote },
+                        { label: 'Total Value', value: naira(stats.total_value), color: 'text-indigo-600', icon: Banknote },
                         { label: 'Active', value: stats.active, color: 'text-green-600', icon: CheckCircle2 },
                         { label: 'In Maintenance', value: stats.maintenance, color: 'text-amber-600', icon: Wrench },
                         { label: 'Disposed', value: stats.disposed, color: 'text-slate-500', icon: Trash2 },
@@ -163,8 +164,8 @@ export default function Assets({ assets, categories, filters, stats }: Props) {
                                     </TableCell>
                                     <TableCell className="text-sm text-slate-500">{a.category ?? '—'}</TableCell>
                                     <TableCell className="text-sm text-slate-500">{a.location ?? '—'}</TableCell>
-                                    <TableCell className="text-right text-sm text-slate-500">₦{Number(a.purchase_price).toLocaleString()}</TableCell>
-                                    <TableCell className="text-right font-semibold text-sm text-slate-900 dark:text-white">₦{Number(a.current_value).toLocaleString()}</TableCell>
+                                    <TableCell className="text-right text-sm text-slate-500">{naira(Number(a.purchase_price))}</TableCell>
+                                    <TableCell className="text-right font-semibold text-sm text-slate-900 dark:text-white">{naira(Number(a.current_value))}</TableCell>
                                     <TableCell>
                                         <Badge className={`border-0 text-xs capitalize ${STATUS_STYLE[a.status] ?? ''}`}>{a.status}</Badge>
                                     </TableCell>

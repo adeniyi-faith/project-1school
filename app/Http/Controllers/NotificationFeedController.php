@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
+use App\Models\Guardian;
 use App\Models\SchoolNotification;
 use App\Models\Student;
 use Illuminate\Http\JsonResponse;
@@ -20,16 +21,16 @@ class NotificationFeedController extends Controller
         $items = collect();
         $unread = 0;
 
-        $announcements = Announcement::where('school_id', $user->school_id);
+        $announcements = Announcement::where('school_id', $user->school_id)->published();
 
         if ($roles->contains('student')) {
             $classId = Student::where('school_id', $user->school_id)->where('user_id', $user->id)->value('class_id');
-            $announcements->where(fn ($q) => $q->where('audience', 'all')
-                ->orWhere(fn ($r) => $r->where('audience', 'role')->where('target_role', 'student'))
-                ->orWhere(fn ($r) => $r->where('audience', 'class')->where('class_id', $classId)));
+            $announcements->for('student', [$classId]);
         } elseif ($roles->contains('parent')) {
-            $announcements->where(fn ($q) => $q->where('audience', 'all')
-                ->orWhere(fn ($r) => $r->where('audience', 'role')->where('target_role', 'parent')));
+            $classIds = Student::where('school_id', $user->school_id)
+                ->whereIn('guardian_id', Guardian::where('school_id', $user->school_id)->where('user_id', $user->id)->pluck('id'))
+                ->pluck('class_id')->filter()->all();
+            $announcements->for('parent', $classIds);
         } else {
             $announcements->where(fn ($q) => $q->where('audience', 'all')
                 ->orWhere(fn ($r) => $r->where('audience', 'role')->whereIn('target_role', $roles)));

@@ -59,8 +59,8 @@ class StudentPortalController extends Controller
             'present'    => $presentDays,
             'absent'     => $attendanceRaw->where('status', 'absent')->count(),
             'late'       => $attendanceRaw->where('status', 'late')->count(),
-            'percentage' => $totalDays ? round(($presentDays / $totalDays) * 100) : 0,
-            'today'      => $attendanceRaw->firstWhere('date', $today)?->status ?? 'not-marked',
+            'percentage' => Attendance::percentage($attendanceRaw),
+            'today'      => $attendanceRaw->first(fn ($a) => $a->date->toDateString() === $today)?->status ?? 'not-marked',
             'calendar'   => $attendanceRaw->map(fn ($a) => ['date' => $a->date, 'status' => $a->status]),
         ];
 
@@ -141,11 +141,8 @@ class StudentPortalController extends Controller
             ]);
 
         /* ── Announcements ── */
-        $announcements = Announcement::where('school_id', $user->school_id)
-            ->where(fn ($q) => $q->where('audience', 'all')
-                ->orWhere(fn ($q3) => $q3->where('audience', 'role')->where('target_role', 'student'))
-                ->orWhere(fn ($q2) => $q2->where('audience', 'class')->where('class_id', $student->class_id))
-            )
+        $announcements = Announcement::where('school_id', $user->school_id)->published()
+            ->for('student', [$student->class_id])
             ->orderByDesc('published_at')
             ->limit(5)
             ->get(['id', 'title', 'body', 'is_pinned', 'published_at'])
@@ -248,7 +245,7 @@ class StudentPortalController extends Controller
                 'present'    => $present,
                 'absent'     => $rows->where('status', 'absent')->count(),
                 'late'       => $rows->where('status', 'late')->count(),
-                'percentage' => $total ? round($present / $total * 100) : 0,
+                'percentage' => Attendance::percentage($rows),
                 'calendar'   => $rows->map(fn ($r) => ['date' => $r->date, 'status' => $r->status]),
             ];
         }
@@ -347,11 +344,8 @@ class StudentPortalController extends Controller
         $student = $this->resolveStudent();
         if (! $student) return $this->notLinked('Student/Announcements');
 
-        $announcements = Announcement::where('school_id', $student->school_id)
-            ->where(fn ($q) => $q->where('audience', 'all')
-                ->orWhere('audience', 'students')
-                ->orWhere(fn ($q2) => $q2->where('audience', 'class')->where('class_id', $student->class_id))
-            )
+        $announcements = Announcement::where('school_id', $student->school_id)->published()
+            ->for('student', [$student->class_id])
             ->orderByDesc('published_at')
             ->get(['id', 'title', 'body', 'is_pinned', 'published_at'])
             ->map(fn ($a) => [

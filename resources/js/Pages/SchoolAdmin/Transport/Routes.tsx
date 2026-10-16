@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2, Users, Bus, MapPin, X } from 'lucide-react';
 import type { PageProps, PaginatedResponse } from '@/Types';
 
+import { naira } from '@/lib/format';
 interface VehicleOption { id: number; name: string | null; registration_no: string; capacity: number; }
 interface Stop { name: string; pickup_time: string; }
 interface Route {
@@ -114,7 +115,7 @@ export default function TransportRoutes({ routes, vehicles, filters }: Props) {
                                         {r.vehicle ? (r.vehicle.name ?? r.vehicle.registration_no) : '—'}
                                     </TableCell>
                                     <TableCell className="text-sm text-slate-500">{r.stops?.length ?? 0} stops</TableCell>
-                                    <TableCell className="text-right text-sm font-medium">₦{Number(r.monthly_fee).toLocaleString()}</TableCell>
+                                    <TableCell className="text-right text-sm font-medium">{naira(Number(r.monthly_fee))}</TableCell>
                                     <TableCell className="text-center">
                                         <Badge className="bg-indigo-100 text-indigo-700 border-0 text-xs">{r.students_count}</Badge>
                                     </TableCell>

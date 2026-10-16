@@ -15,6 +15,7 @@ import { KeyRound } from 'lucide-react';
 import { useCan } from '@/lib/can';
 import type { Staff, StaffDocument } from '@/Types';
 
+import { naira } from '@/lib/format';
 interface Props {
     staff: Staff;
     login: { id: number; email: string; status: string; role: string | null } | null;
@@ -211,7 +212,7 @@ export default function StaffShow({ staff, login, loginRoles }: Props) {
                                 <InfoRow label="Designation"   value={staff.designation?.name} />
                                 <InfoRow label="Joining Date"  value={staff.joining_date ? new Date(staff.joining_date).toLocaleDateString() : undefined} />
                                 <InfoRow label="Salary Type"   value={staff.salary_type === 'fixed' ? 'Fixed Monthly' : 'Hourly'} />
-                                <InfoRow label="Salary"        value={staff.salary ? `₦${Number(staff.salary).toLocaleString()}` : undefined} />
+                                <InfoRow label="Salary"        value={staff.salary ? naira(Number(staff.salary)) : undefined} />
                                 <InfoRow label="Status"        value={staff.status.replace('_', ' ')} />
                                 {staff.notes && <InfoRow label="Notes" value={staff.notes} />}
                             </CardContent>

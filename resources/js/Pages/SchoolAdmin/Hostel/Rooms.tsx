@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
+import { naira } from '@/lib/format';
 interface Hostel { id: number; name: string; type: string; total_rooms: number; total_capacity: number; }
 interface Room {
     id: number; room_no: string; floor: string | null; type: string;
@@ -106,7 +107,7 @@ export default function HostelRooms({ hostel, rooms }: Props) {
                                     <TableCell className="text-center text-sm">{r.capacity}</TableCell>
                                     <TableCell className="text-center text-sm font-medium text-indigo-600">{r.occupied}</TableCell>
                                     <TableCell className="text-sm">{r.ac ? '✓' : '—'}</TableCell>
-                                    <TableCell className="text-right text-sm">₦{Number(r.monthly_fee).toLocaleString()}</TableCell>
+                                    <TableCell className="text-right text-sm">{naira(Number(r.monthly_fee))}</TableCell>
                                     <TableCell>
                                         <Badge className={`border-0 text-xs capitalize ${STATUS_STYLE[r.status] ?? ''}`}>{r.status}</Badge>
                                     </TableCell>

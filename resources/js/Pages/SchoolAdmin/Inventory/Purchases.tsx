@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, Plus } from 'lucide-react';
 import type { PageProps, PaginatedResponse } from '@/Types';
 
+import { naira } from '@/lib/format';
 interface ItemOption { id: number; name: string; unit: string; }
 interface Purchase {
     id: number; vendor: string | null; purchase_date: string; quantity: string;
@@ -109,8 +110,8 @@ export default function InventoryPurchases({ purchases, items, filters }: Props)
                                     <TableCell className="text-sm text-slate-500">{p.vendor ?? '—'}</TableCell>
                                     <TableCell className="text-sm text-slate-400 font-mono">{p.invoice_no ?? '—'}</TableCell>
                                     <TableCell className="text-right text-sm">{Number(p.quantity).toLocaleString()}</TableCell>
-                                    <TableCell className="text-right text-sm text-slate-500">₦{Number(p.unit_price).toLocaleString()}</TableCell>
-                                    <TableCell className="text-right font-semibold text-sm text-slate-900 dark:text-white">₦{Number(p.total_price).toLocaleString()}</TableCell>
+                                    <TableCell className="text-right text-sm text-slate-500">{naira(Number(p.unit_price))}</TableCell>
+                                    <TableCell className="text-right font-semibold text-sm text-slate-900 dark:text-white">{naira(Number(p.total_price))}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
