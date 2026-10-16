@@ -85,11 +85,12 @@ class MessageService
         foreach ($this->recipients($schoolId, $channel, $audience, $classId) as [$type, $id, $name, $contact]) {
             $contact = $contact !== null ? trim((string) $contact) : '';
             $problem = $this->problemWith($channel, $contact);
-            // The same number or address gets one message, even if two people share it
-            if (! $problem && isset($seen[strtolower($contact)])) {
+            // The same number or address gets one message, even if two people share it (0803 111 2222 and +234 803 111 2222 are one phone)
+            $key = $channel === 'sms' ? $this->phoneKey($contact) : strtolower($contact);
+            if (! $problem && isset($seen[$key])) {
                 continue;
             }
-            $seen[strtolower($contact)] = true;
+            $seen[$key] = true;
             $rows[] = [
                 'school_id' => $schoolId, 'message_batch_id' => $batch->id, 'recipient_type' => $type, 'recipient_id' => $id,
                 'recipient_name' => mb_substr($name, 0, 150), 'to' => $contact !== '' ? mb_substr($contact, 0, 150) : null,
@@ -142,6 +143,20 @@ class MessageService
             });
 
         return $counts;
+    }
+
+    /** A phone number reduced to its digits in the local form, so spacing, dashes and +234 do not make one phone look like two */
+    private function phoneKey(string $phone): string
+    {
+        $digits = preg_replace('/\D/', '', $phone);
+        if (str_starts_with($digits, '234') && strlen($digits) >= 13) {
+            return '0'.substr($digits, 3);
+        }
+        if (strlen($digits) === 10 && ! str_starts_with($digits, '0')) {
+            return '0'.$digits;
+        }
+
+        return $digits;
     }
 
     private function problemWith(string $channel, string $contact): ?string

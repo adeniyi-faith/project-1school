@@ -67,6 +67,13 @@ class TransportController extends Controller
             'status'          => 'required|in:active,inactive,maintenance',
         ]);
 
+        // Every route on this bus takes its own riders, so the bus must seat the fullest route
+        $fullest = (int) \DB::table('student_route')->whereIn('route_id', TransportRoute::where('vehicle_id', $vehicle->id)->pluck('id'))
+            ->selectRaw('count(*) as n')->groupBy('route_id')->orderByDesc('n')->value('n');
+        if ((int) $data['capacity'] < $fullest) {
+            return back()->withErrors(['capacity' => "One route on this vehicle carries {$fullest} " . ($fullest === 1 ? 'student' : 'students') . ", so it needs at least {$fullest} seats."]);
+        }
+
         $vehicle->update($data);
         return back()->with('success', 'Vehicle updated.');
     }
@@ -130,6 +137,14 @@ class TransportController extends Controller
             'stops.*.pickup_time'  => 'nullable|string|max:10',
         ]);
 
+        if (! empty($data['vehicle_id'])) {
+            $seats = (int) Vehicle::whereKey($data['vehicle_id'])->value('capacity');
+            $riders = $route->students()->count();
+            if ($riders > $seats) {
+                return back()->withErrors(['vehicle_id' => "This route carries {$riders} students but that vehicle has only {$seats} seats."]);
+            }
+        }
+
         $route->update($data);
         return back()->with('success', 'Route updated.');
     }
@@ -177,6 +192,12 @@ class TransportController extends Controller
             'stop'       => 'nullable|string|max:200',
             'fee_linked' => 'boolean',
         ]);
+
+        // Already on this route: nothing to add. Otherwise there must be a seat left on the vehicle.
+        $seats = $route->vehicle?->capacity;
+        if ($seats !== null && ! $route->students()->whereKey($data['student_id'])->exists() && $route->students()->count() >= $seats) {
+            return back()->withErrors(['student_id' => "{$route->vehicle->name} has only {$seats} seats and all of them are taken on this route."]);
+        }
 
         $route->students()->syncWithoutDetaching([
             $data['student_id'] => [

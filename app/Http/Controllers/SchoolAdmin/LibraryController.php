@@ -9,6 +9,7 @@ use App\Models\Staff;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class LibraryController extends Controller
@@ -18,6 +19,7 @@ class LibraryController extends Controller
     public function index(Request $request)
     {
         $sid = $this->getSchoolId();
+        $this->markOverdue($sid);
 
         $books = Book::where('school_id', $sid)
             ->when($request->search,   fn ($q) => $q->where(fn ($q2) =>
@@ -27,7 +29,7 @@ class LibraryController extends Controller
             ))
             ->when($request->category, fn ($q) => $q->where('category', $request->category))
             ->when($request->available === 'yes', fn ($q) => $q->where('available_copies', '>', 0))
-            ->withCount(['issues' => fn ($q) => $q->where('status', 'issued')])
+            ->withCount(['issues' => fn ($q) => $q->whereIn('status', ['issued', 'overdue'])])
             ->orderBy('title')
             ->paginate(20)
             ->withQueryString();
@@ -42,7 +44,7 @@ class LibraryController extends Controller
         $stats = [
             'total_books'    => Book::where('school_id', $sid)->sum('total_copies'),
             'available'      => Book::where('school_id', $sid)->sum('available_copies'),
-            'issued_count'   => BookIssue::where('school_id', $sid)->where('status', 'issued')->count(),
+            'issued_count'   => BookIssue::where('school_id', $sid)->whereIn('status', ['issued', 'overdue'])->count(), // everything out, late ones included
             'overdue_count'  => BookIssue::where('school_id', $sid)->where('status', 'overdue')->count(),
         ];
 
@@ -91,9 +93,12 @@ class LibraryController extends Controller
             'is_active'        => 'boolean',
         ]);
 
-        // Adjust available_copies based on total_copies change
-        $diff = (int)$data['total_copies'] - $book->total_copies;
-        $data['available_copies'] = max(0, $book->available_copies + $diff);
+        // Copies on the shelf = total minus the ones out. A total below what is out cannot be right.
+        $out = $this->copiesOut($book);
+        if ((int) $data['total_copies'] < $out) {
+            return back()->withErrors(['total_copies' => "{$out} " . ($out === 1 ? 'copy is' : 'copies are') . " out on loan, so the total cannot be less than {$out}."]);
+        }
+        $data['available_copies'] = (int) $data['total_copies'] - $out;
 
         $book->update($data);
 
@@ -102,6 +107,9 @@ class LibraryController extends Controller
 
     public function destroy(Book $book)
     {
+        if ($out = $this->copiesOut($book)) {
+            return back()->with('error', "{$book->title} still has {$out} " . ($out === 1 ? 'copy' : 'copies') . ' out on loan. Take the returns first, then remove it.');
+        }
         $book->delete();
         return back()->with('success', 'Book removed from catalog.');
     }
@@ -112,11 +120,7 @@ class LibraryController extends Controller
     {
         $sid = $this->getSchoolId();
 
-        // Mark overdue automatically
-        BookIssue::where('school_id', $sid)
-            ->where('status', 'issued')
-            ->where('due_date', '<', now()->toDateString())
-            ->update(['status' => 'overdue']);
+        $this->markOverdue($sid);
 
         $issues = BookIssue::with(['book:id,title,author,isbn'])
             ->where('school_id', $sid)
@@ -157,7 +161,7 @@ class LibraryController extends Controller
         $data = $request->validate([
             'book_id'      => 'required|exists:books,id',
             'member_type'  => 'required|in:student,staff',
-            'member_id'    => 'required|integer',
+            'member_id'    => ['required', 'integer', Rule::exists($request->input('member_type') === 'staff' ? 'staff' : 'students', 'id')],
             'issued_date'  => 'required|date',
             'due_date'     => 'required|date|after:issued_date',
             'fine_per_day' => 'nullable|numeric|min:0',
@@ -167,6 +171,9 @@ class LibraryController extends Controller
         $sid  = $this->getSchoolId();
         $book = Book::findOrFail($data['book_id']);
 
+        if (! $book->is_active) {
+            return back()->withErrors(['book_id' => 'This book has been withdrawn from the library.']);
+        }
         if ($book->available_copies < 1) {
             return back()->withErrors(['book_id' => 'No copies available.']);
         }
@@ -195,38 +202,43 @@ class LibraryController extends Controller
     public function returnBook(Request $request, BookIssue $bookIssue)
     {
         $data = $request->validate([
-            'returned_date' => 'required|date',
+            'returned_date' => 'required|date|after_or_equal:' . $bookIssue->issued_date->toDateString(),
             'note'          => 'nullable|string|max:500',
-        ]);
+        ], ['returned_date.after_or_equal' => 'A book cannot come back before the day it was issued.']);
 
         $returnDate = \Carbon\Carbon::parse($data['returned_date']);
-        $dueDate    = $bookIssue->due_date;
-        $overdueDays = max(0, $dueDate->diffInDays($returnDate, false));
-        $fine = $overdueDays > 0 ? round($overdueDays * (float)$bookIssue->fine_per_day, 2) : 0;
 
-        DB::transaction(function () use ($bookIssue, $data, $fine, $returnDate) {
-            $bookIssue->update([
+        $result = DB::transaction(function () use ($bookIssue, $data, $returnDate) {
+            // Lock the loan so two clicks (or two librarians) cannot both return it
+            $issue = BookIssue::whereKey($bookIssue->id)->lockForUpdate()->first();
+            if ($issue->status === 'returned') {
+                return null;
+            }
+            $overdueDays = max(0, $issue->due_date->startOfDay()->diffInDays($returnDate->copy()->startOfDay(), false));
+            $fine = $overdueDays > 0 ? round($overdueDays * (float) $issue->fine_per_day, 2) : 0;
+            $issue->update([
                 'returned_date' => $returnDate->toDateString(),
                 'fine'          => $fine,
                 'status'        => 'returned',
-                'note'          => $data['note'] ?? $bookIssue->note,
+                'note'          => $data['note'] ?? $issue->note,
             ]);
+            $issue->book->increment('available_copies');
 
-            $bookIssue->book->increment('available_copies');
+            return $fine;
         });
 
-        $msg = $fine > 0 ? "Book returned. Fine: ₦{$fine}" : 'Book returned successfully.';
-        return back()->with('success', $msg);
+        if ($result === null) {
+            return back()->with('error', 'This book was already returned.');
+        }
+
+        return back()->with('success', $result > 0 ? 'Book returned. Fine: ₦' . number_format($result, 2) : 'Book returned successfully.');
     }
 
     public function overdue(Request $request)
     {
         $sid = $this->getSchoolId();
 
-        BookIssue::where('school_id', $sid)
-            ->where('status', 'issued')
-            ->where('due_date', '<', now()->toDateString())
-            ->update(['status' => 'overdue']);
+        $this->markOverdue($sid);
 
         $overdueIssues = BookIssue::with('book:id,title,author,isbn')
             ->where('school_id', $sid)
@@ -235,7 +247,7 @@ class LibraryController extends Controller
             ->get();
 
         $overdueIssues->each(function ($issue) {
-            $overdueDays = max(0, now()->startOfDay()->diffInDays($issue->due_date->startOfDay(), false));
+            $overdueDays = max(0, $issue->due_date->startOfDay()->diffInDays(now()->startOfDay(), false));
             $issue->overdue_days        = $overdueDays;
             $issue->estimated_fine      = round($overdueDays * (float)$issue->fine_per_day, 2);
 
@@ -259,5 +271,20 @@ class LibraryController extends Controller
                 'total_fine_est' => $overdueIssues->sum('estimated_fine'),
             ],
         ]);
+    }
+
+    /** A loan whose due date has passed is late: keep the status true whichever page is opened first */
+    private function markOverdue(int $schoolId): void
+    {
+        BookIssue::where('school_id', $schoolId)
+            ->where('status', 'issued')
+            ->where('due_date', '<', now()->toDateString())
+            ->update(['status' => 'overdue']);
+    }
+
+    /** Copies of this book that are out right now, late ones included */
+    private function copiesOut(Book $book): int
+    {
+        return BookIssue::where('book_id', $book->id)->whereIn('status', ['issued', 'overdue'])->count();
     }
 }
