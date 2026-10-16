@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, Plus, Wrench } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
+import { naira } from '@/lib/format';
 interface MaintenanceLog {
     id: number; date: string; description: string; cost: string;
     vendor: string | null; next_maintenance_date: string | null;
@@ -74,8 +75,8 @@ export default function AssetDetail({ asset }: { asset: Asset }) {
                             { label: 'Asset Code',    value: asset.asset_code },
                             { label: 'Category',      value: asset.category ?? '—' },
                             { label: 'Purchase Date', value: asset.purchase_date ? new Date(asset.purchase_date).toLocaleDateString() : '—' },
-                            { label: 'Purchase Price',value: `₦${Number(asset.purchase_price).toLocaleString()}` },
-                            { label: 'Current Value', value: `₦${Number(asset.current_value).toLocaleString()}` },
+                            { label: 'Purchase Price',value: naira(Number(asset.purchase_price)) },
+                            { label: 'Current Value', value: naira(Number(asset.current_value)) },
                             { label: 'Depreciation',  value: `${asset.depreciation_rate}% / yr (${asset.depreciation_method.replace('_', ' ')})` },
                             { label: 'Location',      value: asset.location ?? '—' },
                             { label: 'Assigned To',   value: asset.assigned_to ?? '—' },
@@ -118,7 +119,7 @@ export default function AssetDetail({ asset }: { asset: Asset }) {
                                         <TableCell className="text-sm text-slate-500">{new Date(log.date).toLocaleDateString()}</TableCell>
                                         <TableCell className="text-sm text-slate-700 dark:text-slate-300">{log.description}</TableCell>
                                         <TableCell className="text-sm text-slate-500">{log.vendor ?? '—'}</TableCell>
-                                        <TableCell className="text-right text-sm font-medium">₦{Number(log.cost).toLocaleString()}</TableCell>
+                                        <TableCell className="text-right text-sm font-medium">{naira(Number(log.cost))}</TableCell>
                                         <TableCell className="text-sm text-slate-500">
                                             {log.next_maintenance_date ? new Date(log.next_maintenance_date).toLocaleDateString() : '—'}
                                         </TableCell>

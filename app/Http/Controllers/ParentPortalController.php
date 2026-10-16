@@ -83,7 +83,9 @@ class ParentPortalController extends Controller
                     'total'      => $total,
                     'present'    => $present,
                     'absent'     => $attRows->where('status', 'absent')->count(),
-                    'percentage' => $total ? round(($present / $total) * 100) : 0,
+                    'late'       => $attRows->where('status', 'late')->count(),
+                    'half_day'   => $attRows->where('status', 'half_day')->count(),
+                    'percentage' => Attendance::percentage($attRows),
                 ],
                 'fees' => [
                     'total_due'  => $account['total_due'],
@@ -96,8 +98,8 @@ class ParentPortalController extends Controller
         });
 
         /* Announcements for parents */
-        $announcements = Announcement::where('school_id', $user->school_id)
-            ->where(fn ($q) => $q->where('audience', 'all')->orWhere(fn ($q2) => $q2->where('audience', 'role')->where('target_role', 'parent')))
+        $announcements = Announcement::where('school_id', $user->school_id)->published()
+            ->for('parent', $guardian->students->pluck('class_id')->filter()->all())
             ->orderByDesc('published_at')
             ->limit(5)
             ->get()
@@ -162,7 +164,7 @@ class ParentPortalController extends Controller
                     'present'    => $present,
                     'absent'     => $rows->where('status', 'absent')->count(),
                     'late'       => $rows->where('status', 'late')->count(),
-                    'percentage' => $total ? round($present / $total * 100) : 0,
+                    'percentage' => Attendance::percentage($rows),
                     'calendar'   => $rows->map(fn ($r) => ['date' => $r->date, 'status' => $r->status]),
                 ];
             }
@@ -252,8 +254,8 @@ class ParentPortalController extends Controller
         $guardian = Guardian::where('school_id', $user->school_id)->where('user_id', $user->id)->first();
         if (! $guardian) return $this->notLinked('Parent/Announcements');
 
-        $announcements = Announcement::where('school_id', $user->school_id)
-            ->where(fn ($q) => $q->where('audience', 'all')->orWhere('audience', 'parents'))
+        $announcements = Announcement::where('school_id', $user->school_id)->published()
+            ->for('parent', $guardian->students()->pluck('class_id')->filter()->all())
             ->orderByDesc('published_at')
             ->get(['id', 'title', 'body', 'is_pinned', 'published_at'])
             ->map(fn ($a) => [

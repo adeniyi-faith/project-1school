@@ -13,6 +13,7 @@ import { Plus, MoreHorizontal, Pencil, Trash2, ArrowLeft, Settings2 } from 'luci
 import { Link } from '@inertiajs/react';
 import type { SchoolClass, PageProps, PaginatedResponse } from '@/Types';
 
+import { naira } from '@/lib/format';
 interface FeeCategory { id: number; name: string; type: string; }
 interface FeeStructure {
     id: number; class_id: number; fee_category_id: number; academic_year: string;
@@ -167,7 +168,7 @@ export default function FeeStructures({ structures, classes, categories, filters
                                     <TableCell className="text-slate-600 dark:text-slate-400">{s.school_class?.name}</TableCell>
                                     <TableCell className="text-slate-600 dark:text-slate-400">{s.academic_year}</TableCell>
                                     <TableCell className="text-right font-semibold text-slate-900 dark:text-white">
-                                        ₦{Number(s.amount).toLocaleString()}
+                                        {naira(Number(s.amount))}
                                     </TableCell>
                                     <TableCell>
                                         <Badge className={`border-0 text-xs ${FREQ_COLORS[s.frequency] ?? ''}`}>{FREQ_LABELS[s.frequency] ?? s.frequency}</Badge>

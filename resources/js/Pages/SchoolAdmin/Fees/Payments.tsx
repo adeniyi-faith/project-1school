@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { nairaCompact } from '@/lib/format';
+import { nairaCompact, naira } from '@/lib/format';
 import { Banknote, CheckCircle2, Clock, FileText, TrendingDown } from 'lucide-react';
 import type { SchoolClass, PageProps, PaginatedResponse } from '@/Types';
 
@@ -132,10 +132,10 @@ export default function FeePayments({ payments, classes, filters, stats }: Props
                                             <p className="text-sm text-slate-700 dark:text-slate-300">{p.fee_structure?.fee_category?.name}</p>
                                             <p className="text-xs text-slate-400">{p.fee_structure?.academic_year} {p.month_year ? `· ${p.month_year}` : ''}</p>
                                         </TableCell>
-                                        <TableCell className="text-right text-sm">₦{Number(p.amount_due).toLocaleString()}</TableCell>
-                                        <TableCell className="text-right text-sm font-semibold text-green-600">₦{Number(p.amount_paid).toLocaleString()}</TableCell>
+                                        <TableCell className="text-right text-sm">{naira(Number(p.amount_due))}</TableCell>
+                                        <TableCell className="text-right text-sm font-semibold text-green-600">{naira(Number(p.amount_paid))}</TableCell>
                                         <TableCell className={`text-right text-sm font-medium ${Number(balance) > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                            {Number(balance) > 0 ? `₦${Number(balance).toLocaleString()}` : '—'}
+                                            {Number(balance) > 0 ? naira(Number(balance)) : '—'}
                                         </TableCell>
                                         <TableCell className="text-xs text-slate-500">{METHOD_LABELS[p.method] ?? p.method}</TableCell>
                                         <TableCell className="text-xs text-slate-500">

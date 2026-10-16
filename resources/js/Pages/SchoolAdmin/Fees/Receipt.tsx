@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Printer } from 'lucide-react';
 
+import { naira } from '@/lib/format';
 interface FeePayment {
     id: number; receipt_no: string; amount_due: string; amount_paid: string;
     discount: string; fine: string; payment_date: string | null; month_year: string | null;
@@ -96,34 +97,34 @@ export default function FeeReceipt({ payment }: { payment: FeePayment }) {
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-500">Amount Due</span>
-                                <span className="text-slate-900 dark:text-white">₦{Number(payment.amount_due).toLocaleString()}</span>
+                                <span className="text-slate-900 dark:text-white">{naira(Number(payment.amount_due))}</span>
                             </div>
                             {Number(payment.fine) > 0 && (
                                 <div className="flex justify-between text-sm">
                                     <span className="text-red-500">Fine</span>
-                                    <span className="text-red-500">+ ₦{Number(payment.fine).toLocaleString()}</span>
+                                    <span className="text-red-500">+ {naira(Number(payment.fine))}</span>
                                 </div>
                             )}
                             {Number(payment.discount) > 0 && (
                                 <div className="flex justify-between text-sm">
                                     <span className="text-green-500">Discount</span>
-                                    <span className="text-green-500">- ₦{Number(payment.discount).toLocaleString()}</span>
+                                    <span className="text-green-500">- {naira(Number(payment.discount))}</span>
                                 </div>
                             )}
                             <div className="border-t border-slate-100 dark:border-slate-800 pt-2 flex justify-between font-semibold">
                                 <span className="text-slate-700 dark:text-slate-300">Net Due</span>
                                 <span className="text-slate-900 dark:text-white">
-                                    ₦{(Number(payment.amount_due) + Number(payment.fine) - Number(payment.discount)).toLocaleString()}
+                                    {naira((Number(payment.amount_due) + Number(payment.fine) - Number(payment.discount)))}
                                 </span>
                             </div>
                             <div className="flex justify-between font-bold text-lg">
                                 <span className="text-slate-700 dark:text-slate-300">Amount Paid</span>
-                                <span className="text-green-600">₦{Number(payment.amount_paid).toLocaleString()}</span>
+                                <span className="text-green-600">{naira(Number(payment.amount_paid))}</span>
                             </div>
                             {balance > 0 && (
                                 <div className="flex justify-between text-sm font-medium text-red-600">
                                     <span>Balance Due</span>
-                                    <span>₦{balance.toLocaleString()}</span>
+                                    <span>{naira(balance)}</span>
                                 </div>
                             )}
                         </div>

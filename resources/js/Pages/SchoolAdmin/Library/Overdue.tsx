@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, AlertTriangle, Banknote } from 'lucide-react';
 
+import { naira } from '@/lib/format';
 interface OverdueIssue {
     id: number; overdue_days: number; estimated_fine: number;
     member_name: string; member_id_no: string; member_label: string;
@@ -43,7 +44,7 @@ export default function OverdueBooks({ overdue, summary }: { overdue: OverdueIss
                         <CardContent className="p-4 flex items-center gap-3">
                             <Banknote className="w-5 h-5 text-amber-500" />
                             <div>
-                                <p className="text-xl font-bold text-amber-600">₦{summary.total_fine_est?.toLocaleString()}</p>
+                                <p className="text-xl font-bold text-amber-600">{naira(summary.total_fine_est)}</p>
                                 <p className="text-xs text-slate-500">Est. Fines</p>
                             </div>
                         </CardContent>
@@ -88,7 +89,7 @@ export default function OverdueBooks({ overdue, summary }: { overdue: OverdueIss
                                         <TableCell className="text-center">
                                             <Badge className="bg-red-100 text-red-700 border-0 font-bold">{iss.overdue_days} days</Badge>
                                         </TableCell>
-                                        <TableCell className="text-right font-semibold text-amber-600">₦{iss.estimated_fine?.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-semibold text-amber-600">{naira(iss.estimated_fine)}</TableCell>
                                         <TableCell>
                                             <Link href="/school/library/issues">
                                                 <Button size="sm" variant="outline" className="text-xs h-7">Return</Button>

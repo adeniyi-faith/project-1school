@@ -44,17 +44,17 @@ export default function ParentFees({ linked, children, payOnline = false }: Prop
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                             <Card><CardContent className="p-3 text-center">
                                 <p className="text-[11px] text-slate-500 mb-1">Total Due</p>
-                                <p className="font-bold text-slate-800 dark:text-white">₦{child.total_due.toLocaleString()}</p>
+                                <p className="font-bold text-slate-800 dark:text-white">{naira(child.total_due)}</p>
                             </CardContent></Card>
                             <Card><CardContent className="p-3 text-center">
                                 <p className="text-[11px] text-slate-500 mb-1">Total Paid</p>
-                                <p className="font-bold text-green-600">₦{child.total_paid.toLocaleString()}</p>
+                                <p className="font-bold text-green-600">{naira(child.total_paid)}</p>
                             </CardContent></Card>
                             <Card className={child.balance > 0 ? 'border-red-200' : 'border-green-200'}>
                                 <CardContent className="p-3 text-center">
                                     <p className="text-[11px] text-slate-500 mb-1">Balance</p>
                                     <p className={cn('font-bold', child.balance > 0 ? 'text-red-600' : 'text-green-600')}>
-                                        {child.balance > 0 ? `₦${child.balance.toLocaleString()}` : 'Clear'}
+                                        {child.balance > 0 ? naira(child.balance) : 'Clear'}
                                     </p>
                                 </CardContent>
                             </Card>
@@ -82,8 +82,8 @@ export default function ParentFees({ linked, children, payOnline = false }: Prop
                                                         {p.month}
                                                         <PartsLine p={p} />
                                                     </td>
-                                                    <td className="px-4 py-2 text-right text-slate-600">₦{p.due.toLocaleString()}</td>
-                                                    <td className="px-4 py-2 text-right text-green-600">₦{p.paid.toLocaleString()}</td>
+                                                    <td className="px-4 py-2 text-right text-slate-600">{naira(p.due)}</td>
+                                                    <td className="px-4 py-2 text-right text-green-600">{naira(p.paid)}</td>
                                                     <td className="px-4 py-2 text-center">
                                                         <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full capitalize', statusColor[p.status] ?? 'bg-slate-100 text-slate-600')}>{p.status}</span>
                                                     </td>
@@ -131,7 +131,7 @@ function PayDialog({ child, row, onClose }: { child: string; row: Payment; onClo
             <DialogContent className={s ? 'sm:max-w-lg' : 'sm:max-w-sm'}>
                 <DialogHeader><DialogTitle>Pay online</DialogTitle></DialogHeader>
                 <form onSubmit={e => { e.preventDefault(); form.post(`/school/parent/fees/invoices/${row.id}/pay`); }} className="space-y-4">
-                    <p className="text-sm text-slate-600 dark:text-slate-300">{child}: {row.month}. Still owed: <span className="font-medium">₦{row.balance.toLocaleString()}</span>.</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">{child}: {row.month}. Still owed: <span className="font-medium">{naira(row.balance)}</span>.</p>
                     {s && <div className="overflow-x-auto"><InstalmentTable summary={s} /></div>}
                     <div className="space-y-1.5">
                         <Label htmlFor="amount">Amount to pay (₦)</Label>

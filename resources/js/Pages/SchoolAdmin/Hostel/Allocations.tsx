@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, Plus, LogOut, Pencil } from 'lucide-react';
 import type { PageProps, PaginatedResponse } from '@/Types';
 
+import { naira } from '@/lib/format';
 interface HostelOption { id: number; name: string; type: string; }
 interface RoomOption { id: number; room_no: string; floor: string | null; type: string; capacity: number; occupied: number; monthly_fee: string; ac: boolean; }
 interface Allocation {
@@ -220,7 +221,7 @@ export default function HostelAllocations({ allocations, hostels, filters }: Pro
                                     <SelectContent>
                                         {rooms.map(r => (
                                             <SelectItem key={r.id} value={String(r.id)}>
-                                                Room {r.room_no} {r.floor ? `(${r.floor})` : ''} — {r.type}{r.ac ? ' AC' : ''} · {r.capacity - r.occupied} beds left · ₦{Number(r.monthly_fee).toLocaleString()}/term
+                                                Room {r.room_no} {r.floor ? `(${r.floor})` : ''} — {r.type}{r.ac ? ' AC' : ''} · {r.capacity - r.occupied} beds left · {naira(Number(r.monthly_fee))}/term
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

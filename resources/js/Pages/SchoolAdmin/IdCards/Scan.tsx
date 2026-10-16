@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { PageHeader, Panel, Pill, Segmented } from '@/components/app/kit';
 import { Camera, CameraOff, Loader2, ScanLine } from 'lucide-react';
 
+import { naira } from '@/lib/format';
 type CardState = 'valid' | 'expired' | 'replaced' | 'revoked';
 interface ScanResult {
     found: boolean; message?: string;
@@ -23,7 +24,6 @@ interface ScanResult {
 interface Props { code: string | null; can: { attendance: boolean; fees: boolean } }
 type Mode = 'look' | 'present' | 'late';
 
-const naira = (n: number) => '₦' + n.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const STATE_TEXT: Record<CardState, { label: string; tone: 'good' | 'warn' | 'bad' }> = {
     valid: { label: 'Card is valid', tone: 'good' }, expired: { label: 'Card has expired', tone: 'warn' },
     replaced: { label: 'Old card: a newer one was made', tone: 'bad' }, revoked: { label: 'Card was stopped', tone: 'bad' },

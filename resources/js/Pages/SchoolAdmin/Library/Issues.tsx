@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, Plus, RotateCcw } from 'lucide-react';
 import type { PageProps, PaginatedResponse } from '@/Types';
 
+import { naira } from '@/lib/format';
 interface BookOption { id: number; title: string; author: string; available_copies: number; isbn: string | null; }
 interface MemberOption { id: number; first_name: string; last_name: string | null; admission_no?: string; emp_id?: string; }
 interface Issue {
@@ -150,7 +151,7 @@ export default function LibraryIssues({ issues, books, students, staffList, filt
                                         {iss.returned_date ? new Date(iss.returned_date).toLocaleDateString() : '—'}
                                     </TableCell>
                                     <TableCell className={`text-right text-sm ${Number(iss.fine) > 0 ? 'text-red-600 font-medium' : 'text-slate-400'}`}>
-                                        {Number(iss.fine) > 0 ? `₦${Number(iss.fine).toLocaleString()}` : '—'}
+                                        {Number(iss.fine) > 0 ? naira(Number(iss.fine)) : '—'}
                                     </TableCell>
                                     <TableCell>
                                         <Badge className={`border-0 text-xs capitalize ${STATUS_STYLE[iss.status] ?? ''}`}>{iss.status}</Badge>

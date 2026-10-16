@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Printer } from 'lucide-react';
 
+import { naira } from '@/lib/format';
 interface SalaryItem { label: string; amount: number; }
 interface Payroll {
     id: number; month_year: string; basic_salary: string; total_allowances: string;
@@ -105,17 +106,17 @@ export default function Payslip({ payroll }: { payroll: Payroll }) {
                             <div className="space-y-1.5">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-slate-600 dark:text-slate-400">Basic Salary</span>
-                                    <span className="font-medium text-slate-900 dark:text-white">₦{Number(payroll.basic_salary).toLocaleString()}</span>
+                                    <span className="font-medium text-slate-900 dark:text-white">{naira(Number(payroll.basic_salary))}</span>
                                 </div>
                                 {(payroll.allowances_snapshot ?? []).map((a, i) => (
                                     <div key={i} className="flex justify-between text-sm">
                                         <span className="text-slate-500">{a.label}</span>
-                                        <span className="text-green-600">₦{Number(a.amount).toLocaleString()}</span>
+                                        <span className="text-green-600">{naira(Number(a.amount))}</span>
                                     </div>
                                 ))}
                                 <div className="flex justify-between text-sm font-semibold border-t border-slate-100 dark:border-slate-800 pt-1">
                                     <span className="text-slate-700 dark:text-slate-300">Gross Salary</span>
-                                    <span>₦{(Number(payroll.basic_salary) + Number(payroll.total_allowances)).toLocaleString()}</span>
+                                    <span>{naira((Number(payroll.basic_salary) + Number(payroll.total_allowances)))}</span>
                                 </div>
                             </div>
                         </div>
@@ -128,7 +129,7 @@ export default function Payslip({ payroll }: { payroll: Payroll }) {
                                     {(payroll.deductions_snapshot ?? []).map((d, i) => (
                                         <div key={i} className="flex justify-between text-sm">
                                             <span className="text-slate-500">{d.label}</span>
-                                            <span className="text-red-600">- ₦{Number(d.amount).toLocaleString()}</span>
+                                            <span className="text-red-600">- {naira(Number(d.amount))}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -138,7 +139,7 @@ export default function Payslip({ payroll }: { payroll: Payroll }) {
                         {/* Net Salary */}
                         <div className="rounded-lg bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 px-4 py-3 flex justify-between items-center">
                             <span className="font-semibold text-indigo-900 dark:text-indigo-200">Net Salary</span>
-                            <span className="text-2xl font-bold text-indigo-600">₦{Number(payroll.net_salary).toLocaleString()}</span>
+                            <span className="text-2xl font-bold text-indigo-600">{naira(Number(payroll.net_salary))}</span>
                         </div>
 
                         {payroll.paid_on && (

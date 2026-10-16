@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Banknote, Zap, Settings2, CheckCircle2, Clock } from 'lucide-react';
 import type { PageProps, PaginatedResponse } from '@/Types';
 
+import { naira } from '@/lib/format';
 interface Department { id: number; name: string; }
 interface PayrollRow {
     id: number; staff_id: number; month_year: string; basic_salary: string;
@@ -83,7 +84,7 @@ export default function PayrollPage({ payrolls, departments, filters, stats }: P
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-lg">
                     {[
-                        { label: 'Net Payable', value: `₦${stats.total_net?.toLocaleString() ?? 0}`, color: 'text-indigo-600', icon: Banknote },
+                        { label: 'Net Payable', value: naira(stats.total_net), color: 'text-indigo-600', icon: Banknote },
                         { label: 'Paid', value: stats.paid_count, color: 'text-green-600', icon: CheckCircle2 },
                         { label: 'Pending', value: stats.draft_count, color: 'text-amber-600', icon: Clock },
                     ].map(({ label, value, color, icon: Icon }) => (
@@ -151,10 +152,10 @@ export default function PayrollPage({ payrolls, departments, filters, stats }: P
                                         <p className="text-xs text-slate-400">{p.staff?.emp_id} · {p.staff?.department?.name}</p>
                                     </TableCell>
                                     <TableCell className="text-sm text-slate-600 dark:text-slate-400">{p.month_year}</TableCell>
-                                    <TableCell className="text-right text-sm">₦{Number(p.basic_salary).toLocaleString()}</TableCell>
-                                    <TableCell className="text-right text-sm text-green-600">₦{Number(p.total_allowances).toLocaleString()}</TableCell>
-                                    <TableCell className="text-right text-sm text-red-600">₦{Number(p.total_deductions).toLocaleString()}</TableCell>
-                                    <TableCell className="text-right font-bold text-indigo-600">₦{Number(p.net_salary).toLocaleString()}</TableCell>
+                                    <TableCell className="text-right text-sm">{naira(Number(p.basic_salary))}</TableCell>
+                                    <TableCell className="text-right text-sm text-green-600">{naira(Number(p.total_allowances))}</TableCell>
+                                    <TableCell className="text-right text-sm text-red-600">{naira(Number(p.total_deductions))}</TableCell>
+                                    <TableCell className="text-right font-bold text-indigo-600">{naira(Number(p.net_salary))}</TableCell>
                                     <TableCell className="text-center text-sm text-slate-500">{p.present_days}/{p.working_days}</TableCell>
                                     <TableCell>
                                         <Badge className={`border-0 text-xs capitalize ${STATUS_STYLE[p.status] ?? ''}`}>{p.status}</Badge>

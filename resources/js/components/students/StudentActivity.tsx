@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { Card, CardContent } from '@/components/ui/card';
 
+import { naira } from '@/lib/format';
 export interface StudentActivity {
     hostel: { id: number; hostel: string | null; room: string | null; floor: string | null; bed: string | null; joined: string | null; left: string | null; status: string }[] | null;
     library: { id: number; title: string | null; author: string | null; issued: string | null; due: string | null; returned: string | null; fine: number; status: string }[] | null;
@@ -17,7 +18,6 @@ export const ACTIVITY_LABELS: Record<ActivityKey, string> = {
     hostel: 'Hostel', library: 'Library', transport: 'Bus', fees: 'Fees', attendance: 'Attendance', results: 'Results', tests: 'Tests',
 };
 
-const naira = (n: number) => `₦${n.toLocaleString()}`;
 const day = (d: string | null) => (d ? new Date(d).toLocaleDateString(undefined, { dateStyle: 'medium' }) : '—');
 
 function Empty({ text }: { text: string }) {
