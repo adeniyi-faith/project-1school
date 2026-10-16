@@ -87,7 +87,7 @@ class Blocks
                         ['key' => 'title', 'label' => 'Title', 'kind' => 'text', 'max' => 80],
                         ['key' => 'body', 'label' => 'A few words about it', 'kind' => 'textarea', 'max' => 300],
                         ['key' => 'image', 'label' => 'Picture (optional)', 'kind' => 'image'],
-                        ['key' => 'link', 'label' => 'Button under the card (only the Grove theme shows it)', 'kind' => 'select', 'options' => self::BUTTONS],
+                        ['key' => 'link', 'label' => 'Button under the card (only the Grove and Leaf themes show it)', 'kind' => 'select', 'options' => self::BUTTONS],
                     ]],
                 ],
                 'default' => ['eyebrow' => '', 'heading' => 'Why families choose us', 'intro' => '', 'style' => 'cards', 'tag' => 'Pillar', 'band' => 'soft', 'items' => []],

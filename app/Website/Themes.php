@@ -25,6 +25,8 @@ class Themes
     private const BARLOW = "'Barlow','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
     private const FRAUNCES = "'Fraunces','Source Serif 4','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const ALBERT = "'Albert Sans','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
+    private const SPARTAN = "'League Spartan','Montserrat','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
+    private const POPPINS = "'Poppins','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
     private const SANS = "'Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
 
     public const ALL = [
@@ -76,6 +78,13 @@ class Themes
             'head' => self::FRAUNCES, 'body' => self::ALBERT, 'fonts' => 'Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500|Albert+Sans:wght@400;500;600;700',
             'radius' => '1rem', 'radius_lg' => '1.5rem', 'btn_radius' => '999px', 'btn_case' => 'none', 'btn_track' => '.01em', 'btn_style' => 'solid',
             'hdr' => 'brand', 'ftr' => 'deep',
+        ],
+        'leaf' => [
+            'label' => 'Leaf', 'note' => 'Bright and friendly: white bar with a left slide-in menu, a cream banner with leaf-shaped photos and a wavy edge, big rounded headlines with a coloured word and a brush underline, soft tinted cards and a gold accordion.',
+            'brand' => '#e8302f', 'brand2' => '#d2b36e', 'bg' => '#ffffff', 'soft' => '#f6f2ea', 'text' => '#17171c',
+            'head' => self::SPARTAN, 'body' => self::POPPINS, 'fonts' => 'League+Spartan:wght@500;600;700;800|Poppins:wght@400;500;600',
+            'radius' => '.9rem', 'radius_lg' => '1.25rem', 'btn_radius' => '.55rem', 'btn_case' => 'none', 'btn_track' => '0', 'btn_style' => 'solid',
+            'hdr' => 'bg', 'ftr' => 'deep',
         ],
     ];
 
