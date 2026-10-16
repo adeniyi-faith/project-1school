@@ -246,6 +246,16 @@ class Blocks
                 ],
                 'default' => ['heading' => 'Send us a message', 'intro' => 'Ask anything. Our office will call or email you back.'],
             ],
+            'newsletter_signup' => [
+                'label' => 'Newsletter sign-up', 'help' => 'Visitors give their email and agree to get your newsletter, then confirm from an email we send. Needs the Newsletter extension switched on and an email service set up, otherwise it stays hidden.',
+                'fields' => [
+                    $heading(),
+                    ['key' => 'intro', 'label' => 'A sentence under the heading', 'kind' => 'text', 'max' => 300],
+                    ['key' => 'button', 'label' => 'Button words', 'kind' => 'text', 'max' => 30],
+                    ['key' => 'interests', 'label' => 'Let people choose what they hear about', 'kind' => 'select', 'options' => ['yes' => 'Yes (news, events, admissions)', 'no' => 'No']],
+                ],
+                'default' => ['heading' => 'Stay in touch', 'intro' => 'Get news, events and admission updates from our school by email.', 'button' => 'Sign up', 'interests' => 'yes'],
+            ],
             'contact' => [
                 'label' => 'Contact details', 'help' => 'Your address, phone and email, taken from your school profile.',
                 'fields' => [$heading()],
