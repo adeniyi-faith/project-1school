@@ -105,6 +105,10 @@ class SchoolUserController extends Controller
             'status'   => 'required|in:active,inactive,suspended',
         ]);
 
+        if ($lock = $this->lockoutReason($user, $data['role'], $data['status'])) {
+            return back()->withErrors(['user' => $lock]);
+        }
+
         $user->update([
             'name'   => $data['name'],
             'email'  => $data['email'],
@@ -139,6 +143,10 @@ class SchoolUserController extends Controller
             abort(403);
         }
 
+        if ($lock = $this->lockoutReason($user, deleting: true)) {
+            return back()->withErrors(['user' => $lock]);
+        }
+
         $user->delete();
 
         return back()->with('success', 'User deleted.');
@@ -148,6 +156,10 @@ class SchoolUserController extends Controller
     {
         if ($user->school_id !== $this->sid()) {
             abort(403);
+        }
+
+        if ($lock = $this->lockoutReason($user, null, 'suspended')) {
+            return back()->withErrors(['user' => $lock]);
         }
 
         $user->update(['status' => 'suspended']);
@@ -162,5 +174,33 @@ class SchoolUserController extends Controller
 
         $user->update(['status' => 'active']);
         return back()->with('success', 'User activated.');
+    }
+
+    /**
+     * Stops a school locking itself out: you cannot delete, switch off or change the role of your own account,
+     * and the last working school admin cannot be removed. Returns the reason, or null when it is fine.
+     * $role / $status are what the account would become (null = unchanged); $deleting is for delete.
+     */
+    private function lockoutReason(User $user, ?string $role = null, ?string $status = null, bool $deleting = false): ?string
+    {
+        $loses = $deleting
+            || ($role !== null && ! $user->hasRole($role))
+            || ($status !== null && $status !== 'active');
+
+        if (! $loses) {
+            return null;
+        }
+        if ($user->id === auth()->id()) {
+            return 'You cannot delete, switch off or change the role of your own account. Ask another school admin to do it.';
+        }
+        if ($user->hasRole('school-admin') && $user->status === 'active') {
+            $others = User::where('school_id', $user->school_id)->where('id', '!=', $user->id)->where('status', 'active')
+                ->whereHas('roles', fn ($r) => $r->where('name', 'school-admin'))->count();
+            if ($others === 0) {
+                return 'This is the only working school admin. Make someone else a school admin first.';
+            }
+        }
+
+        return null;
     }
 }

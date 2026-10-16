@@ -28,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
         // Sections that developers add as folders (resources/website-blocks/{type}/view.blade.php)
         \Illuminate\Support\Facades\View::addNamespace('siteblocks', resource_path('website-blocks'));
 
+        // "exists:classes,id" and friends only accept the signed-in school's own rows (see TenantValidator)
+        \Illuminate\Support\Facades\Validator::resolver(fn ($translator, $data, $rules, $messages, $attributes) => new \App\Support\TenantValidator($translator, $data, $rules, $messages, $attributes));
+
         // The platform owner can do everything
         // Stamp every audit-trail entry with the school it belongs to, so a school
         // only ever sees its own history.

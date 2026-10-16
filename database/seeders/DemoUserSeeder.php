@@ -20,7 +20,7 @@ class DemoUserSeeder extends Seeder
             [
                 'name'     => 'Greenfield Academy',
                 'email'    => 'info@greenfield.edu',
-                'phone'    => '+8801700000000',
+                'phone'    => '08012345600',
                 'address'  => '12 School Road, Osogbo',
                 'city'     => 'Osogbo',
                 'country'  => 'NG',
@@ -159,7 +159,7 @@ class DemoUserSeeder extends Seeder
                         'user_id'   => $parentUser->id,
                         'name'      => 'Parent Demo',
                         'relation'  => 'Father',
-                        'phone'     => '+8801700000099',
+                        'phone'     => '08012345699',
                         'email'     => 'parent@genius-sms.test',
                     ]);
                 }

@@ -28,7 +28,7 @@ class DesignationController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'department_id' => 'nullable|exists:departments,id',
+            'department_id' => ['nullable', \Illuminate\Validation\Rule::exists('departments', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
             'name'          => 'required|string|max:100',
             'description'   => 'nullable|string|max:500',
         ]);
@@ -41,7 +41,7 @@ class DesignationController extends Controller
     public function update(Request $request, Designation $designation): RedirectResponse
     {
         $data = $request->validate([
-            'department_id' => 'nullable|exists:departments,id',
+            'department_id' => ['nullable', \Illuminate\Validation\Rule::exists('departments', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
             'name'          => 'required|string|max:100',
             'description'   => 'nullable|string|max:500',
         ]);

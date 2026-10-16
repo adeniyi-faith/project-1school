@@ -93,7 +93,7 @@ export default function CreateSchool() {
                             </div>
                             <Field name="slug" label="Slug" placeholder="auto-generated if empty" />
                             <Field name="email" label="Email" placeholder="info@school.edu" type="email" />
-                            <Field name="phone" label="Phone" placeholder="+8801700000000" />
+                            <Field name="phone" label="Phone" placeholder="08012345678" />
                             <div className="space-y-1.5">
                                 <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Status</Label>
                                 <Select defaultValue="active" onValueChange={(v) => setValue('status', v as FormData['status'])}>

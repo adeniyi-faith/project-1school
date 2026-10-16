@@ -248,7 +248,7 @@ export default function Admins({ users, roles, filters }: Props) {
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <Label>Phone</Label>
-                                <Input value={form.data.phone} onChange={e => form.setData('phone', e.target.value)} placeholder="+1234567890" />
+                                <Input value={form.data.phone} onChange={e => form.setData('phone', e.target.value)} placeholder="08012345678" />
                             </div>
                             <div>
                                 <Label>{editUser ? 'New Password' : 'Password *'}</Label>

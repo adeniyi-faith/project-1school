@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -76,7 +77,7 @@ class StudentController extends Controller
             'first_name'      => 'required|string|max:100',
             'last_name'       => 'nullable|string|max:100',
             'gender'          => 'required|in:male,female,other',
-            'date_of_birth'   => 'nullable|date',
+            'date_of_birth'   => 'nullable|date|before:tomorrow',
             'blood_group'     => 'nullable|string|max:5',
             'religion'        => 'nullable|string|max:50',
             'nationality'     => 'nullable|string|max:50',
@@ -89,8 +90,8 @@ class StudentController extends Controller
             'previous_school' => 'nullable|string|max:200',
             'roll_no'         => 'nullable|string|max:50',
             // Class
-            'class_id'        => 'required|exists:classes,id',
-            'section_id'      => 'nullable|exists:sections,id',
+            'class_id'        => ['required', Rule::exists('classes', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
+            'section_id'      => ['nullable', Rule::exists('sections', 'id')->where('school_id', $this->getSchoolId())->where('class_id', $request->input('class_id'))->whereNull('deleted_at')],
             // Guardian
             'guardian.name'       => 'required|string|max:150',
             'guardian.relation'   => 'required|string|max:50',
@@ -154,7 +155,7 @@ class StudentController extends Controller
             'first_name'      => 'required|string|max:100',
             'last_name'       => 'nullable|string|max:100',
             'gender'          => 'required|in:male,female,other',
-            'date_of_birth'   => 'nullable|date',
+            'date_of_birth'   => 'nullable|date|before:tomorrow',
             'blood_group'     => 'nullable|string|max:5',
             'religion'        => 'nullable|string|max:50',
             'nationality'     => 'nullable|string|max:50',
@@ -166,8 +167,8 @@ class StudentController extends Controller
             'admission_date'  => 'nullable|date',
             'previous_school' => 'nullable|string|max:200',
             'roll_no'         => 'nullable|string|max:50',
-            'class_id'        => 'required|exists:classes,id',
-            'section_id'      => 'nullable|exists:sections,id',
+            'class_id'        => ['required', Rule::exists('classes', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
+            'section_id'      => ['nullable', Rule::exists('sections', 'id')->where('school_id', $this->getSchoolId())->where('class_id', $request->input('class_id'))->whereNull('deleted_at')],
             'guardian.name'       => 'required|string|max:150',
             'guardian.relation'   => 'required|string|max:50',
             'guardian.phone'      => 'nullable|string|max:20',

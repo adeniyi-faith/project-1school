@@ -53,11 +53,19 @@ type FormData = z.infer<typeof schema>;
 
 const STEPS = ['Personal Info', 'Class & Roll', 'Guardian Info'];
 
+// The boxes on each step, so Next can check them and an error on an earlier step can take the person back to it
+const STEP_FIELDS: string[][] = [
+    ['first_name', 'last_name', 'gender', 'date_of_birth', 'email', 'category', 'status'],
+    ['class_id', 'section_id', 'admission_date', 'roll_no'],
+    ['guardian'],
+];
+const stepOf = (field: string) => Math.max(0, STEP_FIELDS.findIndex(list => list.some(f => field === f || field.startsWith(f + '.'))));
+
 export default function CreateStudent() {
     const { classes, sections } = usePage<Props>().props;
     const [step, setStep] = useState(0);
 
-    const { register, handleSubmit, setValue, watch, setError, formState: { errors, isSubmitting } } =
+    const { register, handleSubmit, setValue, watch, setError, trigger, formState: { errors, isSubmitting } } =
         useForm<FormData>({
             resolver: zodResolver(schema),
             defaultValues: { gender: 'male', category: 'general', status: 'active', nationality: 'Nigerian', guardian: { relation: 'Father' } },
@@ -66,10 +74,22 @@ export default function CreateStudent() {
     const selectedClassId = watch('class_id');
     const visibleSections = selectedClassId ? sections.filter((s) => s.class_id === Number(selectedClassId)) : [];
 
+    const goToFirstError = (fields: string[]) => {
+        if (fields.length) setStep(Math.min(...fields.map(stepOf)));
+    };
+
     const onSubmit = (data: FormData) => {
         router.post('/school/students', data, {
-            onError: (errs) => Object.entries(errs).forEach(([f, m]) => setError(f as keyof FormData, { message: m })),
+            onError: (errs) => {
+                Object.entries(errs).forEach(([f, m]) => setError(f as keyof FormData, { message: m }));
+                goToFirstError(Object.keys(errs));
+            },
         });
+    };
+
+    // Do not let someone move on while this step has a missing or wrong box
+    const goNext = async () => {
+        if (await trigger(STEP_FIELDS[step] as never)) setStep(step + 1);
     };
 
     const Field = ({ name, label, placeholder, type = 'text', required = false }: {
@@ -121,7 +141,7 @@ export default function CreateStudent() {
                     ))}
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)}>
+                <form onSubmit={handleSubmit(onSubmit, errs => goToFirstError(Object.keys(errs)))}>
                     {/* Step 0 — Personal */}
                     {step === 0 && (
                         <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
@@ -144,7 +164,7 @@ export default function CreateStudent() {
                                 <Field name="blood_group" label="Blood Group" placeholder="A+" />
                                 <Field name="religion"    label="Religion"    placeholder="Islam" />
                                 <Field name="nationality" label="Nationality"  placeholder="Nigerian" />
-                                <Field name="phone"       label="Phone"        placeholder="+8801700000000" />
+                                <Field name="phone"       label="Phone"        placeholder="08012345678" />
                                 <Field name="email"       label="Email"        placeholder="student@email.com" type="email" />
                                 <div className="space-y-1.5">
                                     <Label className="text-sm font-medium">Category</Label>
@@ -225,7 +245,7 @@ export default function CreateStudent() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <Field name="guardian.phone"      label="Phone"      placeholder="+8801700000000" />
+                                <Field name="guardian.phone"      label="Phone"      placeholder="08012345678" />
                                 <Field name="guardian.email"      label="Email"      type="email" />
                                 <Field name="guardian.occupation" label="Occupation" placeholder="Business" />
                                 <div className="sm:col-span-2 space-y-1.5">
@@ -242,7 +262,7 @@ export default function CreateStudent() {
                             <Button type="button" variant="outline" onClick={() => setStep(step - 1)}>Back</Button>
                         )}
                         {step < STEPS.length - 1 ? (
-                            <Button type="button" className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => setStep(step + 1)}>
+                            <Button type="button" className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={goNext}>
                                 Next — {STEPS[step + 1]}
                             </Button>
                         ) : (

@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\BlockSuspendedSchool::class,
+            \App\Http\Middleware\EnsureAccountActive::class,
             \App\Http\Middleware\ActAsSchool::class,
             \App\Http\Middleware\DemoReadOnly::class,
         ]);

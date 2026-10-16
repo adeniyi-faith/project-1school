@@ -110,6 +110,13 @@ class LoginController extends Controller
 
         RateLimiter::clear($throttleKey);
 
+        // The password was right, but the school (or the platform) has switched this account off
+        if (in_array($user->status, ['suspended', 'inactive'], true)) {
+            throw ValidationException::withMessages([
+                'email' => 'This account has been switched off. Please contact your school.',
+            ]);
+        }
+
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 

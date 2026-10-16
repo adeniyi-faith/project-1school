@@ -26,7 +26,7 @@ const roleLabel = (r: string) => r.replace(/-/g, ' ').replace(/^./, c => c.toUpp
 export default function StaffCreate({ departments, designations, loginRoles }: Props) {
     const [step, setStep] = useState(0);
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
         first_name:    '',
         last_name:     '',
         gender:        '',
@@ -49,12 +49,28 @@ export default function StaffCreate({ departments, designations, loginRoles }: P
         login_password: '',
     });
 
-    function next() { setStep(s => Math.min(s + 1, STEPS.length - 1)); }
+    // Do not move on from the first step while a required box is empty
+    function next() {
+        if (step === 0) {
+            const missing: Record<string, string> = {};
+            if (!data.first_name.trim()) missing.first_name = 'First name is required.';
+            if (!data.gender) missing.gender = 'Choose a gender.';
+            if (Object.keys(missing).length) { setError(missing as never); return; }
+            clearErrors();
+        }
+        setStep(s => Math.min(s + 1, STEPS.length - 1));
+    }
     function prev() { setStep(s => Math.max(s - 1, 0)); }
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        post('/school/staff');
+        post('/school/staff', {
+            // Take the person back to the step that has the problem
+            onError: errs => {
+                const where = (f: string) => ['department_id', 'designation_id', 'joining_date', 'salary_type', 'salary'].includes(f) ? 1 : ['status', 'notes'].includes(f) ? 2 : 0;
+                setStep(Math.min(...Object.keys(errs).map(where)));
+            },
+        });
     }
 
     const filteredDesignations = data.department_id
