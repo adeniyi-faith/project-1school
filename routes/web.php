@@ -77,6 +77,7 @@ use App\Http\Controllers\StudentPhotoController;
 use App\Http\Controllers\SchoolAdmin\VisitorLogController;
 use App\Http\Controllers\PublicAdmissionController;
 use App\Http\Controllers\PublicSiteController;
+use App\Http\Controllers\SchoolAdmin\Website\WebsiteExtensionController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteGalleryController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteMediaController;
@@ -610,6 +611,10 @@ Route::middleware('auth')->group(function () {
                 Route::get('themes/{theme}/sample',    [WebsiteThemeController::class, 'sample'])->where('theme', '[a-z0-9-]+')->middleware($view)->name('themes.sample');
                 Route::put('themes',                   [WebsiteThemeController::class, 'update'])->middleware($edit)->name('themes.update');
 
+                Route::get('extensions',               [WebsiteExtensionController::class, 'index'])->middleware($view)->name('extensions');
+                Route::post('extensions/{key}',        [WebsiteExtensionController::class, 'toggle'])->where('key', '[a-z_]+')->middleware($edit)->name('extensions.toggle');
+                Route::get('extensions/{key}/open',    [WebsiteExtensionController::class, 'setup'])->where('key', '[a-z_]+')->middleware($view)->name('extensions.setup');
+
                 Route::get('developer',                [WebsiteDeveloperController::class, 'index'])->middleware($view)->name('developer');
                 Route::put('developer/settings',       [WebsiteDeveloperController::class, 'saveSettings'])->middleware($edit)->name('developer.settings');
                 Route::post('developer/webhook',       [WebsiteDeveloperController::class, 'saveWebhook'])->middleware($edit)->name('developer.webhook');
@@ -785,6 +790,10 @@ Route::middleware('auth')->group(function () {
             Route::post('ai',                               [SuperAdminAiController::class, 'save'])->name('ai.save');
             Route::post('ai/check',                         [SuperAdminAiController::class, 'check'])->name('ai.check');
             Route::post('ai/schools/{school}',              [SuperAdminAiController::class, 'saveSchool'])->name('ai.school');
+
+            // Website extensions per plan
+            Route::get('extensions',            [\App\Http\Controllers\SuperAdmin\ExtensionController::class, 'index'])->name('extensions.index');
+            Route::post('extensions',           [\App\Http\Controllers\SuperAdmin\ExtensionController::class, 'save'])->name('extensions.save');
 
             Route::get('packages',              [PackageController::class, 'index'])->name('packages.index');
             Route::post('packages',             [PackageController::class, 'store'])->name('packages.store');

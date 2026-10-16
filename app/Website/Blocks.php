@@ -254,9 +254,12 @@ class Blocks
         ];
     }
 
-    public static function catalogue(): array
+    /** The sections offered in the editor. Sections that belong to an extension are offered only when the school may use it. */
+    public static function catalogue(?int $schoolId = null): array
     {
-        return collect(self::types())->map(fn ($t, $key) => ['type' => $key] + $t)->values()->all();
+        return collect(self::types())
+            ->filter(fn ($t, $key) => $schoolId === null || Extensions::blockAllowed($key, $schoolId))
+            ->map(fn ($t, $key) => ['type' => $key] + $t)->values()->all();
     }
 
     public static function fresh(string $type): ?array

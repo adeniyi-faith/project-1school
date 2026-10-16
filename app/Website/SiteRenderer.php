@@ -80,7 +80,10 @@ class SiteRenderer
     /** @param Collection<int, SchoolSitePage> $pages the published pages */
     public static function render(School $school, SchoolSite $site, SchoolSitePage $page, Collection $pages, bool $preview = false): View
     {
-        $blocks = collect($page->blocks ?? [])->reject(fn ($b) => ! empty($b['hidden']))->values()->all();
+        // sections hidden by hand, and sections of an extension the school has switched off (they stay saved)
+        $blocks = collect($page->blocks ?? [])
+            ->reject(fn ($b) => ! empty($b['hidden']) || ! Extensions::blockAllowed((string) ($b['type'] ?? ''), $school->id))
+            ->values()->all();
 
         // exactly one main heading (h1) per page: the first section that has a heading
         foreach ($blocks as $i => $b) {

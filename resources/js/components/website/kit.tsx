@@ -31,6 +31,7 @@ const TABS = [
     { href: '/school/website/gallery', label: 'Gallery' },
     { href: '/school/website/themes', label: 'Themes' },
     { href: '/school/website/media', label: 'Pictures' },
+    { href: '/school/website/extensions', label: 'Extensions' },
     { href: '/school/website/settings', label: 'Settings' },
     { href: '/school/website/developer', label: 'Developer' },
 ];
