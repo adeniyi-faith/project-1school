@@ -20,7 +20,7 @@ class SafeCss
         $css = str_replace(['<', '>'], '', $css);
         // rules that load other files or run code
         $css = preg_replace('/@(import|charset|namespace)\b[^;{}]*;?/i', '', $css) ?? '';
-        $css = preg_replace('/(expression|behavior|-moz-binding|javascript:|vbscript:)/i', '', $css) ?? '';
+        $css = preg_replace('/(expression|behavior|-moz-binding|-moz-bind|javascript:|vbscript:)/i', '', $css) ?? '';
         // url(): only https addresses and small inline pictures stay
         $css = preg_replace_callback('/url\(\s*([^)]*)\)/i', function ($m) {
             $v = trim($m[1], " \t\n'\"");

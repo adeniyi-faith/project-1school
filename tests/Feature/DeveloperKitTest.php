@@ -86,6 +86,8 @@ class DeveloperKitTest extends SecurityTestCase
         $this->assertStringNotContainsString('@import', $css);
         $this->assertStringNotContainsString('expression', $css);
         $this->assertStringContainsString('p{color:blue}', $css);
+        $this->assertStringNotContainsString('-moz-bind', SafeCss::clean('a{-moz-bind:url(https://x.test/y.xml#z)}'));
+        $this->assertStringNotContainsString('<', SafeCss::clean('</sty/**/le><img src=x onerror=alert(1)>'));
         $this->assertStringContainsString('url("https://fonts.example/x.png")', SafeCss::clean('a{background:url(https://fonts.example/x.png)}'));
 
         [$school] = $this->site('Css School');
