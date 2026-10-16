@@ -39,9 +39,8 @@ class AttendanceController extends Controller
 
             $existing = Attendance::where([
                 'school_id'       => $this->getSchoolId(),
-                'date'            => $date,
                 'attendable_type' => Student::class,
-            ])->whereIn('attendable_id', $students->pluck('id'))
+            ])->whereDate('date', $date)->whereIn('attendable_id', $students->pluck('id'))
               ->get(['attendable_id', 'status', 'remarks'])
               ->keyBy('attendable_id');
         }
@@ -75,20 +74,15 @@ class AttendanceController extends Controller
 
         $schoolId = $this->getSchoolId();
 
+        // Every name sent must be a pupil of the class being marked
+        $inClass = Student::where('class_id', $data['class_id'])->whereIn('id', collect($data['records'])->pluck('student_id'))->count();
+        if ($inClass !== collect($data['records'])->pluck('student_id')->unique()->count()) {
+            return back()->withErrors(['records' => 'Some of these pupils are not in this class. Reload the page and try again.']);
+        }
+
         DB::transaction(function () use ($data, $schoolId) {
             foreach ($data['records'] as $record) {
-                Attendance::updateOrCreate(
-                    [
-                        'school_id'       => $schoolId,
-                        'date'            => $data['date'],
-                        'attendable_type' => Student::class,
-                        'attendable_id'   => $record['student_id'],
-                    ],
-                    [
-                        'status'  => $record['status'],
-                        'remarks' => $record['remarks'] ?? null,
-                    ]
-                );
+                Attendance::mark($schoolId, Student::class, (int) $record['student_id'], $data['date'], $record['status'], $record['remarks'] ?? null);
             }
         });
 
@@ -138,9 +132,8 @@ class AttendanceController extends Controller
 
         $existing = Attendance::where([
             'school_id'       => $this->getSchoolId(),
-            'date'            => $date,
             'attendable_type' => Staff::class,
-        ])->whereIn('attendable_id', $staff->pluck('id'))
+        ])->whereDate('date', $date)->whereIn('attendable_id', $staff->pluck('id'))
           ->get(['attendable_id', 'status', 'remarks'])
           ->keyBy('attendable_id');
 
@@ -172,18 +165,7 @@ class AttendanceController extends Controller
 
         DB::transaction(function () use ($data, $schoolId) {
             foreach ($data['records'] as $record) {
-                Attendance::updateOrCreate(
-                    [
-                        'school_id'       => $schoolId,
-                        'date'            => $data['date'],
-                        'attendable_type' => Staff::class,
-                        'attendable_id'   => $record['staff_id'],
-                    ],
-                    [
-                        'status'  => $record['status'],
-                        'remarks' => $record['remarks'] ?? null,
-                    ]
-                );
+                Attendance::mark($schoolId, Staff::class, (int) $record['staff_id'], $data['date'], $record['status'], $record['remarks'] ?? null);
             }
         });
 

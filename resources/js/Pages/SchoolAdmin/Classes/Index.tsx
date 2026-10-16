@@ -22,7 +22,8 @@ interface Props extends PageProps { classes: ClassRow[]; levels: Record<string, 
 
 const schema = z.object({
     name:         z.string().min(1, 'Name is required'),
-    numeric_name: z.coerce.number().int().positive().nullable().optional(),
+    // An empty box means "no order given", not zero (zero used to block the form with no message)
+    numeric_name: z.preprocess(v => (v === '' || v === null ? undefined : v), z.coerce.number().int().positive('Use a whole number from 1 up').optional()),
     capacity:     z.coerce.number().int().min(0).optional(),
     level:        z.string().nullable().optional(),
 });
@@ -52,17 +53,20 @@ export default function ClassesIndex() {
     const [open, setOpen]     = useState(false);
     const [editing, setEditing] = useState<SchoolClass | null>(null);
 
-    const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } =
+    const { register, handleSubmit, reset, setValue, watch, setError, formState: { errors, isSubmitting } } =
         useForm<FormData>({ resolver: zodResolver(schema) });
 
     const openCreate = () => { reset({ name: '', numeric_name: undefined, capacity: 0, level: '' }); setEditing(null); setOpen(true); };
     const openEdit   = (c: SchoolClass) => { reset({ name: c.name, numeric_name: c.numeric_name ?? undefined, capacity: c.capacity, level: c.level ?? '' }); setEditing(c); setOpen(true); };
 
+    // Show the school's own message (for example, a class with that name already exists) next to the box
+    const showErrors = (errs: Record<string, string>) => Object.entries(errs).forEach(([field, message]) => setError(field as keyof FormData, { message }));
+
     const onSubmit = (data: FormData) => {
         if (editing) {
-            router.put(`/school/classes/${editing.id}`, { ...data, level: data.level || null }, { onSuccess: () => setOpen(false) });
+            router.put(`/school/classes/${editing.id}`, { ...data, level: data.level || null }, { onSuccess: () => setOpen(false), onError: showErrors });
         } else {
-            router.post('/school/classes', { ...data, level: data.level || null }, { onSuccess: () => setOpen(false) });
+            router.post('/school/classes', { ...data, level: data.level || null }, { onSuccess: () => setOpen(false), onError: showErrors });
         }
     };
 
@@ -198,6 +202,7 @@ export default function ClassesIndex() {
                             <div className="space-y-1.5">
                                 <Label>Order (numeric)</Label>
                                 <Input type="number" placeholder="1" {...register('numeric_name')} />
+                                {errors.numeric_name && <p className="text-xs text-red-500">{errors.numeric_name.message as string}</p>}
                             </div>
                             <div className="space-y-1.5">
                                 <Label>Capacity</Label>

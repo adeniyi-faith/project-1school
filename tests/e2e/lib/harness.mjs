@@ -85,12 +85,14 @@ export class Findings {
     /** An expected-answer check: compare, record, never throw. */
     check(name, actual, expected) {
         this.checks++;
+        if (process.env.E2E_VERBOSE) console.log('  check:', name);
         const same = typeof expected === 'number' && typeof actual === 'number' ? Math.abs(actual - expected) < 0.005 : String(actual) === String(expected);
         if (same) this.passed++; else this.add('WRONG ANSWER', name, `expected ${expected} but got ${actual}`);
         return same;
     }
     ok(name, condition, detail = '') {
         this.checks++;
+        if (process.env.E2E_VERBOSE) console.log('  check:', name);
         if (condition) this.passed++; else this.add('CHECK FAILED', name, detail);
         return !!condition;
     }
@@ -225,4 +227,15 @@ export const dialog = page => page.locator('[role=dialog]').last();
 export async function settle(page, ms = 600) {
     await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
     await page.waitForTimeout(ms);
+}
+
+/** Enter the public demo school as one kind of person (these accounts have no password; they are read-only). */
+export async function demoLogin(page, findings, label) {
+    await page.goto(BASE + '/demo', { waitUntil: 'load' });
+    await page.getByRole('button', { name: new RegExp('^' + label, 'i') }).first().click();
+    await page.waitForURL(u => !u.pathname.startsWith('/demo'), { timeout: 15000 }).catch(() => {});
+    await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
+    const ok = !new URL(page.url()).pathname.startsWith('/demo');
+    if (!ok) findings.add('demo sign-in failed', label, 'still on the demo page');
+    return ok;
 }

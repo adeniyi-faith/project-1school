@@ -46,12 +46,14 @@ class ReportController extends Controller
 
     private function adminDashboard(int $sid): array
     {
-        $totalStudents = Student::withoutGlobalScopes()->where('school_id', $sid)->count();
+        // Only pupils who are currently on roll (not alumni, transferred or removed)
+        $totalStudents = Student::where('school_id', $sid)->where('status', 'active')->count();
         $totalStaff    = Staff::where('school_id', $sid)->where('status', 'active')->count();
 
-        $todayAtt = Attendance::where('school_id', $sid)->whereDate('date', today())->get();
+        // Pupils only (staff rows share the table). Late counts as present and a half day as half, like the report cards
+        $todayAtt = Attendance::where('school_id', $sid)->where('attendable_type', Student::class)->whereDate('date', today())->get();
         $attendancePct = $todayAtt->count()
-            ? round($todayAtt->where('status', 'present')->count() / $todayAtt->count() * 100, 1)
+            ? round(($todayAtt->whereIn('status', ['present', 'late'])->count() + 0.5 * $todayAtt->where('status', 'half_day')->count()) / $todayAtt->count() * 100, 1)
             : 0;
 
         $monthFees   = FeeLedgerService::collected($sid, now()->startOfMonth()->toDateString(), now()->toDateString());
@@ -62,10 +64,10 @@ class ReportController extends Controller
         $attChart = [];
         for ($i = 6; $i >= 0; $i--) {
             $day  = now()->subDays($i);
-            $recs = Attendance::where('school_id', $sid)->whereDate('date', $day)->get();
+            $recs = Attendance::where('school_id', $sid)->where('attendable_type', Student::class)->whereDate('date', $day)->get();
             $attChart[] = [
                 'day'     => $day->format('D'),
-                'present' => $recs->where('status', 'present')->count(),
+                'present' => $recs->whereIn('status', ['present', 'late'])->count(),
                 'absent'  => $recs->where('status', 'absent')->count(),
             ];
         }
