@@ -24,6 +24,8 @@ class AiService
         'result_comments' => 'Report card comments',
         'lesson_notes' => 'Lesson notes and schemes of work',
         'questions' => 'Question writer',
+        'site_builder' => 'Website builder',
+        'chat_widget' => 'Website chat assistant',
     ];
 
     /** Two kinds of model: one for long careful writing, one for short quick jobs */

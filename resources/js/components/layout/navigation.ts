@@ -170,6 +170,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Subscriptions',  href: '/super-admin/subscriptions',  icon: CreditCard,  roles: ['super-admin'] },
             { label: 'Coupons',        href: '/super-admin/coupons',        icon: Tag,         roles: ['super-admin'] },
             { label: 'Module Manager', href: '/super-admin/module-manager', icon: Layers,      roles: ['super-admin'] },
+            { label: 'Site Extensions', href: '/super-admin/extensions',    icon: Plug,        roles: ['super-admin'] },
         ],
     },
     {
@@ -180,6 +181,7 @@ export const navGroups: NavGroup[] = [
             { label: 'News & events', href: '/school/website/posts',    icon: Newspaper, roles: ['school-admin'] },
             { label: 'Themes',        href: '/school/website/themes',   icon: Palette,   roles: ['school-admin'] },
             { label: 'Pictures',      href: '/school/website/media',    icon: Images,    roles: ['school-admin'] },
+            { label: 'Extensions',    href: '/school/website/extensions', icon: Plug,    roles: ['school-admin'] },
             { label: 'Site settings', href: '/school/website/settings', icon: SlidersHorizontal, roles: ['school-admin'] },
         ],
     },

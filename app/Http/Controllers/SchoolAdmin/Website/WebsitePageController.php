@@ -44,7 +44,7 @@ class WebsitePageController extends WebsiteBase
             // a page can sit under a top-level page, but a page that already has pages under it stays top level
             'parentOptions' => SchoolSitePage::whereNull('parent_id')->where('id', '!=', $row->id)->where('is_home', false)->orderBy('position')->get(['id', 'title'])->map->only(['id', 'title'])->values(),
             'hasChildren' => SchoolSitePage::where('parent_id', $row->id)->exists(),
-            'blockTypes' => Blocks::catalogue(),
+            'blockTypes' => Blocks::catalogue($school->id),
             'media' => $this->media(),
             'site' => ['tagline' => $site->tagline, 'theme' => Themes::all()[$site->theme]['label'] ?? 'Heritage'],
             'school' => ['name' => $school->name, 'phone' => $school->phone, 'address' => $school->address],
