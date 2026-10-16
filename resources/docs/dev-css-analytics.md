@@ -10,7 +10,17 @@ You can restyle anything: colours, spacing, fonts, shapes. These are removed:
 - backslash escapes (they can spell forbidden words)
 - `url()` addresses that are not `https://` or a small inline picture
 
-Use the theme's variables so your changes follow the school's colours: `--brand`, `--brand2`, `--bg`, `--text`, `--line`, `--radius`.
+Use the theme's variables so your changes follow the school's colours: `--brand`, `--brand2`, `--bg`, `--text`, `--muted`, `--soft`, `--rule`, `--brand-ink`, `--brand-t` (main colour as text) and `--brand2-t` (second colour as text).
+
+## Restyling a whole theme
+
+Extra CSS is ordinary CSS, so any web developer can read it. Three things are specific to this platform:
+
+1. **Scope it to the theme.** Start each rule with `body[data-theme="modern"]` (or the theme's key), so it only applies to that theme.
+2. **Set the variables first.** Changing `--bg`, `--text`, `--brand` and `--brand2` on `body[data-theme="modern"]` recolours most of the site at once. Fix the few places that still look wrong afterwards.
+3. **Reordering sections.** The page sections are direct children of `#main`. Make it a flex column and give each section an `order`: `#main{display:flex;flex-direction:column}` then `#main section:nth-of-type(6){order:2}`. Sections are counted from the top of the page. The `>` character is removed from CSS when saved, so use `section:nth-of-type(n)` instead of `#main > :nth-child(n)`.
+
+CSS can restyle and reorder what is already on the page. It cannot add new sections or text. For that, add a section type or a theme folder (see Themes and sections).
 
 ## Analytics and verification
 
