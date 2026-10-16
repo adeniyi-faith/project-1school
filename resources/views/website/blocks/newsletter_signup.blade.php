@@ -8,14 +8,14 @@
         @if ($b['heading'])<{{ $tag }}>{{ $b['heading'] }}</{{ $tag }}>@endif
         @if ($b['intro'])<p>{{ $b['intro'] }}</p>@endif
     </div>
-    @if (session('newsletter'))
+    @if (session('newsletter') && session('newsletter_at') !== 'footer')
         <p class="live-ok" role="status">{{ session('newsletter') }}</p>
     @else
         <form class="live-form" method="post" action="{{ route('site.newsletter.subscribe', $school->slug) }}">
             @csrf
             @include('website.partials.guard', ['school' => $school, 'kind' => 'newsletter'])
-            <label>Your name (optional)<input name="name" maxlength="100" value="{{ old('name') }}" autocomplete="name"></label>
-            <label>Email<input name="email" type="email" required maxlength="150" value="{{ old('email') }}" autocomplete="email"></label>
+            <label>Your name (optional)<input name="name" maxlength="100" value="{{ old('from') === 'footer' ? '' : old('name') }}" autocomplete="name"></label>
+            <label>Email<input name="email" type="email" required maxlength="150" value="{{ old('from') === 'footer' ? '' : old('email') }}" autocomplete="email"></label>
             @if (($b['interests'] ?? 'yes') === 'yes')
                 <fieldset class="live-wide" style="border:0;padding:0;margin:0">
                     <legend style="font-weight:600;margin-bottom:.35rem">I would like to hear about</legend>

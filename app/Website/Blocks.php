@@ -2,6 +2,8 @@
 
 namespace App\Website;
 
+use App\Models\SiteForm;
+
 /**
  * The sections a website page is made of. Each section type says what its boxes are called, what it starts with
  * and which view draws it. Adding a new kind of section means one entry here and one view in
@@ -246,6 +248,15 @@ class Blocks
                 ],
                 'default' => ['heading' => 'Send us a message', 'intro' => 'Ask anything. Our office will call or email you back.'],
             ],
+            'custom_form' => [
+                'label' => 'Custom form', 'help' => 'One of the forms you built in Extensions > Forms (a prospectus request, a job application, a survey). Needs the Forms extension switched on and the form kept open.',
+                'fields' => [
+                    ['key' => 'form', 'label' => 'Which form', 'kind' => 'select', 'options' => [], 'dynamic' => 'forms'],
+                    ['key' => 'heading', 'label' => 'Heading (leave empty to use the form name)', 'kind' => 'text', 'max' => 120],
+                    ['key' => 'intro', 'label' => 'A sentence under the heading (leave empty to use the form\'s own)', 'kind' => 'text', 'max' => 300],
+                ],
+                'default' => ['form' => '', 'heading' => '', 'intro' => ''],
+            ],
             'newsletter_signup' => [
                 'label' => 'Newsletter sign-up', 'help' => 'Visitors give their email and agree to get your newsletter, then confirm from an email we send. Needs the Newsletter extension switched on and an email service set up, otherwise it stays hidden.',
                 'fields' => [
@@ -269,7 +280,18 @@ class Blocks
     {
         return collect(self::types())
             ->filter(fn ($t, $key) => $schoolId === null || Extensions::blockAllowed($key, $schoolId))
-            ->map(fn ($t, $key) => ['type' => $key] + $t)->values()->all();
+            ->map(function ($t, $key) use ($schoolId) {
+                // a section that picks one of the school's own things (its forms) lists them in the editor
+                foreach ($t['fields'] as $i => $f) {
+                    if (($f['dynamic'] ?? null) === 'forms') {
+                        $own = $schoolId ? SiteForm::withoutGlobalScopes()->where('school_id', $schoolId)->orderBy('name')->pluck('name', 'id')->all() : [];
+                        // keys like "f12" (not bare numbers) so the editor keeps "Choose a form" first
+                        $t['fields'][$i]['options'] = ['' => 'Choose a form'] + array_combine(array_map(fn ($id) => 'f'.$id, array_keys($own)), array_values($own));
+                    }
+                }
+
+                return ['type' => $key] + $t;
+            })->values()->all();
     }
 
     public static function fresh(string $type): ?array
@@ -315,7 +337,9 @@ class Blocks
             $value = $source[$f['key']] ?? null;
 
             $clean[$f['key']] = match ($f['kind']) {
-                'select' => array_key_exists((string) $value, $f['options']) ? (string) $value : array_key_first($f['options']),
+                'select' => ($f['dynamic'] ?? null) === 'forms'
+                    ? (is_string($value) && preg_match('/^f(\d+)$/', $value, $m) && $schoolId && SiteForm::withoutGlobalScopes()->where('school_id', $schoolId)->whereKey((int) $m[1])->exists() ? 'f'.(int) $m[1] : '')
+                    : (array_key_exists((string) $value, $f['options']) ? (string) $value : array_key_first($f['options'])),
                 'number' => max($f['min'], min($f['max'], (int) $value ?: $f['min'])),
                 'image' => self::imagePath($value, $schoolId),
                 'list' => collect(is_array($value) ? array_slice($value, 0, $f['limit']) : [])

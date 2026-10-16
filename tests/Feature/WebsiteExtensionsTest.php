@@ -63,8 +63,8 @@ class WebsiteExtensionsTest extends SecurityTestCase
     public function test_an_extension_that_is_not_built_yet_cannot_be_switched_on(): void
     {
         $school = $this->makeSchool('Ext Soon');
-        $this->actingAs($this->makeUser($school, 'school-admin'))->post('/school/website/extensions/forms', ['on' => true])->assertSessionHasErrors('extension');
-        $this->assertFalse(Extensions::enabled($school->id, 'forms'));
+        $this->actingAs($this->makeUser($school, 'school-admin'))->post('/school/website/extensions/gallery_plus', ['on' => true])->assertSessionHasErrors('extension');
+        $this->assertFalse(Extensions::enabled($school->id, 'gallery_plus'));
         $this->post('/school/website/extensions/nonsense', ['on' => true])->assertNotFound();
     }
 

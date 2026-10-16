@@ -77,6 +77,7 @@ class RolePermissionSeeder extends Seeder
         'messages.view', 'messages.send',
         'sms.send', 'email.send',
         'newsletter.view', 'newsletter.send',
+        'forms.view', 'forms.manage',
 
         // Reports
         'reports.view', 'reports.export', 'reports.custom',
@@ -98,7 +99,7 @@ class RolePermissionSeeder extends Seeder
             'payroll.*', 'payslip.*', 'leave.*', 'staff.performance',
             'library.*', 'transport.*', 'hostel.*', 'inventory.*',
             'homework.*', 'lessons.*', 'syllabus.*',
-            'announcements.*', 'messages.*', 'sms.*', 'email.*', 'newsletter.*',
+            'announcements.*', 'messages.*', 'sms.*', 'email.*', 'newsletter.*', 'forms.*',
             'reports.*', 'settings.*',
         ],
 
@@ -113,7 +114,7 @@ class RolePermissionSeeder extends Seeder
             'fees.view', 'fees.reports',
             'leave.view', 'leave.apply', 'leave.approve',
             'homework.view', 'lessons.view', 'lessons.approve', 'syllabus.view',
-            'announcements.view', 'announcements.create', 'messages.view', 'messages.send', 'newsletter.view', 'newsletter.send',
+            'announcements.view', 'announcements.create', 'messages.view', 'messages.send', 'newsletter.view', 'newsletter.send', 'forms.view',
             'reports.view', 'reports.export',
         ],
 
