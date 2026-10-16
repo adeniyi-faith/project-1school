@@ -11,7 +11,7 @@ const val = n => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : unde
 const phases = (val('--phase') ?? 'all').split(',');
 const dir = path.dirname(fileURLToPath(import.meta.url));
 
-const ALL = ['phase1', 'phase2', 'phase3', 'phase4'];
+const ALL = ['phase1', 'phase2', 'phase3', 'phase4', 'phase5'];
 const chosen = phases[0] === 'all' ? ALL : phases.map(p => (p.startsWith('phase') ? p : `phase${p}`));
 
 let server;

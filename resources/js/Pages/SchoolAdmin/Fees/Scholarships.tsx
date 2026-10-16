@@ -79,7 +79,7 @@ export default function Scholarships({ scholarships, awards, categories, can }: 
     }
 
     const headerActions = canManage && (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => openPolicy(null)}><Plus className="size-4" /> New scholarship</Button>
             <Button disabled={active.length === 0} onClick={() => { award.reset(); award.clearErrors(); setAwardOpen(true); }} className="bg-indigo-600 text-white hover:bg-indigo-700">
                 <UserPlus className="size-4" /> Give to a student
