@@ -71,6 +71,10 @@ class HostelController extends Controller
 
     public function destroy(Hostel $hostel)
     {
+        $living = HostelAllocation::where('hostel_id', $hostel->id)->where('status', 'active')->count();
+        if ($living > 0) {
+            return back()->with('error', "{$hostel->name} still has {$living} " . ($living === 1 ? 'student' : 'students') . ' living in it. Vacate them first, then delete it.');
+        }
         $hostel->delete();
         return back()->with('success', 'Hostel deleted.');
     }
@@ -129,7 +133,16 @@ class HostelController extends Controller
             'status'      => 'required|in:available,full,maintenance',
         ]);
 
+        abort_unless($room->hostel_id === $hostel->id, 404);
+        $taken = HostelAllocation::where('room_id', $room->id)->where('status', 'active')->count();
+        if ((int) $data['capacity'] < $taken) {
+            return back()->withErrors(['capacity' => "{$taken} " . ($taken === 1 ? 'bed is' : 'beds are') . " in use in this room, so its capacity cannot be less than {$taken}."]);
+        }
+
         $oldCapacity = $room->capacity;
+        // A room under repair stays closed; otherwise it is full exactly when every bed is taken
+        $data['status'] = $data['status'] === 'maintenance' ? 'maintenance' : ($taken >= (int) $data['capacity'] ? 'full' : 'available');
+        $data['occupied'] = $taken;
         $room->update($data);
 
         // Recalculate hostel total_capacity
@@ -143,6 +156,11 @@ class HostelController extends Controller
 
     public function destroyRoom(Hostel $hostel, HostelRoom $room)
     {
+        abort_unless($room->hostel_id === $hostel->id, 404);
+        $taken = HostelAllocation::where('room_id', $room->id)->where('status', 'active')->count();
+        if ($taken > 0) {
+            return back()->with('error', "Room {$room->room_no} still has {$taken} " . ($taken === 1 ? 'student' : 'students') . ' in it. Vacate or move them first, then delete the room.');
+        }
         $hostel->decrement('total_rooms');
         $hostel->decrement('total_capacity', $room->capacity);
         $room->delete();
@@ -189,9 +207,11 @@ class HostelController extends Controller
         ]);
 
         $room = HostelRoom::findOrFail($data['room_id']);
+        $hostel = Hostel::findOrFail($data['hostel_id']);
+        $student = Student::findOrFail($data['student_id']);
 
-        if ($room->occupied >= $room->capacity) {
-            return back()->withErrors(['room_id' => 'Room is at full capacity.']);
+        if ($problem = $this->roomProblem($room, $hostel, $student)) {
+            return back()->withErrors($problem);
         }
 
         // Check student not already active in another room
@@ -204,13 +224,23 @@ class HostelController extends Controller
         $data['school_id'] = $this->getSchoolId();
         $data['status']    = 'active';
 
-        DB::transaction(function () use ($data, $room) {
+        $full = DB::transaction(function () use ($data, $room) {
+            // Look at the room again while holding it, so two people booking the last bed cannot both get it
+            $room = HostelRoom::whereKey($room->id)->lockForUpdate()->first();
+            if ($room->occupied >= $room->capacity) {
+                return true;
+            }
             HostelAllocation::create($data);
             $room->increment('occupied');
-            if ($room->occupied >= $room->capacity) {
+            if ($room->fresh()->occupied >= $room->capacity) {
                 $room->update(['status' => 'full']);
             }
+
+            return false;
         });
+        if ($full) {
+            return back()->withErrors(['room_id' => 'Room is at full capacity.']);
+        }
 
         return back()->with('success', 'Student allocated to hostel room.');
     }
@@ -232,13 +262,11 @@ class HostelController extends Controller
         ]);
 
         $newRoom = HostelRoom::findOrFail($data['room_id']);
-        if ($newRoom->hostel_id !== (int) $data['hostel_id']) {
-            return back()->withErrors(['room_id' => 'That room is not in the chosen hostel.']);
-        }
-
         $moving = $newRoom->id !== $allocation->room_id;
-        if ($moving && $newRoom->occupied >= $newRoom->capacity) {
-            return back()->withErrors(['room_id' => 'That room is full.']);
+        $hostel = Hostel::findOrFail($data['hostel_id']);
+        // Staying in the same room only needs the hostel/gender rules; moving needs an open room with a free bed too
+        if ($problem = $this->roomProblem($newRoom, $hostel, $allocation->student, ! $moving)) {
+            return back()->withErrors($problem);
         }
 
         DB::transaction(function () use ($allocation, $data, $newRoom, $moving) {
@@ -280,6 +308,10 @@ class HostelController extends Controller
             'leaving_date' => 'required|date',
         ]);
 
+        if ($allocation->status !== 'active') {
+            return back()->with('error', 'This student has already left, so there is nobody to vacate.');
+        }
+
         DB::transaction(function () use ($allocation, $data) {
             $allocation->update([
                 'status'       => 'left',
@@ -305,5 +337,29 @@ class HostelController extends Controller
             ->get(['id', 'room_no', 'floor', 'type', 'capacity', 'occupied', 'monthly_fee', 'ac']);
 
         return response()->json($rooms);
+    }
+
+    /**
+     * Why this student cannot have a bed in this room, as a form error, or null when they can:
+     * the room is in the chosen hostel, is open, has a free bed (unless the student already sleeps there),
+     * and a boys' hostel only takes boys and a girls' hostel only girls.
+     */
+    private function roomProblem(HostelRoom $room, Hostel $hostel, Student $student, bool $alreadyThere = false): ?array
+    {
+        if ($room->hostel_id !== $hostel->id) {
+            return ['room_id' => 'That room is not in the chosen hostel.'];
+        }
+        if ($room->status === 'maintenance') {
+            return ['room_id' => "Room {$room->room_no} is closed for repairs."];
+        }
+        if (! $alreadyThere && $room->occupied >= $room->capacity) {
+            return ['room_id' => 'Room is at full capacity.'];
+        }
+        $needs = ['boys' => 'male', 'girls' => 'female'][$hostel->type] ?? null;
+        if ($needs && $student->gender !== $needs) {
+            return ['student_id' => "{$student->first_name} cannot be placed in {$hostel->name}: it is a " . ($hostel->type === 'boys' ? "boys'" : "girls'") . ' hostel.'];
+        }
+
+        return null;
     }
 }

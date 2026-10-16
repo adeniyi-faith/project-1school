@@ -35,6 +35,7 @@ never calculated with the app's own formula.
 | `lib/harness.mjs` | sign-in, error watching, page visit checks, form helpers, database reader |
 | `phase1.mjs` | money and people: sign-in, admissions to enrolment, admitting students, staff, fees and payments, permissions, parent view |
 | `phase3.mjs` | every role's view: sign-in checks (wrong password, throttle, sign out), platform owner and acting-in-a-school, each of the 11 roles (landing page, menu has/has-not, every menu link opens, forbidden screens show the plain not-allowed page), buttons follow permissions, parent and student see the right figures for the right child, demo is read-only |
+| `phase4.mjs` | website: 16 test stories (paging, draft and future hidden, sitemap/feed counts, markup shown as text), all 6 themes on every page at desktop and 360px wide (one heading, no sideways scroll, no broken pictures, links open); notices (scheduled one hidden from the student); email and text blasts against hand-counted logs; AI off gives no crash; library, hostel and bus numbers on screen vs the loans, beds and seats made |
 | `phase2.mjs` | daily school work: classes, attendance, score entry with hand-worked totals/grades/positions, report card and broadsheet files, CBT and timetable screens, teacher and student demo views |
 | `lib/php83-polyfill.php`, `lib/router.php` | only used on a machine with PHP older than 8.4 (the app needs 8.4) |
 

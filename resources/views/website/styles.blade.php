@@ -5,6 +5,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body-font
 img{max-width:100%;height:auto;display:block}
 a{color:var(--link);text-underline-offset:.2em}
 h1,h2,h3{font-family:var(--head-font);font-weight:400;line-height:1.15;margin:0 0 .6em;letter-spacing:-.01em;text-wrap:balance}
+h1,h2,h3,h4,p,li,blockquote,figcaption{overflow-wrap:anywhere}
 h1{font-size:clamp(2.1rem,6.5vw,3.6rem)}
 h2{font-size:clamp(1.7rem,4.6vw,2.6rem)}
 h3{font-size:1.35rem}

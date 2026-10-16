@@ -34,14 +34,13 @@ class BookIssue extends Model
         return $this->morphTo();
     }
 
+    /** Days late: for a returned book up to the day it came back, for one still out up to today */
     public function getOverdueDaysAttribute(): int
     {
-        if ($this->status === 'returned' && $this->returned_date) {
-            return max(0, $this->due_date->diffInDays($this->returned_date, false));
+        if ($this->status === 'returned') {
+            return $this->returned_date ? max(0, (int) $this->due_date->startOfDay()->diffInDays($this->returned_date->startOfDay(), false)) : 0;
         }
-        if ($this->status !== 'returned') {
-            return max(0, (int) now()->startOfDay()->diffInDays($this->due_date->startOfDay(), false));
-        }
-        return 0;
+
+        return max(0, (int) $this->due_date->startOfDay()->diffInDays(now()->startOfDay(), false));
     }
 }
