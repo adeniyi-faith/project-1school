@@ -39,12 +39,18 @@ class SiteFormPublicController extends Controller
         $fields = $row->fields ?? [];
         $consents = $row->consents ?? [];
 
-        $validator = Validator::make($request->all(), FormSchema::rules($fields, $consents), ['accepted' => 'Please tick :attribute.', 'required' => 'Please fill in :attribute.'], FormSchema::attributeNames($fields, $consents));
+        // questions that only appear after another answer are checked only when that answer was given
+        $visible = FormSchema::visible($fields, (array) $request->input('a', []));
+        $validator = Validator::make($request->all(), FormSchema::rules($fields, $consents, $visible), [
+            'accepted' => 'Please tick :attribute.', 'required' => 'Please fill in :attribute.', 'mimes' => ':attribute must be a PDF, Word document, JPG or PNG.',
+            'max.file' => ':attribute must be smaller than '.(FormSchema::FILE_KB / 1024).' MB.', 'uploaded' => ':attribute could not be uploaded. It may be too big (the limit is '.(FormSchema::FILE_KB / 1024).' MB).',
+        ], FormSchema::attributeNames($fields, $consents));
         if ($validator->fails()) {
             return back()->withInput()->withErrors($validator, $bag);
         }
 
-        $verdict = Visitor::inspect($request, $school->id, 'form-'.$row->id, 10, 500);
+        // a form that takes files gets a tighter limit, because every post can store a file
+        $verdict = FormService::hasFiles($row) ? Visitor::inspect($request, $school->id, 'form-'.$row->id, 5, 100) : Visitor::inspect($request, $school->id, 'form-'.$row->id, 10, 500);
         if ($verdict === Visitor::ROBOT) {
             return $this->thanks($row, $request); // thanked and ignored
         }

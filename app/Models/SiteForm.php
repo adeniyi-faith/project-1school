@@ -11,9 +11,9 @@ class SiteForm extends Model
 {
     use BelongsToSchool;
 
-    protected $fillable = ['school_id', 'name', 'intro', 'fields', 'consents', 'button_text', 'success_message', 'notify_email', 'newsletter_optin', 'active'];
+    protected $fillable = ['school_id', 'name', 'intro', 'fields', 'consents', 'button_text', 'success_message', 'notify_email', 'newsletter_optin', 'send_to_inquiries', 'active'];
 
-    protected $casts = ['fields' => 'array', 'consents' => 'array', 'newsletter_optin' => 'boolean', 'active' => 'boolean'];
+    protected $casts = ['fields' => 'array', 'consents' => 'array', 'newsletter_optin' => 'boolean', 'send_to_inquiries' => 'boolean', 'active' => 'boolean'];
 
     public function submissions(): HasMany
     {

@@ -12,6 +12,7 @@ use App\Website\Extensions;
 use App\Website\SiteRenderer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -63,8 +64,11 @@ class WebsiteFormsController extends WebsiteBase
             'form' => [
                 'id' => $row->id, 'name' => $row->name, 'intro' => (string) $row->intro, 'fields' => $row->fields ?? [], 'consents' => $row->consents ?? [],
                 'button_text' => $row->button_text, 'success_message' => (string) $row->success_message, 'notify_email' => (string) $row->notify_email,
-                'newsletter_optin' => $row->newsletter_optin, 'active' => $row->active,
+                'newsletter_optin' => $row->newsletter_optin, 'send_to_inquiries' => $row->send_to_inquiries, 'active' => $row->active,
             ],
+            'maps' => collect(FormSchema::MAPS)->map(fn ($m, $k) => ['key' => $k, 'label' => $m['label'], 'types' => $m['types']])->values(),
+            'controls' => FormSchema::CONTROLS, 'fileInfo' => ['types' => strtoupper(str_replace(',', ', ', FormSchema::FILE_TYPES)), 'mb' => FormSchema::FILE_KB / 1024, 'max' => FormSchema::MAX_FILES],
+            'canInquiry' => $request->user()->can('students.view'),
             'types' => FormSchema::TYPES, 'choiceTypes' => FormSchema::CHOICES,
             'limits' => ['fields' => FormSchema::MAX_FIELDS, 'options' => FormSchema::MAX_OPTIONS, 'consents' => FormSchema::MAX_CONSENTS],
             'presets' => FormTemplates::consentPresets($school),
@@ -82,10 +86,10 @@ class WebsiteFormsController extends WebsiteBase
         $data = $request->validate([
             'name' => 'required|string|max:120', 'intro' => 'nullable|string|max:400', 'button_text' => 'nullable|string|max:40',
             'success_message' => 'nullable|string|max:300', 'notify_email' => 'nullable|email|max:150',
-            'newsletter_optin' => 'boolean', 'active' => 'boolean', 'fields' => 'array', 'consents' => 'nullable|array',
+            'newsletter_optin' => 'boolean', 'send_to_inquiries' => 'boolean', 'active' => 'boolean', 'fields' => 'array', 'consents' => 'nullable|array',
         ]);
         $fields = FormSchema::cleanFields($data['fields'] ?? []);
-        if ($problem = FormSchema::problem($fields)) {
+        if ($problem = FormSchema::problem($fields, (bool) ($data['send_to_inquiries'] ?? false))) {
             return back()->withErrors(['fields' => $problem]);
         }
         if (! empty($data['newsletter_optin']) && ! collect($fields)->contains('type', 'email')) {
@@ -95,7 +99,7 @@ class WebsiteFormsController extends WebsiteBase
         $row->update([
             'name' => trim($data['name']), 'intro' => trim((string) ($data['intro'] ?? '')) ?: null, 'button_text' => trim((string) ($data['button_text'] ?? '')) ?: 'Send',
             'success_message' => trim((string) ($data['success_message'] ?? '')) ?: null, 'notify_email' => trim((string) ($data['notify_email'] ?? '')) ?: null,
-            'newsletter_optin' => (bool) ($data['newsletter_optin'] ?? false), 'active' => (bool) ($data['active'] ?? true),
+            'newsletter_optin' => (bool) ($data['newsletter_optin'] ?? false), 'send_to_inquiries' => (bool) ($data['send_to_inquiries'] ?? false), 'active' => (bool) ($data['active'] ?? true),
             'fields' => $fields, 'consents' => FormSchema::cleanConsents($data['consents'] ?? []),
         ]);
 
@@ -106,7 +110,9 @@ class WebsiteFormsController extends WebsiteBase
     public function destroy(int $form): RedirectResponse
     {
         $this->guardOn();
-        SiteForm::findOrFail($form)->delete();
+        $row = SiteForm::findOrFail($form);
+        FormService::forgetFiles($row->submissions()->get());
+        $row->delete();
 
         return redirect('/school/website/forms')->with('success', 'Form and its answers deleted.');
     }
@@ -119,7 +125,7 @@ class WebsiteFormsController extends WebsiteBase
         $status = in_array($request->query('status'), ['new', 'read'], true) ? $request->query('status') : null;
 
         $list = $row->submissions()->when($status, fn ($q) => $q->where('status', $status))->latest('id')->paginate(25)->withQueryString()
-            ->through(fn ($s) => ['id' => $s->id, 'status' => $s->status, 'at' => $s->created_at->toIso8601String(), 'answers' => $s->answers, 'consents' => $s->consents ?? [], 'newsletter' => $s->newsletter_asked, 'page' => $s->page]);
+            ->through(fn ($s) => ['id' => $s->id, 'status' => $s->status, 'at' => $s->created_at->toIso8601String(), 'answers' => collect($s->answers)->map(fn ($a) => ['key' => $a['key'], 'label' => $a['label'], 'type' => $a['type'], 'value' => $a['value'], 'file' => ! empty($a['file']), 'size' => $a['size'] ?? null])->all(), 'consents' => $s->consents ?? [], 'newsletter' => $s->newsletter_asked, 'page' => $s->page, 'inquiry_id' => $s->inquiry_id]);
 
         return Inertia::render('SchoolAdmin/Website/FormAnswers', $this->shell($school, $this->site($school)) + [
             'form' => ['id' => $row->id, 'name' => $row->name],
@@ -128,6 +134,17 @@ class WebsiteFormsController extends WebsiteBase
             'filters' => ['status' => (string) $status],
             'canManage' => $request->user()->can('forms.manage'),
         ]);
+    }
+
+    /** Opens an uploaded file. Only staff of the same school who can see forms, always as a download, never shown inside the page. */
+    public function file(int $form, int $submission, string $key): \Symfony\Component\HttpFoundation\Response
+    {
+        $this->guardOn();
+        $row = SiteFormSubmission::where('form_id', $form)->findOrFail($submission);
+        $answer = collect($row->answers)->first(fn ($a) => $a['key'] === $key && ! empty($a['file']));
+        abort_unless($answer && Storage::disk('private')->exists($answer['file']), 404);
+
+        return Storage::disk('private')->download($answer['file'], $answer['value'], ['X-Content-Type-Options' => 'nosniff']);
     }
 
     public function markRead(Request $request, int $form, int $submission): RedirectResponse
@@ -150,7 +167,9 @@ class WebsiteFormsController extends WebsiteBase
     public function removeAnswer(int $form, int $submission): RedirectResponse
     {
         $this->guardOn();
-        SiteFormSubmission::where('form_id', $form)->findOrFail($submission)->delete();
+        $row = SiteFormSubmission::where('form_id', $form)->findOrFail($submission);
+        FormService::forgetFiles([$row]);
+        $row->delete();
 
         return back()->with('success', 'Answer deleted.');
     }
@@ -162,11 +181,12 @@ class WebsiteFormsController extends WebsiteBase
         $subs = $row->submissions()->orderBy('id')->get();
         $labels = $subs->flatMap(fn ($s) => collect($s->answers)->pluck('label'))->unique()->values()->all();
 
-        $rows = [array_merge(['Sent on', 'Page'], $labels, ['Privacy ticks', 'Asked for the newsletter'])];
+        $rows = [array_merge(['Sent on', 'Page'], $labels, ['Privacy ticks', 'Asked for the newsletter', 'Admissions inquiry'])];
         foreach ($subs as $s) {
-            $by = collect($s->answers)->pluck('value', 'label');
+            // a file is named here; the file itself is opened from the Answers screen
+            $by = collect($s->answers)->mapWithKeys(fn ($a) => [$a['label'] => $a['value'].(! empty($a['file']) ? ' (file)' : '')]);
             $ticks = collect($s->consents ?? [])->map(fn ($c) => ($c['agreed'] ? 'Agreed: ' : 'Not agreed: ').$c['text'])->implode(' | ');
-            $rows[] = array_merge([$s->created_at->format('Y-m-d H:i'), (string) $s->page], collect($labels)->map(fn ($l) => (string) ($by[$l] ?? ''))->all(), [$ticks, $s->newsletter_asked ? 'Yes' : 'No']);
+            $rows[] = array_merge([$s->created_at->format('Y-m-d H:i'), (string) $s->page], collect($labels)->map(fn ($l) => (string) ($by[$l] ?? ''))->all(), [$ticks, $s->newsletter_asked ? 'Yes' : 'No', $s->inquiry_id ? 'Yes' : '']);
         }
         $name = \Illuminate\Support\Str::slug($row->name) ?: 'form';
         $xlsx = (new SimpleXlsx)->sheet(\Illuminate\Support\Str::limit($row->name, 28, ''), $rows);

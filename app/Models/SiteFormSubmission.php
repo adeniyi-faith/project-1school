@@ -11,7 +11,7 @@ class SiteFormSubmission extends Model
 {
     use BelongsToSchool;
 
-    protected $fillable = ['school_id', 'form_id', 'form_name', 'answers', 'consents', 'newsletter_asked', 'ip', 'page', 'status'];
+    protected $fillable = ['school_id', 'form_id', 'form_name', 'answers', 'consents', 'newsletter_asked', 'ip', 'page', 'status', 'inquiry_id'];
 
     protected $casts = ['answers' => 'array', 'consents' => 'array', 'newsletter_asked' => 'boolean'];
 
