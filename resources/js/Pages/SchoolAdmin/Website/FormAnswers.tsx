@@ -4,12 +4,13 @@ import { Pill } from '@/components/app/kit';
 import { WebsiteLayout } from '@/components/website/kit';
 import type { WebsiteShell } from '@/Types/website';
 
-interface Answer { key: string; label: string; type: string; value: string }
+interface Answer { key: string; label: string; type: string; value: string; file: boolean; size: number | null }
 interface Consent { text: string; required: boolean; agreed: boolean }
-interface Sub { id: number; status: string; at: string; answers: Answer[]; consents: Consent[]; newsletter: boolean; page: string | null }
+interface Sub { id: number; status: string; at: string; answers: Answer[]; consents: Consent[]; newsletter: boolean; page: string | null; inquiry_id: number | null }
 interface Paged<T> { data: T[]; links: { url: string | null; label: string; active: boolean }[]; total: number }
 interface Props { shell: WebsiteShell; form: { id: number; name: string }; submissions: Paged<Sub>; counts: { all: number; new: number }; filters: { status: string }; canManage: boolean }
 
+const size = (b: number | null) => (b ? (b > 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`) : '');
 const when = (iso: string) => new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 export default function FormAnswers({ shell, form, submissions, counts, filters, canManage }: Props) {
@@ -46,14 +47,17 @@ export default function FormAnswers({ shell, form, submissions, counts, filters,
                                 {s.answers.map(a => (
                                     <div key={a.key} className={a.type === 'textarea' ? 'sm:col-span-2' : ''}>
                                         <dt className="text-xs font-medium text-slate-500">{a.label}</dt>
-                                        <dd className="whitespace-pre-wrap break-words text-sm text-slate-900 dark:text-white">{a.value || <span className="text-slate-400">Not answered</span>}</dd>
+                                        <dd className="whitespace-pre-wrap break-words text-sm text-slate-900 dark:text-white">
+                                            {a.file ? <a href={`${base}/answers/${s.id}/file/${a.key}`} className="font-medium text-indigo-600 underline underline-offset-2 dark:text-indigo-400">{a.value} <span className="text-xs text-slate-500">({size(a.size)})</span></a> : (a.value || <span className="text-slate-400">Not answered</span>)}
+                                        </dd>
                                     </div>
                                 ))}
                             </dl>
-                            {(s.consents.length > 0 || s.newsletter) && (
+                            {(s.consents.length > 0 || s.newsletter || s.inquiry_id) && (
                                 <div className="mt-3 space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-white/[0.06]">
                                     {s.consents.map((c, i) => <p key={i}><span className={c.agreed ? 'text-emerald-600' : 'text-amber-600'}>{c.agreed ? 'Agreed' : 'Did not agree'}</span>: {c.text}</p>)}
                                     {s.newsletter && <p>Asked to get the newsletter (a confirmation email was sent).</p>}
+                                    {s.inquiry_id && <p>Also added to Admissions: <a href={`/school/admissions/inquiries/${s.inquiry_id}`} className="font-medium text-indigo-600 underline underline-offset-2 dark:text-indigo-400">open the inquiry</a>.</p>}
                                 </div>
                             )}
                         </li>

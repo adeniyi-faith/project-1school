@@ -73,3 +73,5 @@
 .sf-consents .sf-choice{font-size:.92rem;color:var(--muted)}
 .sf-consents a{color:inherit;text-decoration:underline}
 .sf-form .btn{justify-self:start}
+.sf-field[hidden]{display:none}
+.sf-field input[type=file]{min-height:0;padding:.65rem .8rem;font-size:.95rem}

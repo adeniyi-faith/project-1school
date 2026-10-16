@@ -644,6 +644,7 @@ Route::middleware('auth')->group(function () {
                 Route::post('forms/{form}',                        [WebsiteFormsController::class, 'update'])->whereNumber('form')->middleware($fManage)->name('forms.update');
                 Route::post('forms/{form}/delete',                 [WebsiteFormsController::class, 'destroy'])->whereNumber('form')->middleware($fManage)->name('forms.destroy');
                 Route::get('forms/{form}/answers',                 [WebsiteFormsController::class, 'answers'])->whereNumber('form')->middleware($fView)->name('forms.answers');
+                Route::get('forms/{form}/answers/{submission}/file/{key}', [WebsiteFormsController::class, 'file'])->whereNumber('form')->whereNumber('submission')->where('key', 'f[a-z0-9]{4,10}')->middleware($fView)->name('forms.answers.file');
                 Route::get('forms/{form}/export',                  [WebsiteFormsController::class, 'export'])->whereNumber('form')->middleware($fView)->name('forms.export');
                 Route::post('forms/{form}/answers/read-all',       [WebsiteFormsController::class, 'markAllRead'])->whereNumber('form')->middleware($fManage)->name('forms.answers.readall');
                 Route::post('forms/{form}/answers/{submission}/read',   [WebsiteFormsController::class, 'markRead'])->whereNumber('form')->whereNumber('submission')->middleware($fManage)->name('forms.answers.read');

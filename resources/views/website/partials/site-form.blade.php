@@ -12,7 +12,7 @@
     @if ($done)
         <p class="live-ok" role="status">{{ $done }}</p>
     @else
-        <form class="sf-form" method="post" action="{{ route('site.form.submit', [$school->slug, $form->id]) }}">
+        <form class="sf-form" method="post" action="{{ route('site.form.submit', [$school->slug, $form->id]) }}" @if (collect($form->fields)->contains('type', 'file')) enctype="multipart/form-data" @endif data-sf>
             @csrf
             @include('website.partials.guard', ['school' => $school, 'kind' => 'form-'.$form->id])
             <div class="sf-grid">
@@ -21,7 +21,8 @@
                         $id = $fid.'-'.$f['key']; $name = 'a['.$f['key'].']'; $old = old('a.'.$f['key']); $err = $bag->first('a.'.$f['key']) ?: $bag->first('a.'.$f['key'].'.*');
                         $help = $f['help'] !== '' ? $id.'-help' : null;
                     @endphp
-                    <div class="sf-field sf-field--{{ $f['type'] }}{{ $f['half'] ? ' sf-field--half' : '' }}" data-field="{{ $f['key'] }}">
+                    <div class="sf-field sf-field--{{ $f['type'] }}{{ $f['half'] ? ' sf-field--half' : '' }}" data-field="{{ $f['key'] }}"
+                        @if (! empty($f['show_if'])) data-if-key="{{ $f['show_if']['key'] }}" data-if-value="{{ $f['show_if']['value'] }}" @endif>
                         @if (in_array($f['type'], ['radio', 'checkboxes'], true))
                             <fieldset @if ($help) aria-describedby="{{ $help }}" @endif>
                                 <legend>{{ $f['label'] }}@if ($f['required']) <em aria-hidden="true">*</em>@endif</legend>
@@ -40,7 +41,10 @@
                             <label class="sf-choice sf-tick"><input type="checkbox" name="{{ $name }}" value="1" @checked($old) @required($f['required'])><span>{{ $f['label'] }}@if ($f['required']) <em aria-hidden="true">*</em>@endif</span></label>
                         @else
                             <label for="{{ $id }}">{{ $f['label'] }}@if ($f['required']) <em aria-hidden="true">*</em>@endif</label>
-                            @if ($f['type'] === 'textarea')
+                            @if ($f['type'] === 'file')
+                                <input id="{{ $id }}" name="{{ $name }}" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" @required($f['required']) @if ($help) aria-describedby="{{ $help }}" @endif>
+                                <small class="sf-help">PDF, Word, JPG or PNG, up to {{ \App\Forms\FormSchema::FILE_KB / 1024 }} MB.</small>
+                            @elseif ($f['type'] === 'textarea')
                                 <textarea id="{{ $id }}" name="{{ $name }}" rows="5" maxlength="2000" placeholder="{{ $f['placeholder'] }}" @required($f['required']) @if ($help) aria-describedby="{{ $help }}" @endif>{{ $old }}</textarea>
                             @elseif ($f['type'] === 'select')
                                 <select id="{{ $id }}" name="{{ $name }}" @required($f['required']) @if ($help) aria-describedby="{{ $help }}" @endif>
@@ -77,3 +81,35 @@
         </form>
     @endif
 </div>
+@once
+<script>
+(function(){
+  // questions that only appear after another answer: hide them (and stop them being sent) until the answer is picked
+  document.querySelectorAll('form[data-sf]').forEach(function(form){
+    var fields=form.querySelectorAll('[data-if-key]');
+    if(!fields.length)return;
+    function answer(key){
+      var box=form.querySelector('[data-field="'+key+'"]');
+      if(!box||box.hidden)return null;
+      var inputs=box.querySelectorAll('input,select');var out=[];
+      inputs.forEach(function(i){
+        if(i.type==='checkbox'||i.type==='radio'){if(i.checked)out.push(i.value);}
+        else if(i.tagName==='SELECT'){if(i.value)out.push(i.value);}
+      });
+      return out;
+    }
+    function apply(){
+      fields.forEach(function(f){
+        var a=answer(f.getAttribute('data-if-key')),want=f.getAttribute('data-if-value');
+        var control=form.querySelector('[data-field="'+f.getAttribute('data-if-key')+'"]');
+        var isTick=control&&control.classList.contains('sf-field--tick');
+        var show=a!==null&&(isTick?a.length>0:a.indexOf(want)!==-1);
+        f.hidden=!show;
+        f.querySelectorAll('input,select,textarea').forEach(function(i){i.disabled=!show;});
+      });
+    }
+    form.addEventListener('change',apply);apply();
+  });
+})();
+</script>
+@endonce

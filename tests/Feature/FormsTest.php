@@ -14,7 +14,9 @@ use App\Models\User;
 use App\Website\Blocks;
 use App\Website\Extensions;
 use App\Website\Visitor;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Tests\Feature\Security\SecurityTestCase;
 
 /** Footer sign-up and custom forms: what is shown, what is stored, what is refused */
@@ -327,12 +329,252 @@ class FormsTest extends SecurityTestCase
         $this->assertSame(0, SiteFormSubmission::withoutGlobalScopes()->count(), 'answers go with the form');
     }
 
+    // ---- questions that appear after another answer ----
+
+    private function conditionalForm(School $school): SiteForm
+    {
+        $f = fn (string $key, string $type, string $label, array $extra = []) => $extra + ['key' => $key, 'label' => $label, 'type' => $type, 'required' => false, 'help' => '', 'placeholder' => '', 'options' => [], 'half' => false, 'show_if' => null, 'maps_to' => ''];
+
+        return $this->makeForm($school, ['consents' => [], 'fields' => [
+            $f('fwho11', 'radio', 'Are you a current parent?', ['required' => true, 'options' => ['Yes', 'No']]),
+            $f('fchild', 'text', 'Child\'s name', ['required' => true, 'show_if' => ['key' => 'fwho11', 'value' => 'Yes']]),
+            $f('fhow11', 'select', 'How did you hear about us?', ['options' => ['Friend', 'Radio'], 'show_if' => ['key' => 'fwho11', 'value' => 'No']]),
+            $f('fmore1', 'text', 'Which friend?', ['required' => true, 'show_if' => ['key' => 'fhow11', 'value' => 'Friend']]),
+        ]]);
+    }
+
+    public function test_a_question_that_waits_for_an_answer_is_required_only_when_that_answer_is_given_and_ignored_otherwise(): void
+    {
+        $school = $this->school();
+        $form = $this->conditionalForm($school);
+        $err = 'form'.$form->id;
+
+        // "No": the child's name is not needed, and anything sent for it is thrown away
+        $this->send($school, $form, ['a' => ['fwho11' => 'No', 'fchild' => 'Sneaky', 'fhow11' => 'Radio'], 'c' => []])->assertSessionHasNoErrors();
+        $sub = SiteFormSubmission::withoutGlobalScopes()->latest('id')->first();
+        $this->assertSame(['fwho11', 'fhow11'], collect($sub->answers)->pluck('key')->all(), 'hidden questions are not stored');
+
+        // "Yes": the child's name is now required
+        $this->send($school, $form, ['a' => ['fwho11' => 'Yes'], 'c' => []])->assertSessionHasErrors('a.fchild', null, $err);
+        $this->send($school, $form, ['a' => ['fwho11' => 'Yes', 'fchild' => 'Ada'], 'c' => []])->assertSessionHasNoErrors();
+
+        // a question that depends on a hidden question stays hidden, even if someone posts an answer for it
+        $this->send($school, $form, ['a' => ['fwho11' => 'Yes', 'fchild' => 'Ada', 'fhow11' => 'Friend', 'fmore1' => 'Bo'], 'c' => []])->assertSessionHasNoErrors();
+        $this->assertSame(['fwho11', 'fchild'], collect(SiteFormSubmission::withoutGlobalScopes()->latest('id')->first()->answers)->pluck('key')->all());
+
+        // chain: No -> Friend -> the friend's name is required
+        $this->send($school, $form, ['a' => ['fwho11' => 'No', 'fhow11' => 'Friend'], 'c' => []])->assertSessionHasErrors('a.fmore1', null, $err);
+    }
+
+    public function test_a_condition_that_points_at_a_later_or_missing_question_or_a_choice_that_is_not_offered_is_refused_when_saving(): void
+    {
+        $school = $this->school();
+        $form = $this->conditionalForm($school);
+        $this->actingAs($this->admin($school));
+        $fields = $form->fields;
+
+        $later = [$fields[1], $fields[0]]; // the dependent question now comes first
+        $this->post('/school/website/forms/'.$form->id, ['name' => 'x', 'fields' => $later])->assertSessionHasErrors('fields');
+
+        $fields[1]['show_if']['value'] = 'Maybe';
+        $this->post('/school/website/forms/'.$form->id, ['name' => 'x', 'fields' => $fields])->assertSessionHasErrors('fields');
+
+        $fields[1]['show_if'] = ['key' => 'fnothere', 'value' => 'Yes'];
+        $this->post('/school/website/forms/'.$form->id, ['name' => 'x', 'fields' => $fields])->assertSessionHasErrors('fields');
+
+        $this->assertSame('Yes', $form->fresh()->fields[1]['show_if']['value'], 'a refused save changes nothing');
+    }
+
+    public function test_the_public_form_marks_dependent_questions_for_the_page_script(): void
+    {
+        $school = $this->school();
+        $form = $this->conditionalForm($school);
+        $html = $this->get("/s/{$school->slug}/form/{$form->id}")->assertOk()->getContent();
+        $this->assertStringContainsString('data-if-key="fwho11" data-if-value="Yes"', $html);
+        $this->assertStringContainsString('data-sf', $html);
+    }
+
+    // ---- file uploads ----
+
+    private function fileForm(School $school, array $attrs = []): SiteForm
+    {
+        $f = fn (string $key, string $type, string $label, array $extra = []) => $extra + ['key' => $key, 'label' => $label, 'type' => $type, 'required' => false, 'help' => '', 'placeholder' => '', 'options' => [], 'half' => false, 'show_if' => null, 'maps_to' => ''];
+
+        return $this->makeForm($school, $attrs + ['consents' => [], 'fields' => [
+            $f('fname1', 'text', 'Your name', ['required' => true]), $f('fcv111', 'file', 'Your CV', ['required' => true]),
+        ]]);
+    }
+
+    public function test_an_uploaded_file_is_kept_privately_for_staff_of_that_school_only_and_removed_with_its_answer(): void
+    {
+        Storage::fake('private');
+        $school = $this->school();
+        $other = $this->school('Other School');
+        $form = $this->fileForm($school);
+
+        $html = $this->get("/s/{$school->slug}/form/{$form->id}")->getContent();
+        $this->assertStringContainsString('enctype="multipart/form-data"', $html);
+        $this->assertStringContainsString('type="file"', $html);
+
+        $this->send($school, $form, ['a' => ['fname1' => 'Ada', 'fcv111' => UploadedFile::fake()->create('My CV (final).pdf', 200, 'application/pdf')], 'c' => []])->assertSessionHasNoErrors();
+        $sub = SiteFormSubmission::withoutGlobalScopes()->first();
+        $answer = collect($sub->answers)->firstWhere('key', 'fcv111');
+        $this->assertMatchesRegularExpression('#^schools/'.$school->id.'/forms/'.$form->id.'/[a-z0-9]{40}\.pdf$#', $answer['file'], 'random name in the school\'s own folder');
+        $this->assertSame('My CV (final).pdf', $answer['value']);
+        Storage::disk('private')->assertExists($answer['file']);
+        $this->assertFalse(Storage::disk('public')->exists($answer['file']), 'never on the public disk');
+
+        $url = "/school/website/forms/{$form->id}/answers/{$sub->id}/file/fcv111";
+        $this->actingAs($this->admin($school))->get($url)->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff')->assertDownload('My CV (final).pdf');
+        $this->actingAs($this->admin($school, 'teacher'))->get($url)->assertForbidden();
+        $this->actingAs($this->admin($other))->get($url)->assertNotFound();
+        auth()->logout();
+        $this->get($url)->assertRedirect();
+
+        // listing says there is a file but never gives the storage path
+        $this->actingAs($this->admin($school))->get("/school/website/forms/{$form->id}/answers")->assertInertia(fn ($p) => $p->where('submissions.data.0.answers.1.file', true)->missing('submissions.data.0.answers.1.path'));
+        $this->assertStringNotContainsString($answer['file'], $this->get("/school/website/forms/{$form->id}/answers")->getContent());
+
+        $this->post("/school/website/forms/{$form->id}/answers/{$sub->id}/delete");
+        Storage::disk('private')->assertMissing($answer['file']);
+    }
+
+    public function test_deleting_a_form_removes_its_files_too(): void
+    {
+        Storage::fake('private');
+        $school = $this->school();
+        $form = $this->fileForm($school);
+        $this->send($school, $form, ['a' => ['fname1' => 'Ada', 'fcv111' => UploadedFile::fake()->create('cv.pdf', 50, 'application/pdf')], 'c' => []]);
+        $path = SiteFormSubmission::withoutGlobalScopes()->first()->answers[1]['file'];
+        Storage::disk('private')->assertExists($path);
+
+        $this->actingAs($this->admin($school))->post("/school/website/forms/{$form->id}/delete");
+        Storage::disk('private')->assertMissing($path);
+    }
+
+    public function test_only_pictures_and_documents_up_to_five_megabytes_are_accepted(): void
+    {
+        Storage::fake('private');
+        $school = $this->school();
+        $form = $this->fileForm($school);
+        $try = fn ($file) => $this->send($school, $form, ['a' => ['fname1' => 'Ada', 'fcv111' => $file], 'c' => []]);
+
+        $try(UploadedFile::fake()->create('virus.exe', 10, 'application/x-msdownload'))->assertSessionHasErrors('a.fcv111', null, 'form'.$form->id);
+        $try(UploadedFile::fake()->create('page.html', 10, 'text/html'))->assertSessionHasErrors('a.fcv111', null, 'form'.$form->id);
+        $try(UploadedFile::fake()->create('script.php', 10, 'application/x-php'))->assertSessionHasErrors('a.fcv111', null, 'form'.$form->id);
+        $try(UploadedFile::fake()->image('draw.svg'))->assertSessionHasErrors('a.fcv111', null, 'form'.$form->id);
+        $try(UploadedFile::fake()->create('huge.pdf', 6000, 'application/pdf'))->assertSessionHasErrors('a.fcv111', null, 'form'.$form->id);
+        $this->send($school, $form, ['a' => ['fname1' => 'Ada'], 'c' => []])->assertSessionHasErrors('a.fcv111', null, 'form'.$form->id); // required
+        $this->assertSame(0, SiteFormSubmission::withoutGlobalScopes()->count());
+        $this->assertSame([], Storage::disk('private')->allFiles(), 'nothing is stored for a refused post');
+
+        $try(UploadedFile::fake()->image('photo.jpg'))->assertSessionHasNoErrors();
+        $try(UploadedFile::fake()->create('letter.docx', 100, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'))->assertSessionHasNoErrors();
+        $this->assertSame(2, SiteFormSubmission::withoutGlobalScopes()->count());
+    }
+
+    public function test_a_robot_cannot_store_a_file_and_a_form_with_files_has_a_tighter_limit(): void
+    {
+        Storage::fake('private');
+        $school = $this->school();
+        $form = $this->fileForm($school);
+        $this->send($school, $form, [Visitor::TRAP => 'spam', 'a' => ['fname1' => 'Bot', 'fcv111' => UploadedFile::fake()->create('cv.pdf', 10, 'application/pdf')], 'c' => []]);
+        $this->assertSame([], Storage::disk('private')->allFiles());
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->send($school, $form, ['a' => ['fname1' => 'Ada', 'fcv111' => UploadedFile::fake()->create('cv.pdf', 10, 'application/pdf')], 'c' => []])->assertSessionHasNoErrors();
+        }
+        $this->send($school, $form, ['a' => ['fname1' => 'Ada', 'fcv111' => UploadedFile::fake()->create('cv.pdf', 10, 'application/pdf')], 'c' => []])->assertSessionHasErrors('form', null, 'form'.$form->id);
+        $this->assertCount(5, Storage::disk('private')->allFiles(), 'the sixth post stored nothing');
+    }
+
+    public function test_a_form_can_have_at_most_three_file_questions(): void
+    {
+        $fields = array_map(fn ($i) => ['label' => "File $i", 'type' => 'file'], range(1, 4));
+        $this->assertNotNull(FormSchema::problem(FormSchema::cleanFields($fields)));
+        $this->assertNull(FormSchema::problem(FormSchema::cleanFields(array_slice($fields, 0, 3))));
+    }
+
+    // ---- sending answers to Admissions inquiries ----
+
+    private function inquiryForm(School $school, array $attrs = []): SiteForm
+    {
+        $f = fn (string $key, string $type, string $label, string $map = '', array $extra = []) => $extra + ['key' => $key, 'label' => $label, 'type' => $type, 'required' => true, 'help' => '', 'placeholder' => '', 'options' => [], 'half' => false, 'show_if' => null, 'maps_to' => $map];
+
+        return $this->makeForm($school, $attrs + ['name' => 'Visit request', 'send_to_inquiries' => true, 'consents' => [], 'fields' => [
+            $f('fpar111', 'text', 'Your name', 'guardian_name'), $f('fphone1', 'phone', 'Your phone', 'guardian_phone'), $f('fmail11', 'email', 'Your email', 'guardian_email', ['required' => false]),
+            $f('fkid111', 'text', 'Child\'s name', 'student_name'), $f('fclass1', 'select', 'Class', 'class_interested', ['options' => ['Nursery', 'Primary 1']]),
+            $f('fgen111', 'radio', 'Gender', 'student_gender', ['options' => ['Male', 'Female']]), $f('fdob111', 'date', 'Date of birth', 'student_dob'),
+            $f('fnote11', 'textarea', 'Anything else', '', ['required' => false]),
+        ]]);
+    }
+
+    public function test_an_answer_can_also_become_an_admissions_inquiry_with_the_marked_questions_filling_the_right_boxes(): void
+    {
+        $school = $this->school();
+        $admin = $this->admin($school);
+        $form = $this->inquiryForm($school);
+
+        $this->send($school, $form, ['a' => ['fpar111' => 'Mrs Obi', 'fphone1' => '08031234567', 'fmail11' => 'obi@example.com', 'fkid111' => 'Ada Obi', 'fclass1' => 'Nursery', 'fgen111' => 'Female', 'fdob111' => '2022-03-04', 'fnote11' => 'We are moving from Abuja'], 'c' => []])->assertSessionHasNoErrors();
+
+        $inq = \App\Models\AdmissionInquiry::withoutGlobalScopes()->where('school_id', $school->id)->first();
+        $this->assertSame('Mrs Obi', $inq->guardian_name);
+        $this->assertSame('08031234567', $inq->guardian_phone);
+        $this->assertSame('obi@example.com', $inq->guardian_email);
+        $this->assertSame('Ada Obi', $inq->student_name);
+        $this->assertSame('Nursery', $inq->class_interested);
+        $this->assertSame('female', $inq->student_gender);
+        $this->assertSame('2022-03-04', $inq->student_dob->toDateString());
+        $this->assertSame('website', $inq->source);
+        $this->assertStringContainsString('Visit request', $inq->notes);
+        $this->assertStringContainsString('Anything else: We are moving from Abuja', $inq->notes, 'the unmarked answer goes into the notes');
+        $this->assertSame($inq->id, SiteFormSubmission::withoutGlobalScopes()->first()->inquiry_id);
+        $this->assertNotNull(SchoolNotification::withoutGlobalScopes()->where('user_id', $admin->id)->where('type', 'admission_inquiry')->first(), 'the office is told as with the message form');
+
+        $this->actingAs($admin)->get("/school/website/forms/{$form->id}/answers")->assertInertia(fn ($p) => $p->where('submissions.data.0.inquiry_id', $inq->id));
+        $this->get('/school/admissions/inquiries/'.$inq->id)->assertOk();
+    }
+
+    public function test_nothing_goes_to_admissions_unless_the_form_is_set_to_and_a_missing_phone_or_name_keeps_it_out(): void
+    {
+        $school = $this->school();
+        $off = $this->inquiryForm($school, ['send_to_inquiries' => false]);
+        $this->send($school, $off, ['a' => ['fpar111' => 'Mrs Obi', 'fphone1' => '08031234567', 'fkid111' => 'Ada', 'fclass1' => 'Nursery', 'fgen111' => 'Female', 'fdob111' => '2022-03-04'], 'c' => []])->assertSessionHasNoErrors();
+        $this->assertSame(0, \App\Models\AdmissionInquiry::withoutGlobalScopes()->count());
+        $this->assertSame(1, SiteFormSubmission::withoutGlobalScopes()->count(), 'the answer is kept either way');
+
+        // phone optional and left empty: the answer is still saved, no half-made inquiry
+        $form = $this->inquiryForm($school);
+        $fields = $form->fields;
+        $fields[1]['required'] = false;
+        $form->update(['fields' => $fields]);
+        $this->send($school, $form, ['a' => ['fpar111' => 'Mrs Obi', 'fkid111' => 'Ada', 'fclass1' => 'Nursery', 'fgen111' => 'Female', 'fdob111' => '2022-03-04'], 'c' => []])->assertSessionHasNoErrors();
+        $this->assertSame(0, \App\Models\AdmissionInquiry::withoutGlobalScopes()->count());
+        $this->assertNull(SiteFormSubmission::withoutGlobalScopes()->latest('id')->first()->inquiry_id);
+    }
+
+    public function test_saving_a_form_for_admissions_needs_the_parents_name_and_phone_marked_and_marks_must_fit_the_question_kind(): void
+    {
+        $school = $this->school();
+        $form = $this->makeForm($school);
+        $this->actingAs($this->admin($school));
+        $plain = [['label' => 'Your name', 'type' => 'text'], ['label' => 'Phone', 'type' => 'phone']];
+        $this->post('/school/website/forms/'.$form->id, ['name' => 'x', 'send_to_inquiries' => true, 'fields' => $plain])->assertSessionHasErrors('fields');
+        $this->assertFalse($form->fresh()->send_to_inquiries);
+
+        $marked = [['label' => 'Your name', 'type' => 'text', 'maps_to' => 'guardian_name'], ['label' => 'Phone', 'type' => 'phone', 'maps_to' => 'guardian_phone'], ['label' => 'Born', 'type' => 'text', 'maps_to' => 'student_dob'], ['label' => 'Other name', 'type' => 'text', 'maps_to' => 'guardian_name']];
+        $this->post('/school/website/forms/'.$form->id, ['name' => 'x', 'send_to_inquiries' => true, 'fields' => $marked])->assertSessionHasNoErrors();
+        $saved = $form->fresh();
+        $this->assertTrue($saved->send_to_inquiries);
+        $this->assertSame(['guardian_name', 'guardian_phone', '', ''], collect($saved->fields)->pluck('maps_to')->all(), 'a text box cannot be a date of birth and each target is used once');
+    }
+
     public function test_templates_make_valid_forms(): void
     {
         $school = $this->school();
         foreach (array_keys(FormTemplates::LIST) as $key) {
             $t = FormTemplates::make($key, $school);
-            $this->assertNull(FormSchema::problem($t['fields']), "template {$key} must pass the form checks");
+            $this->assertNull(FormSchema::problem($t['fields'], $t['send_to_inquiries']), "template {$key} must pass the form checks");
         }
     }
 }

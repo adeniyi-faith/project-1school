@@ -8,23 +8,25 @@ import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { ErrorList, SaveBar, Switch, WebsiteLayout, selectClass } from '@/components/website/kit';
 import type { WebsiteShell } from '@/Types/website';
 
-interface FieldRow { key: string; label: string; type: string; required: boolean; help: string; placeholder: string; options: string[]; half: boolean }
+interface ShowIf { key: string; value: string }
+interface FieldRow { key: string; label: string; type: string; required: boolean; help: string; placeholder: string; options: string[]; half: boolean; show_if: ShowIf | null; maps_to: string }
+interface MapInfo { key: string; label: string; types: string[] }
 interface Consent { text: string; required: boolean }
 interface Preset { label: string; text: string; required: boolean }
 interface Props {
     shell: WebsiteShell; canManage: boolean; types: Record<string, string>; choiceTypes: string[]; limits: { fields: number; options: number; consents: number };
-    presets: Preset[]; shareUrl: string; answers: number; newsletterReady: boolean;
-    form: { id: number; name: string; intro: string; fields: FieldRow[]; consents: Consent[]; button_text: string; success_message: string; notify_email: string; newsletter_optin: boolean; active: boolean };
+    presets: Preset[]; shareUrl: string; answers: number; newsletterReady: boolean; maps: MapInfo[]; controls: string[]; canInquiry: boolean; fileInfo: { types: string; mb: number; max: number };
+    form: { id: number; name: string; intro: string; fields: FieldRow[]; consents: Consent[]; button_text: string; success_message: string; notify_email: string; newsletter_optin: boolean; send_to_inquiries: boolean; active: boolean };
 }
 type Row = FieldRow & { optionsText: string };
 
 const row = 'flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 text-sm dark:border-white/10';
 const textTypes = ['text', 'textarea', 'email', 'phone', 'number'];
 
-export default function FormEdit({ shell, form: f, types, choiceTypes, limits, presets, shareUrl, answers, newsletterReady, canManage }: Props) {
+export default function FormEdit({ shell, form: f, types, choiceTypes, limits, presets, shareUrl, answers, newsletterReady, maps, controls, canInquiry, fileInfo, canManage }: Props) {
     const [copied, setCopied] = useState(false);
     const form = useForm({
-        name: f.name, intro: f.intro, button_text: f.button_text, success_message: f.success_message, notify_email: f.notify_email, newsletter_optin: f.newsletter_optin, active: f.active,
+        name: f.name, intro: f.intro, button_text: f.button_text, success_message: f.success_message, notify_email: f.notify_email, newsletter_optin: f.newsletter_optin, send_to_inquiries: f.send_to_inquiries, active: f.active,
         fields: f.fields.map(x => ({ ...x, optionsText: x.options.join('\n') })) as Row[], consents: f.consents as Consent[],
     });
     const d = form.data;
@@ -36,12 +38,23 @@ export default function FormEdit({ shell, form: f, types, choiceTypes, limits, p
         if (j < 0 || j >= next.length) return;
         [next[i], next[j]] = [next[j], next[i]]; form.setData('fields', next);
     };
-    const addField = () => form.setData('fields', [...d.fields, { key: '', label: '', type: 'text', required: false, help: '', placeholder: '', options: [], half: false, optionsText: '' }]);
+    const addField = () => form.setData('fields', [...d.fields, { key: '', label: '', type: 'text', required: false, help: '', placeholder: '', options: [], half: false, show_if: null, maps_to: '', optionsText: '' }]);
     const setConsent = (i: number, patch: Partial<Consent>) => form.setData('consents', d.consents.map((x, n) => (n === i ? { ...x, ...patch } : x)));
 
+    const choicesOf = (x: Row) => x.optionsText.split(/\r?\n/).map(o => o.trim()).filter(Boolean);
+    const controlsFor = (i: number) => d.fields.slice(0, i).filter(c => c.key && controls.includes(c.type));
     const save = () => {
         form.transform(data => ({ ...data, fields: data.fields.map(x => ({ ...x, options: x.optionsText.split(/\r?\n/) })) }));
-        form.post(`/school/website/forms/${f.id}`, { preserveScroll: true });
+        form.post(`/school/website/forms/${f.id}`, {
+            preserveScroll: true,
+            // take the saved questions back (new ones now have their permanent keys, which conditions point at)
+            onSuccess: page => {
+                const saved = (page.props as unknown as { form: Props['form'] }).form;
+                const fields = saved.fields.map(x => ({ ...x, optionsText: x.options.join('\n') }));
+                form.setData('fields', fields);
+                form.setDefaults({ ...form.data, fields });
+            },
+        });
     };
     const copy = async () => { try { await navigator.clipboard.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* the address is shown, it can be copied by hand */ } };
 
@@ -77,6 +90,39 @@ export default function FormEdit({ shell, form: f, types, choiceTypes, limits, p
                                 <label className="block space-y-1 text-sm"><span className="font-medium">Help text (optional)</span><Input disabled={locked} maxLength={200} value={x.help} onChange={e => setField(i, { help: e.target.value })} /></label>
                                 {textTypes.includes(x.type) && <label className="block space-y-1 text-sm"><span className="font-medium">Example inside the box (optional)</span><Input disabled={locked} maxLength={80} value={x.placeholder} onChange={e => setField(i, { placeholder: e.target.value })} /></label>}
                             </div>
+                            {x.type === 'file' && <p className="text-xs text-slate-500">Visitors can upload {fileInfo.types} files up to {fileInfo.mb} MB. Files are kept privately and only staff who can see forms can open them. They are not scanned for viruses, so open them with care. A form can have up to {fileInfo.max} file questions.</p>}
+                            {(() => {
+                                const options = controlsFor(i);
+                                const ctl = d.fields.find(c => c.key && c.key === x.show_if?.key);
+                                const values = ctl ? choicesOf(ctl) : [];
+                                return (
+                                    <div className="space-y-2 text-sm">
+                                        <label className="block space-y-1"><span className="font-medium">Show this question only when</span>
+                                            <select disabled={locked} className={selectClass} value={x.show_if?.key ?? ''} onChange={e => { const key = e.target.value; const c = d.fields.find(z => z.key === key); setField(i, { show_if: key ? { key, value: c && c.type !== 'tick' ? (choicesOf(c)[0] ?? '') : 'yes' } : null }); }}>
+                                                <option value="">Always show it</option>
+                                                {options.map(c => <option key={c.key} value={c.key}>{c.label || 'Untitled question'}</option>)}
+                                            </select>
+                                        </label>
+                                        {x.show_if && ctl && ctl.type !== 'tick' && (
+                                            <label className="block space-y-1"><span className="font-medium">is answered with</span>
+                                                <select disabled={locked} className={selectClass} value={x.show_if.value} onChange={e => setField(i, { show_if: { key: x.show_if!.key, value: e.target.value } })}>
+                                                    {values.map(v => <option key={v} value={v}>{v}</option>)}
+                                                </select>
+                                            </label>
+                                        )}
+                                        {x.show_if && ctl && ctl.type === 'tick' && <p className="text-xs text-slate-500">…is ticked.</p>}
+                                        {options.length === 0 && !x.show_if && <p className="text-xs text-slate-500">To use this, add a drop-down, pick-one, tick or single-tick question above this one and press Save first.</p>}
+                                    </div>
+                                );
+                            })()}
+                            {d.send_to_inquiries && (
+                                <label className="block space-y-1 text-sm"><span className="font-medium">Goes into the Admissions inquiry as</span>
+                                    <select disabled={locked} className={selectClass} value={x.maps_to} onChange={e => setField(i, { maps_to: e.target.value })}>
+                                        <option value="">Only written in the notes</option>
+                                        {maps.filter(m => m.types.includes(x.type)).map(m => <option key={m.key} value={m.key}>{m.label}</option>)}
+                                    </select>
+                                </label>
+                            )}
                             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
                                 <label className="flex items-center gap-2">{x.type === 'tick' ? 'Must be ticked' : 'Must be answered'} <Switch label="Required" disabled={locked} on={x.required} onChange={v => setField(i, { required: v })} /></label>
                                 {x.type !== 'textarea' && x.type !== 'checkboxes' && <label className="flex items-center gap-2">Half width on large screens <Switch label="Half width" disabled={locked} on={x.half} onChange={v => setField(i, { half: v })} /></label>}
@@ -123,6 +169,7 @@ export default function FormEdit({ shell, form: f, types, choiceTypes, limits, p
                     <label className="block space-y-1"><span className="font-medium">Thank-you message</span><Input disabled={locked} maxLength={300} value={d.success_message} onChange={e => form.setData('success_message', e.target.value)} /></label>
                     <label className="block space-y-1"><span className="font-medium">Also email each answer to (optional)</span><Input disabled={locked} type="email" maxLength={150} placeholder="office@yourschool.com" value={d.notify_email} onChange={e => form.setData('notify_email', e.target.value)} />
                         <span className="block text-xs text-slate-500">Staff who can see forms always get a bell notice. This adds an email to one address you choose.</span></label>
+                    <label className={row}><span>Also add each answer to Admissions inquiries <span className="block text-xs text-slate-500">{canInquiry ? 'The office then follows it up in the usual place, with a bell notice. Mark which question is the parent\'s name and which is the phone number (both must be answered). Other answers are written in the inquiry notes.' : 'Only people who can see students can switch this on.'}</span></span><Switch label="Add answers to Admissions" disabled={locked || !canInquiry} on={d.send_to_inquiries} onChange={v => form.setData('send_to_inquiries', v)} /></label>
                     <label className={row}><span>Offer "Also send me the newsletter" <span className="block text-xs text-slate-500">{newsletterReady ? 'Shows an unticked box. It needs an "Email address" question. People are added only after they confirm from an email.' : 'Needs the Newsletter extension switched on and an email service set up.'}</span></span><Switch label="Offer the newsletter" disabled={locked || !newsletterReady} on={d.newsletter_optin} onChange={v => form.setData('newsletter_optin', v)} /></label>
                 </div>
             </Panel>
