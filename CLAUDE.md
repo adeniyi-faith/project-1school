@@ -150,8 +150,9 @@ There is no `npm run type-check`, no lint script and no frontend test runner yet
 ### Right-answer tests and browser checks
 
 - `tests/Feature/Correctness` checks that figures are RIGHT, with expected values worked out by hand (fee balances to the kobo, part payments, scholarships, instalment splits, admission numbers, enrolment, sign-in and account switch-off, cross-school ids). Add a case here whenever a feature handles money or records.
-- `tests/e2e` (see its README) drives the real app in Chromium as each role: `npm run build && npm run e2e` (or `-- --phase 1`). It uses a throw-away database, prints only the problems, and compares on-screen and stored values with hand-written expected answers. Phase 1 (money and people) is done; later phases are added as `phaseN.mjs`.
+- `tests/e2e` (see its README) drives the real app in Chromium as each role: `npm run build && npm run e2e` (or `-- --phase 1`). It uses a throw-away database, prints only the problems, and compares on-screen and stored values with hand-written expected answers. Phase 1 (money and people) and phase 2 (daily school work) are done; later phases are added as `phaseN.mjs`.
 - Every plain `exists:table,column` validation rule is school-limited and ignores deleted rows automatically (`App\Support\TenantValidator`, registered in `AppServiceProvider`), so a form can never accept another school's id. Rules that already name `school_id` are left as written. `unique` rules are NOT changed.
+- Attendance is saved and read by calendar day (`Attendance::mark`, `whereDate`), because SQLite stores the day as "2026-03-30 00:00:00". The timetable stores times as HH:MM:SS and refuses lessons that overlap for a teacher or a class. Class names are unique per school and a class with pupils on roll cannot be deleted.
 - A suspended or inactive account cannot sign in and is signed out on its next click (`EnsureAccountActive`, `LoginController`). School admins cannot delete, switch off or change the role of their own account, nor remove the last working school admin.
 
 ### Safety-net tests (`tests/Feature/Security`)

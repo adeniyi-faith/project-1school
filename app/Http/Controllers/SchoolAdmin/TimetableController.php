@@ -76,17 +76,31 @@ class TimetableController extends Controller
             'notes'      => 'nullable|string|max:200',
         ]);
 
-        // Teacher conflict check
-        if (!empty($data['teacher_id'])) {
-            $conflict = Timetable::where('school_id', $this->getSchoolId())
-                ->where('teacher_id', $data['teacher_id'])
-                ->where('day_of_week', $data['day_of_week'])
-                ->where('start_time', $data['start_time'])
-                ->exists();
+        // Kept as HH:MM:SS everywhere so times compare correctly (08:00 and 08:00:00 are the same minute)
+        $start = $data['start_time'] . ':00';
+        $end = $data['end_time'] . ':00';
+        $data['start_time'] = $start;
+        $data['end_time'] = $end;
+        $sid = $this->getSchoolId();
 
-            if ($conflict) {
-                return back()->withErrors(['teacher_id' => 'This teacher already has a class at this time.']);
-            }
+        // A period that overlaps another on the same day (even by a few minutes) is a clash.
+        // The period being saved again (same class, arm, day and start) replaces itself, so it is left out.
+        $overlapping = fn () => Timetable::where('school_id', $sid)
+            ->where('day_of_week', $data['day_of_week'])
+            ->where('start_time', '<', $end)->where('end_time', '>', $start)
+            ->whereNot(fn ($q) => $q->where('class_id', $data['class_id'])->where('start_time', $start)
+                ->where(fn ($s) => ($data['section_id'] ?? null) ? $s->where('section_id', $data['section_id']) : $s->whereNull('section_id')));
+
+        if (! empty($data['teacher_id']) && $overlapping()->where('teacher_id', $data['teacher_id'])->exists()) {
+            return back()->withErrors(['teacher_id' => 'This teacher already has a class at this time.']);
+        }
+
+        // The same class (or arm) cannot have two lessons at once. A period for the whole class clashes with any arm's.
+        $classClash = $overlapping()->where('class_id', $data['class_id'])
+            ->when($data['section_id'] ?? null, fn ($q) => $q->where(fn ($s) => $s->whereNull('section_id')->orWhere('section_id', $data['section_id'])))
+            ->exists();
+        if ($classClash) {
+            return back()->withErrors(['start_time' => 'This class already has a lesson at this time.']);
         }
 
         Timetable::updateOrCreate(

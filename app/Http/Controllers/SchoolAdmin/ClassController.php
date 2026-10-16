@@ -38,7 +38,7 @@ class ClassController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'name'         => 'required|string|max:100',
+            'name'         => ['required', 'string', 'max:100', $this->uniqueName()],
             'numeric_name' => 'nullable|integer|min:1',
             'level'        => ['nullable', Rule::in(array_keys(SchoolClass::LEVELS))],
             'capacity'     => 'nullable|integer|min:0',
@@ -52,7 +52,7 @@ class ClassController extends Controller
     public function update(Request $request, SchoolClass $class): RedirectResponse
     {
         $data = $request->validate([
-            'name'         => 'required|string|max:100',
+            'name'         => ['required', 'string', 'max:100', $this->uniqueName($class->id)],
             'numeric_name' => 'nullable|integer|min:1',
             'level'        => ['nullable', Rule::in(array_keys(SchoolClass::LEVELS))],
             'capacity'     => 'nullable|integer|min:0',
@@ -65,6 +65,11 @@ class ClassController extends Controller
 
     public function destroy(SchoolClass $class): RedirectResponse
     {
+        $onRoll = \App\Models\Student::where('class_id', $class->id)->where('status', 'active')->count();
+        if ($onRoll > 0) {
+            return back()->with('error', "{$class->name} still has {$onRoll} " . ($onRoll === 1 ? 'student' : 'students') . " on roll. Move them to another class first (Move Students Up), then delete it.");
+        }
+
         $class->delete();
 
         return back()->with('success', 'Class deleted.');
@@ -88,5 +93,18 @@ class ClassController extends Controller
         }
 
         return back()->with('success', "Teachers saved for {$class->name}.");
+    }
+
+    /** Two classes in one school cannot share a name (capital letters do not matter) */
+    private function uniqueName(?int $ignoreId = null): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail) use ($ignoreId) {
+            $taken = SchoolClass::where('school_id', $this->getSchoolId())
+                ->whereRaw('lower(trim(name)) = ?', [mb_strtolower(trim((string) $value))])
+                ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))->exists();
+            if ($taken) {
+                $fail('A class called "' . trim((string) $value) . '" already exists.');
+            }
+        };
     }
 }

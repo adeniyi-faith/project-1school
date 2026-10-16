@@ -34,6 +34,7 @@ never calculated with the app's own formula.
 | `run.mjs` | starts everything, runs the chosen phases, prints the problem list |
 | `lib/harness.mjs` | sign-in, error watching, page visit checks, form helpers, database reader |
 | `phase1.mjs` | money and people: sign-in, admissions to enrolment, admitting students, staff, fees and payments, permissions, parent view |
+| `phase2.mjs` | daily school work: classes, attendance, score entry with hand-worked totals/grades/positions, report card and broadsheet files, CBT and timetable screens, teacher and student demo views |
 | `lib/php83-polyfill.php`, `lib/router.php` | only used on a machine with PHP older than 8.4 (the app needs 8.4) |
 
 The faster right-answer checks that need no browser live in `tests/Feature/Correctness` and run with `php artisan test`.
