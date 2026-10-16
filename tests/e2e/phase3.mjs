@@ -17,7 +17,7 @@ const DEMO_ONLY = { receptionist: 'Front Desk', driver: 'Driver', warden: 'Hoste
 const ROLES = {
     'school-admin': { landing: '/school/reports/dashboard', has: ['Students', 'Staff', 'Payroll', 'Invoices', 'Settings', 'Manage Users', 'Audit Log', 'Classes'], not: ['Packages', 'Schools', 'My Results'] },
     principal:      { landing: '/school/reports/dashboard', has: ['Students', 'Staff', 'Invoices', 'Term Results', 'Messages'], not: ['Payroll', 'Settings', 'Manage Users', 'Audit Log', 'Library', 'SMS/Email Blast'] },
-    teacher:        { landing: '/school/reports/dashboard', has: ['Attendance', 'Term Results', 'Homework', 'CBT Tests', 'Timetable'], not: ['Payroll', 'Invoices', 'Staff', 'Settings', 'Library', 'Hostel'] },
+    teacher:        { landing: '/school/my-classes', has: ['Attendance', 'Term Results', 'Homework', 'CBT Tests', 'Timetable'], not: ['Payroll', 'Invoices', 'Staff', 'Settings', 'Library', 'Hostel'] },
     accountant:     { landing: '/school/reports/dashboard', has: ['Invoices', 'Payroll', 'Fee Structures', 'Scholarships'], not: ['Attendance', 'Hostel', 'Term Results', 'Settings', 'Staff'] },
     librarian:      { landing: '/school/reports/dashboard', has: ['Library'], not: ['Invoices', 'Payroll', 'Attendance', 'Settings', 'Hostel'] },
     receptionist:   { landing: '/school/home', has: ['Inquiries', 'Visitors', 'Students'], not: ['Invoices', 'Payroll', 'Staff', 'Settings', 'Hostel'] },
@@ -74,7 +74,7 @@ async function enter(page, f, role) {
 }
 
 async function menu(page) {
-    return page.evaluate(() => [...document.querySelectorAll('nav[aria-label="Main"] a')].map(a => ({ label: a.innerText.trim(), href: new URL(a.href).pathname })));
+    return page.evaluate(() => [...document.querySelectorAll('nav[aria-label="Main"] a')].map(a => ({ label: a.innerText.trim().split('\n')[0].trim(), href: new URL(a.href).pathname })));
 }
 
 // ---------------------------------------------------------------------------------------------

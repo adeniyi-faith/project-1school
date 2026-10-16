@@ -134,7 +134,7 @@ class RoleAccessMatrixTest extends SecurityTestCase
     public function test_every_role_lands_on_the_right_start_page(): void
     {
         $landing = [
-            self::SA => '/school/reports/dashboard', self::PR => '/school/reports/dashboard', self::TE => '/school/reports/dashboard',
+            self::SA => '/school/reports/dashboard', self::PR => '/school/reports/dashboard', self::TE => '/school/my-classes',
             self::AC => '/school/reports/dashboard', self::LI => '/school/reports/dashboard',
             self::RE => '/school/home', self::DR => '/school/home', self::WA => '/school/home', self::ST => '/school/home',
             'student' => '/school/student/dashboard', 'parent' => '/school/parent/dashboard',
