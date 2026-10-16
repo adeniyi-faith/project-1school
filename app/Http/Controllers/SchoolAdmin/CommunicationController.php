@@ -37,6 +37,7 @@ class CommunicationController extends Controller
             'classes'       => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->get(['id', 'name']),
             'filters'       => $request->only('audience'),
             'can'           => ['create' => $request->user()->can('announcements.create'), 'delete' => $request->user()->can('announcements.delete')],
+            'canEmailSubscribers' => $this->subscribersReachable($request),
         ]);
     }
 
@@ -50,13 +51,24 @@ class CommunicationController extends Controller
             'target_role' => 'nullable|string|max:50',
             'is_pinned'   => 'boolean',
             'published_at'=> 'nullable|date',
+            'email_subscribers' => 'sometimes|boolean',
         ]);
+        $alsoEmail = (bool) ($data['email_subscribers'] ?? false);
+        unset($data['email_subscribers']);
 
         $data['school_id']  = $this->getSchoolId();
         $data['author_id']  = auth()->id();
         $data['published_at'] = $data['published_at'] ?? now();
 
-        Announcement::create($data);
+        $announcement = Announcement::create($data);
+
+        if ($alsoEmail && $this->subscribersReachable($request)) {
+            // never mailed without a look: the announcement becomes a draft newsletter for someone to check and send
+            $draft = app(\App\Newsletter\NewsletterService::class)->draft($this->getSchoolId(), $announcement->title, $announcement->body, $request->user()->id);
+
+            return redirect('/school/website/newsletter/campaigns/'.$draft->id)->with('success', 'Announcement published. Check the email below, then press Send to reach your newsletter subscribers.');
+        }
+
         return back()->with('success', 'Announcement published.');
     }
 
@@ -151,14 +163,36 @@ class CommunicationController extends Controller
         return Inertia::render('SchoolAdmin/Communication/Blast', [
             'classes'   => SchoolClass::where('school_id', $sid)->orderBy('numeric_name')->get(['id', 'name']),
             'audiences' => collect(MessageService::AUDIENCES)->map(fn ($label, $value) => ['value' => $value, 'label' => $label])->values(),
+            'subscribers' => $this->subscribersReachable($request) ? \App\Models\NewsletterSubscriber::where('status', 'confirmed')->count() : null,
             'canSms'    => $request->user()->can('sms.send'),
             'canEmail'  => $request->user()->can('email.send'),
             'smsReady'  => false, // no SMS provider is connected yet
         ]);
     }
 
-    public function sendBlast(Request $request, MessageService $messages)
+    /** Newsletter subscribers can be reached from here only when the extension is on and the school can send email through it */
+    private function subscribersReachable(Request $request): bool
     {
+        $sid = $this->getSchoolId();
+
+        return $request->user()->can('newsletter.send') && \App\Website\Extensions::enabled($sid, 'newsletter') && \App\Newsletter\NewsletterSettings::resolve($sid) !== null;
+    }
+
+    public function sendBlast(Request $request, MessageService $messages, \App\Newsletter\NewsletterService $newsletter)
+    {
+        if ($request->input('audience') === 'subscribers') {
+            // Subscribers get it through the newsletter, so the email has its unsubscribe link and only confirmed people are reached
+            abort_unless($this->subscribersReachable($request), 403);
+            $data = $request->validate(['channel' => 'required|in:email', 'subject' => 'required|string|max:255', 'message' => 'required|string|max:1600']);
+            $school = \App\Models\School::findOrFail($this->getSchoolId());
+            $draft = $newsletter->draft($school->id, $data['subject'], $data['message'], $request->user()->id);
+            if ($error = $newsletter->start($school, $draft)) {
+                return redirect('/school/website/newsletter/campaigns/'.$draft->id)->withErrors(['send' => $error]);
+            }
+
+            return redirect('/school/website/newsletter/campaigns/'.$draft->id.'?send=1')->with('success', 'Sending to your newsletter subscribers. Keep this page open until it says it is done.');
+        }
+
         $data = $request->validate([
             'channel'    => 'required|in:sms,email',
             'audience'   => 'required|in:'.implode(',', array_keys(MessageService::AUDIENCES)),

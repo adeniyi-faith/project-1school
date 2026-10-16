@@ -38,18 +38,19 @@ interface Props {
     classes:       SchoolClass[];
     filters:       { audience?: string };
     can?:          { create: boolean; delete: boolean };
+    canEmailSubscribers?: boolean;
 }
 
 const emptyForm = {
     title: '', body: '', audience: 'all', class_id: '', target_role: '',
-    is_pinned: false, published_at: '',
+    is_pinned: false, published_at: '', email_subscribers: false,
 };
 
 const audienceColor: Record<string, 'default' | 'secondary'> = {
     all: 'default', class: 'secondary', role: 'secondary',
 };
 
-export default function Announcements({ announcements, classes, filters, can = { create: false, delete: false } }: Props) {
+export default function Announcements({ announcements, classes, filters, can = { create: false, delete: false }, canEmailSubscribers = false }: Props) {
     const [open, setOpen]       = useState(false);
     const [editing, setEditing] = useState<Announcement | null>(null);
     const [filterAudience, setFilterAudience] = useState(filters.audience ?? '');
@@ -217,6 +218,12 @@ export default function Announcements({ announcements, classes, filters, can = {
                             <Checkbox id="pin" checked={data.is_pinned} onCheckedChange={v => setData('is_pinned', !!v)} />
                             <label htmlFor="pin" className="text-sm cursor-pointer">Pin this announcement</label>
                         </div>
+                        {canEmailSubscribers && !editing && (
+                            <div className="flex items-start gap-2">
+                                <Checkbox id="subs" checked={data.email_subscribers} onCheckedChange={v => setData('email_subscribers', !!v)} />
+                                <label htmlFor="subs" className="text-sm cursor-pointer">Also email this to newsletter subscribers<span className="block text-xs text-slate-500">You will see the email first and press Send yourself.</span></label>
+                            </div>
+                        )}
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
                             <Button type="submit" disabled={processing}>{editing ? 'Update' : 'Publish'}</Button>

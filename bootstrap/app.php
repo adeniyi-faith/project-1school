@@ -20,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // GPS devices can't send a CSRF token; they use their own secret instead
-        $middleware->preventRequestForgery(except: ['webhooks/*']);
+        $middleware->preventRequestForgery(except: ['webhooks/*', 's/*/newsletter/unsubscribe/*']);
 
         $middleware->alias([
             'role'       => \Spatie\Permission\Middleware\RoleMiddleware::class,

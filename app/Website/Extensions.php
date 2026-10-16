@@ -37,7 +37,7 @@ class Extensions
     {
         return [
             'newsletter' => [
-                'name' => 'Newsletter', 'ready' => false, 'needs' => 'An email service account (Brevo is recommended, or any mailbox that supports SMTP)',
+                'name' => 'Newsletter', 'ready' => true, 'needs' => 'An email service account (Brevo is recommended, or any mailbox that supports SMTP)',
                 'description' => 'Visitors sign up on your website and confirm their email. You write a newsletter and send it to everyone who agreed, with an unsubscribe link in every email.',
                 'blocks' => ['newsletter_signup'],
             ],

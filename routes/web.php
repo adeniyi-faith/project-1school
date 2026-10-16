@@ -76,11 +76,13 @@ use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\StudentPhotoController;
 use App\Http\Controllers\SchoolAdmin\VisitorLogController;
 use App\Http\Controllers\PublicAdmissionController;
+use App\Http\Controllers\NewsletterPublicController;
 use App\Http\Controllers\PublicSiteController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteExtensionController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteGalleryController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteMediaController;
+use App\Http\Controllers\SchoolAdmin\Website\WebsiteNewsletterController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsitePageController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsitePostController;
 use App\Http\Controllers\SchoolAdmin\Website\WebsiteThemeController;
@@ -615,6 +617,23 @@ Route::middleware('auth')->group(function () {
                 Route::post('extensions/{key}',        [WebsiteExtensionController::class, 'toggle'])->where('key', '[a-z_]+')->middleware($edit)->name('extensions.toggle');
                 Route::get('extensions/{key}/open',    [WebsiteExtensionController::class, 'setup'])->where('key', '[a-z_]+')->middleware($view)->name('extensions.setup');
 
+                // Newsletter extension
+                $nlView = 'permission:newsletter.view';
+                $nlSend = 'permission:newsletter.send';
+                Route::get('newsletter',                          [WebsiteNewsletterController::class, 'index'])->middleware($nlView)->name('newsletter');
+                Route::get('newsletter/export',                   [WebsiteNewsletterController::class, 'export'])->middleware($nlView)->name('newsletter.export');
+                Route::post('newsletter/subscribers/{subscriber}/remove', [WebsiteNewsletterController::class, 'removeSubscriber'])->whereNumber('subscriber')->middleware($nlSend)->name('newsletter.subscribers.remove');
+                Route::post('newsletter/settings',                [WebsiteNewsletterController::class, 'saveSettings'])->middleware($edit)->name('newsletter.settings');
+                Route::post('newsletter/campaigns',               [WebsiteNewsletterController::class, 'storeCampaign'])->middleware($nlSend)->name('newsletter.campaigns.store');
+                Route::post('newsletter/preview',                 [WebsiteNewsletterController::class, 'preview'])->middleware($nlView)->name('newsletter.preview');
+                Route::get('newsletter/campaigns/{campaign}',     [WebsiteNewsletterController::class, 'campaign'])->whereNumber('campaign')->middleware($nlView)->name('newsletter.campaigns.show');
+                Route::post('newsletter/campaigns/{campaign}',    [WebsiteNewsletterController::class, 'updateCampaign'])->whereNumber('campaign')->middleware($nlSend)->name('newsletter.campaigns.update');
+                Route::post('newsletter/campaigns/{campaign}/test',  [WebsiteNewsletterController::class, 'sendTest'])->whereNumber('campaign')->middleware($nlSend)->name('newsletter.campaigns.test');
+                Route::post('newsletter/campaigns/{campaign}/send',  [WebsiteNewsletterController::class, 'send'])->whereNumber('campaign')->middleware($nlSend)->name('newsletter.campaigns.send');
+                Route::post('newsletter/campaigns/{campaign}/step',  [WebsiteNewsletterController::class, 'step'])->whereNumber('campaign')->middleware($nlSend)->name('newsletter.campaigns.step');
+                Route::post('newsletter/campaigns/{campaign}/retry', [WebsiteNewsletterController::class, 'retry'])->whereNumber('campaign')->middleware($nlSend)->name('newsletter.campaigns.retry');
+                Route::post('newsletter/campaigns/{campaign}/delete', [WebsiteNewsletterController::class, 'destroyCampaign'])->whereNumber('campaign')->middleware($nlSend)->name('newsletter.campaigns.destroy');
+
                 Route::get('developer',                [WebsiteDeveloperController::class, 'index'])->middleware($view)->name('developer');
                 Route::put('developer/settings',       [WebsiteDeveloperController::class, 'saveSettings'])->middleware($edit)->name('developer.settings');
                 Route::post('developer/webhook',       [WebsiteDeveloperController::class, 'saveWebhook'])->middleware($edit)->name('developer.webhook');
@@ -791,6 +810,10 @@ Route::middleware('auth')->group(function () {
             Route::post('ai/check',                         [SuperAdminAiController::class, 'check'])->name('ai.check');
             Route::post('ai/schools/{school}',              [SuperAdminAiController::class, 'saveSchool'])->name('ai.school');
 
+            // Newsletter: the platform's own email service and who may use it
+            Route::get('newsletter',            [\App\Http\Controllers\SuperAdmin\NewsletterProviderController::class, 'index'])->name('newsletter.index');
+            Route::post('newsletter',           [\App\Http\Controllers\SuperAdmin\NewsletterProviderController::class, 'save'])->name('newsletter.save');
+
             // Website extensions per plan
             Route::get('extensions',            [\App\Http\Controllers\SuperAdmin\ExtensionController::class, 'index'])->name('extensions.index');
             Route::post('extensions',           [\App\Http\Controllers\SuperAdmin\ExtensionController::class, 'save'])->name('extensions.save');
@@ -877,6 +900,11 @@ Route::get('/s/{slug}/news.json', [PublicSiteController::class, 'newsJson'])->wh
 Route::get('/s/{slug}/sitemap.xml', [PublicSiteController::class, 'sitemap'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.sitemap');
 Route::get('/s/{slug}/sign-in', [PublicSiteController::class, 'signIn'])->where('slug', '[a-z0-9-]+')->middleware('throttle:120,1')->name('site.sign-in');
 Route::post('/s/{slug}/contact', [PublicSiteController::class, 'contact'])->where('slug', '[a-z0-9-]+')->middleware('throttle:6,1')->name('site.contact');
+Route::post('/s/{slug}/newsletter', [NewsletterPublicController::class, 'subscribe'])->where('slug', '[a-z0-9-]+')->middleware('throttle:20,1')->name('site.newsletter.subscribe');
+Route::get('/s/{slug}/newsletter/confirm/{token}', [NewsletterPublicController::class, 'confirmPage'])->where('slug', '[a-z0-9-]+')->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:30,1')->name('site.newsletter.confirm');
+Route::post('/s/{slug}/newsletter/confirm/{token}', [NewsletterPublicController::class, 'confirm'])->where('slug', '[a-z0-9-]+')->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:30,1')->name('site.newsletter.confirm.do');
+Route::get('/s/{slug}/newsletter/unsubscribe/{token}', [NewsletterPublicController::class, 'unsubscribePage'])->where('slug', '[a-z0-9-]+')->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:30,1')->name('site.newsletter.unsubscribe');
+Route::post('/s/{slug}/newsletter/unsubscribe/{token}', [NewsletterPublicController::class, 'unsubscribe'])->where('slug', '[a-z0-9-]+')->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:30,1')->name('site.newsletter.unsubscribe.do');
 Route::get('/s/{slug}/search', [PublicSiteController::class, 'search'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1')->name('site.search');
 Route::get('/s/{slug}/{page?}', [PublicSiteController::class, 'show'])->where('slug', '[a-z0-9-]+')->where('page', '[a-z0-9_-]+')->middleware('throttle:120,1')->name('site.show');
 // Read-only data for a school's own scripts, with the key from Website > Developer

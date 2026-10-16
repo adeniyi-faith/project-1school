@@ -14,9 +14,10 @@ interface Props {
     canSms: boolean;
     canEmail: boolean;
     smsReady: boolean;
+    subscribers: number | null;
 }
 
-export default function Blast({ classes, audiences, canSms, canEmail, smsReady }: Props) {
+export default function Blast({ classes, audiences: baseAudiences, canSms, canEmail, smsReady, subscribers }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         channel: canEmail ? 'email' : 'sms',
         audience: 'all_parents',
@@ -26,6 +27,9 @@ export default function Blast({ classes, audiences, canSms, canEmail, smsReady }
     });
     const classItems = classes.map(c => ({ value: String(c.id), label: c.name }));
     const sms = data.channel === 'sms';
+    // newsletter subscribers can only be reached by email, and only when the newsletter is set up
+    const audiences = !sms && subscribers !== null ? [...baseAudiences, { value: 'subscribers', label: `Newsletter subscribers (${subscribers} confirmed)` }] : baseAudiences;
+    if (sms && data.audience === 'subscribers') setData('audience', 'all_parents');
     const texts = Math.max(1, Math.ceil(data.message.length / 160));
 
     function submit(e: React.FormEvent) {
@@ -86,6 +90,7 @@ export default function Blast({ classes, audiences, canSms, canEmail, smsReady }
                                     </div>
                                 )}
                             </div>
+                            {data.audience === 'subscribers' && <p className="-mt-2 text-xs text-slate-500">This goes out as a newsletter email, with an unsubscribe link, to people who signed up on your website and confirmed. It is not recorded in Sent messages: you will see it under Website &gt; Newsletter.</p>}
                             <p className="-mt-2 text-xs text-slate-500">Parents get one message each, even with several children here. Only active students and current staff are included.</p>
 
                             {!sms && (

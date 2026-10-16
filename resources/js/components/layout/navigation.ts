@@ -170,6 +170,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Subscriptions',  href: '/super-admin/subscriptions',  icon: CreditCard,  roles: ['super-admin'] },
             { label: 'Coupons',        href: '/super-admin/coupons',        icon: Tag,         roles: ['super-admin'] },
             { label: 'Module Manager', href: '/super-admin/module-manager', icon: Layers,      roles: ['super-admin'] },
+            { label: 'Newsletter Email', href: '/super-admin/newsletter',    icon: Mail,        roles: ['super-admin'] },
             { label: 'Site Extensions', href: '/super-admin/extensions',    icon: Plug,        roles: ['super-admin'] },
         ],
     },
