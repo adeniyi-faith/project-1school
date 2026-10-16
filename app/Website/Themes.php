@@ -23,6 +23,8 @@ class Themes
     private const GARAMOND = "'EB Garamond','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const LORA = "'Lora','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
     private const BARLOW = "'Barlow','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
+    private const FRAUNCES = "'Fraunces','Source Serif 4','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif";
+    private const ALBERT = "'Albert Sans','Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
     private const SANS = "'Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
 
     public const ALL = [
@@ -67,6 +69,13 @@ class Themes
             'head' => self::NEWSREADER, 'body' => self::INSTRUMENT, 'fonts' => 'Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;0,6..72,700;0,6..72,800;1,6..72,300;1,6..72,400;1,6..72,500;1,6..72,600;1,6..72,700|Instrument+Sans:wght@400;500;600;700',
             'radius' => '.5rem', 'radius_lg' => '.5rem', 'btn_radius' => '.4rem', 'btn_case' => 'none', 'btn_track' => '0', 'btn_style' => 'solid',
             'hdr' => 'bg', 'ftr' => 'deep',
+        ],
+        'grove' => [
+            'label' => 'Grove', 'note' => 'Warm and editorial: olive bar with a menu that slides in from the side, a tagline strip, a big photo with an overlapping welcome card, full-width colour bands with photos, rounded buttons and a soft deep-green footer.',
+            'brand' => '#55642b', 'brand2' => '#f3b9a3', 'bg' => '#fbf9f3', 'soft' => '#f0ecdd', 'text' => '#2d3326',
+            'head' => self::FRAUNCES, 'body' => self::ALBERT, 'fonts' => 'Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500|Albert+Sans:wght@400;500;600;700',
+            'radius' => '1rem', 'radius_lg' => '1.5rem', 'btn_radius' => '999px', 'btn_case' => 'none', 'btn_track' => '.01em', 'btn_style' => 'solid',
+            'hdr' => 'brand', 'ftr' => 'deep',
         ],
     ];
 
