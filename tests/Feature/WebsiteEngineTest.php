@@ -478,7 +478,7 @@ class WebsiteEngineTest extends SecurityTestCase
     {
         [$school] = $this->liveSite('Look School');
         auth()->logout();
-        $marks = ['heritage' => '<section class="hh hh--', 'modern' => '<section class="hero hero--modern', 'warm' => '<section class="hero hero--warm', 'evergreen' => '<section class="hero hero--evergreen', 'crest' => '<section class="hero hero--crest', 'statement' => '<section class="hero hero--statement'];
+        $marks = ['heritage' => '<section class="hh hh--', 'modern' => '<section class="hero hero--modern', 'warm' => '<section class="hero hero--warm', 'evergreen' => '<section class="hero hero--evergreen', 'crest' => '<section class="hero hero--crest', 'statement' => '<section class="hero hero--statement', 'grove' => '<section class="hero hero--grove'];
         $this->assertSame(array_keys($marks), array_keys(Themes::ALL));
         foreach ($marks as $theme => $mark) {
             \App\Models\SchoolSite::withoutGlobalScopes()->where('school_id', $school->id)->update(['theme' => $theme]);
@@ -491,6 +491,33 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->assertSame('<em>cared for</em>', substr(\App\Website\Prose::accent('Known and *cared for*'), -18));
         $this->assertStringContainsString('<em>', \App\Website\Prose::accent('Where every child is known and cared for', true));
         $this->assertStringNotContainsString('<em>', \App\Website\Prose::accent('Short title'));
+    }
+
+    public function test_the_grove_theme_has_a_side_drawer_menu_bands_and_a_title_banner(): void
+    {
+        [$school, $admin] = $this->liveSite('Olive School', 'grove');
+        $this->put('/school/website', ['enabled' => true, 'tagline' => 'A happy school with high expectations'])->assertSessionHasNoErrors();
+        $about = SchoolSitePage::where('slug', 'about')->first();
+        $about->blocks = Blocks::clean([
+            ['type' => 'text', 'eyebrow' => 'Our story', 'heading' => 'About Olive School', 'body' => 'We love learning.'],
+            ['type' => 'features', 'heading' => 'Values', 'items' => [['title' => 'Care', 'body' => 'Kind.', 'link' => 'contact'], ['title' => 'Joy', 'body' => 'Happy.', 'link' => 'bogus']]],
+        ], $school->id);
+        $about->save();
+        $this->assertSame('none', $about->fresh()->blocks[1]['items'][1]['link']);
+        auth()->logout();
+
+        $home = $this->get('/s/olive-school')->assertOk()
+            ->assertSee('class="gv-tag"', false)->assertSee('A happy school with high expectations')
+            ->assertSee('class="menu gv-drawer"', false)->assertSee('data-menu-close', false)
+            ->assertSee('<footer class="ftr ftr--grove">', false)->assertSee('gv-band gv-band--olive', false);
+        $this->assertStringContainsString('data-page="home"', $home->getContent());
+
+        $this->get('/s/olive-school/about')->assertOk()
+            ->assertSee('class="gv-title"', false)->assertSee('<h1>About Olive School</h1>', false)->assertSee('data-page="about"', false)
+            ->assertSee('Talk to us')->assertSee('gv-band--peach', false);
+        // the other themes never see the Grove pieces
+        \App\Models\SchoolSite::withoutGlobalScopes()->where('school_id', $school->id)->update(['theme' => 'heritage']);
+        $this->get('/s/olive-school/about')->assertOk()->assertDontSee('gv-title', false)->assertDontSee('gv-band', false);
     }
 
     public function test_testimonials_show_in_every_theme_and_are_cleaned(): void
