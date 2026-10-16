@@ -478,7 +478,7 @@ class WebsiteEngineTest extends SecurityTestCase
     {
         [$school] = $this->liveSite('Look School');
         auth()->logout();
-        $marks = ['heritage' => '<section class="hh hh--', 'modern' => '<section class="hero hero--modern', 'warm' => '<section class="hero hero--warm', 'evergreen' => '<section class="hero hero--evergreen', 'crest' => '<section class="hero hero--crest', 'statement' => '<section class="hero hero--statement', 'grove' => '<section class="hero hero--grove'];
+        $marks = ['heritage' => '<section class="hh hh--', 'modern' => '<section class="hero hero--modern', 'warm' => '<section class="hero hero--warm', 'evergreen' => '<section class="hero hero--evergreen', 'crest' => '<section class="hero hero--crest', 'statement' => '<section class="hero hero--statement', 'grove' => '<section class="hero hero--grove', 'leaf' => '<section class="hero hero--leaf'];
         $this->assertSame(array_keys($marks), array_keys(Themes::ALL));
         foreach ($marks as $theme => $mark) {
             \App\Models\SchoolSite::withoutGlobalScopes()->where('school_id', $school->id)->update(['theme' => $theme]);
@@ -491,6 +491,16 @@ class WebsiteEngineTest extends SecurityTestCase
         $this->assertSame('<em>cared for</em>', substr(\App\Website\Prose::accent('Known and *cared for*'), -18));
         $this->assertStringContainsString('<em>', \App\Website\Prose::accent('Where every child is known and cared for', true));
         $this->assertStringNotContainsString('<em>', \App\Website\Prose::accent('Short title'));
+    }
+
+    public function test_the_leaf_theme_has_a_left_drawer_leaf_photos_and_tinted_cards(): void
+    {
+        [$school] = $this->liveSite('Leafy School', 'leaf');
+        auth()->logout();
+        $this->get('/s/'.$school->slug)->assertOk()
+            ->assertSee('lf-drawer', false)->assertSee('lf-leaf lf-leaf--a', false)->assertSee('lf-card lf-card--a', false)
+            ->assertSee('<footer class="ftr ftr--leaf">', false)->assertSee('lf-top', false);
+        $this->get('/s/'.$school->slug.'/about')->assertOk()->assertSee('lf-crumbs', false);
     }
 
     public function test_the_grove_theme_has_a_side_drawer_menu_bands_and_a_title_banner(): void
