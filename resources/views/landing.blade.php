@@ -311,6 +311,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
       <a href="#products">Products</a>
       <a href="#roles">Who it's for</a>
       <a href="#how">How it works</a>
+      <a href="{{ route('docs.index') }}">Docs</a>
       <a href="#contact">Contact</a>
     </nav>
     <div class="hdr-cta">
@@ -368,6 +369,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
         </div>
       </li>
       <li><a class="m-item" href="#how" data-close>How it works</a></li>
+      <li><a class="m-item" href="{{ route('docs.index') }}">Docs</a></li>
             <li><a class="m-item" href="{{ route('login') }}" data-close>Log in</a></li>
     </ul>
     <a href="{{ route('register') }}" class="btn btn-white btn-block" data-close>Register your school</a>
@@ -559,7 +561,10 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
         <a href="#p-ops">Results &amp; Report Cards</a>
       </div>
       <div class="f-col">
-        <h4>Legal</h4>
+        <h4>Guides</h4>
+        <a href="{{ route('docs.index') }}">Guides for schools</a>
+        <a href="{{ route('docs.show', 'dev-overview') }}">Developer docs</a>
+        <h4 style="margin-top:28px">Legal</h4>
         <a href="#top">Terms of Use</a>
         <a href="#top">Privacy Notice</a>
         <a href="#top">Data Protection Policy</a>

@@ -30,7 +30,7 @@ class WebsiteThemeController extends WebsiteBase
     /** The school's home page drawn in one theme, for the theme pictures (nothing is saved) */
     public function sample(Request $request, string $theme)
     {
-        abort_unless($theme === 'current' || isset(Themes::ALL[$theme]), 404);
+        abort_unless($theme === 'current' || isset(Themes::all()[$theme]), 404);
         $school = $this->school();
         $site = $this->site($school);
         if ($theme !== 'current') {
@@ -50,12 +50,12 @@ class WebsiteThemeController extends WebsiteBase
     public function update(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'theme' => ['required', Rule::in(array_keys(Themes::ALL))],
+            'theme' => ['required', Rule::in(array_keys(Themes::all()))],
             'color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'color2' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
         ]);
         $this->site()->update($data);
 
-        return back()->with('success', 'Your new look is saved. '.(Themes::ALL[$data['theme']]['label']).' is now your theme.');
+        return back()->with('success', 'Your new look is saved. '.(Themes::all()[$data['theme']]['label']).' is now your theme.');
     }
 }

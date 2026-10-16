@@ -1,5 +1,6 @@
-import { usePage } from '@inertiajs/react';
-import { Activity as ActivityIcon } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import { Activity as ActivityIcon, Check, ChevronRight } from 'lucide-react';
 import {
     Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
@@ -22,6 +23,7 @@ interface Props {
     attChart:         { day: string; present: number; absent: number }[];
     recentActivity:   Activity[];
     schools?:         number;
+    setup?:           { done: number; total: number; items: { key: string; title: string; text: string; href: string; done: boolean }[] } | null;
 }
 
 const AXIS = { fontSize: 12, fill: 'var(--color-slate-400)' };
@@ -52,7 +54,8 @@ function timeAgo(iso: string) {
     return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
 }
 
-export default function Dashboard({ role, totalStudents, totalStaff, attendancePct, monthFees, pendingFees, pendingHomework, todayCollection, feeChart, attChart, recentActivity, schools }: Props) {
+export default function Dashboard({ role, totalStudents, totalStaff, attendancePct, monthFees, pendingFees, pendingHomework, todayCollection, feeChart, attChart, recentActivity, schools, setup }: Props) {
+    const [hideSetup, setHideSetup] = useState(() => { try { return localStorage.getItem('setup-hidden') === '1'; } catch { return false; } });
     const { auth } = usePage<PageProps>().props;
     const fmt = (n: number) => new Intl.NumberFormat('en-NG').format(n);
     const firstName = auth.user?.name?.split(' ')[0] ?? '';
@@ -83,6 +86,31 @@ export default function Dashboard({ role, totalStudents, totalStaff, attendanceP
         <AppLayout title="Dashboard">
             <div className="space-y-6">
                 <PageHeader title={`${greeting}${firstName ? `, ${firstName}` : ''}`} description={today} />
+
+                {setup && !hideSetup && (
+                    <Panel title="Get your school ready" description={`${setup.done} of ${setup.total} steps done. Each one ticks itself when you finish it.`}
+                        action={<button type="button" className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200" onClick={() => { try { localStorage.setItem('setup-hidden', '1'); } catch { /* ignore */ } setHideSetup(true); }}>Hide for now</button>}>
+                        <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+                            <div className="h-full rounded-full bg-indigo-500" style={{ width: `${Math.round((setup.done / setup.total) * 100)}%` }} />
+                        </div>
+                        <ul className="grid gap-1 sm:grid-cols-2">
+                            {setup.items.map((i) => (
+                                <li key={i.key}>
+                                    <Link href={i.href} className="flex items-start gap-3 rounded-lg px-2 py-2 hover:bg-slate-50 dark:hover:bg-white/5">
+                                        <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border ${i.done ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 dark:border-white/20'}`}>
+                                            {i.done && <Check className="size-3" />}
+                                        </span>
+                                        <span className="min-w-0 flex-1">
+                                            <span className={`block text-sm font-medium ${i.done ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-100'}`}>{i.title}</span>
+                                            {!i.done && <span className="block text-xs text-slate-500">{i.text}</span>}
+                                        </span>
+                                        {!i.done && <ChevronRight className="mt-1 size-4 shrink-0 text-slate-400" />}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </Panel>
+                )}
 
                 <StatStrip items={stats} />
                 {extras.length > 0 && role !== 'super-admin' && <StatStrip items={extras} className={extras.length === 1 ? 'sm:max-w-xs' : ''} />}

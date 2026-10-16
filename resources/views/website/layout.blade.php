@@ -22,11 +22,14 @@
     <link rel="stylesheet" href="{{ $fontsUrl }}">
     @endif
     <style>:root{ {!! $style !!} }</style>
-    <style>@include('website.styles')@include('website.styles-themes')@include('website.styles-'.\App\Website\Themes::key($theme))@include('website.styles-cookie')</style>
+    <style>@include('website.styles')@include('website.styles-themes')@include('website.styles-'.\App\Website\Themes::key($theme))@include('website.styles-cookie')@include('website.styles-live')</style>
+    @php $customCss = trim(\App\Website\Themes::css($theme).' '.\App\Website\SafeCss::clean((string) $site->option('custom_css'))); @endphp
+    @if ($customCss)<style>{!! $customCss !!}</style>@endif
+    @include('website.partials.head-extra')
     <noscript><style>.burger{display:none}.menu{display:block;position:static;background:none;color:inherit;padding:0}.menu a{font-size:1rem;display:inline-block;border:0;margin-right:1rem}</style></noscript>
     <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 </head>
-<body id="sheet" data-theme="{{ \App\Website\Themes::key($theme) }}">
+<body id="sheet" data-theme="{{ \App\Website\Themes::key($theme) }}" data-site-theme="{{ $theme }}">
 <a class="skip" href="#main">Skip to content</a>
 
 @include('website.partials.announcement')
@@ -75,6 +78,7 @@
   @endif
 })();
 </script>
+@include('website.partials.whatsapp')
 @include('website.partials.cookie-notice')
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Photo viewer">
     <button class="lb-x" type="button" aria-label="Close">&times;</button>

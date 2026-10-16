@@ -21,13 +21,14 @@ class Staff extends Model
         'emp_id', 'first_name', 'last_name', 'gender',
         'date_of_birth', 'blood_group', 'religion', 'nationality',
         'phone', 'email', 'address', 'photo',
-        'joining_date', 'salary_type', 'salary', 'status', 'notes',
+        'joining_date', 'salary_type', 'salary', 'status', 'notes', 'show_on_website',
     ];
 
     protected $casts = [
         'date_of_birth' => 'date',
         'joining_date'  => 'date',
         'salary'        => 'decimal:2',
+        'show_on_website' => 'boolean',
     ];
 
     protected $appends = ['full_name', 'photo_url'];
