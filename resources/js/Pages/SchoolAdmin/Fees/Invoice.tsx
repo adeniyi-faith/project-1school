@@ -160,7 +160,7 @@ export default function Invoice({ invoice, entries, plans, can }: Props) {
                                             <TableCell className="text-right tabular-nums">{naira(e.after, { kobo: true })}</TableCell>
                                             <TableCell className="text-xs text-slate-500">{e.recorded_by ?? '—'}</TableCell>
                                             <TableCell className="pr-5 text-right">
-                                                {can.correct && !e.reversed && e.type !== 'reversal' && (
+                                                {can.correct && !e.reversed && e.type !== 'reversal' && e.type !== 'charge' && (
                                                     <Button variant="ghost" size="sm" onClick={() => { reverse.reset(); reverse.clearErrors(); setReversing(e); }}>
                                                         <Undo2 className="size-3.5" /> Reverse
                                                     </Button>

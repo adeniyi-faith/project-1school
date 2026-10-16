@@ -8,6 +8,7 @@ use App\Models\FeeCategory;
 use App\Models\FeeStructure;
 use App\Models\SchoolClass;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class FeeStructureController extends Controller
@@ -37,8 +38,8 @@ class FeeStructureController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'class_id'        => 'required|exists:classes,id',
-            'fee_category_id' => 'required|exists:fee_categories,id',
+            'class_id'        => ['required', Rule::exists('classes', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
+            'fee_category_id' => ['required', Rule::exists('fee_categories', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
             'academic_year'   => 'required|string|max:20',
             'amount'          => 'required|numeric|min:0',
             'due_date'        => 'nullable|date',
@@ -62,13 +63,13 @@ class FeeStructureController extends Controller
     public function storeMany(Request $request)
     {
         $data = $request->validate([
-            'fee_category_id'    => 'required|exists:fee_categories,id',
+            'fee_category_id'    => ['required', Rule::exists('fee_categories', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
             'academic_year'      => 'required|string|max:20',
             'frequency'          => 'required|in:per_term,annual,one_time',
             'due_date'           => 'nullable|date',
             'description'        => 'nullable|string|max:255',
             'rows'               => 'required|array|min:1',
-            'rows.*.class_id'    => 'required|exists:classes,id',
+            'rows.*.class_id'    => ['required', Rule::exists('classes', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
             'rows.*.amount'      => 'nullable|numeric|min:0',
         ]);
 
@@ -99,8 +100,8 @@ class FeeStructureController extends Controller
     public function update(Request $request, FeeStructure $feeStructure)
     {
         $data = $request->validate([
-            'class_id'        => 'required|exists:classes,id',
-            'fee_category_id' => 'required|exists:fee_categories,id',
+            'class_id'        => ['required', Rule::exists('classes', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
+            'fee_category_id' => ['required', Rule::exists('fee_categories', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
             'academic_year'   => 'required|string|max:20',
             'amount'          => 'required|numeric|min:0',
             'due_date'        => 'nullable|date',

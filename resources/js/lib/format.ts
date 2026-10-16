@@ -5,7 +5,9 @@ const nairaFine = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 
 export function naira(value: number | string | null | undefined, opts: { kobo?: boolean } = {}): string {
     const n = Number(value ?? 0);
     if (Number.isNaN(n)) return '₦0';
-    return (opts.kobo ? nairaFine : nairaFull).format(n);
+    // Never hide kobo: ₦98,999.45 owed must not read as ₦98,999 (or ₦0.45 as ₦0)
+    const hasKobo = Math.abs(n - Math.round(n)) > 0.004;
+    return (opts.kobo || hasKobo ? nairaFine : nairaFull).format(n);
 }
 
 /** 5,440,000 -> ₦5.44M, 820,000 -> ₦820K. For tight spots such as dashboard cards and chart axes. */

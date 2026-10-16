@@ -196,6 +196,10 @@ class FeeLedgerService
         if ($entry->type === 'reversal') {
             throw ValidationException::withMessages(['entry' => 'A reversal cannot itself be reversed. Add a new line instead.']);
         }
+        if ($entry->type === 'charge') {
+            // Taking the charge back out would leave a zero balance that looks like "paid" when nothing was paid
+            throw ValidationException::withMessages(['entry' => 'The fee itself cannot be reversed. Cancel the invoice instead.']);
+        }
         if ($entry->reversedBy()->exists()) {
             throw ValidationException::withMessages(['entry' => 'This line has already been reversed.']);
         }
