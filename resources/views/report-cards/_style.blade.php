@@ -7,6 +7,7 @@
     $font = $t === 'elegant' ? 'DejaVu Serif, serif' : 'DejaVu Sans, sans-serif';
 @endphp
 <style>
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     @page { margin: {{ $t === 'compact' ? '20px 22px' : '28px 30px' }}; }
     body { font-family: {{ $font }}; font-size: {{ $fs }}px; color: #1f2937; }
     .card { page-break-after: always; position: relative; @if($t === 'elegant') border: 3px double {{ $d['primary'] }}; padding: 12px 16px; @endif }

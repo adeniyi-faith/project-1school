@@ -341,6 +341,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('academics/report-card-designs/{design}',       [ReportCardDesignController::class, 'destroy'])->middleware('permission:settings.edit')->name('report-card-designs.destroy');
             Route::post('academics/report-card-designs/{design}/classes', [ReportCardDesignController::class, 'assignClasses'])->middleware('permission:settings.edit')->name('report-card-designs.classes');
             Route::post('academics/report-card-designs/{design}/try',     [ReportCardDesignController::class, 'tryOut'])->middleware('permission:reportcard.generate')->name('report-card-designs.try');
+            Route::get('academics/report-card-designs/{design}/thumb',    [ReportCardDesignController::class, 'thumb'])->middleware('permission:reportcard.generate')->name('report-card-designs.thumb');
             Route::get('academics/report-card-designs/{design}/preview',  [ReportCardDesignController::class, 'preview'])->middleware('permission:reportcard.generate')->name('report-card-designs.preview');
 
             // Report cards: comments, then the term and full-year PDFs (one student or the whole class)
