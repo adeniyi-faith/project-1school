@@ -212,6 +212,7 @@ Route::middleware('auth')->group(function () {
             }
 
             Route::get('my-classes', [MyClassesController::class, 'index'])->middleware('permission:attendance.view')->name('my-classes');
+            Route::put('class-manager-label', [ClassController::class, 'saveLabel'])->middleware('permission:settings.edit')->name('classes.label');
             Route::post('classes/{class}/teachers', [ClassController::class, 'teachers'])->middleware('permission:settings.edit')->name('classes.teachers');
 
             // Bulk adding of students and bulk sign-in details (before the students/{student} routes below)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SchoolAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\ClassSubject;
 use App\Models\SchoolClass;
+use App\Models\SchoolSetting;
 use App\Models\Staff;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class ClassController extends Controller
             ]));
 
         return Inertia::render('SchoolAdmin/Classes/Index', [
+            'manager_label' => self::managerLabel($this->getSchoolId()),
             'classes' => $classes,
             'levels' => SchoolClass::LEVELS,
             'staff' => Staff::where('status', 'active')->orderBy('first_name')->get(['id', 'first_name', 'last_name'])
@@ -68,6 +70,22 @@ class ClassController extends Controller
         $class->delete();
 
         return back()->with('success', 'Class deleted.');
+    }
+
+    /** What this school calls the person in charge of a class (Class Teacher, Manager, Form Master ...) */
+    public static function managerLabel(int $schoolId): string
+    {
+        return (string) SchoolSetting::get($schoolId, 'class_teacher_label', 'Class Teacher');
+    }
+
+    public function saveLabel(Request $request): RedirectResponse
+    {
+        $data = $request->validate(['label' => 'required|string|max:40']);
+        $label = trim($data['label']);
+
+        SchoolSetting::set($this->getSchoolId(), 'class_teacher_label', $label, 'general');
+
+        return back()->with('success', "Saved. Classes now say \"{$label}\".");
     }
 
     /** Who is the class teacher, and who teaches each subject of this class */
