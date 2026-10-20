@@ -213,6 +213,26 @@ class ReportCardDesignController extends Controller
     }
 
     /**
+     * The sample card as a bare page (no top bar), for the small live pictures on the designs page.
+     * It can be shown with another layout or colours (?template=, ?primary_color=, ?accent_color=) without saving anything.
+     */
+    public function thumb(Request $request, ReportCardDesign $design, ReportCardService $cards): HttpResponse
+    {
+        $check = validator($request->query(), [
+            'template' => ['nullable', Rule::in(ReportCardDesign::TEMPLATES)],
+            'primary_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'accent_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+        ]);
+        abort_if($check->fails(), 422);
+        $design->fill(array_filter($check->validated(), fn ($v) => $v !== null));
+
+        $html = view('report-cards.term', ['cards' => $cards->sampleCards($design, 'term')])->render();
+        $html = str_replace('<head>', '<head><style>html{background:#fff}body{margin:0;padding:30px;width:734px;overflow:hidden}#x{}.card{page-break-after:auto!important}</style>', $html);
+
+        return response($html, 200, ['Content-Type' => 'text/html; charset=UTF-8', 'X-Frame-Options' => 'SAMEORIGIN']);
+    }
+
+    /**
      * The sample card shown on screen with whatever is chosen in the form right now: colours, switches,
      * wording and also pictures just picked (logo, stamp, signatures). Nothing is saved or stored, so the
      * demo school can use it too.

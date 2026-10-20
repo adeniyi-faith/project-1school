@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, router, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -87,6 +87,7 @@ export default function ReportCardDesigns({ designs, classes, templates, writers
                                     <span className="font-medium text-slate-900 dark:text-white">{d.name}</span>
                                     {d.is_default && <Pill tone="info">Default</Pill>}
                                 </div>
+                                <CardThumb designId={d.id} className="mt-2 max-w-[9rem]" />
                                 <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
                                     <span className="size-3.5 rounded-full" style={{ background: d.primary_color }} />
                                     <span className="size-3.5 rounded-full" style={{ background: d.accent_color }} />
@@ -202,7 +203,7 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
                             {templates.map(t => (
                                 <button key={t} type="button" disabled={disabled} onClick={() => setData('template', t)}
                                     className={cn('rounded-xl border p-3 text-left', data.template === t ? 'border-indigo-600 ring-2 ring-indigo-600/20' : 'border-slate-200 dark:border-white/10')}>
-                                    <TemplateThumb template={t} primary={data.primary_color} accent={data.accent_color} />
+                                    <CardThumb designId={design.id} template={t} primary={data.primary_color} accent={data.accent_color} />
                                     <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{TEMPLATE_INFO[t].label}</p>
                                     <p className="text-xs text-slate-500">{TEMPLATE_INFO[t].text}</p>
                                 </button>
@@ -391,34 +392,39 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
     );
 }
 
-/** A tiny drawing of each layout so schools can tell them apart before previewing */
-function TemplateThumb({ template, primary, accent }: { template: ReportCardDesignRow['template']; primary: string; accent: string }) {
-    const rows = template === 'compact' ? 6 : 4;
-    const centred = template === 'modern' || template === 'elegant';
-    const light = template === 'modern' || template === 'elegant';
+/**
+ * A small live picture of a real sample card, made by the same page that makes the real report card,
+ * so it shows exactly the layout, colours and parts. Colours are picked up a moment after they stop changing.
+ */
+function CardThumb({ designId, template, primary, accent, className }: { designId: number; template?: string; primary?: string; accent?: string; className?: string }) {
+    const box = useRef<HTMLDivElement>(null);
+    const [scale, setScale] = useState(0.3);
+    const [colours, setColours] = useState({ primary, accent });
+    useEffect(() => {
+        const t = setTimeout(() => setColours({ primary, accent }), 500);
+        return () => clearTimeout(t);
+    }, [primary, accent]);
+    useEffect(() => {
+        const el = box.current;
+        if (!el) return;
+        const fit = () => setScale(el.clientWidth / 794);
+        fit();
+        const ro = new ResizeObserver(fit);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    const q = new URLSearchParams();
+    if (template) q.set('template', template);
+    if (template && colours.primary && /^#[0-9a-fA-F]{6}$/.test(colours.primary)) q.set('primary_color', colours.primary);
+    if (template && colours.accent && /^#[0-9a-fA-F]{6}$/.test(colours.accent)) q.set('accent_color', colours.accent);
+
     return (
-        <div className={cn('h-24 rounded-md bg-white p-2', template === 'elegant' ? 'border-[3px] border-double' : 'border border-slate-200 dark:border-white/10')}
-            style={template === 'elegant' ? { borderColor: primary } : undefined}>
-            {template === 'banner' ? (
-                <div className="-mx-1 -mt-1 flex items-center gap-1.5 rounded-sm px-1.5 py-1" style={{ background: primary, borderBottom: `2px solid ${accent}` }}>
-                    <span className="size-3 rounded-sm bg-white" />
-                    <span className="h-1.5 w-14 rounded bg-white/90" />
-                </div>
-            ) : (
-                <>
-                    <div className={cn('flex items-center gap-1.5', centred && 'flex-col gap-0.5')}>
-                        <span className="size-3 rounded-full" style={{ background: primary }} />
-                        <span className="h-1.5 w-14 rounded" style={{ background: primary }} />
-                    </div>
-                    <div className="mt-1.5 h-px" style={{ background: light ? accent : primary, height: template === 'elegant' ? 3 : undefined, borderTop: template === 'elegant' ? `1px solid ${primary}` : undefined, borderBottom: template === 'elegant' ? `1px solid ${primary}` : undefined }} />
-                </>
-            )}
-            <div className="mt-1.5 space-y-0.5">
-                <div className="h-1.5 rounded-sm" style={{ background: light ? (template === 'elegant' ? '#faf7f0' : '#e5e7eb') : primary, borderBottom: light ? `1px solid ${template === 'elegant' ? primary : accent}` : template === 'banner' ? `1px solid ${accent}` : undefined }} />
-                {Array.from({ length: rows }).map((_, i) => (
-                    <div key={i} className={cn('h-1 rounded-sm', template === 'modern' ? 'bg-slate-100' : template === 'banner' ? (i % 2 ? 'bg-slate-100' : 'bg-white') : 'border border-slate-200')} />
-                ))}
-            </div>
+        <div ref={box} className={cn('relative w-full overflow-hidden rounded-md border border-slate-200 bg-white dark:border-white/10', className)} style={{ aspectRatio: '794 / 1123' }}>
+            <iframe title="Sample report card" loading="lazy" tabIndex={-1} aria-hidden="true" scrolling="no"
+                src={`/school/academics/report-card-designs/${designId}/thumb?${q.toString()}`}
+                className="pointer-events-none absolute left-0 top-0 border-0"
+                style={{ width: 794, height: 1123, transform: `scale(${scale})`, transformOrigin: 'top left' }} />
         </div>
     );
 }

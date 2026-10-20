@@ -246,7 +246,7 @@ class ReportCardController extends Controller
 
         $head = '<meta name="viewport" content="width=device-width, initial-scale=1"><title>'.$pageTitle.'</title>'
             .'<style>'
-            .'html{background:#e5e7eb}body{margin:0;padding:0 0 24px}'
+            .'*{-webkit-print-color-adjust:exact;print-color-adjust:exact}html{background:#e5e7eb}body{margin:0;padding:0 0 24px}'
             .'.vbar{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;background:#1e293b;color:#fff;font:600 14px system-ui,sans-serif}'
             .'.vbar a,.vbar button{font:600 13px system-ui,sans-serif;color:#fff;background:#4f46e5;border:0;border-radius:8px;padding:9px 14px;text-decoration:none;cursor:pointer}'
             .'.vbar button{background:#475569}'
