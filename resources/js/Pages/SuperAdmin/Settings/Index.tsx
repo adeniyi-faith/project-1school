@@ -55,7 +55,7 @@ function GeneralTab({ settings, logoUrl, faviconUrl }: Pick<Props, 'settings' | 
         platform_name: string; support_email: string; support_phone: string;
         footer_copyright: string; logo: File | null; favicon: File | null;
     }>({
-        platform_name:    settings.platform_name    ?? 'SchoolRuns',
+        platform_name:    settings.platform_name    ?? 'Adino School Systems',
         support_email:    settings.support_email    ?? '',
         support_phone:    settings.support_phone    ?? '',
         footer_copyright: settings.footer_copyright ?? '',
@@ -145,7 +145,7 @@ function GeneralTab({ settings, logoUrl, faviconUrl }: Pick<Props, 'settings' | 
                         <div>
                             <Label>Footer Copyright Text</Label>
                             <Input value={form.data.footer_copyright} onChange={e => form.setData('footer_copyright', e.target.value)}
-                                placeholder="© 2026 SchoolRuns. All rights reserved." />
+                                placeholder="© 2026 Adino School Systems. All rights reserved." />
                         </div>
                     </div>
 
@@ -306,7 +306,7 @@ function SmtpTab({ settings }: { settings: Record<string, string> }) {
                             <Label>From Name</Label>
                             <Input value={form.data.platform_mail_from_name}
                                 onChange={e => form.setData('platform_mail_from_name', e.target.value)}
-                                placeholder="SchoolRuns" />
+                                placeholder="Adino School Systems" />
                         </div>
                     </div>
                     <div className="flex justify-end">

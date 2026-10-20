@@ -1,4 +1,4 @@
-# CLAUDE.md — SchoolRuns (School Management System)
+# CLAUDE.md — Adino School Systems (School Management System)
 
 > The guide for every Claude Code session on this project. Read it before writing code.
 > It describes what is **actually built today**. Where the older planning files in
@@ -121,7 +121,8 @@ Everything below exists as working screens unless a caveat says otherwise.
 9. **Zustand only for truly global state.** Local state stays in `useState`.
 10. **Security defaults:** Eloquent only (no raw SQL); no `dangerouslySetInnerHTML`; validate uploads (type + size); uploaded documents go on the `private` disk and are served through a route that checks the person's school and permission. Pictures (logos, stamps, signatures, student photos) are stored with `App\Support\ImageShrinker::store`, which makes big JPEG/PNG files smaller first (max side 600px, 128px for favicons) and leaves small ones and other types untouched; upload limits for pictures are 10 MB so phone photos are accepted and then shrunk. The report card and certificate design pages preview unsaved choices and unsaved pictures through the `*.try` routes (a real form post, nothing stored, shown in an in-page preview), which the demo read-only guard lets through.
 11. **Slow work:** PDF, imports and message blasts currently run inside the request or the stub job. Moving them to the queue is Phase 4 work; do not pretend it is done.
-12. **Keep this file true.** If you change the stack, add a module or fix a caveat above, update the table.
+12. **Brand:** the product is called **Adino School Systems** (company: Adino Systems). It is shown as a text wordmark, "Adino" in a serif with "School Systems" small underneath (`Wordmark` in `resources/js/components/layout/Logo.tsx`; `resources/views/partials/wordmark*.blade.php` for pages made with Blade); there is no logo picture. Public school websites end with "School Software by Adino Systems" (the nine footers in `resources/views/website/footers`); inside the app every page ends with "Powered by Adino Systems" (`AppLayout.tsx`). The webhook headers keep their old `X-SchoolRuns-*` names so existing integrations do not break.
+13. **Keep this file true.** If you change the stack, add a module or fix a caveat above, update the table.
 
 ---
 

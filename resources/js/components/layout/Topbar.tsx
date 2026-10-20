@@ -7,7 +7,7 @@ import {
     DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import NotificationBell from '@/components/layout/NotificationBell';
-import { LogoMark, initialsOf } from '@/components/layout/Logo';
+import { Wordmark, initialsOf } from '@/components/layout/Logo';
 import { useAuthStore } from '@/Stores/useAuthStore';
 import { useUIStore } from '@/Stores/useUIStore';
 import type { PageProps } from '@/Types';
@@ -56,7 +56,7 @@ export default function Topbar({ title, breadcrumbs }: TopbarProps) {
     return (
         <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card/85 px-4 backdrop-blur-xl md:px-6">
             <div className="flex items-center gap-2.5 md:hidden">
-                <LogoMark className="size-7 rounded-lg" />
+                <Wordmark size="sm" className="text-foreground" />
             </div>
             <button onClick={toggleCollapsed} className={`${iconButton} hidden md:flex`} aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
                 <PanelLeft className="size-[18px]" strokeWidth={1.75} />

@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'SchoolRuns'),
+    'name' => env('APP_NAME', 'Adino School Systems'),
 
     // Show the one-click demo logins on the sign-in page. Off unless
     // SHOW_DEMO_ACCOUNTS=true, so a real school never exposes them by accident.

@@ -1,6 +1,6 @@
-# SchoolRuns
+# Adino School Systems
 
-SchoolRuns is a school management system: one Laravel application that
+Adino School Systems is a school management system: one Laravel application that
 renders its own React (TypeScript) pages using [Inertia.js](https://inertiajs.com/),
 so there's a single codebase instead of a separate backend and frontend.
 It covers admissions, students, staff, attendance, timetables, exams,

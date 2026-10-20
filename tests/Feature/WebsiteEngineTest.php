@@ -398,7 +398,7 @@ class WebsiteEngineTest extends SecurityTestCase
     {
         [$school] = $this->liveSite('Foot School');
         auth()->logout();
-        $this->get('/s/foot-school')->assertOk()->assertSee('School platform powered by', false)->assertSee('SchoolRuns')->assertSee('/s/foot-school/sign-in', false);
+        $this->get('/s/foot-school')->assertOk()->assertSee('School Software by', false)->assertSee('Adino Systems')->assertSee('/s/foot-school/sign-in', false);
     }
 
     public function test_the_sign_in_page_uses_the_site_look_and_posts_to_the_normal_login(): void
@@ -653,7 +653,7 @@ class WebsiteEngineTest extends SecurityTestCase
             ->assertSee('sec sec--headlines', false)
             ->assertSee('Visit News', false)
             ->assertSee('<footer class="ftr ftr--heritage">', false)
-            ->assertSee('School platform powered by', false);
+            ->assertSee('School Software by', false);
 
         $this->get('/s/gold-school/sign-in')->assertOk()->assertSee('class="hp-tabs"', false)->assertDontSee('class="pagehero"', false);
         $this->get('/apply/'.$school->id)->assertOk()->assertSee('class="hp-form"', false)->assertDontSee('class="pagehero"', false);
@@ -739,7 +739,7 @@ class WebsiteEngineTest extends SecurityTestCase
             ->assertSee('panel-card', false)
             ->assertSee('class="profile"', false)
             ->assertSee('<footer class="ftr ftr--statement">', false);
-        $this->get('/s/civic-school')->assertSee('School platform powered by', false);
+        $this->get('/s/civic-school')->assertSee('School Software by', false);
 
         $this->actingAs($admin)->put('/school/website', ['announcement' => '']);
         auth()->logout();
