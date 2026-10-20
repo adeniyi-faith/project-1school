@@ -13,27 +13,27 @@ use Illuminate\Support\Carbon;
 class StudentSeeder extends Seeder
 {
     private array $firstNames = [
-        'Rahim', 'Karim', 'Jamal', 'Farhan', 'Imran', 'Sabbir', 'Rakib', 'Nasir', 'Tanvir', 'Sohel',
-        'Fatema', 'Nusrat', 'Sadia', 'Tania', 'Mitu', 'Riya', 'Priya', 'Suma', 'Lima', 'Shirin',
-        'Anik', 'Badhon', 'Dipu', 'Emon', 'Fuad', 'Golam', 'Habib', 'Irfan', 'Jewel', 'Kabir',
-        'Layla', 'Mina', 'Nadia', 'Orin', 'Puja', 'Ruma', 'Sonia', 'Tina', 'Uma', 'Vina',
+        'Chinedu', 'Emeka', 'Tunde', 'Ibrahim', 'Musa', 'Segun', 'Obinna', 'Kelechi', 'Damilola', 'Uche',
+        'Amara', 'Ngozi', 'Aisha', 'Funke', 'Zainab', 'Blessing', 'Chioma', 'Folake', 'Halima', 'Ifeoma',
+        'Adebayo', 'Babatunde', 'Chidi', 'Danladi', 'Efe', 'Femi', 'Gbenga', 'Ikenna', 'Jide', 'Kunle',
+        'Lara', 'Mercy', 'Nneka', 'Ose', 'Peace', 'Ronke', 'Sade', 'Titi', 'Uju', 'Yetunde',
     ];
 
     private array $lastNames = [
-        'Hossain', 'Islam', 'Ahmed', 'Khan', 'Rahman', 'Begum', 'Akter', 'Miah', 'Uddin', 'Sarkar',
-        'Chowdhury', 'Sheikh', 'Mondal', 'Das', 'Roy', 'Paul', 'Biswas', 'Ghosh', 'Dey', 'Bose',
+        'Okafor', 'Adeyemi', 'Bello', 'Ibrahim', 'Eze', 'Balogun', 'Nwosu', 'Abubakar', 'Okonkwo', 'Adewale',
+        'Ogunleye', 'Musa', 'Obi', 'Lawal', 'Chukwu', 'Afolabi', 'Danjuma', 'Ogundipe', 'Nnamdi', 'Salami',
     ];
 
     private array $guardianFirstNames = [
-        'Mohammad', 'Abdul', 'Md.', 'Abul', 'Habibur', 'Nurul', 'Jahangir', 'Rafiqul', 'Sirajul', 'Mahabub',
-        'Nasima', 'Rehana', 'Kulsum', 'Halima', 'Rashida', 'Amena', 'Sufia', 'Bilkis', 'Morjina', 'Shahnaz',
+        'Chief', 'Alhaji', 'Mr.', 'Engr.', 'Dr.', 'Pastor', 'Prince', 'Sunday', 'Emmanuel', 'Olumide',
+        'Mrs.', 'Hajia', 'Madam', 'Funmilayo', 'Adaeze', 'Bukola', 'Hauwa', 'Titilayo', 'Ngozi', 'Rashidat',
     ];
 
-    private array $religions    = ['Islam', 'Hinduism', 'Christianity', 'Buddhism'];
+    private array $religions    = ['Christianity', 'Islam'];
     private array $bloodGroups  = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
     private array $relations    = ['Father', 'Mother', 'Guardian'];
-    private array $occupations  = ['Businessman', 'Farmer', 'Teacher', 'Driver', 'Engineer', 'Doctor', 'Garments Worker', 'Government Employee'];
-    private array $areas        = ['Dhaka', 'Mirpur', 'Uttara', 'Motijheel', 'Mohammadpur', 'Dhanmondi', 'Gulshan', 'Banani'];
+    private array $occupations  = ['Businessman', 'Farmer', 'Teacher', 'Driver', 'Engineer', 'Doctor', 'Trader', 'Civil Servant'];
+    private array $areas        = ['Ikeja', 'Yaba', 'Surulere', 'Lekki', 'Ajah', 'Maryland', 'Ikoyi', 'Victoria Island'];
 
     public function run(): void
     {
@@ -65,7 +65,7 @@ class StudentSeeder extends Seeder
                     'school_id'  => $school->id,
                     'name'       => $this->guardianFirstNames[array_rand($this->guardianFirstNames)] . ' ' . $lastName,
                     'relation'   => $this->relations[array_rand($this->relations)],
-                    'phone'      => '017' . rand(10000000, 99999999),
+                    'phone'      => '0803' . rand(1000000, 9999999),
                     'email'      => strtolower($lastName) . rand(10, 99) . '@gmail.com',
                     'occupation' => $this->occupations[array_rand($this->occupations)],
                     'address'    => rand(1, 99) . ' Road ' . rand(1, 20) . ', ' . $this->areas[array_rand($this->areas)],
@@ -89,7 +89,7 @@ class StudentSeeder extends Seeder
                     'blood_group'    => $this->bloodGroups[array_rand($this->bloodGroups)],
                     'religion'       => $this->religions[array_rand($this->religions)],
                     'nationality'    => 'Nigerian',
-                    'phone'          => rand(0, 1) ? '018' . rand(10000000, 99999999) : null,
+                    'phone'          => rand(0, 1) ? '0813' . rand(1000000, 9999999) : null,
                     'address'        => rand(1, 99) . ' Lane ' . rand(1, 10) . ', ' . $this->areas[array_rand($this->areas)],
                     'category'       => 'general',
                     'status'         => $i < 7 ? 'active' : 'alumni',

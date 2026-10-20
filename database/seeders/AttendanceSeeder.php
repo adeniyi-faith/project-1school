@@ -30,8 +30,8 @@ class AttendanceSeeder extends Seeder
         $days = 0;
 
         while ($days < 30) {
-            // Skip weekends (Friday=5, Saturday=6 in Bangladesh)
-            if (in_array($date->dayOfWeek, [5, 6])) {
+            // Skip weekends (Saturday=6, Sunday=0 in Nigeria)
+            if (in_array($date->dayOfWeek, [0, 6])) {
                 $date->subDay();
                 continue;
             }
