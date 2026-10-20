@@ -35,6 +35,7 @@ const schema = z.object({
     admission_date:  z.string().optional(),
     previous_school: z.string().optional(),
     roll_no:         z.string().optional(),
+    admission_no:    z.string().optional(),
     // Class
     class_id:   z.coerce.number().int().positive('Select a class'),
     section_id: z.coerce.number().int().positive().nullable().optional(),
