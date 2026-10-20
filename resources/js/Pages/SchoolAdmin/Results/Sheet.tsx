@@ -222,7 +222,46 @@ function ScoresTab({ sheet, canEnter, subjects, subjectId, components, students,
             )}
         >
             {firstError && <p className="px-5 pb-3 text-sm text-red-600">{firstError}</p>}
-            <div className="overflow-x-auto">
+
+            {/* Phone: one card per student, so nothing needs sideways scrolling */}
+            <ul className="divide-y divide-slate-100 dark:divide-white/[0.06] md:hidden">
+                {students.map(s => {
+                    const stored = subjectResults[s.id];
+                    return (
+                        <li key={s.id} className="px-4 py-3">
+                            <p className="font-medium text-slate-900 dark:text-white">{s.name}</p>
+                            <p className="mb-2 text-xs text-slate-400">{s.admission_no}</p>
+                            <div className="grid grid-cols-3 gap-2">
+                                {components.map(c => {
+                                    const key = `${s.id}-${c.id}`;
+                                    const over = values[key] !== '' && Number(values[key]) > Number(c.max_score);
+                                    return (
+                                        <label key={c.id} className="block text-xs text-slate-500 dark:text-slate-400">
+                                            <span className="mb-1 block" title={c.name}>{c.short_name} <span className="text-slate-400">/{Number(c.max_score)}</span></span>
+                                            <input
+                                                type="number" inputMode="decimal" min={0} max={Number(c.max_score)} step="0.5"
+                                                disabled={!canEnter}
+                                                aria-label={`${c.short_name} for ${s.name}`}
+                                                value={values[key]}
+                                                onChange={e => { setValues(v => ({ ...v, [key]: e.target.value })); setDirty(true); }}
+                                                className={cn('h-10 w-full rounded-md border bg-white px-2 text-center text-sm tabular-nums text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-500 dark:bg-white/[0.04] dark:text-white dark:disabled:bg-transparent',
+                                                    over ? 'border-red-400' : 'border-slate-200 dark:border-white/10')}
+                                            />
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                Total <b className="text-slate-900 dark:text-white">{rowTotal(s.id) ?? '—'}</b>
+                                {' · '}Grade <b className="text-slate-900 dark:text-white">{dirty ? '…' : stored?.grade ?? '—'}</b>
+                                {' · '}Position <b className="text-slate-900 dark:text-white">{dirty ? '…' : ordinal(stored?.subject_position)}</b>
+                            </p>
+                        </li>
+                    );
+                })}
+            </ul>
+
+            <div className="hidden overflow-x-auto md:block">
                 <table data-no-stack className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-slate-100 text-left text-xs text-slate-500 dark:border-white/[0.06] dark:text-slate-400">
@@ -317,7 +356,36 @@ function BehaviourTab({ sheet, canEnter, students, traits, ratings, ratingLabels
                 </Button>
             )}
         >
-            <div className="overflow-x-auto">
+            {/* Phone: one card per student */}
+            <ul className="divide-y divide-slate-100 dark:divide-white/[0.06] md:hidden">
+                {students.map(s => (
+                    <li key={s.id} className="px-4 py-3">
+                        <p className="mb-2 font-medium text-slate-900 dark:text-white">{s.name}</p>
+                        <div className="grid grid-cols-2 gap-2">
+                            {shown.map(t => {
+                                const key = `${s.id}-${t.id}`;
+                                return (
+                                    <label key={t.id} className="block text-xs text-slate-500 dark:text-slate-400">
+                                        <span className="mb-1 block">{t.name}</span>
+                                        <select
+                                            disabled={!canEnter}
+                                            aria-label={`${t.name} for ${s.name}`}
+                                            value={values[key]}
+                                            onChange={e => { setValues(v => ({ ...v, [key]: e.target.value })); setDirty(true); }}
+                                            className="h-10 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-900 disabled:bg-slate-50 dark:border-white/10 dark:bg-slate-900 dark:text-white"
+                                        >
+                                            <option value="">–</option>
+                                            {[5, 4, 3, 2, 1].map(n => <option key={n} value={n}>{n}</option>)}
+                                        </select>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    </li>
+                ))}
+            </ul>
+
+            <div className="hidden overflow-x-auto md:block">
                 <table data-no-stack className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-slate-100 text-left text-xs text-slate-500 dark:border-white/[0.06] dark:text-slate-400">
