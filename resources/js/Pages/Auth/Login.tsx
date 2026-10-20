@@ -155,7 +155,7 @@ export default function Login() {
 
             <div className="mt-7 grid gap-2 text-center text-[15px] text-[#5A6482]">
                 <p>
-                    Not on SchoolRuns yet?{' '}
+                    Not on Adino School Systems yet?{' '}
                     <a href="/register" className="font-medium text-[#3346E0] hover:underline">Register your school</a>
                 </p>
                 {demoEnabled && (

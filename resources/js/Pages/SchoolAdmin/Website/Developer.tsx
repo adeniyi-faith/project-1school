@@ -44,7 +44,7 @@ export default function Developer({ shell, dev, webhook, eventNames, newSecret, 
 
     return (
         <WebsiteLayout shell={shell} title="Developer" crumb={[{ label: 'Developer' }]} description="For the person who looks after your website's technical side. You do not need this to run a good website.">
-            <Panel title="Your site as data" description="Free, public links your developer can use to show your school's content in another website or an app. The Guides area on the SchoolRuns front page explains them.">
+            <Panel title="Your site as data" description="Free, public links your developer can use to show your school's content in another website or an app. The Guides area on the Adino School Systems front page explains them.">
                 <div className="space-y-2 text-sm">
                     <p className="text-xs text-slate-500">Whole site: pages, fees, term dates, team and events</p><Copy value={urls.site} />
                     <p className="text-xs text-slate-500">News and events (add ?category=events to filter)</p><Copy value={urls.news} />

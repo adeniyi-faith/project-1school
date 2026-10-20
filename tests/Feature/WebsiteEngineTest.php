@@ -398,7 +398,7 @@ class WebsiteEngineTest extends SecurityTestCase
     {
         [$school] = $this->liveSite('Foot School');
         auth()->logout();
-        $this->get('/s/foot-school')->assertOk()->assertSee('School platform powered by', false)->assertSee('SchoolRuns')->assertSee('/s/foot-school/sign-in', false);
+        $this->get('/s/foot-school')->assertOk()->assertSee('School Software by', false)->assertSee('Adino Systems')->assertSee('/s/foot-school/sign-in', false);
     }
 
     public function test_the_sign_in_page_uses_the_site_look_and_posts_to_the_normal_login(): void

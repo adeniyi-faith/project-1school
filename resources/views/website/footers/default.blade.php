@@ -31,7 +31,7 @@
         </div>
         <div class="legal">
             <p>@if ($site->footer_text){{ $site->footer_text }} &middot; @endif&copy; {{ now()->year }} {{ $school->name }}@if ($privacyUrl) &middot; <a href="{{ $privacyUrl }}">Privacy Policy</a>@endif</p>
-            <p class="powered">School platform powered by <a href="{{ url('/') }}" rel="noopener">SchoolRuns</a></p>
+            <p class="powered">School Software by <a href="{{ url('/') }}" rel="noopener">Adino Systems</a></p>
         </div>
     </div>
 </footer>

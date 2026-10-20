@@ -55,6 +55,10 @@ class HandleInertiaRequests extends Middleware
                 // Numbers shown beside menu items that have something waiting (page address => count)
                 'badges' => fn () => $request->user() ? \App\Support\NavBadges::for($request->user()) : [],
             ],
+            // The school this person works in (shown at the top of the side menu)
+            'school' => fn () => ($id = \App\Support\ActingSchool::id() ?? $request->user()?->school_id)
+                ? \App\Models\School::withoutGlobalScopes()->whereKey($id)->first(['id', 'name', 'logo'])?->only(['id', 'name', 'logo_url'])
+                : null,
             // Set while the platform owner is working inside one school
             'acting_school' => fn () => ($id = \App\Support\ActingSchool::id())
                 ? ['id' => $id, 'name' => \App\Models\School::whereKey($id)->value('name')]

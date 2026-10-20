@@ -66,6 +66,6 @@ class SuperAdminSchoolAccessTest extends SecurityTestCase
 
     public function test_the_page_title_is_never_the_framework_default(): void
     {
-        $this->get('/login')->assertOk()->assertSee('<title inertia>SchoolRuns</title>', false);
+        $this->get('/login')->assertOk()->assertSee('<title inertia>Adino School Systems</title>', false);
     }
 }

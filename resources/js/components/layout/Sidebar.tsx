@@ -4,7 +4,7 @@ import { ChevronDown, ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/Stores/useUIStore';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { LogoMark, initialsOf } from '@/components/layout/Logo';
+import { Wordmark, WordmarkLetter, initialsOf } from '@/components/layout/Logo';
 import { isNavActive, navGroupsForRole, type NavGroup, type NavItem } from '@/components/layout/navigation';
 import type { PageProps } from '@/Types';
 
@@ -178,18 +178,19 @@ export default function Sidebar({ drawer = false, onNavigate }: SidebarProps) {
                     !drawer && (collapsed ? 'w-[68px]' : 'w-64'),
                 )}
             >
-                <div className={cn('flex h-14 shrink-0 items-center gap-2.5 px-5', collapsed && 'justify-center px-0')}>
-                    <LogoMark />
-                    {!collapsed && <span className="text-[15px] font-semibold tracking-tight text-white">SchoolRuns</span>}
+                <div className={cn('flex h-16 shrink-0 items-center gap-2.5 px-5', collapsed && 'justify-center px-0')}>
+                    {collapsed ? <WordmarkLetter /> : <Wordmark size="lg" />}
                 </div>
 
                 {!collapsed && (
                     <div className="mx-3 mb-2 flex items-center gap-2.5 rounded-xl border border-sidebar-border bg-white/[0.04] px-3 py-2.5">
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-300 to-amber-500 text-[11px] font-bold text-amber-950">
-                            {initialsOf(acting_school?.name ?? school?.name ?? 'SR')}
-                        </span>
+                        {school?.logo_url
+                            ? <img src={school.logo_url} alt="" className="size-8 shrink-0 rounded-lg bg-white object-contain p-0.5" />
+                            : <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-[11px] font-semibold tracking-wide text-white/80">
+                                {initialsOf(acting_school?.name ?? school?.name ?? 'Adino')}
+                            </span>}
                         <span className="min-w-0 leading-tight">
-                            <span className="block truncate text-[13px] font-medium text-white">{acting_school?.name ?? school?.name ?? 'SchoolRuns'}</span>
+                            <span className="block truncate text-[13px] font-medium text-white">{acting_school?.name ?? school?.name ?? 'Adino School Systems'}</span>
                             <span className="block truncate text-[11px] text-white/45">{roleLabel}</span>
                         </span>
                     </div>

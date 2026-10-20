@@ -104,7 +104,7 @@ export default function Register() {
             title="Register your school"
             topLink={{ href: '/login', label: 'Log in' }}
             heading="Bring your whole school online"
-            text="Register once and your school gets its own private SchoolRuns account, ready for fees in naira."
+            text="Register once and your school gets its own private Adino School Systems account, ready for fees in naira."
             points={['Online fee payments and receipts', 'Results, report cards and attendance', 'AI lesson notes and exam questions', 'Logins for staff, parents and students']}
         >
             <div className="text-sm font-medium text-[#5A6482]">Step {step + 1} of 2</div>
@@ -186,7 +186,7 @@ export default function Register() {
                     <div className="grid gap-1.5">
                         <label className="grid cursor-pointer grid-cols-[22px_1fr] items-start gap-2.5 text-[14.5px] text-[#2A3555]">
                             <input type="checkbox" className="mt-px size-5 accent-[#3346E0]" {...register('confirm_authorised')} />
-                            <span>I am authorised to register this school on SchoolRuns.</span>
+                            <span>I am authorised to register this school on Adino School Systems.</span>
                         </label>
                         {errors.confirm_authorised && <span role="alert" className="text-[13.5px] text-[#D0472F]">{errors.confirm_authorised.message}</span>}
                     </div>
