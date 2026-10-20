@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface MyClass { id: number; name: string; students: number; class_teacher: boolean; subjects: string[] }
 interface Lesson { id: number; start: string; end: string; class: string; subject: string | null; room: string | null }
-interface Props { staffName: string; hasStaffCard: boolean; classes: MyClass[]; today: Lesson[] }
+interface Props { managerLabel: string; staffName: string; hasStaffCard: boolean; classes: MyClass[]; today: Lesson[] }
 
-export default function MyClasses({ staffName, hasStaffCard, classes, today }: Props) {
+export default function MyClasses({ managerLabel, staffName, hasStaffCard, classes, today }: Props) {
     return (
         <AppLayout breadcrumbs={[{ label: 'My Classes' }]}>
             <Head title="My Classes" />
@@ -25,7 +25,7 @@ export default function MyClasses({ staffName, hasStaffCard, classes, today }: P
                         {classes.length === 0 ? (
                             <p className="text-sm text-slate-500">
                                 {hasStaffCard
-                                    ? 'No class is assigned to you yet. Ask the school admin to set you as a class teacher or subject teacher on the Classes page.'
+                                    ? 'No class is assigned to you yet. Ask the school admin to set you as ' + managerLabel + ' or subject teacher on the Classes page.'
                                     : 'Your login is not linked to a staff record yet. Ask the school admin to add you under Staff.'}
                             </p>
                         ) : classes.map((c) => (
@@ -33,7 +33,7 @@ export default function MyClasses({ staffName, hasStaffCard, classes, today }: P
                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="font-semibold text-slate-900 dark:text-white">{c.name}</span>
-                                        {c.class_teacher && <Badge className="bg-indigo-100 text-indigo-700">Class teacher</Badge>}
+                                        {c.class_teacher && <Badge className="bg-indigo-100 text-indigo-700">{managerLabel}</Badge>}
                                         <span className="text-xs text-slate-500 inline-flex items-center gap-1"><Users className="w-3 h-3" /> {c.students} students</span>
                                     </div>
                                     <div className="flex flex-wrap gap-2 text-xs">
