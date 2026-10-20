@@ -14,6 +14,8 @@ export interface NavItem {
 export interface NavGroup {
     title: string;
     items: NavItem[];
+    /** Rarely-used groups start folded. A group holding the open page always shows. */
+    folded?: boolean;
 }
 
 export const navGroups: NavGroup[] = [
@@ -31,12 +33,16 @@ export const navGroups: NavGroup[] = [
     },
     {
         title: 'School Setup',
+        folded: true,
         items: [
             { label: 'Classes',     href: '/school/classes',  icon: GraduationCap,  roles: ['super-admin','school-admin','principal'] },
             { label: 'Arms',        href: '/school/sections', icon: Layers,         roles: ['super-admin','school-admin','principal'] },
             { label: 'Subjects',    href: '/school/subjects', icon: BookOpen,       roles: ['super-admin','school-admin','principal'] },
             { label: 'Shifts',      href: '/school/shifts',   icon: Clock,          roles: ['super-admin','school-admin','principal'] },
             { label: 'Holidays',    href: '/school/holidays', icon: CalendarOff,    roles: ['super-admin','school-admin','principal'] },
+            { label: 'Terms',       href: '/school/academics/terms',      icon: CalendarRange, roles: ['super-admin','school-admin','principal','teacher'] },
+            { label: 'Scores & Grades', href: '/school/academics/assessment', icon: SlidersHorizontal, roles: ['super-admin','school-admin','principal'] },
+            { label: 'Report Card Designs', href: '/school/academics/report-card-designs', icon: Palette, roles: ['super-admin','school-admin','principal'] },
         ],
     },
     {
@@ -47,22 +53,26 @@ export const navGroups: NavGroup[] = [
             { label: 'Timetable',   href: '/school/timetable', icon: CalendarDays,  roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Attendance',  href: '/school/attendance', icon: ClipboardList, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Examinations',href: '/school/exams',    icon: BookOpen,       roles: ['super-admin','school-admin','principal','teacher','accountant'] },
+            { label: 'Scan ID Card', href: '/school/id-cards/scan',       icon: ScanLine,       roles: ['super-admin','school-admin','principal','teacher','receptionist','warden','accountant'] },
+            { label: 'Term Results', href: '/school/results',             icon: ClipboardCheck, roles: ['super-admin','school-admin','principal','teacher'] },
+            { label: 'Print Report Cards', href: '/school/results/print', icon: Printer, roles: ['super-admin','school-admin','principal','teacher'] },
+            { label: 'Comment Bank', href: '/school/results/comment-bank', icon: MessageSquareQuote, roles: ['super-admin','school-admin','principal','teacher'] },
+        ],
+    },
+    {
+        title: 'Student Records',
+        folded: true,
+        items: [
             { label: 'Move Students Up', href: '/school/promotions',     icon: ArrowUpRight,   roles: ['super-admin','school-admin'] },
             { label: 'Certificates', href: '/school/certificates',       icon: Award,          roles: ['super-admin','school-admin','principal'] },
             { label: 'ID Cards',    href: '/school/id-cards',             icon: IdCard,         roles: ['super-admin','school-admin','principal'], exact: true },
-            { label: 'Scan ID Card', href: '/school/id-cards/scan',       icon: ScanLine,       roles: ['super-admin','school-admin','principal','teacher','receptionist','warden','accountant'] },
             { label: 'Houses',      href: '/school/houses',               icon: Medal,          roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Clubs',       href: '/school/clubs',                icon: Shapes,         roles: ['super-admin','school-admin','principal','teacher'] },
-            { label: 'Term Results', href: '/school/results',             icon: ClipboardCheck, roles: ['super-admin','school-admin','principal','teacher'] },
-            { label: 'Terms',       href: '/school/academics/terms',      icon: CalendarRange, roles: ['super-admin','school-admin','principal','teacher'] },
-            { label: 'Scores & Grades', href: '/school/academics/assessment', icon: SlidersHorizontal, roles: ['super-admin','school-admin','principal'] },
-            { label: 'Print Report Cards', href: '/school/results/print', icon: Printer, roles: ['super-admin','school-admin','principal','teacher'] },
-            { label: 'Comment Bank', href: '/school/results/comment-bank', icon: MessageSquareQuote, roles: ['super-admin','school-admin','principal','teacher'] },
-            { label: 'Report Card Designs', href: '/school/academics/report-card-designs', icon: Palette, roles: ['super-admin','school-admin','principal'] },
         ],
     },
     {
         title: 'HR Setup',
+        folded: true,
         items: [
             { label: 'Departments',  href: '/school/departments',  icon: Building2,   roles: ['super-admin','school-admin','principal'] },
             { label: 'Designations', href: '/school/designations', icon: BadgeCheck,  roles: ['super-admin','school-admin','principal'] },
@@ -77,7 +87,6 @@ export const navGroups: NavGroup[] = [
             { label: 'Scholarships',   href: '/school/fees/scholarships', icon: Gift,    roles: ['super-admin','school-admin','accountant'] },
             { label: 'Online Payments', href: '/school/fees/online-payments', icon: CreditCard, roles: ['super-admin','school-admin','accountant'] },
             { label: 'Payment Plans', href: '/school/fees/payment-plans', icon: CalendarClock, roles: ['super-admin','school-admin','accountant'] },
-            { label: 'Old Payment Records', href: '/school/fees/payments', icon: Banknote,  roles: ['super-admin','school-admin','accountant'] },
             { label: 'Fee Structures', href: '/school/fees/structures',  icon: BarChart3,   roles: ['super-admin','school-admin','accountant'] },
             { label: 'Fee Categories', href: '/school/fees/categories',  icon: ClipboardList, roles: ['super-admin','school-admin','accountant'] },
         ],
@@ -134,6 +143,7 @@ export const navGroups: NavGroup[] = [
     },
     {
         title: 'Facilities',
+        folded: true,
         items: [
             { label: 'Library',     href: '/school/library/books',       icon: Library,  roles: ['super-admin','school-admin','principal','librarian'] },
             { label: 'Transport',   href: '/school/transport/vehicles',  icon: Bus,      roles: ['super-admin','school-admin','driver'] },
@@ -150,6 +160,13 @@ export const navGroups: NavGroup[] = [
             { label: 'Sent Messages',    href: '/school/communication/sent',             icon: History,       roles: ['super-admin','school-admin','principal'] },
             { label: 'Email Templates',  href: '/school/communication/email-templates',  icon: Mail,          roles: ['super-admin','school-admin'] },
             { label: 'Notifications',    href: '/school/communication/notifications',    icon: Bell,          roles: ['super-admin','school-admin','principal','teacher','accountant','librarian','receptionist','driver','warden','store-manager'] },
+        ],
+    },
+    {
+        title: 'History',
+        folded: true,
+        items: [
+            { label: 'Old Payment Records', href: '/school/fees/payments', icon: Banknote,  roles: ['super-admin','school-admin','accountant'] },
         ],
     },
     {
@@ -176,6 +193,7 @@ export const navGroups: NavGroup[] = [
     },
     {
         title: 'Website',
+        folded: true,
         items: [
             { label: 'Overview',      href: '/school/website',          icon: Globe,     roles: ['school-admin'], exact: true },
             { label: 'Pages',         href: '/school/website/pages',    icon: FileText,  roles: ['school-admin'] },
@@ -188,6 +206,7 @@ export const navGroups: NavGroup[] = [
     },
     {
         title: 'Admin',
+        folded: true,
         items: [
             { label: 'Settings',      href: '/school/settings',              icon: Settings, roles: ['school-admin'], exact: true },
             { label: 'Settings',      href: '/super-admin/settings',         icon: Settings, roles: ['super-admin'] },
