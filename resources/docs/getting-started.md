@@ -2,7 +2,7 @@ Your school administrator sees a **Get your school ready** list on the dashboard
 
 ## 1. Choose your kind of school
 
-Pick Nigerian, British, American or Montessori. SchoolRuns adds the matching classes, subjects, term names and grades. It only adds what you do not have yet and never changes what you already set up. You can find it again at **Settings > School type**.
+Pick Nigerian, British, American or Montessori. Adino School Systems adds the matching classes, subjects, term names and grades. It only adds what you do not have yet and never changes what you already set up. You can find it again at **Settings > School type**.
 
 ## 2. Add your logo
 

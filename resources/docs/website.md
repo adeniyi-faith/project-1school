@@ -25,4 +25,4 @@ These update by themselves and hide themselves when there is nothing to show:
 
 ## Make it safe and fast
 
-The footer credits SchoolRuns. A privacy page and cookie notice are included for every theme. The top menu never wraps; on small laptops the phone-style menu is used instead.
+The footer credits Adino School Systems. A privacy page and cookie notice are included for every theme. The top menu never wraps; on small laptops the phone-style menu is used instead.
