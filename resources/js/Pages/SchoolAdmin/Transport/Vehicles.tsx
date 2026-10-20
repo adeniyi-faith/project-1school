@@ -174,7 +174,7 @@ export default function Vehicles({ vehicles, filters, stats }: Props) {
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>Registration No. <span className="text-red-500">*</span></Label>
-                                <Input value={form.registration_no} onChange={e => setForm(p => ({ ...p, registration_no: e.target.value }))} placeholder="DHAKA-METRO-XX-XXXX" />
+                                <Input value={form.registration_no} onChange={e => setForm(p => ({ ...p, registration_no: e.target.value }))} placeholder="LAGOS-APP-123-XY" />
                             </div>
                             <div className="space-y-1.5">
                                 <Label>Vehicle Name</Label>

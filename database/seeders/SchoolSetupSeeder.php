@@ -54,7 +54,7 @@ class SchoolSetupSeeder extends Seeder
 
         // ── Subjects (per class group) ────────────────────────────────
         $primarySubjects = [
-            ['name' => 'Bangla',        'code' => 'BAN', 'type' => 'theory'],
+            ['name' => 'Yoruba',        'code' => 'YOR', 'type' => 'theory'],
             ['name' => 'English',        'code' => 'ENG', 'type' => 'theory'],
             ['name' => 'Mathematics',    'code' => 'MAT', 'type' => 'theory'],
             ['name' => 'Science',        'code' => 'SCI', 'type' => 'theory'],
@@ -64,7 +64,7 @@ class SchoolSetupSeeder extends Seeder
         ];
 
         $secondarySubjects = [
-            ['name' => 'Bangla',         'code' => 'BAN', 'type' => 'theory'],
+            ['name' => 'Yoruba',         'code' => 'YOR', 'type' => 'theory'],
             ['name' => 'English',         'code' => 'ENG', 'type' => 'theory'],
             ['name' => 'Mathematics',     'code' => 'MAT', 'type' => 'theory'],
             ['name' => 'Physics',         'code' => 'PHY', 'type' => 'theory'],

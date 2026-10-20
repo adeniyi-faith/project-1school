@@ -12,18 +12,18 @@ use Illuminate\Support\Carbon;
 class StaffSeeder extends Seeder
 {
     private array $firstNames = [
-        'Kamrul', 'Rafiqul', 'Shahidul', 'Mizanur', 'Mahbubur', 'Anisur', 'Hasanur', 'Golam',
-        'Nasrin', 'Roksana', 'Shahnaz', 'Fatema', 'Morjina', 'Bilkis', 'Kulsum', 'Rehana',
-        'Aminul', 'Shafiqul', 'Belal', 'Moniruzzaman',
+        'Olumide', 'Chukwuemeka', 'Abdullahi', 'Oluwaseun', 'Ifeanyi', 'Yusuf', 'Adebola', 'Emmanuel',
+        'Ngozi', 'Folasade', 'Hauwa', 'Chiamaka', 'Bukola', 'Titilayo', 'Adaeze', 'Rashidat',
+        'Tochukwu', 'Babajide', 'Kayode', 'Nkechi',
     ];
 
     private array $lastNames = [
-        'Hossain', 'Islam', 'Ahmed', 'Khan', 'Rahman', 'Begum', 'Akter', 'Sarkar', 'Chowdhury', 'Sheikh',
+        'Okafor', 'Adeyemi', 'Bello', 'Ibrahim', 'Eze', 'Balogun', 'Nwosu', 'Abubakar', 'Okonkwo', 'Ogunleye',
     ];
 
-    private array $religions   = ['Islam', 'Hinduism', 'Christianity', 'Buddhism'];
+    private array $religions   = ['Christianity', 'Islam'];
     private array $bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
-    private array $areas       = ['Dhaka', 'Mirpur', 'Uttara', 'Motijheel', 'Mohammadpur', 'Gulshan'];
+    private array $areas       = ['Ikeja', 'Yaba', 'Surulere', 'Lekki', 'Ajah', 'Maryland'];
 
     private array $departmentData = [
         ['name' => 'Science & Mathematics', 'code' => 'SCI'],
@@ -86,8 +86,8 @@ class StaffSeeder extends Seeder
                     'blood_group'    => $this->bloodGroups[array_rand($this->bloodGroups)],
                     'religion'       => $this->religions[array_rand($this->religions)],
                     'nationality'    => 'Nigerian',
-                    'phone'          => '017' . rand(10000000, 99999999),
-                    'email'          => strtolower($firstName) . rand(10, 99) . '@school.edu.bd',
+                    'phone'          => '0803' . rand(1000000, 9999999),
+                    'email'          => strtolower($firstName) . rand(10, 99) . '@school.edu.ng',
                     'address'        => rand(1, 99) . ' Road ' . rand(1, 20) . ', ' . $this->areas[array_rand($this->areas)],
                     'joining_date'   => $joiningDate->toDateString(),
                     'salary_type'    => 'fixed',

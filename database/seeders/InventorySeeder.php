@@ -85,7 +85,7 @@ class InventorySeeder extends Seeder
         // Assets
         $assetsData = [
             ['name' => 'Projector — Auditorium',    'category' => 'Electronics', 'purchase_price' => 45000, 'location' => 'Auditorium',    'depreciation_rate' => 20],
-            ['name' => 'School Bus — Dhaka-01',     'category' => 'Vehicle',     'purchase_price' => 850000,'location' => 'Garage',         'depreciation_rate' => 15],
+            ['name' => 'School Bus — Lagos-01',     'category' => 'Vehicle',     'purchase_price' => 850000,'location' => 'Garage',         'depreciation_rate' => 15],
             ['name' => 'Computer Lab — PC Set',     'category' => 'Electronics', 'purchase_price' => 320000,'location' => 'Computer Lab',   'depreciation_rate' => 25],
             ['name' => 'Library Shelf Set',         'category' => 'Furniture',   'purchase_price' => 28000, 'location' => 'Library',        'depreciation_rate' => 10],
             ['name' => 'CCTV System',               'category' => 'Electronics', 'purchase_price' => 55000, 'location' => 'School Premises','depreciation_rate' => 20],
