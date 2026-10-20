@@ -19,9 +19,9 @@ class TransportSeeder extends Seeder
 
         // Vehicles
         $vehiclesData = [
-            ['registration_no' => 'DHAKA-METRO-GA-1234', 'name' => 'Bus 01', 'type' => 'bus',     'capacity' => 45, 'driver_name' => 'Md. Rahim',   'driver_phone' => '01711-111111'],
-            ['registration_no' => 'DHAKA-METRO-GA-5678', 'name' => 'Bus 02', 'type' => 'bus',     'capacity' => 45, 'driver_name' => 'Md. Karim',   'driver_phone' => '01711-222222'],
-            ['registration_no' => 'DHAKA-METRO-GA-9012', 'name' => 'Mini 01','type' => 'minibus', 'capacity' => 20, 'driver_name' => 'Md. Salam',   'driver_phone' => '01711-333333'],
+            ['registration_no' => 'LAGOS-APP-123-XY', 'name' => 'Bus 01', 'type' => 'bus',     'capacity' => 45, 'driver_name' => 'Mr. Adewale',   'driver_phone' => '0803-111-1111'],
+            ['registration_no' => 'LAGOS-APP-567-XY', 'name' => 'Bus 02', 'type' => 'bus',     'capacity' => 45, 'driver_name' => 'Mr. Okonkwo',   'driver_phone' => '0803-222-2222'],
+            ['registration_no' => 'LAGOS-APP-901-XY', 'name' => 'Mini 01','type' => 'minibus', 'capacity' => 20, 'driver_name' => 'Mr. Bello',   'driver_phone' => '0803-333-3333'],
         ];
 
         $vehicles = [];
@@ -35,39 +35,39 @@ class TransportSeeder extends Seeder
         // Routes
         $routesData = [
             [
-                'name'        => 'Mirpur Route',
+                'name'        => 'Lekki Route',
                 'start_point' => 'School Gate',
-                'end_point'   => 'Mirpur-10',
+                'end_point'   => 'Lekki Phase 1',
                 'monthly_fee' => 800,
                 'vehicle_idx' => 0,
                 'stops'       => [
-                    ['name' => 'Mirpur-1', 'pickup_time' => '07:15'],
-                    ['name' => 'Mirpur-6', 'pickup_time' => '07:25'],
-                    ['name' => 'Mirpur-10','pickup_time' => '07:35'],
+                    ['name' => 'Ajah', 'pickup_time' => '07:15'],
+                    ['name' => 'Chevron', 'pickup_time' => '07:25'],
+                    ['name' => 'Lekki Phase 1','pickup_time' => '07:35'],
                 ],
             ],
             [
-                'name'        => 'Dhanmondi Route',
+                'name'        => 'Surulere Route',
                 'start_point' => 'School Gate',
-                'end_point'   => 'Dhanmondi-27',
+                'end_point'   => 'Surulere Stadium',
                 'monthly_fee' => 700,
                 'vehicle_idx' => 1,
                 'stops'       => [
-                    ['name' => 'Dhanmondi-2', 'pickup_time' => '07:20'],
-                    ['name' => 'Dhanmondi-15','pickup_time' => '07:30'],
-                    ['name' => 'Dhanmondi-27','pickup_time' => '07:40'],
+                    ['name' => 'Yaba', 'pickup_time' => '07:20'],
+                    ['name' => 'Ojuelegba','pickup_time' => '07:30'],
+                    ['name' => 'Surulere Stadium','pickup_time' => '07:40'],
                 ],
             ],
             [
-                'name'        => 'Uttara Route',
+                'name'        => 'Ikeja Route',
                 'start_point' => 'School Gate',
-                'end_point'   => 'Uttara Sector-7',
+                'end_point'   => 'Ikeja GRA',
                 'monthly_fee' => 1000,
                 'vehicle_idx' => 2,
                 'stops'       => [
-                    ['name' => 'Uttara Sector-3', 'pickup_time' => '06:50'],
-                    ['name' => 'Uttara Sector-5', 'pickup_time' => '07:00'],
-                    ['name' => 'Uttara Sector-7', 'pickup_time' => '07:10'],
+                    ['name' => 'Allen Avenue', 'pickup_time' => '06:50'],
+                    ['name' => 'Computer Village', 'pickup_time' => '07:00'],
+                    ['name' => 'Ikeja GRA', 'pickup_time' => '07:10'],
                 ],
             ],
         ];

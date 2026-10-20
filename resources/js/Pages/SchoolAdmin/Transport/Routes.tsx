@@ -145,7 +145,7 @@ export default function TransportRoutes({ routes, vehicles, filters }: Props) {
                     <div className="space-y-4 mt-2 max-h-[70vh] overflow-y-auto pr-1">
                         <div className="space-y-1.5">
                             <Label>Route Name <span className="text-red-500">*</span></Label>
-                            <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Mirpur Route" />
+                            <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Lekki Route" />
                         </div>
                         <div className="space-y-1.5">
                             <Label>Assign Vehicle</Label>
