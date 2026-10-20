@@ -33,11 +33,11 @@ const TABS = [
 type TabId = typeof TABS[number]['id'];
 
 const TIMEZONES = [
-    'Africa/Lagos', 'UTC', 'Asia/Dhaka', 'Asia/Kolkata', 'Asia/Karachi', 'Asia/Dubai',
+    'Africa/Lagos', 'UTC', 'Asia/Kolkata', 'Asia/Karachi', 'Asia/Dubai',
     'America/New_York', 'America/Chicago', 'America/Los_Angeles',
     'Europe/London', 'Europe/Berlin', 'Africa/Cairo', 'Australia/Sydney',
 ];
-const CURRENCIES   = ['USD','EUR','GBP','BDT','INR','PKR','AED','SAR','EGP','AUD','CAD'];
+const CURRENCIES   = ['NGN','USD','EUR','GBP','GHS','INR','PKR','AED','SAR','EGP','AUD','CAD'];
 const DATE_FORMATS = ['Y-m-d','d/m/Y','m/d/Y','d-m-Y','F j, Y'];
 const LANGUAGES    = [{ value:'en', label:'English' },{ value:'bn', label:'Bengali' },{ value:'ar', label:'Arabic' }];
 
