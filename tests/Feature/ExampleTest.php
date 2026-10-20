@@ -11,7 +11,7 @@ class ExampleTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('SchoolRuns');
+        $response->assertSee('Adino School Systems');
         $response->assertSee(route('login'), false);
     }
 }

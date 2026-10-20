@@ -2,16 +2,13 @@ import { Head } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
 import AuthLayout from '@/Layouts/AuthLayout';
+import { Wordmark } from '@/components/layout/Logo';
 
-/** The SchoolRuns "S" mark, the same one used on the homepage. */
-function SchoolRunsLogo() {
+/** The Adino wordmark in white, linking home. */
+function AdinoLogo() {
     return (
-        <a href="/" className="flex items-center gap-2.5 font-[Plus_Jakarta_Sans,Helvetica,Arial,sans-serif] text-xl font-bold text-white no-underline" aria-label="SchoolRuns home">
-            <svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true">
-                <rect width="30" height="30" rx="7" fill="#fff" />
-                <path d="M9 19.6c.8 1.9 3.2 2.9 6.2 2.9 3.6 0 5.8-1.5 5.8-3.6 0-4.9-11.6-2.7-11.6-7.6 0-2 2.2-3.3 5.4-3.3 2.6 0 4.6.9 5.4 2.6" fill="none" stroke="#2A2F9E" strokeWidth="2.6" strokeLinecap="round" />
-            </svg>
-            <b>School<span className="text-white/60">Runs</span></b>
+        <a href="/" className="text-white no-underline" aria-label="Adino School Systems home">
+            <Wordmark size="lg" />
         </a>
     );
 }
@@ -41,7 +38,7 @@ export default function AuthShell({ title, topLink, heading, text, points, child
             <div className="grid min-h-dvh grid-rows-[auto_1fr] bg-white font-[Figtree,'Segoe_UI',system-ui,sans-serif] text-[#0E1A3A] lg:grid-cols-[minmax(380px,44%)_1fr] lg:grid-rows-1">
                 <aside className="relative overflow-hidden bg-[#0C1738] text-white lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:bg-[linear-gradient(180deg,#2A2F9E,#4549D6_60%,#5B63EA)]">
                     <div className="flex h-16 items-center justify-between px-5 lg:h-[84px] lg:px-12">
-                        <SchoolRunsLogo />
+                        <AdinoLogo />
                         <a href={topLink.href} className="text-sm text-white/80 no-underline hover:text-white lg:hidden">{topLink.label}</a>
                     </div>
 

@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SchoolRuns | School management software</title>
-<meta name="description" content="SchoolRuns brings fees, results, attendance, admissions and AI-assisted teaching into one secure platform for serious schools.">
-<link rel="icon" href="{{ asset('favicon.ico') }}">
+<title>Adino School Systems | School management software</title>
+<meta name="description" content="Adino School Systems brings fees, results, attendance, admissions and AI-assisted teaching into one secure platform for serious schools.">
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Figtree:wght@400;500;600&family=Caveat:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Plus+Jakarta+Sans:wght@500;600;700&family=Figtree:wght@400;500;600&family=Caveat:wght@600;700&display=swap">
 @verbatim
 <style>
 /* Layout: Helium-style marketing page. Header sits transparent on the hero and turns navy on scroll; hero with dotted globe; white card; navy statement; tinted numbered product cards; CTA card; navy footer. Single committed look, colours set explicitly. */
@@ -52,10 +52,10 @@ p{margin:0}
 .hdr{position:fixed;left:0;right:0;top:0;z-index:40;padding-top:env(safe-area-inset-top,0px);background:transparent;color:#fff;transition:background .25s, box-shadow .25s}
 .hdr.solid{background:var(--ink);box-shadow:0 1px 0 rgba(255,255,255,.06)}
 .hdr .wrap{display:flex;align-items:center;justify-content:space-between;height:var(--hdr);gap:16px}
-.logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em;color:#fff}
-.logo b{font-weight:700}
-.logo b span{color:rgba(255,255,255,.62)}
-.logo svg{flex:none}
+.logo{display:flex;align-items:center;gap:10px;font-size:20px;color:#fff;text-decoration:none}
+.wm{display:inline-flex;flex-direction:column;line-height:1;color:inherit;text-decoration:none}
+.wm-a{font-family:"Fraunces",Georgia,"Times New Roman",serif;font-weight:600;font-size:1.65em;letter-spacing:-.025em;font-variation-settings:"opsz" 72;line-height:.95}
+.wm-t{font-family:"Figtree","Segoe UI",system-ui,sans-serif;font-weight:600;font-size:.46em;letter-spacing:.34em;text-transform:uppercase;opacity:.68;margin-top:.5em;padding-left:.1em}
 .nav{display:none;align-items:center;gap:30px;font-size:15px;color:rgba(255,255,255,.82)}
 .nav a:hover{color:#fff}
 .hdr-cta{display:none}
@@ -303,9 +303,8 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
 <!-- ============ HEADER ============ -->
 <header class="hdr" id="hdr">
   <div class="wrap">
-    <a href="#top" class="logo" aria-label="SchoolRuns home">
-      <svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="7" fill="#fff"/><path d="M9 19.6c.8 1.9 3.2 2.9 6.2 2.9 3.6 0 5.8-1.5 5.8-3.6 0-4.9-11.6-2.7-11.6-7.6 0-2 2.2-3.3 5.4-3.3 2.6 0 4.6.9 5.4 2.6" fill="none" stroke="#2A2F9E" stroke-width="2.6" stroke-linecap="round"/></svg>
-      <b>School<span>Runs</span></b>
+    <a href="#top" class="logo" aria-label="Adino School Systems home">
+      @include('partials.wordmark')
     </a>
     <nav class="nav" aria-label="Main">
       <a href="#products">Products</a>
@@ -329,8 +328,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
   <div class="wrap">
     <div class="top">
       <span class="logo">
-        <svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="7" fill="#fff"/><path d="M9 19.6c.8 1.9 3.2 2.9 6.2 2.9 3.6 0 5.8-1.5 5.8-3.6 0-4.9-11.6-2.7-11.6-7.6 0-2 2.2-3.3 5.4-3.3 2.6 0 4.6.9 5.4 2.6" fill="none" stroke="#0C1738" stroke-width="2.6" stroke-linecap="round"/></svg>
-        <b>School<span>Runs</span></b>
+        @include('partials.wordmark')
       </span>
       <button class="burger" id="closeMenu" aria-label="Close menu">
         <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M2 2l18 18M20 2L2 20" stroke="#fff" stroke-width="2.4"/></svg>
@@ -382,7 +380,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
   <canvas id="globe" width="1000" height="1000" aria-hidden="true"></canvas>
   <div class="wrap">
     <h1>The school management platform built for serious schools</h1>
-    <p>SchoolRuns brings fees, results, attendance, admissions and AI-assisted teaching into one secure system for proprietors, staff and parents.</p>
+    <p>Adino School Systems brings fees, results, attendance, admissions and AI-assisted teaching into one secure system for proprietors, staff and parents.</p>
     <div class="hero-ctas">
       <a href="{{ route('register') }}" class="btn btn-white">Register your school
         <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 10h7M10.5 7l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
@@ -412,12 +410,12 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
 <section class="statement">
   <div class="wrap">
     <div class="grid2">
-      <h2>A school runs on hundreds of small workflows. <span>SchoolRuns keeps every one of them moving, from the first admission form to the last report card of the session.</span></h2>
+      <h2>A school runs on hundreds of small workflows. <span>Adino School Systems keeps every one of them moving, from the first admission form to the last report card of the session.</span></h2>
       <p class="lead">One record for every student. One ledger for every naira. One place for every parent to check in. Each person sees only what their role allows, and every change is logged.</p>
     </div>
     <div class="stage">
       <div class="screen">
-        <figure class="shotframe"><img src="{{ asset('images/landing/fees.jpg') }}" width="1500" height="927" alt="The SchoolRuns invoices screen with money still owed, collected and overdue" loading="lazy"></figure>
+        <figure class="shotframe"><img src="{{ asset('images/landing/fees.jpg') }}" width="1500" height="927" alt="The Adino School Systems invoices screen with money still owed, collected and overdue" loading="lazy"></figure>
       </div>
     </div>
   </div>
@@ -448,7 +446,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
       <article class="card c2" id="p-ai">
         <div class="num">02</div>
         <h3>AI Lesson Notes &amp; Exam Questions</h3>
-        <p class="desc">A teacher picks the subject, class and topic. SchoolRuns drafts a <b>full lesson note</b> and a <b>set of exam questions</b> that follow the scheme of work. The teacher reviews and approves before anything is used.</p>
+        <p class="desc">A teacher picks the subject, class and topic. Adino School Systems drafts a <b>full lesson note</b> and a <b>set of exam questions</b> that follow the scheme of work. The teacher reviews and approves before anything is used.</p>
         <figure class="shotframe"><img src="{{ asset('images/landing/questions.jpg') }}" width="1500" height="927" alt="A question bank with objective and theory questions and a marking guide" loading="lazy"></figure>
         <figure class="shotframe"><img src="{{ asset('images/landing/lesson-notes.jpg') }}" width="1500" height="927" alt="Lesson notes waiting for approval, approved or sent back" loading="lazy"></figure>
         <ul class="feat">
@@ -585,12 +583,12 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
         </div>
       </div>
     </div>
-    <div class="f-base">© 2026 SchoolRuns. All rights reserved.</div>
+    <div class="f-base">© 2026 Adino School Systems. All rights reserved.</div>
   </div>
 </footer>
 
 <!-- ============ CHAT ============ -->
-<div class="chat" id="chat" hidden role="dialog" aria-label="Chat with SchoolRuns">
+<div class="chat" id="chat" hidden role="dialog" aria-label="Chat with Adino School Systems">
   <div class="chat-h"><b>How can we help?</b><p>Our team replies during school hours.</p></div>
   <div class="chat-b">
     <a href="#register">Register my school <span>→</span></a>

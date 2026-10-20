@@ -18,7 +18,7 @@ import { useCan } from '@/lib/can';
 interface SubjectTeacher { id: number; subject: string; teacher_id: number | null }
 type ClassRow = SchoolClass & { class_teacher_staff_id?: number | null; subject_teachers?: SubjectTeacher[] };
 interface StaffOption { id: number; name: string }
-interface Props extends PageProps { classes: ClassRow[]; levels: Record<string, string>; staff: StaffOption[] }
+interface Props extends PageProps { classes: ClassRow[]; levels: Record<string, string>; staff: StaffOption[]; manager_label: string }
 
 const schema = z.object({
     name:         z.string().min(1, 'Name is required'),
@@ -30,7 +30,8 @@ type FormData = z.infer<typeof schema>;
 
 export default function ClassesIndex() {
     const can = useCan();
-    const { classes, levels, staff } = usePage<Props>().props;
+    const { classes, levels, staff, manager_label } = usePage<Props>().props;
+    const [label, setLabel] = useState(manager_label);
     const [teachersFor, setTeachersFor] = useState<ClassRow | null>(null);
     const [classTeacher, setClassTeacher] = useState('');
     const [lineTeachers, setLineTeachers] = useState<Record<number, string>>({});
@@ -86,6 +87,19 @@ export default function ClassesIndex() {
                 )}
             </div>
 
+            {can('settings.edit') && (
+                <form
+                    onSubmit={e => { e.preventDefault(); router.put('/school/class-manager-label', { label }, { preserveScroll: true }); }}
+                    className="mb-4 flex flex-wrap items-end gap-3"
+                >
+                    <div className="space-y-1.5">
+                        <Label>What do you call the person in charge of a class?</Label>
+                        <Input value={label} onChange={e => setLabel(e.target.value)} maxLength={40} className="w-64" placeholder="Class Teacher, Manager, Form Master ..." />
+                    </div>
+                    <Button type="submit" variant="outline" disabled={!label.trim() || label === manager_label}>Save name</Button>
+                </form>
+            )}
+
             <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                 <CardContent className="p-0">
                     <Table>
@@ -94,7 +108,7 @@ export default function ClassesIndex() {
                                 <TableHead>#</TableHead>
                                 <TableHead>Class Name</TableHead>
                                 <TableHead>Level</TableHead>
-                                <TableHead>Class teacher</TableHead>
+                                <TableHead>{manager_label}</TableHead>
                                 <TableHead>Arms</TableHead>
                                 <TableHead>Subjects</TableHead>
                                 <TableHead>Capacity</TableHead>
@@ -121,7 +135,7 @@ export default function ClassesIndex() {
                                     <TableCell>
                                         {can('settings.edit') && (
                                             <div className="flex items-center gap-1">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openTeachers(c)} aria-label={`Teachers of ${c.name}`} title="Class teacher and subject teachers">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openTeachers(c)} aria-label={`Teachers of ${c.name}`} title={`${manager_label} and subject teachers`}>
                                                     <UserRound className="w-3.5 h-3.5" />
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)} aria-label={`Change ${c.name}`}>
@@ -145,7 +159,7 @@ export default function ClassesIndex() {
                     <DialogHeader><DialogTitle>Teachers of {teachersFor?.name}</DialogTitle></DialogHeader>
                     <div className="space-y-4 pt-2">
                         <div className="space-y-1.5">
-                            <Label>Class teacher</Label>
+                            <Label>{manager_label}</Label>
                             <select className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-transparent px-3 text-sm" value={classTeacher} onChange={e => setClassTeacher(e.target.value)}>
                                 <option value="">Not set</option>
                                 {staff.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}

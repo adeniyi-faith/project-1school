@@ -26,7 +26,7 @@ class BlockSuspendedSchool
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login')->withErrors(['email' => 'This school\'s account has been suspended. Please contact SchoolRuns support.']);
+            return redirect()->route('login')->withErrors(['email' => 'This school\'s account has been suspended. Please contact Adino School Systems support.']);
         }
 
         return $next($request);

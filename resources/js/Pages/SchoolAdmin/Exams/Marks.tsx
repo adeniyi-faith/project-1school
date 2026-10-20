@@ -121,7 +121,52 @@ export default function MarksEntry({ exam, subjects, students, existingMarks, se
                     <Panel><EmptyState icon={Users} title="No students yet" text="No active students were found in this class." /></Panel>
                 ) : (
                     <Panel flush title="Mark sheet" description={`${filled} of ${total} entries filled`}>
-                        <div className="overflow-x-auto scroll-quiet">
+                        {/* Phone: one card per student with every subject under the name, so nothing scrolls sideways */}
+                        <ul className="divide-y divide-slate-100 dark:divide-white/[0.06] md:hidden">
+                            {students.map(student => (
+                                <li key={student.id} className="px-4 py-3">
+                                    <div className="mb-2 flex items-center gap-2.5">
+                                        <PersonAvatar name={`${student.first_name} ${student.last_name ?? ''}`} className="size-8" />
+                                        <div className="min-w-0">
+                                            <p className="truncate font-medium text-slate-900 dark:text-white">{student.first_name} {student.last_name}</p>
+                                            <p className="text-xs text-slate-400">{[student.roll_no && `Roll ${student.roll_no}`, student.section?.name].filter(Boolean).join(' · ')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-x-3 gap-y-3">
+                                        {subjects.map(sub => {
+                                            const rec = buffer[student.id]?.[sub.id];
+                                            const isAbsent = rec?.is_absent ?? false;
+                                            return (
+                                                <div key={sub.id}>
+                                                    <label className="mb-1 block min-h-[3rem] text-xs text-slate-500 dark:text-slate-400">
+                                                        <span className="line-clamp-2">{sub.name}</span>
+                                                        <span className="text-slate-400"> /{sub.full_marks}</span>
+                                                    </label>
+                                                    <Input
+                                                        type="number"
+                                                        inputMode="decimal"
+                                                        min="0"
+                                                        max={sub.full_marks}
+                                                        aria-label={`${sub.name} marks for ${student.first_name}`}
+                                                        className={`h-10 w-full text-center tabular-nums ${isAbsent ? 'bg-slate-100 text-slate-400 dark:bg-white/[0.04]' : ''}`}
+                                                        value={isAbsent ? '' : (rec?.marks_obtained ?? '')}
+                                                        disabled={isAbsent}
+                                                        onChange={e => setMark(student.id, sub.id, 'marks_obtained', e.target.value)}
+                                                        placeholder="—"
+                                                    />
+                                                    <label className="mt-1 flex cursor-pointer items-center gap-1.5 text-xs text-slate-400">
+                                                        <input type="checkbox" checked={isAbsent} onChange={e => setMark(student.id, sub.id, 'is_absent', e.target.checked)} className="size-4 accent-indigo-600" />
+                                                        Absent
+                                                    </label>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+
+                        <div className="scroll-quiet hidden overflow-x-auto md:block">
                             <table data-no-stack className="w-full min-w-max border-collapse text-sm">
                                 <thead>
                                     <tr className="bg-slate-50/70 dark:bg-white/[0.03]">

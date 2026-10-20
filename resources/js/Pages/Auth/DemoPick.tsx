@@ -83,7 +83,7 @@ export default function DemoPick() {
             title="Try the demo"
             topLink={{ href: '/login', label: 'Log in' }}
             heading="See it as they do"
-            text="Every person in a school sees SchoolRuns differently. Pick one and look around a sample Nigerian school."
+            text="Every person in a school sees Adino School Systems differently. Pick one and look around a sample Nigerian school."
             points={['No sign-up and no password', 'Real-looking sample data', 'Nothing you click changes anything']}
         >
             <p className="text-[15px] font-medium text-[#3346E0]">Demo school</p>

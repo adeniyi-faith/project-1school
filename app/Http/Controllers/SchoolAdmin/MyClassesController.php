@@ -52,6 +52,7 @@ class MyClassesController extends Controller
         }
 
         return Inertia::render('SchoolAdmin/MyClasses/Index', [
+            'managerLabel' => ClassController::managerLabel((int) $user->school_id),
             'staffName' => $staff?->full_name ?? $user->name,
             'hasStaffCard' => (bool) $staff,
             'classes' => $classes,

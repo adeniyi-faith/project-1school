@@ -78,6 +78,7 @@ export default function AppLayout({ children, title, breadcrumbs }: AppLayoutPro
                 <Topbar title={title} breadcrumbs={breadcrumbs} />
                 <main id="main" className="scroll-quiet flex-1 overflow-y-auto px-4 pb-28 pt-5 md:px-8 md:pb-10 md:pt-7">
                     <div className="mx-auto w-full max-w-[1400px]">{children}</div>
+                    <p className="mx-auto mt-10 w-full max-w-[1400px] text-center text-xs text-muted-foreground">Powered by Adino Systems</p>
                 </main>
             </div>
 

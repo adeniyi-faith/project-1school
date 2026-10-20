@@ -96,7 +96,7 @@ class WebsiteDeveloperController extends WebsiteBase
     public function testWebhook(WebhookService $webhooks): RedirectResponse
     {
         $hook = SchoolWebhook::firstOrFail();
-        [$ok, $message] = $webhooks->send($hook, 'test', ['message' => 'This is a test from SchoolRuns.']);
+        [$ok, $message] = $webhooks->send($hook, 'test', ['message' => 'This is a test from Adino School Systems.']);
 
         return back()->with($ok ? 'success' : 'error', $ok ? 'Test delivered. Your receiver answered OK.' : "Test failed: {$message}");
     }
@@ -163,7 +163,7 @@ class WebsiteDeveloperController extends WebsiteBase
         $request->validate(['file' => 'required|file|max:2048', 'replace' => 'sometimes|boolean', 'apply_settings' => 'sometimes|boolean']);
         $json = json_decode((string) file_get_contents($request->file('file')->getRealPath()), true);
         if (! is_array($json) || ($json['format'] ?? '') !== 'schoolruns-site' || ! is_array($json['pages'] ?? null)) {
-            return back()->withErrors(['file' => 'That is not a SchoolRuns website file. Use one made with "Download my website".']);
+            return back()->withErrors(['file' => 'That is not a Adino School Systems website file. Use one made with "Download my website".']);
         }
 
         $school = $this->school();

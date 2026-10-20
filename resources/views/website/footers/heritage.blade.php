@@ -43,6 +43,6 @@
             <li><a href="{{ $homeUrl }}/sitemap.xml">Sitemap</a></li>
         </ul>
         <p class="fh-copy">@if ($site->footer_text){{ $site->footer_text }} &middot; @endif Copyright &copy; {{ now()->year }} {{ $school->name }}</p>
-        <p class="fh-powered">School platform powered by <a href="{{ url('/') }}" rel="noopener">SchoolRuns</a></p>
+        <p class="fh-powered">School Software by <a href="{{ url('/') }}" rel="noopener">Adino Systems</a></p>
     </div>
 </footer>
