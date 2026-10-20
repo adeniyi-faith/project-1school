@@ -46,7 +46,9 @@ class Docs
         foreach (self::groups() as $group => $pages) {
             foreach ($pages as $page) {
                 if ($page['slug'] === $slug && is_file(resource_path("docs/{$slug}.md"))) {
-                    return $page + ['group' => $group];
+                    $words = str_word_count(strip_tags((string) file_get_contents(resource_path("docs/{$slug}.md"))));
+
+                    return $page + ['group' => $group, 'minutes' => max(1, (int) ceil($words / 200))];
                 }
             }
         }

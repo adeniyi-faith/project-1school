@@ -1,4 +1,4 @@
-SchoolRuns is a Laravel and React application. A school's public website is drawn by the server, and you can build on it without touching the dashboard code.
+Adino School Systems is a Laravel and React application. A school's public website is drawn by the server, and you can build on it without touching the dashboard code.
 
 | You want to | Use |
 |---|---|
