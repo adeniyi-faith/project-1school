@@ -89,6 +89,7 @@ class StudentController extends Controller
             'admission_date'  => 'nullable|date',
             'previous_school' => 'nullable|string|max:200',
             'roll_no'         => 'nullable|string|max:50',
+            'admission_no'    => ['nullable', 'string', 'max:50', $this->uniqueNumber()],
             // Class
             'class_id'        => ['required', Rule::exists('classes', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
             'section_id'      => ['nullable', Rule::exists('sections', 'id')->where('school_id', $this->getSchoolId())->where('class_id', $request->input('class_id'))->whereNull('deleted_at')],
@@ -167,6 +168,7 @@ class StudentController extends Controller
             'admission_date'  => 'nullable|date',
             'previous_school' => 'nullable|string|max:200',
             'roll_no'         => 'nullable|string|max:50',
+            'admission_no'    => ['required', 'string', 'max:50', $this->uniqueNumber($student->id)],
             'class_id'        => ['required', Rule::exists('classes', 'id')->where('school_id', $this->getSchoolId())->whereNull('deleted_at')],
             'section_id'      => ['nullable', Rule::exists('sections', 'id')->where('school_id', $this->getSchoolId())->where('class_id', $request->input('class_id'))->whereNull('deleted_at')],
             'guardian.name'       => 'required|string|max:150',
@@ -192,6 +194,13 @@ class StudentController extends Controller
         });
 
         return redirect()->route('school.students.show', $student)->with('success', 'Student updated.');
+    }
+
+    /** An admission number can be used only once in a school (removed students keep theirs) */
+    private function uniqueNumber(?int $ignore = null): \Illuminate\Validation\Rules\Unique
+    {
+        return \Illuminate\Validation\Rule::unique('students', 'admission_no')
+            ->where('school_id', $this->getSchoolId())->ignore($ignore);
     }
 
     public function destroy(Student $student): RedirectResponse

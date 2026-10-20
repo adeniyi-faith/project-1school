@@ -37,6 +37,7 @@ use App\Http\Controllers\SchoolAdmin\StaffController;
 use App\Http\Controllers\SchoolAdmin\StudentController;
 use App\Http\Controllers\SchoolAdmin\StudentImportController;
 use App\Http\Controllers\SchoolAdmin\StudentLoginController;
+use App\Http\Controllers\SchoolAdmin\StudentRenumberController;
 use App\Http\Controllers\SchoolAdmin\SubjectController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SchoolAdmin\SchoolUserController;
@@ -224,6 +225,8 @@ Route::middleware('auth')->group(function () {
             Route::post('students/logins/{token}/step',         [StudentLoginController::class, 'step'])->middleware(['permission:students.logins', 'throttle:600,1'])->whereUuid('token')->name('students.logins.step');
             Route::get('students/logins/{token}/pdf',           [StudentLoginController::class, 'pdf'])->middleware('permission:students.logins')->whereUuid('token')->name('students.logins.pdf');
             Route::get('students/logins/{token}/excel',         [StudentLoginController::class, 'excel'])->middleware('permission:students.logins')->whereUuid('token')->name('students.logins.excel');
+            Route::get('students/renumber',  [StudentRenumberController::class, 'index'])->middleware('permission:students.edit')->name('students.renumber');
+            Route::post('students/renumber', [StudentRenumberController::class, 'apply'])->middleware('permission:students.edit')->name('students.renumber.apply');
             Route::resource('students', StudentController::class)->only(['create', 'store'])->middleware('permission:students.create');
             Route::resource('students', StudentController::class)->only(['index', 'show'])->middleware('permission:students.view');
             Route::resource('students', StudentController::class)->only(['edit', 'update'])->middleware('permission:students.edit');

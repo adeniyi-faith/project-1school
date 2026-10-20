@@ -116,4 +116,21 @@ class NumberingTest extends SecurityTestCase
         $this->assertSame('RCP-2026-00001', $receipt($this->school));
         $this->assertSame('RCP-2026-00002', $receipt($other));
     }
+
+    public function test_renumbering_follows_the_register_and_refuses_clashes(): void
+    {
+        $zed = $this->student(['first_name' => 'Chidi', 'last_name' => 'Zed']);   // typed in first
+        $abe = $this->student(['first_name' => 'Bola', 'last_name' => 'Abe']);
+        $this->assertSame('ADM-2026-0001', $zed->admission_no);
+
+        $this->post('/school/students/renumber', ['order' => 'surname'])->assertRedirect();
+
+        $this->assertSame('ADM-2026-0001', $abe->fresh()->admission_no);
+        $this->assertSame('ADM-2026-0002', $zed->fresh()->admission_no);
+
+        // a number held by a student outside the chosen class is never taken
+        $other = SchoolClass::create(['school_id' => $this->school->id, 'name' => 'JSS 2']);
+        Student::withoutGlobalScopes()->create(['school_id' => $this->school->id, 'class_id' => $other->id, 'first_name' => 'X', 'last_name' => 'Y', 'gender' => 'male', 'status' => 'active', 'admission_no' => 'ADM-2026-0003']);
+        $this->post('/school/students/renumber', ['class_id' => $this->class->id, 'order' => 'surname', 'start' => 3])->assertSessionHasErrors('prefix');
+    }
 }

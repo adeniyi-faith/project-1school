@@ -34,6 +34,7 @@ const schema = z.object({
     admission_date:  z.string().optional(),
     previous_school: z.string().optional(),
     roll_no:         z.string().optional(),
+    admission_no:    z.string().min(1, 'Admission number is required'),
     class_id:        z.coerce.number().int().positive('Select a class'),
     section_id:      z.coerce.number().int().positive().nullable().optional(),
     guardian: z.object({
@@ -69,6 +70,7 @@ export default function EditStudent() {
                 admission_date:  student.admission_date?.slice(0, 10) ?? '',
                 previous_school: student.previous_school ?? '',
                 roll_no:         student.roll_no ?? '',
+                admission_no:    student.admission_no ?? '',
                 class_id:        student.class_id,
                 section_id:      student.section_id ?? undefined,
                 guardian: {
@@ -202,6 +204,7 @@ export default function EditStudent() {
                                     </SelectContent>
                                 </Select>
                             </div>
+                            <Field name="admission_no"    label="Admission No" />
                             <Field name="roll_no"         label="Roll No" />
                             <Field name="admission_date"  label="Admission Date" type="date" />
                         </CardContent>
