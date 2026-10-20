@@ -157,10 +157,10 @@ export default function HomeworkIndex({ homework, classes, subjects, staff, filt
                                 )}
                                 {homework.data.map(hw => (
                                     <TableRow key={hw.id}>
-                                        <TableCell className="font-medium">{hw.title}</TableCell>
+                                        <TableCell className="max-w-[13rem] truncate font-medium" title={hw.title}>{hw.title}</TableCell>
                                         <TableCell>{hw.school_class?.name ?? '—'}</TableCell>
-                                        <TableCell>{hw.subject?.name ?? '—'}</TableCell>
-                                        <TableCell>{hw.teacher ? `${hw.teacher.first_name} ${hw.teacher.last_name}` : '—'}</TableCell>
+                                        <TableCell className="whitespace-normal">{hw.subject?.name ?? '—'}</TableCell>
+                                        <TableCell className="whitespace-normal">{hw.teacher ? `${hw.teacher.first_name} ${hw.teacher.last_name}` : '—'}</TableCell>
                                         <TableCell>{new Date(hw.due_date).toLocaleDateString()}</TableCell>
                                         <TableCell>
                                             <Badge variant="secondary">{hw.submissions_count}</Badge>

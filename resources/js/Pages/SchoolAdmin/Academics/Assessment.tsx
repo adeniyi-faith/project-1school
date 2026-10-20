@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader, Panel, Pill } from '@/components/app/kit';
 import { cn } from '@/lib/utils';
 import { Pencil, Plus, Star, Trash2, X } from 'lucide-react';
@@ -149,7 +150,16 @@ export default function Assessment({ assessmentSchemes, gradingSchemes, classes,
                     description="Choose how a subject score is made up (CA tests, assignments, exam) and how scores turn into grades."
                 />
 
+                <Tabs defaultValue="score" className="gap-5">
+                    <TabsList className="h-auto w-full flex-wrap justify-start sm:w-auto">
+                        <TabsTrigger value="score">Score setups</TabsTrigger>
+                        <TabsTrigger value="grade">Grade scales</TabsTrigger>
+                        <TabsTrigger value="classes">Classes &amp; subjects</TabsTrigger>
+                        <TabsTrigger value="behaviour">Behaviour &amp; skills</TabsTrigger>
+                    </TabsList>
+
                 {/* ───── score setups ───── */}
+                <TabsContent value="score" className="space-y-6">
                 <Panel
                     title="Score setups"
                     description="The parts that make up a subject score in a term. The parts of each setup add up to 100."
@@ -181,7 +191,10 @@ export default function Assessment({ assessmentSchemes, gradingSchemes, classes,
                     </div>
                 </Panel>
 
+                </TabsContent>
+
                 {/* ───── grade scales ───── */}
+                <TabsContent value="grade" className="space-y-6">
                 <Panel
                     title="Grade scales"
                     description="How a final score (out of 100) becomes a grade and a remark on the report card."
@@ -218,6 +231,9 @@ export default function Assessment({ assessmentSchemes, gradingSchemes, classes,
                 </Panel>
 
                 {/* ───── per class ───── */}
+                </TabsContent>
+
+                <TabsContent value="classes" className="space-y-6">
                 <Panel title="What each class uses" description="Leave a class on the school default unless it needs something different, e.g. nursery and primary on a simpler scale." flush>
                     <Table>
                         <TableHeader>
@@ -289,10 +305,12 @@ export default function Assessment({ assessmentSchemes, gradingSchemes, classes,
                         </ul>
                     )}
                 </Panel>
-            </div>
+                </TabsContent>
 
-            <div className="mx-auto mt-6 max-w-5xl pb-24 md:pb-0">
-                <TraitsPanel traits={traits} canEdit={canEdit} />
+                <TabsContent value="behaviour" className="space-y-6">
+                    <TraitsPanel traits={traits} canEdit={canEdit} />
+                </TabsContent>
+                </Tabs>
             </div>
 
             {/* ───── score setup dialog ───── */}
