@@ -653,7 +653,7 @@ class WebsiteEngineTest extends SecurityTestCase
             ->assertSee('sec sec--headlines', false)
             ->assertSee('Visit News', false)
             ->assertSee('<footer class="ftr ftr--heritage">', false)
-            ->assertSee('School platform powered by', false);
+            ->assertSee('School Software by', false);
 
         $this->get('/s/gold-school/sign-in')->assertOk()->assertSee('class="hp-tabs"', false)->assertDontSee('class="pagehero"', false);
         $this->get('/apply/'.$school->id)->assertOk()->assertSee('class="hp-form"', false)->assertDontSee('class="pagehero"', false);
@@ -739,7 +739,7 @@ class WebsiteEngineTest extends SecurityTestCase
             ->assertSee('panel-card', false)
             ->assertSee('class="profile"', false)
             ->assertSee('<footer class="ftr ftr--statement">', false);
-        $this->get('/s/civic-school')->assertSee('School platform powered by', false);
+        $this->get('/s/civic-school')->assertSee('School Software by', false);
 
         $this->actingAs($admin)->put('/school/website', ['announcement' => '']);
         auth()->logout();
