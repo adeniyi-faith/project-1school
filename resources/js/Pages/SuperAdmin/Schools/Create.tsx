@@ -135,7 +135,6 @@ export default function CreateSchool() {
                                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Africa/Lagos">Africa/Lagos (WAT)</SelectItem>
-                                        <SelectItem value="Asia/Dhaka">Asia/Dhaka (BST)</SelectItem>
                                         <SelectItem value="Asia/Kolkata">Asia/Kolkata (IST)</SelectItem>
                                         <SelectItem value="UTC">UTC</SelectItem>
                                         <SelectItem value="America/New_York">America/New_York</SelectItem>
@@ -150,7 +149,6 @@ export default function CreateSchool() {
                                     <SelectContent>
                                         <SelectItem value="NGN">NGN (₦)</SelectItem>
                                         <SelectItem value="GHS">GHS (₵)</SelectItem>
-                                        <SelectItem value="BDT">BDT (৳)</SelectItem>
                                         <SelectItem value="USD">USD ($)</SelectItem>
                                         <SelectItem value="INR">INR (₹)</SelectItem>
                                         <SelectItem value="GBP">GBP (£)</SelectItem>
