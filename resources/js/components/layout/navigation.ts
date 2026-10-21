@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
 import {
-    LayoutDashboard, School, Users, GraduationCap, UserCog, CalendarDays, BookOpen, ClipboardList, Banknote, Library, Bus, Home, Package, MessageSquare, BarChart3, Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff, Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell, PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug, CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock, IdCard, ScanLine, Medal, Shapes, Sparkles, Globe, Newspaper, Images, Activity, AlertTriangle, Bug, Timer,
+    LayoutDashboard, School, Users, GraduationCap, UserCog, CalendarDays, BookOpen, ClipboardList, Banknote, Library, Bus, Home, Package, MessageSquare, BarChart3, Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff, Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell, PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug, CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock, IdCard, ScanLine, Medal, Shapes, Sparkles, Globe, Newspaper, Images, Activity, TerminalSquare, AlertTriangle, Bug, Timer,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -222,6 +222,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Platform Health', href: '/super-admin/health', icon: Activity, roles: ['super-admin'] },
             { label: 'Failed Jobs', href: '/super-admin/failed-jobs', icon: AlertTriangle, roles: ['super-admin'] },
             { label: 'Error Log', href: '/super-admin/error-log', icon: Bug, roles: ['super-admin'] },
+            { label: 'Safe Commands', href: '/super-admin/commands', icon: TerminalSquare, roles: ['super-admin'] },
             { label: 'Scheduled Tasks', href: '/super-admin/scheduled-tasks', icon: Timer, roles: ['super-admin'] },
         ],
     },

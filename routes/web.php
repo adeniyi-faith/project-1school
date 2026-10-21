@@ -839,6 +839,10 @@ Route::middleware('auth')->group(function () {
             if (\App\Support\PlatformTools::enabled('error_log')) {
                 Route::get('error-log', [\App\Http\Controllers\SuperAdmin\ErrorLogController::class, 'index'])->name('error-log');
             }
+            if (\App\Support\PlatformTools::enabled('commands')) {
+                Route::get('commands', [\App\Http\Controllers\SuperAdmin\CommandsController::class, 'index'])->name('commands.index');
+                Route::post('commands/{command}/run', [\App\Http\Controllers\SuperAdmin\CommandsController::class, 'run'])->middleware('throttle:10,1')->name('commands.run');
+            }
             if (\App\Support\PlatformTools::enabled('scheduled_tasks')) {
                 Route::get('scheduled-tasks', [\App\Http\Controllers\SuperAdmin\ScheduledTasksController::class, 'index'])->name('scheduled-tasks');
             }
