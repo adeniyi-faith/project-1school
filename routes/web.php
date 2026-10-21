@@ -822,6 +822,11 @@ Route::middleware('auth')->group(function () {
             Route::patch('schools/{school}/notes/{note}/pin',     [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'togglePin'])->name('schools.notes.pin');
             Route::delete('schools/{school}/notes/{note}',        [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'destroyNote'])->name('schools.notes.destroy');
 
+            // Onboarding tracker: which schools are stuck setting up, and a nudge
+            Route::get('onboarding',                          [\App\Http\Controllers\SuperAdmin\OnboardingController::class, 'index'])->name('onboarding.index');
+            Route::get('onboarding/{school}/draft',           [\App\Http\Controllers\SuperAdmin\OnboardingController::class, 'draft'])->name('onboarding.draft');
+            Route::post('onboarding/{school}/nudge',          [\App\Http\Controllers\SuperAdmin\OnboardingController::class, 'nudge'])->name('onboarding.nudge');
+
             // Platform announcements and maintenance notices
             Route::get('announcements',                       [\App\Http\Controllers\SuperAdmin\PlatformAnnouncementController::class, 'index'])->name('announcements.index');
             Route::post('announcements',                      [\App\Http\Controllers\SuperAdmin\PlatformAnnouncementController::class, 'store'])->name('announcements.store');
