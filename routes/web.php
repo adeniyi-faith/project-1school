@@ -745,6 +745,7 @@ Route::middleware('auth')->group(function () {
             Route::resource('staff', StaffController::class)->only(['destroy'])->middleware('permission:staff.delete');
             Route::post('staff/{staff}/login',             [StaffController::class, 'giveLogin'])->middleware('permission:users.create')->name('staff.login.give');
             Route::post('staff/{staff}/login/reset',       [StaffController::class, 'resetLogin'])->middleware('permission:users.edit')->name('staff.login.reset');
+            Route::put('staff/{staff}/assignments',        [StaffController::class, 'assign'])->middleware('permission:settings.edit')->name('staff.assign');
             Route::post('staff/{staff}/website',           [StaffController::class, 'toggleWebsite'])->middleware('permission:staff.edit')->name('staff.website');
             Route::post('staff/{staff}/documents',         [StaffController::class, 'uploadDocument'])->middleware('permission:staff.edit')->name('staff.documents.upload');
             Route::delete('staff/documents/{document}',    [StaffController::class, 'deleteDocument'])->middleware('permission:staff.edit')->name('staff.documents.delete');

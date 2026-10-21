@@ -279,6 +279,8 @@ export interface Staff {
     department?: Department;
     designation?: Designation;
     documents?: StaffDocument[];
+    /** Login role (school-admin, teacher ...), or null when the person has no login */
+    role?: string | null;
 }
 
 export type PaginatedResponse<T> = {

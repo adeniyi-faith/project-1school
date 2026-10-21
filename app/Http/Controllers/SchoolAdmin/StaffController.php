@@ -4,7 +4,9 @@ namespace App\Http\Controllers\SchoolAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\ClassSubject;
 use App\Models\Designation;
+use App\Models\SchoolClass;
 use App\Models\Staff;
 use App\Models\StaffDocument;
 use App\Models\User;
@@ -21,7 +23,8 @@ class StaffController extends Controller
 {
     public function index(Request $request): Response
     {
-        $staff = Staff::with(['department:id,name', 'designation:id,name'])
+        $staff = Staff::with(['department:id,name', 'designation:id,name', 'user.roles:id,name'])
+            ->when($request->role, fn ($q) => $q->whereHas('user.roles', fn ($r) => $r->where('name', $request->role)))
             ->when($request->search, fn ($q) => $q->where(function ($q) use ($request) {
                 $q->where('first_name', 'like', "%{$request->search}%")
                   ->orWhere('last_name',  'like', "%{$request->search}%")
@@ -37,7 +40,9 @@ class StaffController extends Controller
 
         return Inertia::render('SchoolAdmin/Staff/Index', [
             'staff' => [
-                'data'  => $staff->items(),
+                'data'  => collect($staff->items())->map(fn (Staff $s) => array_merge($s->toArray(), [
+                    'role' => $s->user?->roles->pluck('name')->first(),
+                ]))->all(),
                 'meta'  => [
                     'total'        => $staff->total(),
                     'per_page'     => $staff->perPage(),
@@ -51,7 +56,8 @@ class StaffController extends Controller
                     'next' => $staff->nextPageUrl(),
                 ],
             ],
-            'filters'      => $request->only('search', 'department_id', 'designation_id', 'status'),
+            'filters'      => $request->only('search', 'department_id', 'designation_id', 'status', 'role'),
+            'roles'        => StaffAccountService::STAFF_ROLES,
             'departments'  => Department::orderBy('name')->get(['id', 'name']),
             'designations' => Designation::orderBy('name')->get(['id', 'department_id', 'name']),
             'stats'        => [
@@ -127,7 +133,54 @@ class StaffController extends Controller
             'staff' => $staff,
             'login' => $login ? ['id' => $login->id, 'email' => $login->email, 'status' => $login->status, 'role' => $login->roles->pluck('name')->first()] : null,
             'loginRoles' => StaffAccountService::STAFF_ROLES,
+            'assign' => $this->assignmentData($staff),
+            'classTeacherLabel' => ClassController::managerLabel((int) $staff->school_id),
         ]);
+    }
+
+    /** Every class and subject line of the school, with who has it now, for the "Assign to classes and subjects" card */
+    private function assignmentData(Staff $staff): array
+    {
+        $names = Staff::pluck('first_name', 'id');
+        $lastNames = Staff::pluck('last_name', 'id');
+        $nameOf = fn (?int $id) => $id ? trim(($names[$id] ?? '').' '.($lastNames[$id] ?? '')) : null;
+
+        $lines = ClassSubject::with('subject:id,name')->get()->groupBy('class_id');
+
+        return SchoolClass::orderBy('numeric_name')->orderBy('name')->get(['id', 'name', 'class_teacher_staff_id'])
+            ->map(fn (SchoolClass $c) => [
+                'id'                => $c->id,
+                'name'              => $c->name,
+                'is_class_teacher'  => $c->class_teacher_staff_id === $staff->id,
+                'class_teacher'     => $c->class_teacher_staff_id === $staff->id ? null : $nameOf($c->class_teacher_staff_id),
+                'subjects'          => ($lines[$c->id] ?? collect())->map(fn (ClassSubject $l) => [
+                    'id'      => $l->id,
+                    'name'    => $l->subject?->name ?? 'Subject',
+                    'mine'    => $l->teacher_id === $staff->id,
+                    'teacher' => $l->teacher_id === $staff->id ? null : $nameOf($l->teacher_id),
+                ])->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)->values(),
+            ])->values()->all();
+    }
+
+    /** Save which classes this person is class teacher of and which subjects they teach (replaces their old choices) */
+    public function assign(Request $request, Staff $staff): RedirectResponse
+    {
+        $sid = (int) $staff->school_id;
+        $data = $request->validate([
+            'class_ids'   => 'nullable|array|max:200',
+            'class_ids.*' => ['integer', Rule::exists('classes', 'id')->where('school_id', $sid)->whereNull('deleted_at')],
+            'line_ids'    => 'nullable|array|max:2000',
+            'line_ids.*'  => ['integer', Rule::exists('class_subjects', 'id')->where('school_id', $sid)],
+        ]);
+        $classIds = array_values(array_unique($data['class_ids'] ?? []));
+        $lineIds = array_values(array_unique($data['line_ids'] ?? []));
+
+        SchoolClass::where('class_teacher_staff_id', $staff->id)->whereNotIn('id', $classIds)->update(['class_teacher_staff_id' => null]);
+        SchoolClass::whereIn('id', $classIds)->update(['class_teacher_staff_id' => $staff->id]);
+        ClassSubject::where('teacher_id', $staff->id)->whereNotIn('id', $lineIds)->update(['teacher_id' => null]);
+        ClassSubject::whereIn('id', $lineIds)->update(['teacher_id' => $staff->id]);
+
+        return back()->with('success', "Saved. {$staff->full_name} is class teacher of ".count($classIds).' class(es) and teaches '.count($lineIds).' subject line(s).');
     }
 
     /** Show or hide this person on the school website's "Our team" section */
