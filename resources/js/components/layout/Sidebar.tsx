@@ -163,11 +163,11 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ drawer = false, onNavigate }: SidebarProps) {
-    const { auth, school, acting_school } = usePage<PageProps>().props;
+    const { auth, school, acting_school, platform } = usePage<PageProps>().props;
     const { sidebarCollapsed, toggleCollapsed } = useUIStore();
     const collapsed = drawer ? false : sidebarCollapsed;
     const role = auth.user?.role ?? '';
-    const roleLabel = role.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    const roleLabel = acting_school?.as ?? platform?.role ?? role.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
     const groups = navGroupsForRole(role, auth.paths, !!acting_school);
 
     return (

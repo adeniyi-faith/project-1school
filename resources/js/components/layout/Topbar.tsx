@@ -31,14 +31,14 @@ const iconButton =
     'flex size-9 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring';
 
 export default function Topbar({ title, breadcrumbs }: TopbarProps) {
-    const { auth } = usePage<PageProps>().props;
+    const { auth, platform, acting_school } = usePage<PageProps>().props;
     const { theme, setTheme } = useAuthStore();
     const { sidebarCollapsed, toggleCollapsed } = useUIStore();
 
     const user = auth.user;
     const role = user?.role ?? '';
-    const roleLabel = role.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    const notifyHref = NOTIFY_HREF[role] ?? (role === 'super-admin' ? null : '/school/communication/notifications');
+    const roleLabel = acting_school?.as ?? platform?.role ?? role.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    const notifyHref = NOTIFY_HREF[role] ?? (role === 'super-admin' || role === 'platform-staff' ? null : '/school/communication/notifications');
 
     useEffect(() => {
         const root = document.documentElement;

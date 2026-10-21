@@ -64,7 +64,15 @@ export interface PageProps {
     };
     faviconUrl: string | null;
     /** Set while the platform owner is working inside one school */
-    acting_school?: { id: number; name: string } | null;
+    acting_school?: {
+        id: number; name: string;
+        /** Who is inside: "Super Admin", "Support" ... */
+        as: string;
+        /** True when this person can look around but not change anything */
+        read_only: boolean;
+    } | null;
+    /** Set for members of the platform team (not the owner): their role name and whether they are limited to some schools */
+    platform?: { role: string; scoped: boolean } | null;
     /** Set while someone looks around the public demo, with the account type they chose */
     demo?: { label: string } | null;
     errors: Record<string, string>;

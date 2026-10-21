@@ -47,6 +47,14 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        Gate::before(fn ($user) => $user->hasRole('super-admin') ? true : null);
+        // The owner may do everything. Platform staff who are inside a school may do everything there (their own
+        // `platform.*` powers never widen, and changes inside are blocked unless they hold `platform.schools.act`).
+        Gate::before(function ($user, $ability) {
+            if (\App\Support\PlatformAccess::isOwner($user)) {
+                return true;
+            }
+
+            return is_string($ability) && ! str_starts_with($ability, 'platform.') && \App\Support\PlatformAccess::staffInsideSchool($user) ? true : null;
+        });
     }
 }
