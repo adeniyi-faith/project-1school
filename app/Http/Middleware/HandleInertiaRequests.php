@@ -67,6 +67,12 @@ class HandleInertiaRequests extends Middleware
             'demo' => fn () => DemoSchool::isDemoUser($request->user())
                 ? ['label' => DemoSchool::ACCOUNTS[DemoSchool::keyOf($request->user())][1]]
                 : null,
+            // Notices from the platform team that are on screen for this person's school right now (banners)
+            'platform_notices' => fn () => ($schoolId = \App\Support\ActingSchool::id() ?? $request->user()?->school_id)
+                ? \App\Models\PlatformAnnouncement::bannerFor($schoolId)->latest('published_at')->limit(3)->get()
+                    ->map(fn ($a) => ['id' => $a->id, 'title' => $a->title, 'body' => $a->body, 'kind' => $a->kind,
+                        'starts_at' => $a->starts_at?->toIso8601String(), 'ends_at' => $a->ends_at?->toIso8601String()])->all()
+                : [],
             'flash' => [
                 'success' => fn () => session('success'),
                 'error'   => fn () => session('error'),

@@ -5,6 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
 import MobileNav from '@/components/layout/MobileNav';
 import { StackTables } from '@/components/layout/StackTables';
+import PlatformNotices from '@/components/layout/PlatformNotices';
 import PageProgress from '@/components/layout/PageProgress';
 import LoginDetailsDialog from '@/components/layout/LoginDetailsDialog';
 import { useAuthStore } from '@/Stores/useAuthStore';
@@ -75,6 +76,7 @@ export default function AppLayout({ children, title, breadcrumbs }: AppLayoutPro
                         <button type="button" onClick={() => router.post('/super-admin/leave-school')} className="shrink-0 font-semibold underline underline-offset-2 hover:text-amber-900">Back to platform</button>
                     </div>
                 )}
+                <PlatformNotices />
                 <Topbar title={title} breadcrumbs={breadcrumbs} />
                 <main id="main" className="scroll-quiet flex-1 overflow-y-auto px-4 pb-28 pt-5 md:px-8 md:pb-10 md:pt-7">
                     <div className="mx-auto w-full max-w-[1400px]">{children}</div>
