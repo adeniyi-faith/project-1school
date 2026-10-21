@@ -843,6 +843,13 @@ Route::middleware('auth')->group(function () {
                 Route::get('commands', [\App\Http\Controllers\SuperAdmin\CommandsController::class, 'index'])->name('commands.index');
                 Route::post('commands/{command}/run', [\App\Http\Controllers\SuperAdmin\CommandsController::class, 'run'])->middleware('throttle:10,1')->name('commands.run');
             }
+            if (\App\Support\PlatformTools::enabled('integrations')) {
+                Route::get('integrations', [\App\Http\Controllers\SuperAdmin\IntegrationsController::class, 'index'])->name('integrations.index');
+                Route::post('integrations/{integration}/test', [\App\Http\Controllers\SuperAdmin\IntegrationsController::class, 'test'])->middleware('throttle:20,1')->name('integrations.test');
+            }
+            if (\App\Support\PlatformTools::enabled('environment')) {
+                Route::get('environment', [\App\Http\Controllers\SuperAdmin\EnvironmentController::class, 'index'])->name('environment');
+            }
             if (\App\Support\PlatformTools::enabled('scheduled_tasks')) {
                 Route::get('scheduled-tasks', [\App\Http\Controllers\SuperAdmin\ScheduledTasksController::class, 'index'])->name('scheduled-tasks');
             }

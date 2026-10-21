@@ -35,6 +35,18 @@ return [
         ],
     ],
 
+    // Optional. Not used by the app yet; when set, the Integrations board can test the connection.
+    'cpanel' => [
+        'host' => env('CPANEL_HOST'),
+        'username' => env('CPANEL_USERNAME'),
+        'token' => env('CPANEL_API_TOKEN'),
+    ],
+
+    'spaceship' => [
+        'key' => env('SPACESHIP_API_KEY'),
+        'secret' => env('SPACESHIP_API_SECRET'),
+    ],
+
     'supabase' => [
         'url' => env('SUPABASE_URL'),
         'anon_key' => env('SUPABASE_ANON_KEY'),
