@@ -10,6 +10,10 @@ return [
     'failed_jobs' => env('PLATFORM_TOOL_FAILED_JOBS', true),
     'error_log' => env('PLATFORM_TOOL_ERROR_LOG', true),
     'scheduled_tasks' => env('PLATFORM_TOOL_SCHEDULED_TASKS', true),
+    'commands' => env('PLATFORM_TOOL_COMMANDS', true),
+
+    // Inside the commands tool: false leaves only the commands that change nothing (look-only)
+    'commands_change_data' => env('PLATFORM_COMMANDS_CHANGE_DATA', true),
 
     // Optional: the address of an outside error tracker (for example a Sentry project). Shown as a button on the error log.
     'error_tracker_url' => env('PLATFORM_ERROR_TRACKER_URL'),
