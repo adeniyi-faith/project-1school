@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
 import {
-    LayoutDashboard, School, Users, GraduationCap, UserCog, CalendarDays, BookOpen, ClipboardList, Banknote, Library, Bus, Home, Package, MessageSquare, BarChart3, Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff, Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell, PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug, CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock, IdCard, ScanLine, Medal, Shapes, Sparkles, Globe, Newspaper, Images,
+    LayoutDashboard, School, Users, GraduationCap, UserCog, CalendarDays, BookOpen, ClipboardList, Banknote, Library, Bus, Home, Package, MessageSquare, BarChart3, Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff, Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell, PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug, CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock, IdCard, ScanLine, Medal, Shapes, Sparkles, Globe, Newspaper, Images, Activity,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -213,6 +213,12 @@ export const navGroups: NavGroup[] = [
             { label: 'Pictures',      href: '/school/website/media',    icon: Images,    roles: ['school-admin'] },
             { label: 'Extensions',    href: '/school/website/extensions', icon: Plug,    roles: ['school-admin'] },
             { label: 'Site settings', href: '/school/website/settings', icon: SlidersHorizontal, roles: ['school-admin'] },
+        ],
+    },
+    {
+        title: 'Developer tools',
+        items: [
+            { label: 'Platform Health', href: '/super-admin/health', icon: Activity, roles: ['super-admin'] },
         ],
     },
     {
