@@ -18,6 +18,7 @@ interface Admin { id: number; name: string; email: string; phone: string | null;
 interface ShowPageProps extends PageProps {
     school: School & { academic_years: AcademicYear[]; delete_scheduled_at: string | null; delete_reason: string | null };
     grace_days: number;
+    export_enabled: boolean;
     usage: { students: number; staff: number; users: number; outstanding: number; last_login: string | null };
     subscription: { id: number; package: string | null; status: string; start: string | null; end: string | null; is_trial: boolean; max_students: number | null; max_staff: number | null } | null;
     packages: { id: number; name: string; price_monthly: string; price_yearly: string }[];
@@ -40,7 +41,7 @@ const when = (s: string | null) => (s ? new Date(s).toLocaleString() : 'Never');
 const field = 'w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm';
 
 export default function ShowSchool() {
-    const { grace_days, school, usage, subscription, packages, modules, admins, ai, activity } = usePage<ShowPageProps>().props;
+    const { grace_days, export_enabled, school, usage, subscription, packages, modules, admins, ai, activity } = usePage<ShowPageProps>().props;
     const statusClass = statusMap[school.status] ?? statusMap.inactive;
     const base = `/super-admin/schools/${school.id}`;
 
@@ -73,6 +74,9 @@ export default function ShowSchool() {
     // Deleting a school: a reason and the school's name, then a waiting period
     const scheduled = school.delete_scheduled_at;
     const [deleteOpen, setDeleteOpen] = useState(false);
+    const [exportOpen, setExportOpen] = useState(false);
+    const [exportReason, setExportReason] = useState('');
+    const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
     const delForm = useForm({ reason: '', confirm_name: '' });
     const day = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -278,6 +282,34 @@ export default function ShowSchool() {
             </div>
 
             <SchoolOverviewPanels />
+
+            {export_enabled && (
+                <div className="mt-6 rounded-lg border border-slate-200 dark:border-slate-800 p-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Download this school's data</p>
+                        <p className="text-xs text-slate-500">A ZIP with one spreadsheet file per table. Passwords and keys are left out, and so are uploaded files. It needs a reason and is logged. Nothing changes in the school.</p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => { setExportReason(''); setExportOpen(true); }}>Download data…</Button>
+                </div>
+            )}
+
+            <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Download data of {school.name}</DialogTitle></DialogHeader>
+                    <form method="post" action={`${base}/export`} onSubmit={() => setTimeout(() => setExportOpen(false), 500)} className="space-y-3">
+                        <input type="hidden" name="_token" value={csrf} />
+                        <p className="text-sm text-slate-500">The file can hold names, phone numbers and results of children, so keep it safe and delete it when you are done.</p>
+                        <div>
+                            <label htmlFor="exp-why" className="text-sm font-medium">Reason (required, at least 10 letters)</label>
+                            <Textarea id="exp-why" name="reason" rows={3} maxLength={500} value={exportReason} onChange={(e) => setExportReason(e.target.value)} />
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setExportOpen(false)}>Cancel</Button>
+                            <Button type="submit" disabled={exportReason.trim().length < 10} className="bg-indigo-600 text-white hover:bg-indigo-700">Download</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             {!scheduled && (
                 <div className="mt-6 rounded-lg border border-red-200 dark:border-red-900 p-4 flex flex-wrap items-center justify-between gap-3">
