@@ -10,6 +10,7 @@ use App\Models\ResultSheet;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Support\ScoreAccess;
 use App\Models\SubjectScore;
 use App\Models\Term;
 use App\Models\TermResult;
@@ -100,7 +101,9 @@ class ResultController extends Controller
             ],
             'actions' => $sheet->availableActions($user),
             'canPrint' => $user->can('reportcard.generate'),
-            'canEnter' => $sheet->isEditable() && $user->can('marks.entry'),
+            'canEnter' => $sheet->isEditable() && $user->can('marks.entry') && ScoreAccess::canEnter($user, $sheet->class_id, $subject?->id),
+            'canRate' => $sheet->isEditable() && $user->can('marks.entry') && ScoreAccess::canRate($user, $sheet->class_id),
+            'viewOnlyWhy' => $this->viewOnlyWhy($user, $sheet, $subject?->id),
             'tab' => in_array($request->tab, ['scores', 'behaviour', 'results'], true) ? $request->tab : 'scores',
             'subjects' => $subjects->map(fn (Subject $s) => ['id' => $s->id, 'name' => $s->name, 'departments' => $s->lineFor($sheet->class_id)?->departments ?? []]),
             'subjectId' => $subject?->id,
@@ -125,6 +128,16 @@ class ResultController extends Controller
         ]);
     }
 
+    /** The plain-English reason a person sees scores as view only (null when they can edit or it is the sheet's step) */
+    private function viewOnlyWhy($user, ResultSheet $sheet, ?int $subjectId): ?string
+    {
+        if (! $sheet->isEditable() || ! $user->can('marks.entry') || ScoreAccess::canEnter($user, $sheet->class_id, $subjectId)) {
+            return null;
+        }
+
+        return 'View only. You can enter scores only for the subjects you are assigned to teach in this class.';
+    }
+
     /** Save the part scores for one subject, then work the class's results out again. */
     public function saveScores(Request $request, ResultSheet $sheet): RedirectResponse
     {
@@ -139,6 +152,7 @@ class ResultController extends Controller
         ]);
 
         $subject = Subject::offeredIn($sheet->class_id)->findOrFail($data['subject_id']);
+        abort_unless(ScoreAccess::canEnter($request->user(), $sheet->class_id, $subject->id), 403, 'You can only enter scores for the subjects you teach in this class.');
         $components = AssessmentScheme::forSubject($subject, $sheet->class_id)?->components->keyBy('id') ?? collect();
         $studentIds = $this->students($sheet, $subject)->pluck('id')->flip();
 
@@ -177,6 +191,7 @@ class ResultController extends Controller
     public function saveRatings(Request $request, ResultSheet $sheet): RedirectResponse
     {
         $this->ensureEditable($sheet);
+        abort_unless(ScoreAccess::canRate($request->user(), $sheet->class_id), 403, 'Only the class teacher can rate behaviour and skills for this class.');
 
         $data = $request->validate([
             'ratings' => 'present|array',

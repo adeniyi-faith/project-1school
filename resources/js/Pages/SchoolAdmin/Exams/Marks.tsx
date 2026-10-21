@@ -62,12 +62,12 @@ export default function MarksEntry({ exam, subjects, students, existingMarks, se
         students.forEach(s => {
             subjects.forEach(sub => {
                 const rec = buffer[s.id]?.[sub.id];
-                if (rec) {
+                if (rec && sub.can_edit !== false) {
                     records.push({ student_id: s.id, subject_id: sub.id, marks_obtained: rec.marks_obtained, is_absent: rec.is_absent, remarks: rec.remarks });
                 }
             });
         });
-        router.post(`/school/exams/${exam.id}/marks`, { records }, {
+        router.post(`/school/exams/${exam.id}/marks`, { marks: records }, {
             preserveScroll: true,
             onFinish: () => setSaving(false),
         });
@@ -139,7 +139,7 @@ export default function MarksEntry({ exam, subjects, students, existingMarks, se
                                             return (
                                                 <div key={sub.id}>
                                                     <label className="mb-1 block min-h-[3rem] text-xs text-slate-500 dark:text-slate-400">
-                                                        <span className="line-clamp-2">{sub.name}</span>
+                                                        <span className="line-clamp-2">{sub.name}{sub.can_edit === false && <span className="ml-1 text-amber-600">(view only)</span>}</span>
                                                         <span className="text-slate-400"> /{sub.full_marks}</span>
                                                     </label>
                                                     <Input
@@ -150,12 +150,12 @@ export default function MarksEntry({ exam, subjects, students, existingMarks, se
                                                         aria-label={`${sub.name} marks for ${student.first_name}`}
                                                         className={`h-10 w-full text-center tabular-nums ${isAbsent ? 'bg-slate-100 text-slate-400 dark:bg-white/[0.04]' : ''}`}
                                                         value={isAbsent ? '' : (rec?.marks_obtained ?? '')}
-                                                        disabled={isAbsent}
+                                                        disabled={isAbsent || sub.can_edit === false}
                                                         onChange={e => setMark(student.id, sub.id, 'marks_obtained', e.target.value)}
                                                         placeholder="—"
                                                     />
                                                     <label className="mt-1 flex cursor-pointer items-center gap-1.5 text-xs text-slate-400">
-                                                        <input type="checkbox" checked={isAbsent} onChange={e => setMark(student.id, sub.id, 'is_absent', e.target.checked)} className="size-4 accent-indigo-600" />
+                                                        <input type="checkbox" checked={isAbsent} disabled={sub.can_edit === false} onChange={e => setMark(student.id, sub.id, 'is_absent', e.target.checked)} className="size-4 accent-indigo-600" />
                                                         Absent
                                                     </label>
                                                 </div>
@@ -174,6 +174,7 @@ export default function MarksEntry({ exam, subjects, students, existingMarks, se
                                         {subjects.map(sub => (
                                             <th key={sub.id} className="min-w-[110px] border-y border-slate-200 px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-white/[0.08]">
                                                 {sub.name}
+                                                {sub.can_edit === false && <span className="block text-[11px] font-normal normal-case tracking-normal text-amber-600">view only</span>}
                                                 <span className="block text-[11px] font-normal normal-case tracking-normal text-slate-400">out of {sub.full_marks}</span>
                                             </th>
                                         ))}
@@ -204,12 +205,12 @@ export default function MarksEntry({ exam, subjects, students, existingMarks, se
                                                             aria-label={`${sub.name} marks for ${student.first_name}`}
                                                             className={`mx-auto h-9 w-20 text-center tabular-nums ${isAbsent ? 'bg-slate-100 text-slate-400 dark:bg-white/[0.04]' : ''}`}
                                                             value={isAbsent ? '' : (rec?.marks_obtained ?? '')}
-                                                            disabled={isAbsent}
+                                                            disabled={isAbsent || sub.can_edit === false}
                                                             onChange={e => setMark(student.id, sub.id, 'marks_obtained', e.target.value)}
                                                             placeholder="—"
                                                         />
                                                         <label className="mt-1 flex cursor-pointer items-center justify-center gap-1 text-[11px] text-slate-400">
-                                                            <input type="checkbox" checked={isAbsent} onChange={e => setMark(student.id, sub.id, 'is_absent', e.target.checked)} className="size-3 accent-indigo-600" />
+                                                            <input type="checkbox" checked={isAbsent} disabled={sub.can_edit === false} onChange={e => setMark(student.id, sub.id, 'is_absent', e.target.checked)} className="size-3 accent-indigo-600" />
                                                             Absent
                                                         </label>
                                                     </td>

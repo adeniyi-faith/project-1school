@@ -5,12 +5,14 @@ namespace Tests\Feature;
 use App\Models\AcademicYear;
 use App\Models\AssessmentScheme;
 use App\Models\BehaviourTrait;
+use App\Models\ClassSubject;
 use App\Models\Exam;
 use App\Models\Guardian;
 use App\Models\Mark;
 use App\Models\ResultSheet;
 use App\Models\School;
 use App\Models\SchoolClass;
+use App\Models\Staff;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Term;
@@ -140,6 +142,12 @@ class TermResultsTest extends SecurityTestCase
         $ada = $this->student('Ada');
         $sheet = $this->sheet();
         $teacher = $this->makeUser($this->school, 'teacher');
+        // The teacher teaches Maths here, so may enter its scores
+        $staff = Staff::withoutGlobalScopes()->create([
+            'school_id' => $this->school->id, 'user_id' => $teacher->id, 'emp_id' => 'T1', 'first_name' => 'T', 'last_name' => 'One',
+            'status' => 'active', 'salary_type' => 'fixed', 'gender' => 'male', 'email' => $teacher->email,
+        ]);
+        ClassSubject::where('class_id', $this->class->id)->where('subject_id', $this->maths->id)->update(['teacher_id' => $staff->id]);
         $principal = $this->makeUser($this->school, 'principal');
 
         // Nothing to submit yet

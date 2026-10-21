@@ -12,6 +12,7 @@ use App\Models\Subject;
 use App\Models\Term;
 use App\Services\GradingService;
 use App\Services\OldMarksService;
+use App\Support\ScoreAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -106,6 +107,8 @@ class ExamController extends Controller
         $sectionId = $request->section_id;
 
         $subjects = Subject::offeredIn($exam->class_id)->orderBy('name')->get();
+        $mine = ScoreAccess::subjectIds($request->user(), $exam->class_id);
+        $subjects->each(fn ($s) => $s->setAttribute('can_edit', $mine === null || in_array($s->id, $mine, true)));
 
         $students = Student::where('class_id', $exam->class_id)
             ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
@@ -145,6 +148,12 @@ class ExamController extends Controller
             'marks.*.is_absent'       => 'boolean',
             'marks.*.remarks'         => 'nullable|string|max:200',
         ]);
+
+        $mine = ScoreAccess::subjectIds($request->user(), $exam->class_id);
+        if ($mine !== null) {
+            $others = collect($data['marks'])->pluck('subject_id')->unique()->diff($mine);
+            abort_if($others->isNotEmpty(), 403, 'You can only enter marks for the subjects you teach in this class.');
+        }
 
         $schoolId = $this->getSchoolId();
         $grading  = GradingService::forClass($schoolId, $exam->class_id);
@@ -259,7 +268,7 @@ class ExamController extends Controller
             'part'    => 'required|string|max:50',
             'replace' => 'boolean',
         ]);
-        $r = $marks->copy($exam, (int) $data['term_id'], $data['part'], (bool) ($data['replace'] ?? false));
+        $r = $marks->copy($exam, (int) $data['term_id'], $data['part'], (bool) ($data['replace'] ?? false), ScoreAccess::subjectIds($request->user(), $exam->class_id));
 
         $message = "{$r['copied']} mark".($r['copied'] === 1 ? '' : 's')." copied into the term results ({$data['part']}).";
         if ($r['kept']) {
