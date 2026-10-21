@@ -16,6 +16,8 @@ export interface NavGroup {
     items: NavItem[];
     /** Rarely-used groups start folded. A group holding the open page always shows. */
     folded?: boolean;
+    /** Roles for whom this group starts folded (others see it open). */
+    foldedFor?: string[];
 }
 
 export const navGroups: NavGroup[] = [
@@ -52,8 +54,13 @@ export const navGroups: NavGroup[] = [
             { label: 'Staff',       href: '/school/staff',   icon: UserCog,        roles: ['super-admin','school-admin','principal'] },
             { label: 'Timetable',   href: '/school/timetable', icon: CalendarDays,  roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Attendance',  href: '/school/attendance', icon: ClipboardList, roles: ['super-admin','school-admin','principal','teacher'] },
-            { label: 'Examinations',href: '/school/exams',    icon: BookOpen,       roles: ['super-admin','school-admin','principal','teacher','accountant'] },
             { label: 'Scan ID Card', href: '/school/id-cards/scan',       icon: ScanLine,       roles: ['super-admin','school-admin','principal','teacher','receptionist','warden','accountant'] },
+        ],
+    },
+    {
+        title: 'Results',
+        items: [
+            { label: 'Examinations',href: '/school/exams',    icon: BookOpen,       roles: ['super-admin','school-admin','principal','teacher','accountant'] },
             { label: 'Term Results', href: '/school/results',             icon: ClipboardCheck, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Print Report Cards', href: '/school/results/print', icon: Printer, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Comment Bank', href: '/school/results/comment-bank', icon: MessageSquareQuote, roles: ['super-admin','school-admin','principal','teacher'] },
@@ -82,6 +89,7 @@ export const navGroups: NavGroup[] = [
     },
     {
         title: 'Finance',
+        foldedFor: ['principal'],
         items: [
             { label: 'Invoices',       href: '/school/fees/invoices',   icon: FileText,  roles: ['super-admin','school-admin','accountant','principal'] },
             { label: 'Scholarships',   href: '/school/fees/scholarships', icon: Gift,    roles: ['super-admin','school-admin','accountant'] },
@@ -93,6 +101,7 @@ export const navGroups: NavGroup[] = [
     },
     {
         title: 'Learning',
+        foldedFor: ['principal'],
         items: [
             { label: 'Homework',      href: '/school/homework',                icon: NotebookPen,   roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Lesson Notes',  href: '/school/lesson-notes',             icon: ClipboardList, roles: ['super-admin','school-admin','principal','teacher'] },
@@ -136,6 +145,7 @@ export const navGroups: NavGroup[] = [
     },
     {
         title: 'Admissions',
+        foldedFor: ['principal'],
         items: [
             { label: 'Inquiries', href: '/school/admissions/inquiries', icon: ClipboardList, roles: ['super-admin','school-admin','principal','receptionist'] },
             { label: 'Visitors',  href: '/school/admissions/visitors',  icon: Users,         roles: ['super-admin','school-admin','principal','receptionist'] },
@@ -153,6 +163,7 @@ export const navGroups: NavGroup[] = [
     },
     {
         title: 'Communication',
+        foldedFor: ['teacher', 'principal'],
         items: [
             { label: 'Announcements',    href: '/school/communication/announcements',   icon: Megaphone,     roles: ['super-admin','school-admin','principal','teacher','receptionist','driver','warden','store-manager'] },
             { label: 'Messages',         href: '/school/communication/messages',         icon: MessageSquare, roles: ['super-admin','school-admin','principal','teacher','accountant','librarian','receptionist'] },
@@ -171,8 +182,8 @@ export const navGroups: NavGroup[] = [
     },
     {
         title: 'Reports',
+        foldedFor: ['teacher'],
         items: [
-            { label: 'Dashboard',        href: '/school/reports/dashboard',  icon: PieChart,    roles: ['super-admin','school-admin','principal','teacher','accountant'] },
             { label: 'Attendance',       href: '/school/reports/attendance', icon: ClipboardList,roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Academic',         href: '/school/reports/academic',   icon: TrendingUp,  roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Finance',          href: '/school/reports/finance',    icon: Banknote,  roles: ['super-admin','school-admin','accountant'] },
