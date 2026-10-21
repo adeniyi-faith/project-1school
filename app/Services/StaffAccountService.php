@@ -14,8 +14,8 @@ use Spatie\Permission\Models\Role;
  */
 class StaffAccountService
 {
-    /** Roles that belong to someone on the staff list. School admins are left out on purpose. */
-    public const STAFF_ROLES = ['principal', 'teacher', 'accountant', 'librarian', 'receptionist', 'driver', 'warden', 'store-manager'];
+    /** Roles that belong to someone on the staff list (school admins too, so they can be class or subject teachers). */
+    public const STAFF_ROLES = ['school-admin', 'principal', 'teacher', 'accountant', 'librarian', 'receptionist', 'driver', 'warden', 'store-manager'];
 
     private const ALPHABET = 'abcdefghijkmnpqrstuvwxyzACDEFGHJKLMNPQRTUVWXY346789';
 
