@@ -228,6 +228,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Manage Users',  href: '/school/settings/admins',       icon: UserCog,  roles: ['school-admin'] },
             { label: 'All Users',     href: '/super-admin/users',            icon: Users,    roles: ['super-admin'] },
             { label: 'Platform Staff', href: '/super-admin/staff',           icon: UserCog,  roles: ['super-admin'] },
+            { label: 'Staff Activity', href: '/super-admin/audit',           icon: History,  roles: ['super-admin'] },
         ],
     },
 ];

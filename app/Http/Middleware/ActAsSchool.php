@@ -51,8 +51,11 @@ class ActAsSchool
             if ($staff && ! $request->isMethodSafe() && ! PlatformAccess::can($user, 'platform.schools.act')
                 && ! $request->routeIs('super-admin.schools.leave', 'logout')) {
                 if ($request->expectsJson() && ! $request->header('X-Inertia')) {
+                    $request->attributes->set('audit_refused', true);
                     abort(403, 'You can look around this school but not change anything.');
                 }
+
+                $request->attributes->set('audit_refused', true);
 
                 return back(303)->with('error', 'You are looking around this school. Your role does not allow changing anything here.');
             }

@@ -34,6 +34,9 @@ class AppServiceProvider extends ServiceProvider
         // The platform owner can do everything
         // Stamp every audit-trail entry with the school it belongs to, so a school
         // only ever sees its own history.
+        // What a model changed while a platform person was working is copied into their audit line
+        Activity::created(fn (Activity $activity) => \App\Support\PlatformAudit::noteChange($activity));
+
         Activity::creating(function (Activity $activity) {
             if ($activity->properties?->has('school_id')) {
                 return;
