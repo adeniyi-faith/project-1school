@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\SchoolNote;
 use App\Models\SchoolSubscription;
 use App\Models\StaffDocument;
+use App\Models\SupportTicket;
 use App\Models\StudentDocument;
 use App\Models\User;
 use App\Support\SetupChecklist;
@@ -31,6 +32,7 @@ class SchoolOverviewService
             'contact'   => $this->contact($school),
             'checklist' => $this->checklist($school),
             'problems'  => $this->problems($id),
+            'support'   => $this->support($id),
             'notes'     => $this->notes($id),
         ];
     }
@@ -115,6 +117,18 @@ class SchoolOverviewService
         return $list->sortByDesc('at')->take(8)->map(fn ($p) => [
             'kind' => $p['kind'], 'text' => (string) str($p['text'])->limit(160), 'at' => $p['at']?->toIso8601String(),
         ])->values()->all();
+    }
+
+    private function support(int $id): array
+    {
+        $tickets = SupportTicket::withoutGlobalScopes()->where('school_id', $id);
+
+        return [
+            'open'     => (clone $tickets)->where('status', 'open')->count(),
+            'answered' => (clone $tickets)->where('status', 'answered')->count(),
+            'latest'   => (clone $tickets)->latest('last_reply_at')->limit(3)->get()
+                ->map(fn (SupportTicket $t) => ['id' => $t->id, 'subject' => $t->subject, 'status' => $t->status, 'urgent' => $t->priority === 'urgent'])->all(),
+        ];
     }
 
     private function notes(int $id): array

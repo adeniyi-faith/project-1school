@@ -76,6 +76,8 @@ class RolePermissionSeeder extends Seeder
         'announcements.view', 'announcements.create', 'announcements.delete',
         'messages.view', 'messages.send',
         'sms.send', 'email.send',
+        // Asking the platform team for help
+        'support.view', 'support.create',
         'newsletter.view', 'newsletter.send',
         'forms.view', 'forms.manage',
 
@@ -100,7 +102,7 @@ class RolePermissionSeeder extends Seeder
             'library.*', 'transport.*', 'hostel.*', 'inventory.*',
             'homework.*', 'lessons.*', 'syllabus.*',
             'announcements.*', 'messages.*', 'sms.*', 'email.*', 'newsletter.*', 'forms.*',
-            'reports.*', 'settings.*',
+            'reports.*', 'settings.*', 'support.*',
         ],
 
         'principal' => [
@@ -116,6 +118,7 @@ class RolePermissionSeeder extends Seeder
             'homework.view', 'lessons.view', 'lessons.approve', 'syllabus.view',
             'announcements.view', 'announcements.create', 'messages.view', 'messages.send', 'newsletter.view', 'newsletter.send', 'forms.view',
             'reports.view', 'reports.export',
+            'support.view', 'support.create',
         ],
 
         'teacher' => [

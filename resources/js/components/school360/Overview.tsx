@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
-    CreditCard, HardDrive, Mail, Clock, ListChecks, AlertTriangle, StickyNote, Pin, Trash2, Check, Circle, X,
+    CreditCard, HardDrive, Mail, Clock, ListChecks, AlertTriangle, StickyNote, Pin, Trash2, Check, Circle, X, LifeBuoy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,7 +20,7 @@ export interface Overview {
     checklist: { items: { key: string; label: string; done: boolean }[]; done: number; total: number };
     problems: { kind: string; text: string; at: string | null }[];
     notes: { id: number; body: string; pinned: boolean; author: string; at: string }[];
-    support?: { open: number; answered: number; latest: { id: number; subject: string; status: string; urgent: boolean }[] };
+    support: { open: number; answered: number; latest: { id: number; subject: string; status: string; urgent: boolean }[] };
 }
 
 interface Props extends PageProps {
@@ -77,7 +77,7 @@ export function Row({ label, children }: { label: string; children: React.ReactN
 }
 
 /** School 360: the facts below the control centre: payments, storage, email, sign-ins, setup, problems, support, tags, notes */
-export default function SchoolOverviewPanels({ extra }: { extra?: React.ReactNode }) {
+export default function SchoolOverviewPanels() {
     const { school, overview: o, managers } = usePage<Props>().props;
     const [tags, setTags] = useState<string[]>(school.tags ?? []);
     const [tagText, setTagText] = useState('');
@@ -175,7 +175,20 @@ export default function SchoolOverviewPanels({ extra }: { extra?: React.ReactNod
                 <p className="text-xs text-slate-500 mt-3">Shows failed AI requests, failed messages and online payments that need a look.</p>
             </Panel>
 
-            {extra}
+            <Panel title="Support requests" icon={LifeBuoy}>
+                <Row label="Waiting for us"><span className={o.support.open > 0 ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>{o.support.open}</span></Row>
+                <Row label="Waiting for the school">{o.support.answered}</Row>
+                {o.support.latest.length > 0 && (
+                    <ul className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                        {o.support.latest.map((t) => (
+                            <li key={t.id} className="text-sm truncate">
+                                <Link href={`/super-admin/support/${t.id}`} className="text-indigo-600 hover:underline">{t.urgent && t.status === 'open' ? '! ' : ''}{t.subject}</Link>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+                <Link href="/super-admin/support" className="mt-2 inline-block text-xs text-indigo-600 underline">Open the inbox</Link>
+            </Panel>
 
             <Panel title="Tags and account manager" icon={StickyNote}>
                 <label className="text-xs text-slate-500" htmlFor="manager">Account manager</label>

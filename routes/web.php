@@ -570,6 +570,13 @@ Route::middleware('auth')->group(function () {
             Route::get('communication/blast',                                      [CommunicationController::class, 'blast'])->middleware('permission:sms.send|email.send')->name('communication.blast');
             Route::post('communication/blast',                                     [CommunicationController::class, 'sendBlast'])->middleware('permission:sms.send|email.send')->name('communication.blast.send');
 
+            // Help and support: a school asks the platform team
+            Route::get('support',                    [\App\Http\Controllers\SchoolAdmin\SupportController::class, 'index'])->middleware('permission:support.view')->name('support.index');
+            Route::post('support',                   [\App\Http\Controllers\SchoolAdmin\SupportController::class, 'store'])->middleware('permission:support.create')->name('support.store');
+            Route::get('support/{ticket}',           [\App\Http\Controllers\SchoolAdmin\SupportController::class, 'show'])->whereNumber('ticket')->middleware('permission:support.view')->name('support.show');
+            Route::post('support/{ticket}/reply',    [\App\Http\Controllers\SchoolAdmin\SupportController::class, 'reply'])->whereNumber('ticket')->middleware('permission:support.create')->name('support.reply');
+            Route::patch('support/{ticket}/close',   [\App\Http\Controllers\SchoolAdmin\SupportController::class, 'close'])->whereNumber('ticket')->middleware('permission:support.create')->name('support.close');
+
             Route::get('communication/sent',                                       [MessageLogController::class, 'index'])->middleware('permission:sms.send|email.send')->name('communication.sent');
             Route::get('communication/sent/{batch}',                               [MessageLogController::class, 'show'])->middleware('permission:sms.send|email.send')->name('communication.sent.show');
             Route::post('communication/sent/{batch}/retry',                        [MessageLogController::class, 'retry'])->middleware('permission:sms.send|email.send')->name('communication.sent.retry');
@@ -814,6 +821,13 @@ Route::middleware('auth')->group(function () {
             Route::post('schools/{school}/notes',                 [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'storeNote'])->name('schools.notes.store');
             Route::patch('schools/{school}/notes/{note}/pin',     [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'togglePin'])->name('schools.notes.pin');
             Route::delete('schools/{school}/notes/{note}',        [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'destroyNote'])->name('schools.notes.destroy');
+
+            // Support inbox (every school's requests)
+            Route::get('support',                    [\App\Http\Controllers\SuperAdmin\SupportInboxController::class, 'index'])->name('support.index');
+            Route::get('support/{ticket}',           [\App\Http\Controllers\SuperAdmin\SupportInboxController::class, 'show'])->whereNumber('ticket')->name('support.show');
+            Route::post('support/{ticket}/reply',    [\App\Http\Controllers\SuperAdmin\SupportInboxController::class, 'reply'])->whereNumber('ticket')->name('support.reply');
+            Route::patch('support/{ticket}/assign',  [\App\Http\Controllers\SuperAdmin\SupportInboxController::class, 'assign'])->whereNumber('ticket')->name('support.assign');
+            Route::patch('support/{ticket}/status',  [\App\Http\Controllers\SuperAdmin\SupportInboxController::class, 'status'])->whereNumber('ticket')->name('support.status');
 
             // User Management
             // Packages
