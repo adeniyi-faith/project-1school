@@ -17,11 +17,12 @@ class School extends Model
         'name', 'slug', 'logo', 'email', 'phone',
         'address', 'city', 'state', 'country',
         'timezone', 'currency', 'language',
-        'settings', 'status',
+        'settings', 'status', 'tags', 'account_manager_id',
     ];
 
     protected $casts = [
         'settings' => 'array',
+        'tags'     => 'array',
     ];
 
     protected static function booted(): void

@@ -112,7 +112,7 @@ export default function ClassesIndex() {
                                 <TableHead>Arms</TableHead>
                                 <TableHead>Subjects</TableHead>
                                 <TableHead>Capacity</TableHead>
-                                <TableHead className="w-20" />
+                                <TableHead className="w-44" />
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -135,8 +135,8 @@ export default function ClassesIndex() {
                                     <TableCell>
                                         {can('settings.edit') && (
                                             <div className="flex items-center gap-1">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openTeachers(c)} aria-label={`Teachers of ${c.name}`} title={`${manager_label} and subject teachers`}>
-                                                    <UserRound className="w-3.5 h-3.5" />
+                                                <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => openTeachers(c)} aria-label={`Teachers of ${c.name}`} title={`${manager_label} and subject teachers`}>
+                                                    <UserRound className="w-3.5 h-3.5" /> Teachers
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)} aria-label={`Change ${c.name}`}>
                                                     <Pencil className="w-3.5 h-3.5" />

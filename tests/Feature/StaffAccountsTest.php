@@ -67,13 +67,13 @@ class StaffAccountsTest extends SecurityTestCase
         $this->assertSame(User::where('email', 'ngozi@example.com')->value('id'), $card->fresh()->user_id);
     }
 
-    public function test_a_login_for_a_non_staff_role_makes_no_staff_card(): void
+    public function test_a_school_admin_login_also_makes_a_staff_card(): void
     {
         $this->post('/school/settings/admins', [
             'name' => 'Big Boss', 'email' => 'boss@example.com', 'password' => 'secret123', 'role' => 'school-admin', 'status' => 'active',
         ])->assertSessionHasNoErrors();
 
-        $this->assertSame(0, Staff::where('school_id', $this->school->id)->count());
+        $this->assertSame(1, Staff::where('school_id', $this->school->id)->where('email', 'boss@example.com')->count());
     }
 
     public function test_adding_staff_can_make_the_login_in_the_same_step_and_shows_the_details_once(): void
@@ -135,7 +135,8 @@ class StaffAccountsTest extends SecurityTestCase
 
         $result = app(StaffAccountService::class)->syncSchool($this->school->id);
 
-        $this->assertSame(['linked' => 1, 'created' => 1], $result);
+        // the lonely teacher and the school admin from setUp both get a card
+        $this->assertSame(['linked' => 1, 'created' => 2], $result);
         $this->assertSame($matched->id, $card->fresh()->user_id);
         $this->assertNotNull(Staff::where('user_id', $lonely->id)->first());
         $this->assertSame(['linked' => 0, 'created' => 0], app(StaffAccountService::class)->syncSchool($this->school->id), 'safe to run again');

@@ -746,6 +746,7 @@ Route::middleware('auth')->group(function () {
             Route::resource('staff', StaffController::class)->only(['destroy'])->middleware('permission:staff.delete');
             Route::post('staff/{staff}/login',             [StaffController::class, 'giveLogin'])->middleware('permission:users.create')->name('staff.login.give');
             Route::post('staff/{staff}/login/reset',       [StaffController::class, 'resetLogin'])->middleware('permission:users.edit')->name('staff.login.reset');
+            Route::put('staff/{staff}/assignments',        [StaffController::class, 'assign'])->middleware('permission:settings.edit')->name('staff.assign');
             Route::post('staff/{staff}/website',           [StaffController::class, 'toggleWebsite'])->middleware('permission:staff.edit')->name('staff.website');
             Route::post('staff/{staff}/documents',         [StaffController::class, 'uploadDocument'])->middleware('permission:staff.edit')->name('staff.documents.upload');
             Route::delete('staff/documents/{document}',    [StaffController::class, 'deleteDocument'])->middleware('permission:staff.edit')->name('staff.documents.delete');
@@ -811,6 +812,12 @@ Route::middleware('auth')->group(function () {
             Route::patch('schools/{school}/suspend', [SchoolController::class, 'suspend'])->name('schools.suspend');
             Route::patch('schools/{school}/activate', [SchoolController::class, 'activate'])->name('schools.activate');
 
+            // School 360: tags, account manager and private notes
+            Route::patch('schools/{school}/profile',              [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'profile'])->name('schools.profile');
+            Route::post('schools/{school}/notes',                 [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'storeNote'])->name('schools.notes.store');
+            Route::patch('schools/{school}/notes/{note}/pin',     [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'togglePin'])->name('schools.notes.pin');
+            Route::delete('schools/{school}/notes/{note}',        [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'destroyNote'])->name('schools.notes.destroy');
+
             // User Management
             // Packages
             // Dashboard
@@ -826,6 +833,11 @@ Route::middleware('auth')->group(function () {
             Route::post('settings/storage',                 [SuperAdminSettingsController::class, 'saveStorage'])->name('settings.storage');
             Route::post('settings/templates',               [SuperAdminSettingsController::class, 'saveTemplate'])->name('settings.templates');
             Route::post('settings/audit',                   [SuperAdminSettingsController::class, 'saveAudit'])->name('settings.audit');
+
+            // Developer tools (each can be switched off in .env, see config/platform_tools.php)
+            if (\App\Support\PlatformTools::enabled('health')) {
+                Route::get('health', [\App\Http\Controllers\SuperAdmin\HealthController::class, 'index'])->name('health');
+            }
 
             // AI (Gemini)
             Route::get('ai',                                [SuperAdminAiController::class, 'index'])->name('ai.index');

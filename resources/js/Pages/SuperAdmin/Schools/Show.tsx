@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useCan } from '@/lib/can';
+import SchoolOverviewPanels, { type Overview } from '@/components/school360/Overview';
 import type { PageProps, School, AcademicYear } from '@/Types';
 
 interface Admin { id: number; name: string; email: string; phone: string | null; status: string; last_login_at: string | null }
@@ -23,6 +24,8 @@ interface ShowPageProps extends PageProps {
     admins: Admin[];
     ai: { blocked: boolean; limit: string | null; spent: number };
     activity: { id: number; text: string; by: string | null; at: string }[];
+    overview: Overview;
+    managers: { id: number; name: string }[];
 }
 
 const statusMap: Record<string, string> = {
@@ -270,6 +273,8 @@ export default function ShowSchool() {
                     </CardContent>
                 </Card>
             </div>
+
+            <SchoolOverviewPanels />
 
             {can('platform.schools.delete') && <div className="mt-6 rounded-lg border border-red-200 dark:border-red-900 p-4 flex flex-wrap items-center justify-between gap-3">
                 <div>

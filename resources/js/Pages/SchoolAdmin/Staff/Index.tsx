@@ -21,6 +21,8 @@ import type { Staff, Department, Designation, PaginatedResponse, PageProps } fro
 import { useState } from 'react';
 import { useCan } from '@/lib/can';
 
+const roleLabel = (r: string) => r.replace(/-/g, ' ').replace(/^./, c => c.toUpperCase());
+
 interface Props {
     staff: PaginatedResponse<Staff>;
     filters: {
@@ -28,7 +30,9 @@ interface Props {
         department_id?: string;
         designation_id?: string;
         status?: string;
+        role?: string;
     };
+    roles: string[];
     departments: Department[];
     designations: Designation[];
     stats: {
@@ -50,7 +54,7 @@ const statusLabels: Record<string, string> = {
     active: 'Active', on_leave: 'On Leave', resigned: 'Resigned', terminated: 'Terminated',
 };
 
-export default function StaffIndex({ staff, filters, departments, designations, stats }: Props) {
+export default function StaffIndex({ staff, filters, departments, designations, stats, roles }: Props) {
     const can = useCan();
     const { flash } = usePage<PageProps>().props;
     const [search, setSearch] = useState(filters.search ?? '');
@@ -149,6 +153,14 @@ export default function StaffIndex({ staff, filters, departments, designations, 
                         </SelectContent>
                     </Select>
 
+                    <Select value={filters.role ?? ''} onValueChange={v => applyFilter('role', v)}>
+                        <SelectTrigger className="w-40"><SelectValue placeholder="All Roles" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="">All Roles</SelectItem>
+                            {roles.map(r => <SelectItem key={r} value={r}>{roleLabel(r)}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+
                     <Select value={filters.status ?? ''} onValueChange={v => applyFilter('status', v)}>
                         <SelectTrigger className="w-36"><SelectValue placeholder="All Status" /></SelectTrigger>
                         <SelectContent>
@@ -167,6 +179,7 @@ export default function StaffIndex({ staff, filters, departments, designations, 
                         <TableHeader>
                             <TableRow className="bg-slate-50 dark:bg-slate-900">
                                 <TableHead>Staff</TableHead>
+                                <TableHead>Role</TableHead>
                                 <TableHead>Emp ID</TableHead>
                                 <TableHead>Department</TableHead>
                                 <TableHead>Designation</TableHead>
@@ -179,7 +192,7 @@ export default function StaffIndex({ staff, filters, departments, designations, 
                         <TableBody>
                             {staff.data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center py-16 text-slate-400">
+                                    <TableCell colSpan={9} className="text-center py-16 text-slate-400">
                                         <UserCog className="w-10 h-10 mx-auto mb-2 opacity-40" />
                                         No staff members found.
                                     </TableCell>
@@ -201,6 +214,7 @@ export default function StaffIndex({ staff, filters, departments, designations, 
                                             </div>
                                         </div>
                                     </TableCell>
+                                    <TableCell className="text-sm text-slate-600 dark:text-slate-400">{s.role ? roleLabel(s.role) : <span className="text-slate-400">No login</span>}</TableCell>
                                     <TableCell className="font-mono text-xs text-slate-600 dark:text-slate-400">{s.emp_id}</TableCell>
                                     <TableCell className="text-slate-600 dark:text-slate-400 text-sm">{s.department?.name ?? '—'}</TableCell>
                                     <TableCell className="text-slate-600 dark:text-slate-400 text-sm">{s.designation?.name ?? '—'}</TableCell>

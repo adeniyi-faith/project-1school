@@ -14,11 +14,14 @@ import { ArrowLeft, Pencil, User, Briefcase, FileText, Upload, Trash2 } from 'lu
 import { KeyRound } from 'lucide-react';
 import { useCan } from '@/lib/can';
 import type { Staff, StaffDocument } from '@/Types';
+import AssignCard, { type AssignClass } from '@/components/staff/AssignCard';
 
 interface Props {
     staff: Staff;
     login: { id: number; email: string; status: string; role: string | null } | null;
     loginRoles: string[];
+    assign: AssignClass[];
+    classTeacherLabel: string;
 }
 
 const statusColors: Record<string, string> = {
@@ -39,7 +42,7 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
 
 const roleLabel = (r: string) => r.replace(/-/g, ' ').replace(/^./, c => c.toUpperCase());
 
-export default function StaffShow({ staff, login, loginRoles }: Props) {
+export default function StaffShow({ staff, login, loginRoles, assign, classTeacherLabel }: Props) {
     const can = useCan();
     const [loginOpen, setLoginOpen] = useState(false);
     const loginForm = useForm({ role: 'teacher', email: staff.email ?? '', password: '' });
@@ -104,6 +107,8 @@ export default function StaffShow({ staff, login, loginRoles }: Props) {
                         </div>
                     </CardContent>
                 </Card>
+
+                {can('settings.edit') && <AssignCard key={staff.id} staffId={staff.id} staffName={staff.first_name} classes={assign} label={classTeacherLabel} />}
 
                 {/* Login: one person, one record */}
                 <Card className="border-slate-200 dark:border-slate-800">
