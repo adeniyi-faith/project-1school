@@ -809,6 +809,12 @@ Route::middleware('auth')->group(function () {
             Route::patch('schools/{school}/suspend', [SchoolController::class, 'suspend'])->name('schools.suspend');
             Route::patch('schools/{school}/activate', [SchoolController::class, 'activate'])->name('schools.activate');
 
+            // School 360: tags, account manager and private notes
+            Route::patch('schools/{school}/profile',              [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'profile'])->name('schools.profile');
+            Route::post('schools/{school}/notes',                 [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'storeNote'])->name('schools.notes.store');
+            Route::patch('schools/{school}/notes/{note}/pin',     [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'togglePin'])->name('schools.notes.pin');
+            Route::delete('schools/{school}/notes/{note}',        [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'destroyNote'])->name('schools.notes.destroy');
+
             // User Management
             // Packages
             // Dashboard
