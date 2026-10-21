@@ -221,10 +221,13 @@ class SchoolController extends Controller
     public function update(SchoolRequest $request, School $school): RedirectResponse
     {
         $school->update($request->validated());
+        $changed = $school->getChanges();
+        unset($changed['updated_at']);
 
         activity()
             ->causedBy($request->user())
             ->performedOn($school)
+            ->withProperties(['attributes' => $changed, 'old' => array_intersect_key($school->getPrevious(), $changed)])
             ->log('School updated');
 
         return redirect()

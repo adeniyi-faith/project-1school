@@ -872,6 +872,10 @@ Route::middleware('auth')->group(function () {
             Route::patch('staff/{user}/reset-password',  [\App\Http\Controllers\SuperAdmin\PlatformStaffController::class, 'resetPassword'])->name('staff.reset-password');
             Route::delete('staff/{user}',                [\App\Http\Controllers\SuperAdmin\PlatformStaffController::class, 'destroy'])->name('staff.destroy');
 
+            // What the platform team did (who entered which school, what they changed, from where)
+            Route::get('audit',                          [\App\Http\Controllers\SuperAdmin\PlatformAuditController::class, 'index'])->name('audit.index');
+            Route::get('audit/export',                   [\App\Http\Controllers\SuperAdmin\PlatformAuditController::class, 'export'])->name('audit.export');
+
             // User Management
             Route::get('users',                          [UserManagementController::class, 'index'])->name('users.index');
             Route::post('users',                         [UserManagementController::class, 'store'])->name('users.store');
