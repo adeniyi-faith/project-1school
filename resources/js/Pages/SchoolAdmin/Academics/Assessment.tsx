@@ -151,7 +151,7 @@ export default function Assessment({ assessmentSchemes, gradingSchemes, classes,
                 />
 
                 <Tabs defaultValue="score" className="gap-5">
-                    <TabsList className="h-auto w-full flex-wrap justify-start sm:w-auto">
+                    <TabsList className="w-full sm:w-auto">
                         <TabsTrigger value="score">Score setups</TabsTrigger>
                         <TabsTrigger value="grade">Grade scales</TabsTrigger>
                         <TabsTrigger value="classes">Classes &amp; subjects</TabsTrigger>
