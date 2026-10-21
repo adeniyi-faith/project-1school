@@ -26,6 +26,8 @@ interface Props {
     actions: ResultAction[];
     canPrint: boolean;
     canEnter: boolean;
+    canRate: boolean;
+    viewOnlyWhy: string | null;
     tab: 'scores' | 'behaviour' | 'results';
     subjects: { id: number; name: string }[];
     subjectId: number | null;
@@ -158,7 +160,7 @@ export default function ResultSheet(props: Props) {
     );
 }
 
-function ScoresTab({ sheet, canEnter, subjects, subjectId, components, students, scores, subjectResults }: Props) {
+function ScoresTab({ sheet, canEnter, viewOnlyWhy, subjects, subjectId, components, students, scores, subjectResults }: Props) {
     const { errors } = usePage<PageProps>().props;
     const [values, setValues] = useState<Record<string, string>>(() => {
         const v: Record<string, string> = {};
@@ -221,6 +223,7 @@ function ScoresTab({ sheet, canEnter, subjects, subjectId, components, students,
                 </Button>
             )}
         >
+            {viewOnlyWhy && <p className="mx-5 mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">{viewOnlyWhy}</p>}
             {firstError && <p className="px-5 pb-3 text-sm text-red-600">{firstError}</p>}
 
             {/* Phone: one card per student, so nothing needs sideways scrolling */}
@@ -316,7 +319,7 @@ function ScoresTab({ sheet, canEnter, subjects, subjectId, components, students,
     );
 }
 
-function BehaviourTab({ sheet, canEnter, students, traits, ratings, ratingLabels }: Props) {
+function BehaviourTab({ sheet, canRate: canEnter, students, traits, ratings, ratingLabels }: Props) {
     const [values, setValues] = useState<Record<string, string>>(() => {
         const v: Record<string, string> = {};
         students.forEach(s => traits.forEach(t => { v[`${s.id}-${t.id}`] = ratings[s.id]?.[t.id] ? String(ratings[s.id][t.id]) : ''; }));

@@ -7,12 +7,14 @@ use App\Models\AdmissionInquiry;
 use App\Models\AssessmentScheme;
 use App\Models\CbtAttempt;
 use App\Models\CbtBank;
+use App\Models\ClassSubject;
 use App\Models\CbtCandidate;
 use App\Models\CbtQuestion;
 use App\Models\CbtTest as Test;
 use App\Models\AcademicYear;
 use App\Models\School;
 use App\Models\SchoolClass;
+use App\Models\Staff;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\SubjectScore;
@@ -40,6 +42,12 @@ class CbtTheoryTest extends SecurityTestCase
         $this->jss1 = SchoolClass::create(['school_id' => $this->school->id, 'name' => 'JSS 1', 'numeric_name' => 7]);
         $this->maths = Subject::create(['school_id' => $this->school->id, 'class_id' => $this->jss1->id, 'name' => 'Mathematics', 'code' => 'MTH1']);
         $this->bank = CbtBank::create(['school_id' => $this->school->id, 'name' => 'JSS 1 Mathematics', 'subject_id' => $this->maths->id]);
+        // The teacher teaches Maths in JSS 1, so may send its scores into the term results
+        $staff = Staff::withoutGlobalScopes()->create([
+            'school_id' => $this->school->id, 'user_id' => $this->teacher->id, 'emp_id' => 'T1', 'first_name' => 'T', 'last_name' => 'One',
+            'status' => 'active', 'salary_type' => 'fixed', 'gender' => 'male', 'email' => $this->teacher->email,
+        ]);
+        ClassSubject::where('class_id', $this->jss1->id)->where('subject_id', $this->maths->id)->update(['teacher_id' => $staff->id]);
         foreach (range(1, 2) as $n) {
             CbtQuestion::create([
                 'school_id' => $this->school->id, 'cbt_bank_id' => $this->bank->id, 'text' => "What is {$n} + {$n}?",
