@@ -47,6 +47,11 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        // Write down slow database questions for the platform owner's Database Facts page
+        if (\App\Support\PlatformTools::enabled('database')) {
+            \App\Services\SlowQueryRecorder::listen();
+        }
+
         // Remember each scheduled task's runs for the platform owner's Scheduled Tasks page
         \App\Services\SchedulerMonitor::listen();
 

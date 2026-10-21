@@ -14,6 +14,10 @@ return [
     'integrations' => env('PLATFORM_TOOL_INTEGRATIONS', true),
     'environment' => env('PLATFORM_TOOL_ENVIRONMENT', true),
     'isolation_check' => env('PLATFORM_TOOL_ISOLATION_CHECK', true),
+    'database' => env('PLATFORM_TOOL_DATABASE', true),
+
+    // A database question slower than this many milliseconds is written down (the question's shape only, never its values)
+    'slow_query_ms' => (int) env('PLATFORM_SLOW_QUERY_MS', 500),
 
     // Inside the commands tool: false leaves only the commands that change nothing (look-only)
     'commands_change_data' => env('PLATFORM_COMMANDS_CHANGE_DATA', true),
