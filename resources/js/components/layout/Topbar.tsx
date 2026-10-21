@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { ChevronDown, KeyRound, LogOut, Moon, PanelLeft, Sun, User } from 'lucide-react';
 import { useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -30,7 +30,8 @@ const FEED_URL: Record<string, string> = {
 const iconButton =
     'flex size-9 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring';
 
-export default function Topbar({ title, breadcrumbs }: TopbarProps) {
+/** The top bar no longer repeats the page name: every page already shows its own heading. */
+export default function Topbar(_props: TopbarProps) {
     const { auth, platform, acting_school } = usePage<PageProps>().props;
     const { theme, setTheme } = useAuthStore();
     const { sidebarCollapsed, toggleCollapsed } = useUIStore();
@@ -48,9 +49,6 @@ export default function Topbar({ title, breadcrumbs }: TopbarProps) {
         else root.classList.remove('dark');
     }, [theme]);
 
-    const crumbs = breadcrumbs && breadcrumbs.length > 0 ? breadcrumbs : title ? [{ label: title }] : [];
-    const current = crumbs[crumbs.length - 1];
-    const trail = crumbs.slice(0, -1);
     const isDark = theme === 'dark' || (theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     return (
@@ -62,19 +60,7 @@ export default function Topbar({ title, breadcrumbs }: TopbarProps) {
                 <PanelLeft className="size-[18px]" strokeWidth={1.75} />
             </button>
 
-            <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-2 text-sm">
-                {trail.map((crumb, i) => (
-                    <span key={i} className="hidden items-center gap-2 md:flex">
-                        {crumb.href ? (
-                            <Link href={crumb.href} className="text-muted-foreground transition-colors hover:text-foreground">{crumb.label}</Link>
-                        ) : (
-                            <span className="text-muted-foreground">{crumb.label}</span>
-                        )}
-                        <span className="text-border" aria-hidden="true">/</span>
-                    </span>
-                ))}
-                {current && <h1 className="truncate text-[15px] font-semibold tracking-tight text-foreground">{current.label}</h1>}
-            </nav>
+            <div className="flex-1" />
 
             <div className="flex items-center gap-1">
                 <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className={iconButton} aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>

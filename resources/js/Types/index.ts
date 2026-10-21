@@ -173,6 +173,8 @@ export interface Subject {
     type: 'theory' | 'practical';
     full_marks: number;
     pass_marks: number;
+    /** Set on the marks screen: false when the signed-in teacher does not teach this subject here (view only) */
+    can_edit?: boolean;
     school_class?: SchoolClass;
 }
 

@@ -15,6 +15,7 @@ use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Services\CbtService;
+use App\Support\ScoreAccess;
 use App\Support\SimpleXlsx;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -252,6 +253,7 @@ class CbtTestController extends Controller
     public function copyToResults(Request $request, CbtTest $test): RedirectResponse
     {
         $id = (int) $request->validate(['component_id' => 'required|integer'])['component_id'];
+        abort_unless(! $test->class_id || ScoreAccess::canEnter($request->user(), $test->class_id, $test->subject_id), 403, 'You can only send scores for the subjects you teach in this class.');
         $count = $this->cbt->copyToResults($test->load('subject'), $id);
         $waiting = $test->attempts()->where('needs_marking', true)->count();
 
