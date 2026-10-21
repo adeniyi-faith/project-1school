@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 :root{color-scheme:light;--paper:#FAF9F5;--card:#fff;--ink:#141413;--text:#2B2A27;--muted:#6B6A64;--line:#E7E4D9;--soft:#F0EEE6;--accent:#2A2F9E;--accent-soft:#ECEDFB;--dark:#141413;
---serif:"Fraunces",Georgia,"Times New Roman",serif;--sans:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+--wm-font:"Figtree","Segoe UI",system-ui,sans-serif;--serif:"Fraunces",Georgia,"Times New Roman",serif;--sans:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;font:17px/1.7 var(--sans);color:var(--text);background:var(--paper);-webkit-font-smoothing:antialiased;display:flex;min-height:100vh;flex-direction:column}

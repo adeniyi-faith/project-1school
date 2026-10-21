@@ -14,7 +14,6 @@
             $faviconHref = $platformFavicon ? asset('storage/' . $platformFavicon) : asset('favicon.ico');
         @endphp
         <link id="app-favicon" rel="icon" type="image/{{ $platformFavicon ? 'x-icon' : 'svg+xml' }}" href="{{ $platformFavicon ? $faviconHref : asset('favicon.svg') }}" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&display=swap" />
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx'])
         @inertiaHead

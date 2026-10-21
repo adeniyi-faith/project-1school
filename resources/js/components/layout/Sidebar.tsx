@@ -54,10 +54,11 @@ function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: bo
 
 /** One menu group. Rarely-used groups start folded; the group holding the open page is always shown. */
 function Group({ group, collapsed, onNavigate }: { group: NavGroup; collapsed: boolean; onNavigate?: () => void }) {
-    const { url } = usePage<PageProps>();
+    const { url, props } = usePage<PageProps>();
     const { groupOpen, setGroupOpen } = useUIStore();
     const holdsActivePage = group.items.some((i) => isNavActive(url, i.href, i.exact));
-    const open = collapsed || holdsActivePage || (groupOpen[group.title] ?? !group.folded);
+    const startsFolded = group.folded || !!group.foldedFor?.includes(props.auth.user?.role ?? '');
+    const open = collapsed || holdsActivePage || (groupOpen[group.title] ?? !startsFolded);
 
     return (
         <div>
