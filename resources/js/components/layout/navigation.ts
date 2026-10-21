@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
 import {
-    LayoutDashboard, School, Users, GraduationCap, UserCog, CalendarDays, BookOpen, ClipboardList, Banknote, Library, Bus, Home, Package, MessageSquare, BarChart3, Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff, Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell, PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug, CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock, IdCard, ScanLine, Medal, Shapes, Sparkles, Globe, Newspaper, Images, Activity, ScanSearch, SlidersVertical, PlugZap, TerminalSquare, AlertTriangle, Bug, Timer,
+    LayoutDashboard, School, Users, GraduationCap, UserCog, CalendarDays, BookOpen, ClipboardList, Banknote, Library, Bus, Home, Package, MessageSquare, BarChart3, Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff, Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell, PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug, CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock, IdCard, ScanLine, Medal, Shapes, Sparkles, Globe, Newspaper, Images, Activity, Database, ScanSearch, SlidersVertical, PlugZap, TerminalSquare, AlertTriangle, Bug, Timer,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -226,6 +226,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Integrations Status', href: '/super-admin/integrations', icon: PlugZap, roles: ['super-admin'] },
             { label: 'Environment', href: '/super-admin/environment', icon: SlidersVertical, roles: ['super-admin'] },
             { label: 'School Separation Check', href: '/super-admin/isolation-check', icon: ScanSearch, roles: ['super-admin'] },
+            { label: 'Database Facts', href: '/super-admin/database', icon: Database, roles: ['super-admin'] },
             { label: 'Scheduled Tasks', href: '/super-admin/scheduled-tasks', icon: Timer, roles: ['super-admin'] },
         ],
     },

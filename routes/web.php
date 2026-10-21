@@ -854,6 +854,9 @@ Route::middleware('auth')->group(function () {
                 Route::get('isolation-check', [\App\Http\Controllers\SuperAdmin\IsolationCheckController::class, 'index'])->name('isolation-check.index');
                 Route::post('isolation-check/run', [\App\Http\Controllers\SuperAdmin\IsolationCheckController::class, 'run'])->middleware('throttle:6,1')->name('isolation-check.run');
             }
+            if (\App\Support\PlatformTools::enabled('database')) {
+                Route::get('database', [\App\Http\Controllers\SuperAdmin\DatabaseFactsController::class, 'index'])->name('database');
+            }
             if (\App\Support\PlatformTools::enabled('scheduled_tasks')) {
                 Route::get('scheduled-tasks', [\App\Http\Controllers\SuperAdmin\ScheduledTasksController::class, 'index'])->name('scheduled-tasks');
             }
