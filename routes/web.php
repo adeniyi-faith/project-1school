@@ -829,6 +829,19 @@ Route::middleware('auth')->group(function () {
             if (\App\Support\PlatformTools::enabled('health')) {
                 Route::get('health', [\App\Http\Controllers\SuperAdmin\HealthController::class, 'index'])->name('health');
             }
+            if (\App\Support\PlatformTools::enabled('failed_jobs')) {
+                Route::get('failed-jobs', [\App\Http\Controllers\SuperAdmin\FailedJobsController::class, 'index'])->name('failed-jobs.index');
+                Route::post('failed-jobs/retry-all', [\App\Http\Controllers\SuperAdmin\FailedJobsController::class, 'retryAll'])->name('failed-jobs.retry-all');
+                Route::post('failed-jobs/flush', [\App\Http\Controllers\SuperAdmin\FailedJobsController::class, 'flush'])->name('failed-jobs.flush');
+                Route::post('failed-jobs/{uuid}/retry', [\App\Http\Controllers\SuperAdmin\FailedJobsController::class, 'retry'])->name('failed-jobs.retry');
+                Route::delete('failed-jobs/{uuid}', [\App\Http\Controllers\SuperAdmin\FailedJobsController::class, 'destroy'])->name('failed-jobs.destroy');
+            }
+            if (\App\Support\PlatformTools::enabled('error_log')) {
+                Route::get('error-log', [\App\Http\Controllers\SuperAdmin\ErrorLogController::class, 'index'])->name('error-log');
+            }
+            if (\App\Support\PlatformTools::enabled('scheduled_tasks')) {
+                Route::get('scheduled-tasks', [\App\Http\Controllers\SuperAdmin\ScheduledTasksController::class, 'index'])->name('scheduled-tasks');
+            }
 
             // AI (Gemini)
             Route::get('ai',                                [SuperAdminAiController::class, 'index'])->name('ai.index');

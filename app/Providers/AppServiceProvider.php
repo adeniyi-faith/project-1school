@@ -47,6 +47,9 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        // Remember each scheduled task's runs for the platform owner's Scheduled Tasks page
+        \App\Services\SchedulerMonitor::listen();
+
         Gate::before(fn ($user) => $user->hasRole('super-admin') ? true : null);
     }
 }
