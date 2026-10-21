@@ -13,6 +13,7 @@ return [
     'commands' => env('PLATFORM_TOOL_COMMANDS', true),
     'integrations' => env('PLATFORM_TOOL_INTEGRATIONS', true),
     'environment' => env('PLATFORM_TOOL_ENVIRONMENT', true),
+    'isolation_check' => env('PLATFORM_TOOL_ISOLATION_CHECK', true),
 
     // Inside the commands tool: false leaves only the commands that change nothing (look-only)
     'commands_change_data' => env('PLATFORM_COMMANDS_CHANGE_DATA', true),
