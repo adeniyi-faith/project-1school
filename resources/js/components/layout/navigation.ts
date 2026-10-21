@@ -217,6 +217,7 @@ export const navGroups: NavGroup[] = [
     },
     {
         title: 'Developer tools',
+        folded: true,
         items: [
             { label: 'Platform Health', href: '/super-admin/health', icon: Activity, roles: ['super-admin'] },
         ],
