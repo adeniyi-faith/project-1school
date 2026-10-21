@@ -18,6 +18,7 @@ import type { PageProps, PaginatedResponse, School as SchoolType } from '@/Types
 
 interface SchoolsPageProps extends PageProps {
     schools: PaginatedResponse<SchoolType>;
+    duplicates: { why: string; schools: { id: number; name: string; students: number }[] }[];
     deleted: { id: number; name: string; deleted_at: string; delete_reason: string | null }[];
     filters: { search?: string; status?: string };
     stats: { total: number; active: number; suspended: number };
@@ -37,7 +38,7 @@ const statusBadge = (status: string) => {
 };
 
 export default function SchoolsIndex() {
-    const { schools, deleted, filters, stats } = usePage<SchoolsPageProps>().props;
+    const { schools, duplicates, deleted, filters, stats } = usePage<SchoolsPageProps>().props;
     const can = useCan();
     const [search, setSearch] = useState(filters.search ?? '');
 
@@ -247,6 +248,22 @@ export default function SchoolsIndex() {
                     </div>
                 )}
             </div>
+            {duplicates.length > 0 && can('platform.schools.manage') && (
+                <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+                    <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-100">Possible duplicates</h2>
+                    <p className="mb-2 text-xs text-amber-800 dark:text-amber-200">These may be the same school entered twice. This is a look only; open each one to compare. Schools cannot be merged from here.</p>
+                    <ul className="space-y-2">
+                        {duplicates.map((d, i) => (
+                            <li key={i} className="text-sm text-amber-950 dark:text-amber-50">
+                                <span className="font-medium">{d.why}: </span>
+                                {d.schools.map((s, j) => (
+                                    <span key={s.id}>{j > 0 && ' · '}<Link href={`/super-admin/schools/${s.id}`} className="underline">{s.name}</Link> <span className="text-xs">({s.students} students)</span></span>
+                                ))}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
             {deleted.length > 0 && (
                 <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                     <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Recently deleted</h2>
