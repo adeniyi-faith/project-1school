@@ -25,7 +25,8 @@ class OldMarksService
      * @param  string  $part  the score part's short name or name, matched in each subject's own score setup
      * @return array{copied: int, kept: int, absent: int, missing_part: list<string>, no_full_marks: list<string>}
      */
-    public function copy(Exam $exam, int $termId, string $part, bool $replace): array
+    /** $onlySubjects: subject ids a restricted teacher may copy; null means all */
+    public function copy(Exam $exam, int $termId, string $part, bool $replace, ?array $onlySubjects = null): array
     {
         if (! $exam->class_id) {
             throw ValidationException::withMessages(['part' => 'This exam has no class, so its marks cannot be placed.']);
@@ -35,7 +36,8 @@ class OldMarksService
             throw ValidationException::withMessages(['part' => 'These term results have been submitted, so scores cannot be added. Ask for them to be sent back first.']);
         }
 
-        $marks = Mark::with('subject')->where('exam_id', $exam->id)->get();
+        $marks = Mark::with('subject')->where('exam_id', $exam->id)
+            ->when($onlySubjects !== null, fn ($q) => $q->whereIn('subject_id', $onlySubjects))->get();
         $wanted = mb_strtolower(trim($part));
         $report = ['copied' => 0, 'kept' => 0, 'absent' => 0, 'missing_part' => [], 'no_full_marks' => []];
 
