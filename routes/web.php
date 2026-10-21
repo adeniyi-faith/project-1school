@@ -845,6 +845,11 @@ Route::middleware('auth')->group(function () {
             Route::post('settings/templates',               [SuperAdminSettingsController::class, 'saveTemplate'])->name('settings.templates');
             Route::post('settings/audit',                   [SuperAdminSettingsController::class, 'saveAudit'])->name('settings.audit');
 
+            // Developer tools (each can be switched off in .env, see config/platform_tools.php)
+            if (\App\Support\PlatformTools::enabled('health')) {
+                Route::get('health', [\App\Http\Controllers\SuperAdmin\HealthController::class, 'index'])->name('health');
+            }
+
             // AI (Gemini)
             Route::get('ai',                                [SuperAdminAiController::class, 'index'])->name('ai.index');
             Route::post('ai',                               [SuperAdminAiController::class, 'save'])->name('ai.save');
