@@ -14,6 +14,7 @@ use App\Models\SchoolSubscription;
 use App\Models\Staff;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\SchoolOverviewService;
 use App\Services\StaffAccountService;
 use App\Support\ActingSchool;
 use App\Support\SchoolTypes;
@@ -141,7 +142,7 @@ class SchoolController extends Controller
         return $flash ? $redirect->with('login_details', $flash) : $redirect;
     }
 
-    public function show(School $school): Response
+    public function show(School $school, SchoolOverviewService $overview): Response
     {
         $school->load(['academicYears' => fn ($q) => $q->latest()]);
         $id = $school->id;
@@ -152,6 +153,9 @@ class SchoolController extends Controller
 
         return Inertia::render('SuperAdmin/Schools/Show', [
             'school' => $school,
+            // School 360: the extra facts below the control centre
+            'overview' => $overview->build($school),
+            'managers' => User::role('super-admin')->orderBy('name')->get(['id', 'name'])->all(),
             'usage'  => [
                 'students'    => Student::withoutGlobalScopes()->where('school_id', $id)->where('status', 'active')->count(),
                 'staff'       => Staff::withoutGlobalScopes()->where('school_id', $id)->count(),
