@@ -822,6 +822,14 @@ Route::middleware('auth')->group(function () {
             Route::patch('schools/{school}/notes/{note}/pin',     [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'togglePin'])->name('schools.notes.pin');
             Route::delete('schools/{school}/notes/{note}',        [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'destroyNote'])->name('schools.notes.destroy');
 
+            // Platform announcements and maintenance notices
+            Route::get('announcements',                       [\App\Http\Controllers\SuperAdmin\PlatformAnnouncementController::class, 'index'])->name('announcements.index');
+            Route::post('announcements',                      [\App\Http\Controllers\SuperAdmin\PlatformAnnouncementController::class, 'store'])->name('announcements.store');
+            Route::put('announcements/{announcement}',        [\App\Http\Controllers\SuperAdmin\PlatformAnnouncementController::class, 'update'])->name('announcements.update');
+            Route::post('announcements/{announcement}/publish', [\App\Http\Controllers\SuperAdmin\PlatformAnnouncementController::class, 'publish'])->name('announcements.publish');
+            Route::patch('announcements/{announcement}/end',  [\App\Http\Controllers\SuperAdmin\PlatformAnnouncementController::class, 'end'])->name('announcements.end');
+            Route::delete('announcements/{announcement}',     [\App\Http\Controllers\SuperAdmin\PlatformAnnouncementController::class, 'destroy'])->name('announcements.destroy');
+
             // Support inbox (every school's requests)
             Route::get('support',                    [\App\Http\Controllers\SuperAdmin\SupportInboxController::class, 'index'])->name('support.index');
             Route::get('support/{ticket}',           [\App\Http\Controllers\SuperAdmin\SupportInboxController::class, 'show'])->whereNumber('ticket')->name('support.show');
