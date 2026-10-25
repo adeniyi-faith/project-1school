@@ -89,7 +89,7 @@ export default function Dashboard({ role, totalStudents, totalStaff, attendanceP
 
                 {setup && !hideSetup && (
                     <Panel title="Get your school ready" description={`${setup.done} of ${setup.total} steps done. Each one ticks itself when you finish it.`}
-                        action={<button type="button" className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200" onClick={() => { try { localStorage.setItem('setup-hidden', '1'); } catch { /* ignore */ } setHideSetup(true); }}>Hide for now</button>}>
+                        action={<button type="button" className="tap text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200" onClick={() => { try { localStorage.setItem('setup-hidden', '1'); } catch { /* ignore */ } setHideSetup(true); }}>Hide for now</button>}>
                         <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                             <div className="h-full rounded-full bg-indigo-500" style={{ width: `${Math.round((setup.done / setup.total) * 100)}%` }} />
                         </div>

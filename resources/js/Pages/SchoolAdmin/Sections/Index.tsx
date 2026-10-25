@@ -87,7 +87,7 @@ export default function ArmsIndex({ classes, departments }: Props) {
                         {classes.map(cls => (
                             <Panel key={cls.id} title={cls.name}
                                 description={cls.sections.length ? `${cls.sections.length} arm${cls.sections.length === 1 ? '' : 's'}, ${cls.sections.reduce((n, s) => n + (s.students_count ?? 0), 0)} students` : 'No arms: the class is taught as one group'}
-                                action={canEdit ? <button type="button" onClick={() => openCreate(cls.id)} className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Add</button> : undefined}>
+                                action={canEdit ? <button type="button" onClick={() => openCreate(cls.id)} className="tap font-medium text-indigo-600 hover:underline dark:text-indigo-400">Add</button> : undefined}>
                                 {cls.sections.length > 0 && (
                                     <ul className="-my-1 divide-y divide-slate-100 dark:divide-white/[0.06]">
                                         {cls.sections.map(s => (
