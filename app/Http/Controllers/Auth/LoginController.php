@@ -117,10 +117,21 @@ class LoginController extends Controller
             ]);
         }
 
+        // Two-step sign-in: the password was right, but a code from the authenticator app is needed before this person is let in
+        if ($user->hasTwoFactor()) {
+            $request->session()->put(['two_factor.id' => $user->id, 'two_factor.remember' => $request->boolean('remember'), 'two_factor.at' => now()->timestamp]);
+
+            return redirect()->route('two-factor.login');
+        }
+
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
         $user->update(['last_login_at' => now()]);
+
+        if (\App\Support\PlatformAccess::isPlatform($user)) {
+            \App\Support\PlatformAudit::record('login', 'Signed in', ['user' => $user, 'school_id' => null], $request);
+        }
 
         activity()
             ->causedBy($user)
@@ -175,6 +186,10 @@ class LoginController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
+        if (\App\Support\PlatformAccess::isPlatform($request->user())) {
+            \App\Support\PlatformAudit::record('logout', 'Signed out', ['school_id' => null], $request);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

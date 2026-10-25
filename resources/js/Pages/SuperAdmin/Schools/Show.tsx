@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import {
     ArrowLeft, Pencil, Ban, CheckCircle, Globe, Phone, Mail, MapPin, Users, Calendar, LogIn,
@@ -10,12 +10,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { useCan } from '@/lib/can';
 import SchoolOverviewPanels, { type Overview } from '@/components/school360/Overview';
 import type { PageProps, School, AcademicYear } from '@/Types';
 
 interface Admin { id: number; name: string; email: string; phone: string | null; status: string; last_login_at: string | null }
 interface ShowPageProps extends PageProps {
-    school: School & { academic_years: AcademicYear[] };
+    school: School & { academic_years: AcademicYear[]; delete_scheduled_at: string | null; delete_reason: string | null };
+    grace_days: number;
     usage: { students: number; staff: number; users: number; outstanding: number; last_login: string | null };
     subscription: { id: number; package: string | null; status: string; start: string | null; end: string | null; is_trial: boolean; max_students: number | null; max_staff: number | null } | null;
     packages: { id: number; name: string; price_monthly: string; price_yearly: string }[];
@@ -38,7 +41,8 @@ const when = (s: string | null) => (s ? new Date(s).toLocaleString() : 'Never');
 const field = 'w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm';
 
 export default function ShowSchool() {
-    const { school, usage, subscription, packages, modules, admins, ai, activity } = usePage<ShowPageProps>().props;
+    const { grace_days, school, usage, subscription, packages, modules, admins, ai, activity } = usePage<ShowPageProps>().props;
+    const can = useCan();
     const statusClass = statusMap[school.status] ?? statusMap.inactive;
     const base = `/super-admin/schools/${school.id}`;
 
@@ -68,11 +72,11 @@ export default function ShowSchool() {
         }, { onSuccess: () => setPlanOpen(false) });
     };
 
-    const confirmDelete = () => {
-        if (confirm(`Delete "${school.name}"? Its people will no longer be able to sign in.`)) {
-            router.delete(base);
-        }
-    };
+    // Deleting a school: a reason and the school's name, then a waiting period
+    const scheduled = school.delete_scheduled_at;
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const delForm = useForm({ reason: '', confirm_name: '' });
+    const day = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
     return (
         <AppLayout breadcrumbs={[{ label: 'Schools', href: '/super-admin/schools' }, { label: school.name }]}>
@@ -98,10 +102,12 @@ export default function ShowSchool() {
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <Button size="sm" className="bg-amber-500 text-amber-950 hover:bg-amber-600" onClick={() => router.post(`${base}/enter`)}>
-                        <LogIn className="w-4 h-4 mr-1.5" /> Open this school
-                    </Button>
-                    {school.status === 'suspended' ? (
+                    {can('platform.schools.enter') && (
+                        <Button size="sm" className="bg-amber-500 text-amber-950 hover:bg-amber-600" onClick={() => router.post(`${base}/enter`)}>
+                            <LogIn className="w-4 h-4 mr-1.5" /> Open this school
+                        </Button>
+                    )}
+                    {scheduled || !can('platform.schools.manage') ? null : school.status === 'suspended' ? (
                         <Button size="sm" variant="outline" className="text-emerald-600" onClick={() => router.patch(`${base}/activate`)}>
                             <CheckCircle className="w-4 h-4 mr-1.5" /> Activate
                         </Button>
@@ -110,13 +116,22 @@ export default function ShowSchool() {
                             <Ban className="w-4 h-4 mr-1.5" /> Suspend
                         </Button>
                     )}
-                    <Button size="sm" asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                        <Link href={`${base}/edit`}><Pencil className="w-4 h-4 mr-1.5" /> Edit</Link>
-                    </Button>
+                    {can('platform.schools.manage') && (
+                        <Button size="sm" asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                            <Link href={`${base}/edit`}><Pencil className="w-4 h-4 mr-1.5" /> Edit</Link>
+                        </Button>
+                    )}
                 </div>
             </div>
 
-            {school.status === 'suspended' && (
+            {scheduled && (
+                <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100">
+                    <p className="min-w-0 break-words"><b className="font-semibold">Scheduled for deletion on {day(scheduled)}.</b> The school is paused now and nothing is removed until then. Reason: {school.delete_reason}</p>
+                    <Button size="sm" variant="outline" onClick={() => router.post(`${base}/cancel-delete`, {}, { preserveScroll: true })}>Cancel deletion</Button>
+                </div>
+            )}
+
+            {!scheduled && school.status === 'suspended' && (
                 <div className="mb-4 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 px-4 py-3 text-sm text-red-700 dark:text-red-300">
                     This school is suspended. Nobody there can sign in until you activate it.
                 </div>
@@ -145,7 +160,7 @@ export default function ShowSchool() {
                 <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
                         <CardTitle className="text-sm flex items-center gap-2"><CreditCard className="w-4 h-4" /> Plan</CardTitle>
-                        <Button size="sm" variant="outline" onClick={() => setPlanOpen(true)}>{subscription ? 'Change plan' : 'Give a plan'}</Button>
+                        {can('platform.billing.manage') && <Button size="sm" variant="outline" onClick={() => setPlanOpen(true)}>{subscription ? 'Change plan' : 'Give a plan'}</Button>}
                     </CardHeader>
                     <CardContent className="text-sm space-y-1.5">
                         {subscription ? (
@@ -166,7 +181,7 @@ export default function ShowSchool() {
                 <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
                         <CardTitle className="text-sm flex items-center gap-2"><Layers className="w-4 h-4" /> Features this school has</CardTitle>
-                        <Button size="sm" disabled={!modsChanged} onClick={() => router.post('/super-admin/module-manager/bulk', { school_id: school.id, modules: mods })}>Save</Button>
+                        {can('platform.modules.manage') && <Button size="sm" disabled={!modsChanged} onClick={() => router.post('/super-admin/module-manager/bulk', { school_id: school.id, modules: mods })}>Save</Button>}
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 gap-2">
                         {modules.map((m) => (
@@ -182,7 +197,7 @@ export default function ShowSchool() {
                 <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
                         <CardTitle className="text-sm flex items-center gap-2"><UserCog className="w-4 h-4" /> School administrators</CardTitle>
-                        <Button size="sm" variant="outline" onClick={() => setAdminOpen(true)}><Plus className="w-3.5 h-3.5 mr-1" /> Add</Button>
+                        {can('platform.schools.manage') && <Button size="sm" variant="outline" onClick={() => setAdminOpen(true)}><Plus className="w-3.5 h-3.5 mr-1" /> Add</Button>}
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {admins.length === 0 && <p className="text-sm text-slate-400">This school has no administrator. Add one so someone there can sign in.</p>}
@@ -192,12 +207,12 @@ export default function ShowSchool() {
                                     <p className="text-sm font-medium text-slate-900 dark:text-white">{a.name} {a.status !== 'active' && <span className="text-xs text-red-600 capitalize">({a.status})</span>}</p>
                                     <p className="text-xs text-slate-500 truncate">{a.email} · last in: {when(a.last_login_at)}</p>
                                 </div>
-                                <div className="flex flex-wrap gap-1.5">
+                                {can('platform.users.manage') && <div className="flex flex-wrap gap-1.5">
                                     <Button size="sm" variant="outline" onClick={() => { setResetFor(a); setNewPassword(''); }}><KeyRound className="w-3.5 h-3.5 mr-1" /> New password</Button>
                                     {a.status === 'active'
                                         ? <Button size="sm" variant="outline" className="text-amber-600" onClick={() => router.patch(`/super-admin/users/${a.id}/suspend`)}>Suspend</Button>
                                         : <Button size="sm" variant="outline" className="text-emerald-600" onClick={() => router.patch(`/super-admin/users/${a.id}/activate`)}>Activate</Button>}
-                                </div>
+                                </div>}
                             </div>
                         ))}
                         <Link href={`/super-admin/users?school_id=${school.id}`} className="text-xs text-indigo-600 hover:underline inline-block">See every account in this school</Link>
@@ -218,7 +233,7 @@ export default function ShowSchool() {
                                 <Label className="text-xs">Monthly allowance (₦) — empty uses the platform default</Label>
                                 <Input type="number" min="0" className="h-9 w-48" value={aiLimit} onChange={(e) => setAiLimit(e.target.value)} />
                             </div>
-                            <Button size="sm" onClick={() => router.post(`/super-admin/ai/schools/${school.id}`, { blocked: aiBlocked, limit: aiLimit === '' ? null : aiLimit })}>Save</Button>
+                            {can('platform.settings.manage') && <Button size="sm" onClick={() => router.post(`/super-admin/ai/schools/${school.id}`, { blocked: aiBlocked, limit: aiLimit === '' ? null : aiLimit })}>Save</Button>}
                         </div>
                     </CardContent>
                 </Card>
@@ -270,13 +285,37 @@ export default function ShowSchool() {
 
             <SchoolOverviewPanels />
 
-            <div className="mt-6 rounded-lg border border-red-200 dark:border-red-900 p-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <p className="text-sm font-medium text-red-700 dark:text-red-400">Delete this school</p>
-                    <p className="text-xs text-slate-500">Removes it from the platform. Use Suspend instead if you may want it back.</p>
+            {!scheduled && can('platform.schools.delete') && (
+                <div className="mt-6 rounded-lg border border-red-200 dark:border-red-900 p-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="text-sm font-medium text-red-700 dark:text-red-400">Delete this school</p>
+                        <p className="text-xs text-slate-500">Needs a reason. The school is paused now and deleted after {grace_days} days. Until then you can cancel, and afterwards you can bring it back.</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="text-red-600" onClick={() => { delForm.reset(); delForm.clearErrors(); setDeleteOpen(true); }}><Trash2 className="w-4 h-4 mr-1.5" /> Delete…</Button>
                 </div>
-                <Button size="sm" variant="outline" className="text-red-600" onClick={confirmDelete}><Trash2 className="w-4 h-4 mr-1.5" /> Delete</Button>
-            </div>
+            )}
+
+            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Delete {school.name}</DialogTitle></DialogHeader>
+                    <p className="text-sm text-slate-500">The school is paused right away, so nobody there can sign in. After {grace_days} days it is deleted (hidden, not wiped, and you can bring it back from the Schools page). Until then you can cancel at any time.</p>
+                    <div>
+                        <label htmlFor="del-why" className="text-sm font-medium">Reason (required, at least 10 letters)</label>
+                        <Textarea id="del-why" rows={3} value={delForm.data.reason} maxLength={500} onChange={(e) => delForm.setData('reason', e.target.value)} />
+                        {delForm.errors.reason && <p className="text-xs text-red-600 mt-1">{delForm.errors.reason}</p>}
+                    </div>
+                    <div>
+                        <label htmlFor="del-name" className="text-sm font-medium">Type the school name to confirm</label>
+                        <Input id="del-name" value={delForm.data.confirm_name} onChange={(e) => delForm.setData('confirm_name', e.target.value)} placeholder={school.name} className="mt-1 h-9" />
+                        {delForm.errors.confirm_name && <p className="text-xs text-red-600 mt-1">{delForm.errors.confirm_name}</p>}
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+                        <Button type="button" variant="destructive" disabled={delForm.processing || delForm.data.reason.trim().length < 10 || !delForm.data.confirm_name.trim()}
+                            onClick={() => delForm.post(`${base}/schedule-delete`, { preserveScroll: true, onSuccess: () => setDeleteOpen(false) })}>Schedule deletion</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Plan dialog */}
             <Dialog open={planOpen} onOpenChange={setPlanOpen}>

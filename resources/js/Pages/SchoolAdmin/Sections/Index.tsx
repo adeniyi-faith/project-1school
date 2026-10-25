@@ -3,6 +3,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { Layers, Pencil, Plus, Trash2 } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
+import { RowActions } from '@/components/app/RowActions';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -87,7 +88,7 @@ export default function ArmsIndex({ classes, departments }: Props) {
                         {classes.map(cls => (
                             <Panel key={cls.id} title={cls.name}
                                 description={cls.sections.length ? `${cls.sections.length} arm${cls.sections.length === 1 ? '' : 's'}, ${cls.sections.reduce((n, s) => n + (s.students_count ?? 0), 0)} students` : 'No arms: the class is taught as one group'}
-                                action={canEdit ? <button type="button" onClick={() => openCreate(cls.id)} className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Add</button> : undefined}>
+                                action={canEdit ? <button type="button" onClick={() => openCreate(cls.id)} className="tap font-medium text-indigo-600 hover:underline dark:text-indigo-400">Add</button> : undefined}>
                                 {cls.sections.length > 0 && (
                                     <ul className="-my-1 divide-y divide-slate-100 dark:divide-white/[0.06]">
                                         {cls.sections.map(s => (
@@ -97,8 +98,12 @@ export default function ArmsIndex({ classes, departments }: Props) {
                                                 <span className="ml-auto text-xs text-slate-500">
                                                     {s.students_count ?? 0}{s.capacity > 0 ? ` of ${s.capacity}` : ''} student{(s.students_count ?? 0) === 1 && !s.capacity ? '' : 's'}
                                                 </span>
-                                                {canEdit && <Button variant="ghost" size="sm" onClick={() => openEdit(s)} aria-label={`Change ${cls.name} ${s.name}`}><Pencil className="size-3.5" /></Button>}
-                                                {canEdit && <Button variant="ghost" size="sm" onClick={() => destroy(s, cls.name)} aria-label={`Delete ${cls.name} ${s.name}`} className="text-red-600 hover:text-red-700"><Trash2 className="size-3.5" /></Button>}
+                                                {canEdit && (
+                                                    <RowActions label={`Actions for ${cls.name} ${s.name}`} actions={[
+                                                        { label: 'Change', icon: <Pencil className="size-4" />, onClick: () => openEdit(s) },
+                                                        { label: 'Delete', icon: <Trash2 className="size-4" />, onClick: () => destroy(s, cls.name), danger: true },
+                                                    ]} />
+                                                )}
                                             </li>
                                         ))}
                                     </ul>

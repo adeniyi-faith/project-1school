@@ -2,6 +2,8 @@ import AppLayout from '@/Layouts/AppLayout';
 import { cn } from '@/lib/utils';
 import { EmptyState, PageHeader, Panel, PersonAvatar, Pill } from '@/components/app/kit';
 import { naira } from '@/lib/format';
+import { useState } from 'react';
+import { Link } from '@inertiajs/react';
 import { Bell, Users } from 'lucide-react';
 import ExpandableText from '@/components/ExpandableText';
 
@@ -11,17 +13,17 @@ interface ChildFees {
     total_due: number; total_paid: number; balance: number;
     recent: { month: string; paid: number; balance: number; status: string }[];
 }
-interface Mark { exam: string | null; subject: string | null; marks: number | null; grade: string | null; absent: boolean; }
+interface LatestReport { id: number; term: string; average: number | null; position: number | null; class_size: number | null; }
 interface Child {
     id: number; full_name: string; admission_no: string;
     class: string | null; section: string | null; photo_url: string | null;
-    attendance: ChildAttendance; fees: ChildFees; marks: Mark[];
+    attendance: ChildAttendance; fees: ChildFees; latest_report: LatestReport | null;
 }
 interface Announcement { id: number; title: string; body: string; pinned: boolean; date: string | null; }
 
 interface Props {
     linked: boolean; guardian: Guardian | null;
-    children: Child[]; announcements: Announcement[];
+    children: Child[]; announcements: Announcement[]; payOnline?: boolean;
 }
 
 function AttendanceBar({ pct, label }: { pct: number; label: string }) {
@@ -90,26 +92,25 @@ function ChildCard({ child }: { child: Child }) {
                     )}
                 </Section>
 
-                {child.marks.length > 0 && (
-                    <Section title="Recent results">
-                        <ul className="space-y-2.5">
-                            {child.marks.slice(0, 4).map((m, i) => (
-                                <li key={i} className="flex items-center justify-between gap-3 text-sm">
-                                    <div className="min-w-0">
-                                        <p className="truncate font-medium text-slate-800 dark:text-slate-200">{m.subject}</p>
-                                        <p className="truncate text-xs text-slate-500">{m.exam}</p>
-                                    </div>
-                                    {m.absent ? (
-                                        <Pill tone="bad">Absent</Pill>
-                                    ) : (
-                                        <div className="flex shrink-0 items-center gap-2">
-                                            <span className="tabular-nums text-slate-600 dark:text-slate-300">{m.marks ?? '—'}</span>
-                                            {m.grade && <span className="flex size-7 items-center justify-center rounded-md bg-indigo-50 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">{m.grade}</span>}
-                                        </div>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
+                {child.latest_report && (
+                    <Section title="Latest results">
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{child.latest_report.term}</p>
+                        <div className="mt-2 flex items-end justify-between gap-3">
+                            <div className="flex gap-6">
+                                <div>
+                                    <p className="text-xs text-slate-500">Average</p>
+                                    <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-white">{child.latest_report.average ?? '—'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-slate-500">Position</p>
+                                    <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-white">
+                                        {child.latest_report.position ?? '—'}{child.latest_report.class_size ? <span className="text-sm font-normal text-slate-500"> of {child.latest_report.class_size}</span> : null}
+                                    </p>
+                                </div>
+                            </div>
+                            <a href={`/school/parent/report-cards/${child.id}/${child.latest_report.id}`} className="shrink-0 text-sm font-medium text-indigo-700 hover:underline dark:text-indigo-300">Report card (PDF)</a>
+                        </div>
+                        <Link href="/school/parent/results" className="mt-2 inline-block text-xs text-slate-500 hover:underline">See all results</Link>
                     </Section>
                 )}
             </div>
@@ -117,7 +118,36 @@ function ChildCard({ child }: { child: Child }) {
     );
 }
 
-export default function ParentDashboard({ linked, guardian, children, announcements }: Props) {
+function ChildSwitcher({ children, selectedId, onSelect }: { children: Child[]; selectedId: number; onSelect: (id: number) => void }) {
+    return (
+        <div role="tablist" aria-label="Choose a child" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+            {children.map(c => {
+                const active = c.id === selectedId;
+                return (
+                    <button
+                        key={c.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => onSelect(c.id)}
+                        className={cn(
+                            'flex min-h-12 shrink-0 items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-4 text-sm font-medium transition-colors',
+                            active
+                                ? 'border-indigo-600 bg-indigo-600 text-white'
+                                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-slate-900 dark:text-slate-200',
+                        )}
+                    >
+                        <PersonAvatar name={c.full_name} src={c.photo_url} className="size-9" />
+                        {c.full_name.split(' ')[0]}
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
+
+export default function ParentDashboard({ linked, guardian, children, announcements, payOnline = false }: Props) {
+    const [selectedId, setSelectedId] = useState<number | null>(children[0]?.id ?? null);
     if (!linked || !guardian) {
         return (
             <AppLayout title="Parent Dashboard">
@@ -128,6 +158,7 @@ export default function ParentDashboard({ linked, guardian, children, announceme
         );
     }
 
+    const shown = children.find(c => c.id === selectedId) ?? children[0];
     const totalDue = children.reduce((sum, c) => sum + c.fees.balance, 0);
 
     return (
@@ -138,19 +169,25 @@ export default function ParentDashboard({ linked, guardian, children, announceme
                     description={`${children.length} ${children.length === 1 ? 'child' : 'children'} enrolled${guardian.phone ? ` · ${guardian.phone}` : ''}`}
                 />
 
-                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5 dark:border-white/[0.08] dark:bg-slate-900">
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5 dark:border-white/[0.08] dark:bg-slate-900">
                     <div>
                         <p className="text-[13px] text-slate-500">{totalDue > 0 ? 'Total fees due' : 'Fees'}</p>
                         <p className={cn('mt-1 text-2xl font-semibold tabular-nums tracking-[-0.03em]', totalDue > 0 ? 'text-red-700 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400')}>
                             {totalDue > 0 ? naira(totalDue) : 'All clear'}
                         </p>
                     </div>
-                    {totalDue > 0 && <Pill tone="warn">Payment needed</Pill>}
+                    {totalDue > 0
+                        ? <Link href="/school/parent/fees" className="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700">{payOnline ? 'Pay now' : 'See fees'}</Link>
+                        : <Link href="/school/parent/fees" className="text-sm font-medium text-slate-500 hover:underline">See fees</Link>}
                 </div>
 
-                <div className={cn('grid gap-6', children.length === 1 ? 'max-w-lg grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
-                    {children.map(child => <ChildCard key={child.id} child={child} />)}
-                </div>
+                {children.length > 1 && <ChildSwitcher children={children} selectedId={shown?.id ?? 0} onSelect={setSelectedId} />}
+
+                {shown && (
+                    <div className="max-w-lg">
+                        <ChildCard child={shown} />
+                    </div>
+                )}
 
                 {announcements.length > 0 && (
                     <Panel title="School announcements" action={<Bell className="size-4 text-slate-400" />} flush>

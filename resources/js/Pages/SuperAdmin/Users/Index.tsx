@@ -10,13 +10,13 @@ import { Badge } from '@/components/ui/badge';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
-import { Users, Plus, Search, Edit, Trash2, Ban, CheckCircle, KeyRound, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Plus, Search, Edit, Trash2, Ban, CheckCircle, KeyRound, ShieldOff, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Role { name: string; }
 interface UserRow {
     id: number; name: string; email: string; phone: string | null;
     status: string; school_id: number | null; roles: Role[];
-    last_login_at: string | null; created_at: string;
+    last_login_at: string | null; created_at: string; has_two_factor?: boolean;
 }
 interface School { id: number; name: string; }
 interface Meta { total: number; per_page: number; current_page: number; last_page: number; }
@@ -24,6 +24,8 @@ interface Props {
     users: { data: UserRow[]; meta: Meta };
     schools: School[];
     roles: string[];
+    /** Whether this person may add, change, switch off or remove logins (others can only look) */
+    can?: { manage: boolean };
     filters: { search?: string; role?: string; school_id?: string; status?: string };
 }
 
@@ -38,7 +40,8 @@ const statusBadge = (status: string) => {
     return <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${map[status] ?? ''}`}>{status}</span>;
 };
 
-export default function UsersIndex({ users, schools, roles, filters }: Props) {
+export default function UsersIndex({ users, schools, roles, filters, can }: Props) {
+    const canManage = can?.manage ?? true;
     const [search, setSearch]     = useState(filters.search ?? '');
     const [roleFilter, setRoleFilter] = useState(filters.role ?? '');
     const [schoolFilter, setSchoolFilter] = useState(filters.school_id ?? '');
@@ -117,9 +120,11 @@ export default function UsersIndex({ users, schools, roles, filters }: Props) {
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">User Management</h1>
                         <p className="text-sm text-slate-500 mt-0.5">Manage all system users, roles, and access</p>
                     </div>
-                    <Button onClick={openCreate} className="gap-2">
-                        <Plus className="w-4 h-4" /> Add User
-                    </Button>
+                    {canManage && (
+                        <Button onClick={openCreate} className="gap-2">
+                            <Plus className="w-4 h-4" /> Add User
+                        </Button>
+                    )}
                 </div>
 
                 {/* Filters */}
@@ -202,11 +207,17 @@ export default function UsersIndex({ users, schools, roles, filters }: Props) {
                                                 {u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : '—'}
                                             </td>
                                             <td className="py-3 px-4">
-                                                <div className="flex items-center justify-end gap-1">
+                                                {canManage && <div className="flex items-center justify-end gap-1">
                                                     <button onClick={() => setResetUser(u)} title="Reset password"
                                                         className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-600">
                                                         <KeyRound className="w-3.5 h-3.5" />
                                                     </button>
+                                                    {u.has_two_factor && (
+                                                        <button onClick={() => { if (confirm(`Turn off two-step sign-in for ${u.name}? Use this only if they lost their phone and recovery codes.`)) router.patch(`/super-admin/users/${u.id}/two-factor/disable`); }} title="Turn off two-step sign-in"
+                                                            className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-amber-600">
+                                                            <ShieldOff className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    )}
                                                     <button onClick={() => toggleStatus(u)} title={u.status === 'suspended' ? 'Activate' : 'Suspend'}
                                                         className={`p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 ${u.status === 'suspended' ? 'text-green-500' : 'text-amber-500'}`}>
                                                         {u.status === 'suspended' ? <CheckCircle className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
@@ -219,7 +230,7 @@ export default function UsersIndex({ users, schools, roles, filters }: Props) {
                                                         className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-red-600">
                                                         <Trash2 className="w-3.5 h-3.5" />
                                                     </button>
-                                                </div>
+                                                </div>}
                                             </td>
                                         </tr>
                                     ))}

@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,6 +50,17 @@ export default function Profile({ user }: Props) {
                                 </span>
                             </div>
                         </div>
+                    </CardContent>
+                </Card>
+
+                {/* Two-step sign-in */}
+                <Card>
+                    <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-5">
+                        <div>
+                            <p className="font-medium text-slate-900 dark:text-white">Two-step sign-in</p>
+                            <p className="text-sm text-slate-500">Ask for a code from your phone as well as your password.</p>
+                        </div>
+                        <Link href="/security" className="inline-flex h-8 items-center rounded-lg border border-slate-200 px-3 text-sm font-medium hover:bg-slate-50 max-md:h-10 dark:border-white/10 dark:hover:bg-white/5">Manage</Link>
                     </CardContent>
                 </Card>
 

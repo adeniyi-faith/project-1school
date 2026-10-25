@@ -13,10 +13,12 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCan } from '@/lib/can';
 import type { PageProps, PaginatedResponse, School as SchoolType } from '@/Types';
 
 interface SchoolsPageProps extends PageProps {
     schools: PaginatedResponse<SchoolType>;
+    deleted: { id: number; name: string; deleted_at: string; delete_reason: string | null }[];
     filters: { search?: string; status?: string };
     stats: { total: number; active: number; suspended: number };
 }
@@ -35,7 +37,8 @@ const statusBadge = (status: string) => {
 };
 
 export default function SchoolsIndex() {
-    const { schools, filters, stats } = usePage<SchoolsPageProps>().props;
+    const { schools, deleted, filters, stats } = usePage<SchoolsPageProps>().props;
+    const can = useCan();
     const [search, setSearch] = useState(filters.search ?? '');
 
     const applyFilters = (params: Record<string, string>) => {
@@ -47,11 +50,8 @@ export default function SchoolsIndex() {
         applyFilters({ search });
     };
 
-    const confirmDelete = (school: SchoolType) => {
-        if (confirm(`Delete "${school.name}"? This cannot be undone.`)) {
-            router.delete(`/super-admin/schools/${school.id}`);
-        }
-    };
+    // Deleting starts on the school's own page, where a reason is asked for and a waiting period applies
+    const confirmDelete = (school: SchoolType) => router.visit(`/super-admin/schools/${school.id}`);
 
     return (
         <AppLayout breadcrumbs={[{ label: 'Super Admin' }, { label: 'Schools' }]}>
@@ -63,11 +63,13 @@ export default function SchoolsIndex() {
                     <h1 className="text-xl font-bold text-slate-900 dark:text-white">Schools</h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage all registered schools</p>
                 </div>
-                <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
-                    <Link href="/super-admin/schools/create">
-                        <Plus className="w-4 h-4" /> Add School
-                    </Link>
-                </Button>
+                {can('platform.schools.manage') && (
+                    <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2">
+                        <Link href="/super-admin/schools/create">
+                            <Plus className="w-4 h-4" /> Add School
+                        </Link>
+                    </Button>
+                )}
             </div>
 
             {/* Stats */}
@@ -175,9 +177,11 @@ export default function SchoolsIndex() {
                                     {new Date(school.created_at).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell className="whitespace-nowrap">
-                                    <Button size="sm" variant="outline" className="mr-1 h-8 gap-1.5" onClick={() => router.post(`/super-admin/schools/${school.id}/enter`)}>
-                                        <LogIn className="w-3.5 h-3.5" /> Open
-                                    </Button>
+                                    {can('platform.schools.enter') && (
+                                        <Button size="sm" variant="outline" className="mr-1 h-8 gap-1.5" onClick={() => router.post(`/super-admin/schools/${school.id}/enter`)}>
+                                            <LogIn className="w-3.5 h-3.5" /> Open
+                                        </Button>
+                                    )}
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -190,13 +194,15 @@ export default function SchoolsIndex() {
                                                     <Eye className="w-4 h-4 shrink-0" /> View
                                                 </Link>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem asChild>
-                                                <Link href={`/super-admin/schools/${school.id}/edit`} className="flex items-center gap-2 text-sm">
-                                                    <Pencil className="w-4 h-4 shrink-0" /> Edit
-                                                </Link>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            {school.status === 'suspended' ? (
+                                            {can('platform.schools.manage') && (
+                                                <DropdownMenuItem asChild>
+                                                    <Link href={`/super-admin/schools/${school.id}/edit`} className="flex items-center gap-2 text-sm">
+                                                        <Pencil className="w-4 h-4 shrink-0" /> Edit
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            )}
+                                            {can('platform.schools.manage') && <DropdownMenuSeparator />}
+                                            {!can('platform.schools.manage') ? null : school.status === 'suspended' ? (
                                                 <DropdownMenuItem className="flex items-center gap-2 text-sm" onClick={() => router.patch(`/super-admin/schools/${school.id}/activate`)}>
                                                     <CheckCircle className="w-4 h-4 shrink-0 text-emerald-500" /> Activate
                                                 </DropdownMenuItem>
@@ -205,13 +211,17 @@ export default function SchoolsIndex() {
                                                     <Ban className="w-4 h-4 shrink-0 text-amber-500" /> Suspend
                                                 </DropdownMenuItem>
                                             )}
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem
-                                                className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400"
-                                                onClick={() => confirmDelete(school)}
-                                            >
-                                                <Trash2 className="w-4 h-4 shrink-0" /> Delete
-                                            </DropdownMenuItem>
+                                            {can('platform.schools.delete') && (
+                                                <>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem
+                                                        className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400"
+                                                        onClick={() => confirmDelete(school)}
+                                                    >
+                                                        <Trash2 className="w-4 h-4 shrink-0" /> Delete…
+                                                    </DropdownMenuItem>
+                                                </>
+                                            )}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </TableCell>
@@ -237,6 +247,20 @@ export default function SchoolsIndex() {
                     </div>
                 )}
             </div>
+            {deleted.length > 0 && (
+                <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                    <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Recently deleted</h2>
+                    <p className="mb-2 text-xs text-slate-500">Nothing is wiped when a school is deleted. You can bring it back here.</p>
+                    <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {deleted.map((d) => (
+                            <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                                <span className="min-w-0 break-words text-slate-700 dark:text-slate-300">{d.name}<span className="text-xs text-slate-400"> · deleted {new Date(d.deleted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span></span>
+                                <Button size="sm" variant="outline" onClick={() => { if (confirm(`Restore ${d.name}? It comes back suspended.`)) router.post(`/super-admin/deleted-schools/${d.id}/restore`); }}>Restore</Button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
         </AppLayout>
     );
 }

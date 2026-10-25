@@ -84,7 +84,7 @@ export default function Paper({ paper, initial, questions, banks, classes, subje
     );
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'CBT' }, { label: 'Exam papers', href: '/school/cbt/papers' }, { label: paper ? d.title || 'Exam paper' : 'New exam paper' }]}>
+        <AppLayout breadcrumbs={[{ label: 'Learning' }, { label: 'Printed Papers', href: '/school/cbt/papers' }, { label: paper ? d.title || 'Exam paper' : 'New exam paper' }]}>
             <form onSubmit={save} className="mx-auto max-w-4xl space-y-5 pb-28">
                 <Link href="/school/cbt/papers" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"><ArrowLeft className="size-4" /> All exam papers</Link>
                 <PageHeader title={paper ? 'Exam paper' : 'New exam paper'} description="Pick questions from your question banks into sections. Save, then print the paper and its marking scheme." actions={printLinks || undefined} />

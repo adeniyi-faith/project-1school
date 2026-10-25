@@ -44,6 +44,23 @@ class ScoreAccess
             ->filter()->unique()->values()->all();
     }
 
+    /** Class ids this person teaches or is class teacher of; null for people who are not held to the own-classes rule */
+    public static function classIds(User $user): ?array
+    {
+        if (! self::restricted($user)) {
+            return null;
+        }
+        $staff = self::staff($user);
+        if (! $staff) {
+            return [];
+        }
+
+        return SchoolClass::where('class_teacher_staff_id', $staff->id)->pluck('id')
+            ->merge(ClassSubject::where('teacher_id', $staff->id)->pluck('class_id'))
+            ->merge(Timetable::where('teacher_id', $staff->id)->pluck('class_id'))
+            ->unique()->values()->all();
+    }
+
     public static function canEnter(User $user, int $classId, ?int $subjectId): bool
     {
         $ids = self::subjectIds($user, $classId);
