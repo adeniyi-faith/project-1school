@@ -272,7 +272,7 @@ export default function SchoolsIndex() {
                         {deleted.map((d) => (
                             <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
                                 <span className="min-w-0 break-words text-slate-700 dark:text-slate-300">{d.name}<span className="text-xs text-slate-400"> · deleted {new Date(d.deleted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span></span>
-                                <Button size="sm" variant="outline" onClick={() => { if (confirm(`Restore ${d.name}? It comes back suspended.`)) router.post(`/super-admin/deleted-schools/${d.id}/restore`); }}>Restore</Button>
+                                {can('platform.schools.delete') && <Button size="sm" variant="outline" onClick={() => { if (confirm(`Restore ${d.name}? It comes back suspended.`)) router.post(`/super-admin/deleted-schools/${d.id}/restore`); }}>Restore</Button>}
                             </li>
                         ))}
                     </ul>
