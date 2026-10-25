@@ -142,8 +142,9 @@ Route::middleware('auth')->group(function () {
             $user->hasRole('teacher')                                        => redirect()->route('school.my-classes'),
             $user->hasRole('student')                                        => redirect()->route('student.dashboard'),
             $user->hasRole('parent')                                         => redirect()->route('parent.dashboard'),
+            $user->hasRole('librarian')                                      => redirect()->route('school.home'),
             $user->can('reports.view')                                       => redirect()->route('school.reports.dashboard'),
-            // Front desk, drivers, wardens and store keepers get a home page made of their own work
+            // Librarians, front desk, drivers, wardens and store keepers get a home page made of their own work
             default                                                          => redirect()->route('school.home'),
         };
     })->name('dashboard');
