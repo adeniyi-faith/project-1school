@@ -29,6 +29,7 @@ class ParentPortalController extends Controller
                 'linked'    => false,
                 'children'  => [],
                 'announcements' => [],
+                'payOnline' => false,
             ]);
         }
 
@@ -119,6 +120,7 @@ class ParentPortalController extends Controller
             ],
             'children'     => $children,
             'announcements'=> $announcements,
+            'payOnline'    => app(\App\Services\OnlinePaymentService::class)->enabled($guardian->school_id),
         ]);
     }
 
