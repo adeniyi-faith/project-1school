@@ -20,6 +20,7 @@ import {
 import type { Staff, Department, Designation, PaginatedResponse, PageProps } from '@/Types';
 import { useState } from 'react';
 import { useCan } from '@/lib/can';
+import { Pager } from '@/components/app/Pager';
 
 const roleLabel = (r: string) => r.replace(/-/g, ' ').replace(/^./, c => c.toUpperCase());
 
@@ -260,26 +261,7 @@ export default function StaffIndex({ staff, filters, departments, designations, 
                         </TableBody>
                     </Table>
 
-                    {/* Pagination */}
-                    {staff.meta.last_page > 1 && (
-                        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-800">
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Showing {staff.meta.from}–{staff.meta.to} of {staff.meta.total}
-                            </p>
-                            <div className="flex gap-2">
-                                {staff.links.prev && (
-                                    <Link href={staff.links.prev} preserveScroll>
-                                        <Button variant="outline" size="sm">Previous</Button>
-                                    </Link>
-                                )}
-                                {staff.links.next && (
-                                    <Link href={staff.links.next} preserveScroll>
-                                        <Button variant="outline" size="sm">Next</Button>
-                                    </Link>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                    <Pager meta={staff.meta} links={staff.links} />
                 </div>
             </div>
         </AppLayout>

@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EmptyState, PageHeader, Panel, PersonAvatar, Pill, StatStrip } from '@/components/app/kit';
 import type { PageProps, PaginatedResponse, Student, SchoolClass, Section } from '@/Types';
+import { Pager } from '@/components/app/Pager';
 
 interface Props extends PageProps {
     students: PaginatedResponse<Student>;
@@ -206,15 +207,7 @@ export default function StudentsIndex() {
                         </>
                     )}
 
-                    {students.meta.last_page > 1 && (
-                        <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-3 dark:border-white/[0.08]">
-                            <p className="text-xs text-slate-500 tabular-nums">Showing {students.meta.from}–{students.meta.to} of {students.meta.total}</p>
-                            <div className="flex gap-2">
-                                {students.links.prev && <Button variant="outline" size="sm" onClick={() => router.get(students.links.prev!)}>Previous</Button>}
-                                {students.links.next && <Button variant="outline" size="sm" onClick={() => router.get(students.links.next!)}>Next</Button>}
-                            </div>
-                        </div>
-                    )}
+                    <Pager meta={students.meta} links={students.links} />
                 </Panel>
 
                 {can('students.create') && (

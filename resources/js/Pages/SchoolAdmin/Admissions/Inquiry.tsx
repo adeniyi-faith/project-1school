@@ -12,6 +12,7 @@ import { InquiryStatusPill } from '@/components/admissions/InquiryStatus';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, Check, ClipboardCheck, GraduationCap, MessagesSquare, Pencil, Plus, Trash2, X } from 'lucide-react';
 import type { AdmissionAssessment, AssessmentOutcome, InquiryStatus } from '@/Types';
+import { FieldError as ErrorText } from '@/components/app/FormField';
 
 interface Props {
     inquiry: {
@@ -45,10 +46,6 @@ type EnrolForm = {
     class_id: string; section_id: string; guardian_id: string; guardian_relation: string;
     make_parent_login: boolean; bill_fees: boolean;
 };
-
-function ErrorText({ children }: { children?: string }) {
-    return children ? <p className="text-xs text-red-500">{children}</p> : null;
-}
 
 function today() {
     return new Date().toISOString().slice(0, 10);

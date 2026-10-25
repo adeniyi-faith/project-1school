@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EmptyState, PageHeader, Panel, Pill, Segmented } from '@/components/app/kit';
 import { naira } from '@/lib/format';
 import { CreditCard, RefreshCw, Settings } from 'lucide-react';
+import { Pager } from '@/components/app/Pager';
 
 type Status = 'pending' | 'success' | 'failed' | 'needs_review';
 
@@ -119,15 +120,7 @@ export default function OnlinePayments({ payments, status, counts, setup, canSet
                             </table>
                         </div>
                     )}
-                    {(payments.links.prev || payments.links.next) && (
-                        <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-sm dark:border-white/[0.06]">
-                            <span className="text-slate-500">{payments.meta.from}–{payments.meta.to} of {payments.meta.total}</span>
-                            <div className="flex gap-2">
-                                <Button variant="outline" size="sm" disabled={!payments.links.prev} onClick={() => payments.links.prev && router.visit(payments.links.prev)}>Previous</Button>
-                                <Button variant="outline" size="sm" disabled={!payments.links.next} onClick={() => payments.links.next && router.visit(payments.links.next)}>Next</Button>
-                            </div>
-                        </div>
-                    )}
+                    <Pager meta={payments.meta} links={payments.links} />
                 </Panel>
             </div>
             {settingUp && <SetupDialog setup={setup} onClose={() => setSettingUp(false)} />}
