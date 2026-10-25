@@ -11,6 +11,7 @@ use App\Models\PlatformSetting;
  * platform owner's settings, and is never sent to the browser.
  *
  * 'tier' is 'quick' (cheapest model) or 'writing' (a stronger model for long work); see AiService.
+ * Picture styles have tier 'image': they use the picture model and only add to the picture's description.
  * The platform owner can move any style to the other tier with the "ai_style_tiers" setting.
  */
 class AiStyles
@@ -68,6 +69,29 @@ class AiStyles
                 ],
             ],
         ],
+        'image' => [
+            'default' => 'simple',
+            'styles' => [
+                'simple' => [
+                    'label' => 'Simple picture',
+                    'hint' => 'A clear, friendly picture of one thing or scene.',
+                    'tier' => 'image',
+                    'rule' => 'A clear, friendly, child-appropriate illustration with flat colours, a plain light background and one main subject.',
+                ],
+                'explainer' => [
+                    'label' => 'Explainer diagram',
+                    'hint' => 'A clean teaching diagram that shows how something works or its parts.',
+                    'tier' => 'image',
+                    'rule' => 'A clean, simple educational diagram like those in a good textbook: flat colours, clear shapes, arrows where something moves or flows, a plain white background and lots of space around each part. Show the parts clearly and keep it uncluttered.',
+                ],
+                'line' => [
+                    'label' => 'Black and white drawing',
+                    'hint' => 'A line drawing that prints well on exam papers.',
+                    'tier' => 'image',
+                    'rule' => 'A clear black and white line drawing with no shading and no colour, thick clean outlines and a plain white background, suitable for printing on an exam paper.',
+                ],
+            ],
+        ],
     ];
 
     /** What the teacher sees: key, name and one line. Nothing else leaves the server. */
@@ -97,7 +121,7 @@ class AiStyles
 
         $overrides = json_decode((string) PlatformSetting::get('ai_style_tiers', '{}'), true) ?: [];
         $tier = $overrides["{$task}.{$key}"] ?? null;
-        if (in_array($tier, ['quick', 'writing'], true)) {
+        if ($style['tier'] !== 'image' && in_array($tier, ['quick', 'writing'], true)) {
             $style['tier'] = $tier;
         }
 

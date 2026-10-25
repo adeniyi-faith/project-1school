@@ -55,6 +55,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Staff',       href: '/school/staff',   icon: UserCog,        roles: ['super-admin','school-admin','principal'] },
             { label: 'Timetable',   href: '/school/timetable', icon: CalendarDays,  roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Attendance',  href: '/school/attendance', icon: ClipboardList, roles: ['super-admin','school-admin','principal','teacher'] },
+            { label: 'Class & Teacher Overview', href: '/school/overview', icon: ClipboardCheck, roles: ['super-admin','school-admin','principal'] },
             { label: 'Scan ID Card', href: '/school/id-cards/scan',       icon: ScanLine,       roles: ['super-admin','school-admin','principal','teacher','receptionist','warden','accountant'] },
         ],
     },
@@ -93,6 +94,7 @@ export const navGroups: NavGroup[] = [
         foldedFor: ['principal'],
         items: [
             { label: 'Invoices',       href: '/school/fees/invoices',   icon: FileText,  roles: ['super-admin','school-admin','accountant','principal'] },
+            { label: "Today's Collections", href: '/school/fees/collections-today', icon: Banknote, roles: ['super-admin','school-admin','accountant'] },
             { label: 'Scholarships',   href: '/school/fees/scholarships', icon: Gift,    roles: ['super-admin','school-admin','accountant'] },
             { label: 'Online Payments', href: '/school/fees/online-payments', icon: CreditCard, roles: ['super-admin','school-admin','accountant'] },
             { label: 'Payment Plans', href: '/school/fees/payment-plans', icon: CalendarClock, roles: ['super-admin','school-admin','accountant'] },
@@ -143,6 +145,7 @@ export const navGroups: NavGroup[] = [
         items: [
             { label: 'Announcements', href: '/school/student/announcements', icon: Megaphone,   roles: ['student'] },
             { label: 'Announcements', href: '/school/parent/announcements',  icon: Megaphone,   roles: ['parent'] },
+            { label: 'Message the School', href: '/school/parent/messages',  icon: MessageSquare, roles: ['parent'] },
         ],
     },
     {
