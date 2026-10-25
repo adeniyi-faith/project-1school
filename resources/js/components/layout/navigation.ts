@@ -60,7 +60,7 @@ export const navGroups: NavGroup[] = [
     {
         title: 'Results',
         items: [
-            { label: 'Examinations',href: '/school/exams',    icon: BookOpen,       roles: ['super-admin','school-admin','principal','teacher','accountant'] },
+            { label: 'Class Test Marks',href: '/school/exams',    icon: BookOpen,       roles: ['super-admin','school-admin','principal','teacher','accountant'] },
             { label: 'Term Results', href: '/school/results',             icon: ClipboardCheck, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Print Report Cards', href: '/school/results/print', icon: Printer, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Comment Bank', href: '/school/results/comment-bank', icon: MessageSquareQuote, roles: ['super-admin','school-admin','principal','teacher'] },
@@ -107,9 +107,9 @@ export const navGroups: NavGroup[] = [
             { label: 'Lesson Notes',  href: '/school/lesson-notes',             icon: ClipboardList, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Syllabus',      href: '/school/homework/syllabi',        icon: BookOpen,      roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Online Classes',href: '/school/homework/online-classes', icon: Video,         roles: ['super-admin','school-admin','principal','teacher'] },
-            { label: 'CBT Tests',     href: '/school/cbt/tests',               icon: MonitorCheck,  roles: ['super-admin','school-admin','principal','teacher'] },
+            { label: 'Computer Tests', href: '/school/cbt/tests',               icon: MonitorCheck,  roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Question Banks',href: '/school/cbt/banks',               icon: Library,       roles: ['super-admin','school-admin','principal','teacher'] },
-            { label: 'Exam Papers',   href: '/school/cbt/papers',              icon: Printer,       roles: ['super-admin','school-admin','principal','teacher'] },
+            { label: 'Printed Papers', href: '/school/cbt/papers',              icon: Printer,       roles: ['super-admin','school-admin','principal','teacher'] },
         ],
     },
     {
@@ -133,7 +133,7 @@ export const navGroups: NavGroup[] = [
         items: [
             { label: 'Attendance',    href: '/school/parent/attendance',   icon: ClipboardList, roles: ['parent'] },
             { label: 'Results',       href: '/school/parent/results',      icon: BarChart3,     roles: ['parent'] },
-            { label: 'Fee Status',    href: '/school/parent/fees',         icon: Banknote,    roles: ['parent'] },
+            { label: 'Fees',          href: '/school/parent/fees',         icon: Banknote,    roles: ['parent'] },
         ],
     },
     {
