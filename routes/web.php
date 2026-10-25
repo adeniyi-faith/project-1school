@@ -46,6 +46,7 @@ use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsCont
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\SchoolAdmin\AdmissionInquiryController;
 use App\Http\Controllers\SchoolAdmin\AdmissionPipelineController;
+use App\Http\Controllers\SchoolAdmin\OverviewController;
 use App\Http\Controllers\SchoolAdmin\PromotionController;
 use App\Http\Controllers\SchoolAdmin\BroadsheetController;
 use App\Http\Controllers\SchoolAdmin\CertificateController;
@@ -293,6 +294,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('students/{student}/photo',          [StudentPhotoController::class, 'destroy'])->middleware('permission:students.edit')->name('students.photo.destroy');
 
             // ── Year-end promotion: move a class up, keep some back, graduate the top class ──
+            Route::get('overview',                          [OverviewController::class, 'index'])->middleware('permission:results.publish')->name('overview');
             Route::get('promotions',                        [PromotionController::class, 'index'])->middleware('permission:students.promote')->name('promotions.index');
             Route::post('promotions',                       [PromotionController::class, 'store'])->middleware('permission:students.promote')->name('promotions.store');
             Route::post('promotions/{promotionBatch}/bill-fees', [PromotionController::class, 'billFees'])->middleware('permission:fees.structure')->name('promotions.bill-fees');
