@@ -542,6 +542,7 @@ Route::middleware('auth')->group(function () {
             Route::post('fees/invoices/{invoice}/payments',  [FeeInvoiceController::class, 'pay'])->middleware('permission:fees.collect')->name('fees.invoices.pay');
             Route::post('fees/invoices/{invoice}/fines',     [FeeInvoiceController::class, 'fine'])->middleware('permission:fees.collect')->name('fees.invoices.fine');
             Route::post('fees/invoices/{invoice}/entries/{entry}/reverse', [FeeInvoiceController::class, 'reverse'])->middleware('permission:fees.waiver')->name('fees.invoices.reverse');
+            Route::post('fees/invoices/{invoice}/refunds',   [FeeInvoiceController::class, 'refund'])->middleware('permission:fees.waiver')->name('fees.invoices.refund');
             Route::post('fees/invoices/{invoice}/void',      [FeeInvoiceController::class, 'void'])->middleware('permission:fees.waiver')->name('fees.invoices.void');
 
             // Named scholarships and discounts, with who approved each one

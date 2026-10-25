@@ -63,8 +63,7 @@ class FeeInvoiceController extends Controller
             'stats' => [
                 'outstanding' => round((float) (clone $open)->sum('balance'), 2),
                 'open_count' => (clone $open)->count(),
-                'collected' => round(-(float) LedgerEntry::where('type', 'payment')->sum('amount')
-                    - (float) LedgerEntry::where('type', 'reversal')->whereHas('reverses', fn ($q) => $q->where('type', 'payment'))->sum('amount'), 2),
+                'collected' => FeeLedgerService::collected($sid),
                 'behind_count' => (clone $late)->distinct()->count('invoice_id'),
                 'overdue' => round((float) (clone $late)->sum('amount') - (float) (clone $late)->sum('paid'), 2),
             ],
@@ -218,6 +217,25 @@ class FeeInvoiceController extends Controller
         $this->ledger->addFine($invoice, (float) $data['amount'], $data['note'], $request->user());
 
         return back()->with('success', 'Fine added.');
+    }
+
+    public function refund(Request $request, Invoice $invoice): RedirectResponse
+    {
+        $data = $request->validate([
+            'amount'     => 'required|numeric|min:0.01',
+            'method'     => 'required|in:cash,bank_transfer,pos,card,online,ussd',
+            'entry_date' => 'required|date|before_or_equal:today',
+            'reason'     => 'required|string|max:255',
+            'reference'  => 'nullable|string|max:60',
+            'lower_fee'  => 'boolean',
+        ]);
+
+        $entry = $this->ledger->refund(
+            $invoice, (float) $data['amount'], $data['method'], $data['entry_date'], $data['reason'],
+            $data['reference'] ?? null, $request->boolean('lower_fee', true), $request->user(),
+        );
+
+        return back()->with('success', 'Refund of ₦' . number_format($entry->amount, 2) . " recorded. Reference {$entry->reference}.");
     }
 
     public function reverse(Request $request, Invoice $invoice, LedgerEntry $entry): RedirectResponse
