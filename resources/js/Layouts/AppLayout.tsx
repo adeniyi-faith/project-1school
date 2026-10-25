@@ -71,7 +71,10 @@ export default function AppLayout({ children, title, breadcrumbs }: AppLayoutPro
                 )}
                 {acting_school && (
                     <div className="flex items-center justify-between gap-3 bg-amber-500 px-3 py-1 text-[12px] leading-tight text-amber-950 sm:justify-center sm:px-4 sm:py-1.5 sm:text-[13px]">
-                        <span className="min-w-0 truncate">Working inside <b className="font-semibold">{acting_school.name}</b> as Super Admin</span>
+                        <span className="min-w-0 truncate">
+                            {acting_school.read_only ? 'Looking around' : 'Working inside'} <b className="font-semibold">{acting_school.name}</b><span className="hidden sm:inline"> as {acting_school.as}</span>
+                            {acting_school.read_only && <span className="hidden sm:inline">. You can look, but not change anything.</span>}
+                        </span>
                         <button type="button" onClick={() => router.post('/super-admin/leave-school')} className="shrink-0 font-semibold underline underline-offset-2 hover:text-amber-900">Back to platform</button>
                     </div>
                 )}

@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\PlatformSetting;
 use App\Support\DemoSchool;
 use App\Support\NavAccess;
+use App\Support\PlatformAccess;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -30,6 +31,22 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
+     * The role the menu is built for. Platform staff get the platform menu ('platform-staff'), or, while they are
+     * inside a school, the whole school menu (shown as the owner's).
+     */
+    private function roleFor(\App\Models\User $user): ?string
+    {
+        if (PlatformAccess::isOwner($user)) {
+            return 'super-admin';
+        }
+        if (PlatformAccess::isStaff($user)) {
+            return PlatformAccess::staffInsideSchool($user) ? 'super-admin' : 'platform-staff';
+        }
+
+        return $user->roles()->first()?->name;
+    }
+
+    /**
      * Define the props that are shared by default.
      *
      * @see https://inertiajs.com/shared-data
@@ -46,7 +63,7 @@ class HandleInertiaRequests extends Middleware
                     'name'      => $request->user()->name,
                     'email'     => $request->user()->email,
                     'avatar'    => $request->user()->avatar ?? null,
-                    'role'      => $request->user()->hasRole('super-admin') ? 'super-admin' : ($request->user()->roles()->first()?->name ?? null),
+                    'role'      => $this->roleFor($request->user()),
                     'school_id' => $request->user()->school_id ?? null,
                 ] : null,
                 // What this person may do: page buttons check `permissions`, the menu checks `paths`
@@ -61,7 +78,17 @@ class HandleInertiaRequests extends Middleware
                 : null,
             // Set while the platform owner is working inside one school
             'acting_school' => fn () => ($id = \App\Support\ActingSchool::id())
-                ? ['id' => $id, 'name' => \App\Models\School::whereKey($id)->value('name')]
+                ? [
+                    'id' => $id,
+                    'name' => \App\Models\School::whereKey($id)->value('name'),
+                    // Who is inside ("Super Admin", "Support" ...) and whether they may change things there
+                    'as' => PlatformAccess::roleLabel($request->user()->roles->pluck('name')->first(fn ($r) => PlatformAccess::isPlatformRoleName($r))),
+                    'read_only' => PlatformAccess::isStaff($request->user()) && ! PlatformAccess::can($request->user(), 'platform.schools.act'),
+                ]
+                : null,
+            // Set for members of the platform team (not the owner): their role and whether they are limited to some schools
+            'platform' => fn () => PlatformAccess::isStaff($request->user())
+                ? ['role' => PlatformAccess::roleLabel($request->user()->roles->pluck('name')->first(fn ($r) => PlatformAccess::isPlatformRoleName($r))), 'scoped' => PlatformAccess::isScoped($request->user())]
                 : null,
             // Set while someone is looking around the public demo: the bar on top offers to switch account type
             'demo' => fn () => DemoSchool::isDemoUser($request->user())

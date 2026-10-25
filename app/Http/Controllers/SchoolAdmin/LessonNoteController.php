@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\SchoolAdmin;
 
+use App\Ai\AiStyles;
 use App\Http\Controllers\Controller;
 use App\Models\LessonNoteFormat;
 use App\Models\LessonPlan;
@@ -192,6 +193,7 @@ class LessonNoteController extends Controller
             'topic' => 'nullable|string|max:255',
             'duration_minutes' => 'nullable|integer|min:10|max:300',
             'instructions' => 'nullable|string|max:1500',
+            'style' => 'nullable|string|max:30',
         ]);
         $format = ! empty($data['lesson_note_format_id']) ? LessonNoteFormat::find($data['lesson_note_format_id']) : null;
 
@@ -520,6 +522,8 @@ class LessonNoteController extends Controller
         return [
             'shown' => $this->ai->schoolState($sid)['platform_ready'],
             'reason' => $this->ai->unavailable($sid, 'lesson_notes'),
+            'styles' => AiStyles::choices('lesson_note'),
+            'default_style' => AiStyles::defaultKey('lesson_note'),
         ];
     }
 

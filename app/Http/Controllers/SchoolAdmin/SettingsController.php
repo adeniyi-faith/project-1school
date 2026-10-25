@@ -11,6 +11,12 @@ use Inertia\Inertia;
 
 class SettingsController extends Controller
 {
+    /** One front door for every settings page: a card per page with a sentence on what it is for. */
+    public function hub()
+    {
+        return Inertia::render('SchoolAdmin/Settings/Hub');
+    }
+
     public function index()
     {
         $sid    = $this->getSchoolId();

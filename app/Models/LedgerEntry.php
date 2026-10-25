@@ -23,7 +23,7 @@ class LedgerEntry extends Model
 
     public const UPDATED_AT = null;
 
-    public const TYPES = ['charge', 'fine', 'payment', 'discount', 'reversal'];
+    public const TYPES = ['charge', 'fine', 'payment', 'discount', 'reversal', 'credit', 'refund'];
 
     protected $fillable = [
         'school_id', 'invoice_id', 'student_id', 'type', 'amount', 'method', 'reference',

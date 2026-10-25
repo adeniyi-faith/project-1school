@@ -445,4 +445,18 @@ class CbtTest extends SecurityTestCase
         $this->get("/school/cbt/tests/{$test->id}/slips")->assertNotFound();
         $this->delete("/school/cbt/tests/{$test->id}/candidates/{$candidates[1]->id}")->assertNotFound();
     }
+
+    public function test_the_student_home_offers_an_open_test_until_it_is_handed_in(): void
+    {
+        $test = $this->makeTest();
+
+        $this->actingAs($this->adaUser);
+        $this->get('/school/student/dashboard')->assertInertia(fn ($p) => $p
+            ->where('today.open_tests.0.id', $test->id)
+            ->where('latestTerm', null));
+
+        $this->sit($test, 4);
+        $this->post("/school/student/cbt/{$test->id}/submit");
+        $this->get('/school/student/dashboard')->assertInertia(fn ($p) => $p->where('today.open_tests', []));
+    }
 }
