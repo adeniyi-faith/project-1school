@@ -417,6 +417,7 @@ export interface InvoiceRow {
     status: InvoiceStatus;
     due_date: string | null;
     instalments: InstalmentSummary | null;
+    parent_phone?: string | null;
 }
 
 export interface InvoiceDetail extends InvoiceRow {

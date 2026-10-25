@@ -21,6 +21,8 @@ export interface AiWriterInfo {
     topics: string[];
     styles?: { key: string; label: string; hint: string }[];
     default_style?: string;
+    /** Making a picture: why not (or null), what one costs a school in naira, and the picture styles */
+    images?: { reason: string | null; cost: number; styles: { key: string; label: string; hint: string }[]; default_style: string };
 }
 
 interface Draft {

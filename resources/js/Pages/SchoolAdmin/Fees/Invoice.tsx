@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { CUSTOM, InstalmentTable, PlanPartsEditor, planPayload } from '@/components/fees/Instalments';
 import { ArrowLeft, Ban, Banknote, CalendarClock, CircleAlert, HandCoins, Undo2 } from 'lucide-react';
 import type { InvoiceDetail, LedgerLine, LedgerType, PaymentMethod, PaymentPlanOption, PlanPart } from '@/Types';
+import { FieldError as ErrorText } from '@/components/app/FormField';
 
 interface Props {
     invoice: InvoiceDetail;
@@ -34,10 +35,6 @@ type PayForm = { amount: string; method: PaymentMethod; entry_date: string; note
 
 function today() {
     return new Date().toISOString().slice(0, 10);
-}
-
-function ErrorText({ children }: { children?: string }) {
-    return children ? <p className="text-xs text-red-500">{children}</p> : null;
 }
 
 export default function Invoice({ invoice, entries, plans, can }: Props) {

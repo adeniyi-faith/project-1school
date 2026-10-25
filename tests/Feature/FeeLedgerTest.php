@@ -314,6 +314,64 @@ class FeeLedgerTest extends SecurityTestCase
         $this->assertContains('/school/fees/payments', $paths());
     }
 
+    public function test_the_still_owing_list_gives_each_parent_phone_once_with_what_they_owe(): void
+    {
+        $guardian = \App\Models\Guardian::create(['school_id' => $this->school->id, 'name' => 'Mrs Bello', 'phone' => '08031234567']);
+        $ade = $this->student('Ade');
+        $bola = $this->student('Bola');
+        $this->student('Chike');
+        foreach ([$ade, $bola] as $s) {
+            $s->update(['guardian_id' => $guardian->id]);
+        }
+        $this->issue([$this->tuition]);
+
+        // Two children, one parent: one contact, with both amounts added up
+        $this->get('/school/fees/invoices?status=open', ['X-Inertia' => 'true'])
+            ->assertOk()
+            ->assertJsonCount(1, 'props.contacts')
+            ->assertJsonPath('props.contacts.0.phone', '08031234567')
+            ->assertJsonPath('props.contacts.0.owed', 300000)
+            ->assertJsonCount(2, 'props.contacts.0.children');
+
+        // Without the filter there is no contact list
+        $this->get('/school/fees/invoices', ['X-Inertia' => 'true'])->assertOk()->assertJsonPath('props.contacts', null);
+    }
+
+    public function test_todays_collections_add_up_by_method_and_leave_out_reversed_payments(): void
+    {
+        $ade = $this->student('Ade');
+        $this->student('Bola');
+        $this->issue([$this->tuition]);
+        $today = now()->toDateString();
+        $adeInvoice = $this->invoiceFor($ade, $this->tuition);
+        $bolaInvoice = $this->invoiceFor(Student::where('first_name', 'Bola')->first(), $this->tuition);
+
+        $this->post("/school/fees/invoices/{$adeInvoice->id}/payments", ['amount' => 50000, 'method' => 'cash', 'entry_date' => $today]);
+        $this->post("/school/fees/invoices/{$bolaInvoice->id}/payments", ['amount' => 30000, 'method' => 'bank_transfer', 'entry_date' => $today]);
+        $this->post("/school/fees/invoices/{$bolaInvoice->id}/payments", ['amount' => 9999, 'method' => 'cash', 'entry_date' => $today]);
+        $mistake = LedgerEntry::where('invoice_id', $bolaInvoice->id)->where('type', 'payment')->where('amount', -9999)->first();
+        $this->post("/school/fees/invoices/{$bolaInvoice->id}/entries/{$mistake->id}/reverse", ['reason' => 'typed wrong']);
+        // A payment from another day must not appear
+        $this->post("/school/fees/invoices/{$adeInvoice->id}/payments", ['amount' => 1000, 'method' => 'cash', 'entry_date' => now()->subDay()->toDateString()]);
+
+        $this->get('/school/fees/collections-today', ['X-Inertia' => 'true'])
+            ->assertOk()
+            ->assertJsonPath('props.total', 80000)
+            ->assertJsonPath('props.count', 2)
+            ->assertJsonPath('props.reversed_count', 1)
+            ->assertJsonPath('props.by_method.0.method', 'cash')
+            ->assertJsonPath('props.by_method.0.total', 50000)
+            ->assertJsonPath('props.by_method.1.method', 'bank_transfer')
+            ->assertJsonPath('props.by_method.1.total', 30000);
+
+        $this->get('/school/fees/collections-today/pdf')->assertOk()->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_a_teacher_cannot_open_todays_collections(): void
+    {
+        $this->actingAs($this->makeUser($this->school, 'teacher'))->get('/school/fees/collections-today')->assertForbidden();
+    }
+
     public function test_the_take_a_payment_box_finds_students_who_still_owe_and_hides_the_rest(): void
     {
         $ade = $this->student('Ade');

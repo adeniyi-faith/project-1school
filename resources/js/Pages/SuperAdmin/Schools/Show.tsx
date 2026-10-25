@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import {
     ArrowLeft, Pencil, Ban, CheckCircle, Globe, Phone, Mail, MapPin, Users, Calendar, LogIn,
@@ -10,13 +10,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { useCan } from '@/lib/can';
 import SchoolOverviewPanels, { type Overview } from '@/components/school360/Overview';
 import type { PageProps, School, AcademicYear } from '@/Types';
 
 interface Admin { id: number; name: string; email: string; phone: string | null; status: string; last_login_at: string | null }
 interface ShowPageProps extends PageProps {
-    school: School & { academic_years: AcademicYear[] };
+    school: School & { academic_years: AcademicYear[]; delete_scheduled_at: string | null; delete_reason: string | null };
+    grace_days: number;
+    export_enabled: boolean;
     usage: { students: number; staff: number; users: number; outstanding: number; last_login: string | null };
     subscription: { id: number; package: string | null; status: string; start: string | null; end: string | null; is_trial: boolean; max_students: number | null; max_staff: number | null } | null;
     packages: { id: number; name: string; price_monthly: string; price_yearly: string }[];
@@ -39,7 +42,7 @@ const when = (s: string | null) => (s ? new Date(s).toLocaleString() : 'Never');
 const field = 'w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm';
 
 export default function ShowSchool() {
-    const { school, usage, subscription, packages, modules, admins, ai, activity } = usePage<ShowPageProps>().props;
+    const { grace_days, export_enabled, school, usage, subscription, packages, modules, admins, ai, activity } = usePage<ShowPageProps>().props;
     const can = useCan();
     const statusClass = statusMap[school.status] ?? statusMap.inactive;
     const base = `/super-admin/schools/${school.id}`;
@@ -70,11 +73,14 @@ export default function ShowSchool() {
         }, { onSuccess: () => setPlanOpen(false) });
     };
 
-    const confirmDelete = () => {
-        if (confirm(`Delete "${school.name}"? Its people will no longer be able to sign in.`)) {
-            router.delete(base);
-        }
-    };
+    // Deleting a school: a reason and the school's name, then a waiting period
+    const scheduled = school.delete_scheduled_at;
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [exportOpen, setExportOpen] = useState(false);
+    const [exportReason, setExportReason] = useState('');
+    const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+    const delForm = useForm({ reason: '', confirm_name: '' });
+    const day = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
     return (
         <AppLayout breadcrumbs={[{ label: 'Schools', href: '/super-admin/schools' }, { label: school.name }]}>
@@ -105,7 +111,7 @@ export default function ShowSchool() {
                             <LogIn className="w-4 h-4 mr-1.5" /> Open this school
                         </Button>
                     )}
-                    {!can('platform.schools.manage') ? null : school.status === 'suspended' ? (
+                    {scheduled || !can('platform.schools.manage') ? null : school.status === 'suspended' ? (
                         <Button size="sm" variant="outline" className="text-emerald-600" onClick={() => router.patch(`${base}/activate`)}>
                             <CheckCircle className="w-4 h-4 mr-1.5" /> Activate
                         </Button>
@@ -122,7 +128,14 @@ export default function ShowSchool() {
                 </div>
             </div>
 
-            {school.status === 'suspended' && (
+            {scheduled && (
+                <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100">
+                    <p className="min-w-0 break-words"><b className="font-semibold">Scheduled for deletion on {day(scheduled)}.</b> The school is paused now and nothing is removed until then. Reason: {school.delete_reason}</p>
+                    <Button size="sm" variant="outline" onClick={() => router.post(`${base}/cancel-delete`, {}, { preserveScroll: true })}>Cancel deletion</Button>
+                </div>
+            )}
+
+            {!scheduled && school.status === 'suspended' && (
                 <div className="mb-4 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 px-4 py-3 text-sm text-red-700 dark:text-red-300">
                     This school is suspended. Nobody there can sign in until you activate it.
                 </div>
@@ -276,13 +289,65 @@ export default function ShowSchool() {
 
             <SchoolOverviewPanels />
 
-            {can('platform.schools.delete') && <div className="mt-6 rounded-lg border border-red-200 dark:border-red-900 p-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <p className="text-sm font-medium text-red-700 dark:text-red-400">Delete this school</p>
-                    <p className="text-xs text-slate-500">Removes it from the platform. Use Suspend instead if you may want it back.</p>
+            {export_enabled && can('platform.schools.delete') && (
+                <div className="mt-6 rounded-lg border border-slate-200 dark:border-slate-800 p-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Download this school's data</p>
+                        <p className="text-xs text-slate-500">A ZIP with one spreadsheet file per table. Passwords and keys are left out, and so are uploaded files. It needs a reason and is logged. Nothing changes in the school.</p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => { setExportReason(''); setExportOpen(true); }}>Download data…</Button>
                 </div>
-                <Button size="sm" variant="outline" className="text-red-600" onClick={confirmDelete}><Trash2 className="w-4 h-4 mr-1.5" /> Delete</Button>
-            </div>}
+            )}
+
+            <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Download data of {school.name}</DialogTitle></DialogHeader>
+                    <form method="post" action={`${base}/export`} onSubmit={() => setTimeout(() => setExportOpen(false), 500)} className="space-y-3">
+                        <input type="hidden" name="_token" value={csrf} />
+                        <p className="text-sm text-slate-500">The file can hold names, phone numbers and results of children, so keep it safe and delete it when you are done.</p>
+                        <div>
+                            <label htmlFor="exp-why" className="text-sm font-medium">Reason (required, at least 10 letters)</label>
+                            <Textarea id="exp-why" name="reason" rows={3} maxLength={500} value={exportReason} onChange={(e) => setExportReason(e.target.value)} />
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setExportOpen(false)}>Cancel</Button>
+                            <Button type="submit" disabled={exportReason.trim().length < 10} className="bg-indigo-600 text-white hover:bg-indigo-700">Download</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {!scheduled && can('platform.schools.delete') && (
+                <div className="mt-6 rounded-lg border border-red-200 dark:border-red-900 p-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="text-sm font-medium text-red-700 dark:text-red-400">Delete this school</p>
+                        <p className="text-xs text-slate-500">Needs a reason. The school is paused now and deleted after {grace_days} days. Until then you can cancel, and afterwards you can bring it back.</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="text-red-600" onClick={() => { delForm.reset(); delForm.clearErrors(); setDeleteOpen(true); }}><Trash2 className="w-4 h-4 mr-1.5" /> Delete…</Button>
+                </div>
+            )}
+
+            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Delete {school.name}</DialogTitle></DialogHeader>
+                    <p className="text-sm text-slate-500">The school is paused right away, so nobody there can sign in. After {grace_days} days it is deleted (hidden, not wiped, and you can bring it back from the Schools page). Until then you can cancel at any time.</p>
+                    <div>
+                        <label htmlFor="del-why" className="text-sm font-medium">Reason (required, at least 10 letters)</label>
+                        <Textarea id="del-why" rows={3} value={delForm.data.reason} maxLength={500} onChange={(e) => delForm.setData('reason', e.target.value)} />
+                        {delForm.errors.reason && <p className="text-xs text-red-600 mt-1">{delForm.errors.reason}</p>}
+                    </div>
+                    <div>
+                        <label htmlFor="del-name" className="text-sm font-medium">Type the school name to confirm</label>
+                        <Input id="del-name" value={delForm.data.confirm_name} onChange={(e) => delForm.setData('confirm_name', e.target.value)} placeholder={school.name} className="mt-1 h-9" />
+                        {delForm.errors.confirm_name && <p className="text-xs text-red-600 mt-1">{delForm.errors.confirm_name}</p>}
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+                        <Button type="button" variant="destructive" disabled={delForm.processing || delForm.data.reason.trim().length < 10 || !delForm.data.confirm_name.trim()}
+                            onClick={() => delForm.post(`${base}/schedule-delete`, { preserveScroll: true, onSuccess: () => setDeleteOpen(false) })}>Schedule deletion</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Plan dialog */}
             <Dialog open={planOpen} onOpenChange={setPlanOpen}>

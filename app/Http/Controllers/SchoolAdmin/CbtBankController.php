@@ -9,6 +9,7 @@ use App\Models\CbtQuestion;
 use App\Models\SchemeOfWork;
 use App\Models\Subject;
 use App\Services\AiService;
+use App\Services\ImageWriterService;
 use App\Services\CbtService;
 use App\Services\QuestionWriterService;
 use App\Support\SimpleXlsx;
@@ -100,6 +101,12 @@ class CbtBankController extends Controller
                 'shown' => $ai->schoolState($bank->school_id)['platform_ready'],
                 'reason' => $ai->unavailable($bank->school_id, 'questions'),
                 'level' => $bank->subject?->levelLabel() ?: null,
+                'images' => [
+                    'reason' => $ai->imageUnavailable($bank->school_id),
+                    'cost' => $ai->imageCost(),
+                    'styles' => AiStyles::choices('image'),
+                    'default_style' => AiStyles::defaultKey('image'),
+                ],
                 'styles' => AiStyles::choices('questions'),
                 'default_style' => AiStyles::defaultKey('questions'),
                 // Topics from the subject's schemes of work, offered when asking the AI
@@ -127,6 +134,18 @@ class CbtBankController extends Controller
         ], ['topic.required' => 'Type the topic the questions are about.', 'count.max' => 'Ask for at most :max at a time.']);
 
         return response()->json(['questions' => $writer->draft($bank, $request->user(), $data)]);
+    }
+
+    /** A picture the AI makes from a description. Nothing is saved: the browser shows it and the teacher may attach it to the question. */
+    public function aiImage(Request $request, CbtBank $bank, ImageWriterService $images): JsonResponse
+    {
+        $data = $request->validate([
+            'description' => 'required|string|min:5|max:600',
+            'style' => 'nullable|string|max:30',
+        ], ['description.required' => 'Describe what the picture should show.', 'description.min' => 'Describe what the picture should show.']);
+        $bank->loadMissing('subject');
+
+        return response()->json($images->make($bank->school_id, $request->user(), $data['description'], $data['style'] ?? null, $bank->subject?->name));
     }
 
     /** The questions a teacher kept from the AI's drafts, checked like any other question and saved together */
