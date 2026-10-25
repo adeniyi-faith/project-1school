@@ -117,6 +117,13 @@ class LoginController extends Controller
             ]);
         }
 
+        // Two-step sign-in: the password was right, but a code from the authenticator app is needed before this person is let in
+        if ($user->hasTwoFactor()) {
+            $request->session()->put(['two_factor.id' => $user->id, 'two_factor.remember' => $request->boolean('remember'), 'two_factor.at' => now()->timestamp]);
+
+            return redirect()->route('two-factor.login');
+        }
+
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
