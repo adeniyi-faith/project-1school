@@ -815,6 +815,9 @@ Route::middleware('auth')->group(function () {
         Route::get('fees/pay/{reference}/go',     [ParentPaymentController::class, 'go'])->name('fees.pay.go');
         Route::get('fees/pay/{reference}/result', [ParentPaymentController::class, 'result'])->name('fees.pay.result');
         Route::get('announcements', [ParentPortalController::class, 'announcements'])->name('announcements');
+        Route::get('messages',      [\App\Http\Controllers\ParentContactController::class, 'index'])->name('messages');
+        Route::post('messages',     [\App\Http\Controllers\ParentContactController::class, 'send'])->middleware('throttle:10,1')->name('messages.send');
+        Route::post('absent',       [\App\Http\Controllers\ParentContactController::class, 'absent'])->middleware('throttle:10,1')->name('absent');
         Route::get('notifications/feed', [\App\Http\Controllers\NotificationFeedController::class, 'index'])->name('notifications.feed');
     });
 
