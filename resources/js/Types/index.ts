@@ -403,7 +403,7 @@ export interface TermReport {
 // ───────────── Invoices, ledger and scholarships ─────────────
 
 export type InvoiceStatus = 'unpaid' | 'partial' | 'paid' | 'void';
-export type LedgerType = 'charge' | 'fine' | 'payment' | 'discount' | 'reversal';
+export type LedgerType = 'charge' | 'fine' | 'payment' | 'discount' | 'reversal' | 'credit' | 'refund';
 export type PaymentMethod = 'cash' | 'bank_transfer' | 'pos' | 'card' | 'online' | 'ussd';
 
 export interface InvoiceRow {

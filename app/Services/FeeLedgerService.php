@@ -196,6 +196,10 @@ class FeeLedgerService
         if ($entry->type === 'reversal') {
             throw ValidationException::withMessages(['entry' => 'A reversal cannot itself be reversed. Add a new line instead.']);
         }
+        if (in_array($entry->type, ['credit', 'refund'], true)) {
+            // The two lines of a refund belong together; reversing one would leave the other hanging
+            throw ValidationException::withMessages(['entry' => 'A refund cannot be reversed. If it was a mistake, record a payment for the same amount.']);
+        }
         if ($entry->type === 'charge') {
             // Taking the charge back out would leave a zero balance that looks like "paid" when nothing was paid
             throw ValidationException::withMessages(['entry' => 'The fee itself cannot be reversed. Cancel the invoice instead.']);
@@ -217,6 +221,46 @@ class FeeLedgerService
             $this->refresh($invoice);
 
             return $reversal;
+        });
+    }
+
+    /**
+     * Give money back to the family. Never more than has been paid (after earlier refunds).
+     * By default the fee is lowered by the same amount (a "credit" line), because a refund usually
+     * means the school is no longer charging for that part. Both lines are added together or not at all.
+     */
+    public function refund(Invoice $invoice, float $amount, string $method, string $date, string $reason, ?string $reference, bool $lowerFee, User $by): LedgerEntry
+    {
+        $amount = round($amount, 2);
+        if ($amount <= 0) {
+            throw ValidationException::withMessages(['amount' => 'Enter an amount above zero.']);
+        }
+
+        return DB::transaction(function () use ($invoice, $amount, $method, $date, $reason, $reference, $lowerFee, $by) {
+            $invoice = Invoice::whereKey($invoice->id)->lockForUpdate()->firstOrFail();
+            $this->ensureOpen($invoice);
+
+            $paid = $this->netPaid($invoice);
+            if ($amount > $paid + 0.001) {
+                throw ValidationException::withMessages([
+                    'amount' => $paid > 0
+                        ? 'Only ₦' . number_format($paid, 2) . ' has been paid on this invoice, so that is the most that can be refunded.'
+                        : 'Nothing has been paid on this invoice, so there is nothing to refund.',
+                ]);
+            }
+
+            if ($lowerFee) {
+                $this->line($invoice, 'credit', -$amount, $by, ['entry_date' => $date, 'note' => 'Fee lowered for refund: ' . $reason]);
+            }
+            $entry = $this->line($invoice, 'refund', $amount, $by, [
+                'method' => $method,
+                'entry_date' => $date,
+                'reference' => $reference ?: 'RFD-' . now()->format('ymd') . '-' . strtoupper(Str::random(6)),
+                'note' => $reason,
+            ]);
+            $this->refresh($invoice);
+
+            return $entry;
         });
     }
 
@@ -269,15 +313,16 @@ class FeeLedgerService
         $payments = LedgerEntry::where('invoice_id', $invoice->id)->where('type', 'payment')->sum('amount');
         $reversed = LedgerEntry::where('invoice_id', $invoice->id)->where('type', 'reversal')
             ->whereHas('reverses', fn ($q) => $q->where('type', 'payment'))->sum('amount');
+        $refunded = LedgerEntry::where('invoice_id', $invoice->id)->where('type', 'refund')->sum('amount');
 
-        return round(-((float) $payments + (float) $reversed), 2);
+        return round(-((float) $payments + (float) $reversed + (float) $refunded), 2);
     }
 
-    /** Ledger lines that are money received: payments, plus reversals of payments (which take money back out). */
+    /** Ledger lines that are money received: payments, plus reversals of payments and refunds (which take money back out). */
     public static function moneyIn(): Builder
     {
         return LedgerEntry::query()->where(fn ($q) => $q
-            ->where('type', 'payment')
+            ->whereIn('type', ['payment', 'refund'])
             ->orWhere(fn ($r) => $r->where('type', 'reversal')->whereHas('reverses', fn ($p) => $p->where('type', 'payment'))));
     }
 
@@ -319,7 +364,8 @@ class FeeLedgerService
         $rows = $invoices->map(function (Invoice $invoice) {
             $payments = $invoice->entries->where('type', 'payment');
             $paymentReversals = $invoice->entries->where('type', 'reversal')->whereIn('reverses_id', $payments->pluck('id'));
-            $paid = round(-($payments->sum('amount') + $paymentReversals->sum('amount')), 2);
+            $refunds = $invoice->entries->where('type', 'refund');
+            $paid = round(-($payments->sum('amount') + $paymentReversals->sum('amount') + $refunds->sum('amount')), 2);
             $lastPaid = $payments->max('entry_date');
 
             return [
