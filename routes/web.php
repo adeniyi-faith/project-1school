@@ -47,6 +47,7 @@ use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsCont
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\SchoolAdmin\AdmissionInquiryController;
 use App\Http\Controllers\SchoolAdmin\AdmissionPipelineController;
+use App\Http\Controllers\SchoolAdmin\NewTermController;
 use App\Http\Controllers\SchoolAdmin\PromotionController;
 use App\Http\Controllers\SchoolAdmin\BroadsheetController;
 use App\Http\Controllers\SchoolAdmin\CertificateController;
@@ -314,6 +315,8 @@ Route::middleware('auth')->group(function () {
             Route::get('exams/{exam}/results',               [ExamController::class, 'results'])->middleware('permission:results.view')->name('exams.results');
             Route::post('exams/{exam}/copy-to-results',      [ExamController::class, 'copyToResults'])->middleware('permission:marks.entry')->name('exams.copy-to-results');
             // School years, terms, score setups and grade scales
+            Route::get('new-term',                             [NewTermController::class, 'index'])->middleware('permission:exams.view')->name('new-term');
+            Route::post('new-term/tick',                       [NewTermController::class, 'toggle'])->middleware('permission:exams.view')->name('new-term.tick');
             Route::get('academics/terms',                      [AcademicSetupController::class, 'terms'])->middleware('permission:exams.view')->name('academics.terms');
             Route::post('academics/years',                     [AcademicSetupController::class, 'storeYear'])->middleware('permission:exams.edit')->name('academics.years.store');
             Route::put('academics/terms/{term}',               [AcademicSetupController::class, 'updateTerm'])->middleware('permission:exams.edit')->name('academics.terms.update');
