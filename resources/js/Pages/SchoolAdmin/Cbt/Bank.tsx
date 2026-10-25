@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EmptyState, PageHeader, Panel, Pill, Segmented } from '@/components/app/kit';
 import AiQuestionWriter, { type AiWriterInfo } from '@/components/cbt/AiQuestionWriter';
+import PictureMaker from '@/components/cbt/PictureMaker';
 import { ArrowLeft, Download, FileUp, ImagePlus, Pencil, Plus, Search, Settings2, Sparkles, Trash2, X } from 'lucide-react';
 import type { CbtDifficulty, CbtQuestionRow, CbtQuestionType } from '@/Types';
 
@@ -141,7 +142,7 @@ export default function CbtBank({ bank, questions, topics, filters, subjects, ca
                 </Panel>
             </div>
 
-            {editing && <QuestionDialog key={editing === 'new' ? 'new' : editing.id} url={url} question={editing === 'new' ? null : editing} topics={topics} maxOptions={maxOptions} onClose={() => setEditing(null)} />}
+            {editing && <QuestionDialog key={editing === 'new' ? 'new' : editing.id} url={url} question={editing === 'new' ? null : editing} topics={topics} maxOptions={maxOptions} images={ai.shown ? ai.images : undefined} onClose={() => setEditing(null)} />}
             {importing && <ImportDialog url={url} topics={topics} onClose={() => setImporting(false)} />}
             {writing && <AiQuestionWriter url={url} info={ai} topics={topics} onClose={() => setWriting(false)} />}
             {settings && <BankSettings bank={bank} subjects={subjects} onClose={() => setSettings(false)} />}
@@ -155,7 +156,7 @@ interface QuestionForm {
     image: File | null; remove_image: boolean;
 }
 
-function QuestionDialog({ url, question, topics, maxOptions, onClose }: { url: string; question: CbtQuestionRow | null; topics: string[]; maxOptions: number; onClose: () => void }) {
+function QuestionDialog({ url, question, topics, maxOptions, images, onClose }: { url: string; question: CbtQuestionRow | null; topics: string[]; maxOptions: number; images: AiWriterInfo['images']; onClose: () => void }) {
     const form = useForm<QuestionForm>({
         type: question?.type ?? 'objective', marking_guide: question?.marking_guide ?? '',
         text: question?.text ?? '', options: question?.options.length ? question.options : ['', '', '', ''], correct_option: question?.correct_option ?? 0,
@@ -211,6 +212,9 @@ function QuestionDialog({ url, question, topics, maxOptions, onClose }: { url: s
                                 <label className="flex items-center gap-2 text-sm"><Checkbox checked={d.remove_image} onCheckedChange={v => form.setData('remove_image', !!v)} /> Remove the picture</label>
                             )}
                         </div>
+                        {images && !images.reason && (
+                            <PictureMaker url={url} info={images} onUse={file => form.setData(data => ({ ...data, image: file, remove_image: false }))} />
+                        )}
                         {errors.image && <p className="text-xs text-red-500">{errors.image}</p>}
                     </div>
 

@@ -26,7 +26,16 @@ class AiService
         'questions' => 'Question writer',
         'site_builder' => 'Website builder',
         'chat_widget' => 'Website chat assistant',
+        'images' => 'Pictures',
     ];
+
+    /** The picture model and what Google charges for one picture (US dollars), as the platform owner can change them */
+    public const DEFAULT_IMAGE_MODEL = 'gemini-3.1-flash-lite-image';
+
+    public const DEFAULT_IMAGE_PRICE = 0.0336;
+
+    /** Pictures cost far more than text, so each school also gets a monthly picture limit, which the platform owner can change */
+    public const DEFAULT_IMAGE_CAP = 50;
 
     /** Two kinds of model: one for long careful writing, one for short quick jobs */
     public const DEFAULT_MODELS = ['writing' => 'gemini-3.8-flash', 'quick' => 'gemini-3.5-flash-lite'];
@@ -71,6 +80,9 @@ class AiService
             'key_hint' => $key ? '…'.substr($key, -4) : null,
             'models' => $models,
             'prices' => $prices,
+            'image_model' => ($s['ai_model_image'] ?? '') ?: self::DEFAULT_IMAGE_MODEL,
+            'image_price' => is_numeric($s['ai_price_image'] ?? null) ? (float) $s['ai_price_image'] : self::DEFAULT_IMAGE_PRICE,
+            'image_cap' => is_numeric($s['ai_image_cap'] ?? null) ? (int) $s['ai_image_cap'] : self::DEFAULT_IMAGE_CAP,
             'default_limit' => is_numeric($s['ai_default_limit'] ?? null) ? (float) $s['ai_default_limit'] : self::DEFAULT_LIMIT_NAIRA,
             'naira_per_dollar' => is_numeric($s['ai_naira_per_dollar'] ?? null) ? (float) $s['ai_naira_per_dollar'] : self::DEFAULT_NAIRA_PER_DOLLAR,
         ];
@@ -181,6 +193,61 @@ class AiService
         $log($answer, null);
 
         return $data;
+    }
+
+    /** What one picture costs a school, in naira (a flat price per picture) */
+    public function imageCost(?array $settings = null): float
+    {
+        $settings ??= $this->settings();
+
+        return round($settings['image_price'] * $settings['naira_per_dollar'], 2);
+    }
+
+    public function imagesThisMonth(int $schoolId): int
+    {
+        return AiUsage::withoutGlobalScopes()->where('school_id', $schoolId)->where('feature', 'images')->where('ok', true)->where('created_at', '>=', now()->startOfMonth())->count();
+    }
+
+    /** Null when this school may make a picture now; otherwise why not (tool off, allowance spent, or the picture limit reached) */
+    public function imageUnavailable(int $schoolId): ?string
+    {
+        if ($why = $this->unavailable($schoolId, 'images')) {
+            return $why;
+        }
+        $cap = $this->settings()['image_cap'];
+
+        return $this->imagesThisMonth($schoolId) >= $cap
+            ? "Your school has made its {$cap} pictures for this month. It starts again on the 1st."
+            : null;
+    }
+
+    /**
+     * Make one picture. Refuses like ask() does, and also when the school has reached its picture limit.
+     * A picture costs a flat price, charged only when Google returned one. Returns the picture as base64 with its type.
+     *
+     * @return array{mime: string, data: string}
+     */
+    public function askImage(int $schoolId, ?int $userId, string $prompt): array
+    {
+        if ($why = $this->imageUnavailable($schoolId)) {
+            throw ValidationException::withMessages(['ai' => $why]);
+        }
+        $settings = $this->settings();
+        $log = fn (array $tokens, ?string $error) => AiUsage::create([
+            'school_id' => $schoolId, 'user_id' => $userId, 'feature' => 'images', 'model' => $settings['image_model'],
+            'input_tokens' => $tokens['input_tokens'], 'output_tokens' => $tokens['output_tokens'],
+            'cost_naira' => $error === null ? $this->imageCost($settings) : 0, 'ok' => $error === null, 'error' => $error ? mb_strimwidth($error, 0, 300) : null,
+        ]);
+
+        try {
+            $picture = $this->gemini->generateImage((string) $this->key(), $settings['image_model'], $prompt);
+        } catch (AiFailure $e) {
+            $log($e->tokens, $e->getMessage());
+            throw ValidationException::withMessages(['ai' => $e->getMessage()]);
+        }
+        $log($picture, null);
+
+        return ['mime' => $picture['mime'], 'data' => $picture['data']];
     }
 
     /** A tiny request to prove the key and model work. Not logged against any school. Returns the reply or throws AiFailure. */
