@@ -103,12 +103,12 @@ export default function ExamsIndex({ exams, classes, terms, filters, stats, part
     ];
 
     return (
-        <AppLayout title="Examinations">
+        <AppLayout title="Class Test Marks">
             <div className="space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Examinations</h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{stats.total} exams configured</p>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Class Test Marks</h1>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{stats.total} tests and exams recorded here (computer tests and printed papers are under Learning)</p>
                     </div>
                     <div className="flex gap-2">
                         <Link href="/school/academics/assessment">
