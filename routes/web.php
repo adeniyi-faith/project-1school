@@ -270,6 +270,7 @@ Route::middleware('auth')->group(function () {
             Route::post('cbt/banks/{bank}/questions/{question}',      [CbtBankController::class, 'updateQuestion'])->middleware('permission:cbt.manage')->name('cbt.questions.update');
             Route::delete('cbt/banks/{bank}/questions/{question}',    [CbtBankController::class, 'destroyQuestion'])->middleware('permission:cbt.manage')->name('cbt.questions.destroy');
             Route::post('cbt/banks/{bank}/ai',                        [CbtBankController::class, 'aiDraft'])->middleware(['permission:cbt.manage', 'throttle:20,1'])->name('cbt.questions.ai');
+            Route::post('cbt/banks/{bank}/ai-image',                        [CbtBankController::class, 'aiImage'])->middleware(['permission:cbt.manage', 'throttle:10,1'])->name('cbt.questions.ai-image');
             Route::post('cbt/banks/{bank}/import',                    [CbtBankController::class, 'import'])->middleware('permission:cbt.manage')->name('cbt.questions.import');
             Route::get('cbt/papers',                                  [ExamPaperController::class, 'index'])->middleware('permission:cbt.view')->name('cbt.papers');
             Route::get('cbt/papers/new',                              [ExamPaperController::class, 'create'])->middleware('permission:cbt.manage')->name('cbt.papers.create');
