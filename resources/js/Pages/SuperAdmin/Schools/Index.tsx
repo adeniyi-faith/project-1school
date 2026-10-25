@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { PageProps, PaginatedResponse, School as SchoolType } from '@/Types';
+import { Pager } from '@/components/app/Pager';
 
 interface SchoolsPageProps extends PageProps {
     schools: PaginatedResponse<SchoolType>;
@@ -221,21 +222,7 @@ export default function SchoolsIndex() {
                 </Table>
 
                 {/* Pagination */}
-                {schools.meta.last_page > 1 && (
-                    <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-800">
-                        <p className="text-xs text-slate-500">
-                            Showing {schools.meta.from}–{schools.meta.to} of {schools.meta.total}
-                        </p>
-                        <div className="flex gap-1">
-                            {schools.links.prev && (
-                                <Button variant="outline" size="sm" onClick={() => router.get(schools.links.prev!)}>Previous</Button>
-                            )}
-                            {schools.links.next && (
-                                <Button variant="outline" size="sm" onClick={() => router.get(schools.links.next!)}>Next</Button>
-                            )}
-                        </div>
-                    </div>
-                )}
+                <Pager meta={schools.meta} links={schools.links} />
             </div>
         </AppLayout>
     );

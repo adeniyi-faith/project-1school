@@ -14,6 +14,7 @@ import { naira } from '@/lib/format';
 import { PlanPartsEditor, planPayload } from '@/components/fees/Instalments';
 import { CalendarClock, FileText, Gift, Plus } from 'lucide-react';
 import type { InvoiceRow, PaymentPlanOption, PlanPart } from '@/Types';
+import { Pager } from '@/components/app/Pager';
 
 interface Structure { id: number; class_id: number; class_name: string | null; name: string; amount: number; academic_year: string; due_date: string | null }
 interface TermOption { id: number; label: string; is_current: boolean; start: string | null; end: string | null }
@@ -196,15 +197,7 @@ export default function Invoices({ invoices, stats, classes, terms, structures, 
                             </Table>
                         </div>
                     )}
-                    {invoices.meta.last_page > 1 && (
-                        <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-sm text-slate-500 dark:border-white/[0.06]">
-                            <span>{invoices.meta.from}–{invoices.meta.to} of {invoices.meta.total}</span>
-                            <div className="flex gap-2">
-                                <Button variant="outline" size="sm" disabled={!invoices.links.prev} onClick={() => invoices.links.prev && router.visit(invoices.links.prev)}>Previous</Button>
-                                <Button variant="outline" size="sm" disabled={!invoices.links.next} onClick={() => invoices.links.next && router.visit(invoices.links.next)}>Next</Button>
-                            </div>
-                        </div>
-                    )}
+                    <Pager meta={invoices.meta} links={invoices.links} />
                 </Panel>
             </div>
 

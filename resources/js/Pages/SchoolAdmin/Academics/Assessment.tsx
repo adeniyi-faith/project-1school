@@ -12,6 +12,7 @@ import { PageHeader, Panel, Pill } from '@/components/app/kit';
 import { cn } from '@/lib/utils';
 import { Pencil, Plus, Star, Trash2, X } from 'lucide-react';
 import type { AssessmentComponent, AssessmentPresets, AssessmentScheme, BehaviourTrait, GradeBand, GradingScheme } from '@/Types';
+import { FieldError as ErrorText } from '@/components/app/FormField';
 
 interface ClassRow { id: number; name: string; assessment_scheme_id: number | null; grading_scheme_id: number | null }
 interface SubjectRow { id: number; name: string; class_id: number | null; class_name: string | null; assessment_scheme_id: number | null; classes?: { id: number; name: string }[] }
@@ -29,10 +30,6 @@ interface Props {
 }
 
 const DEFAULT = 'default';
-
-function ErrorText({ children }: { children?: string }) {
-    return children ? <p className="text-xs text-red-500">{children}</p> : null;
-}
 
 /** Errors for list rows come back as "components.2.max_score"; show the first one for the list */
 function firstRowError(errors: Record<string, string>, prefix: string) {
