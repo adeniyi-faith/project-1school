@@ -19,6 +19,10 @@ export interface AiWriterInfo {
     level: string | null;
     /** Topics from the subject's schemes of work */
     topics: string[];
+    styles?: { key: string; label: string; hint: string }[];
+    default_style?: string;
+    /** Making a picture: why not (or null), what one costs a school in naira, and the picture styles */
+    images?: { reason: string | null; cost: number; styles: { key: string; label: string; hint: string }[]; default_style: string };
 }
 
 interface Draft {
@@ -40,7 +44,7 @@ const PARTS = [{ value: '0', label: 'No parts' }, { value: '2', label: '(a) and 
 
 /** Ask the AI for questions on a topic, check and change them, then add the ones worth keeping to the bank */
 export default function AiQuestionWriter({ url, info, topics, onClose }: { url: string; info: AiWriterInfo; topics: string[]; onClose: () => void }) {
-    const [ask, setAsk] = useState({ type: 'objective' as CbtQuestionType, count: '10', topic: '', difficulty: 'mixed', level: info.level ?? '', parts: '3', marks: '10', instructions: '' });
+    const [ask, setAsk] = useState({ type: 'objective' as CbtQuestionType, count: '10', topic: '', difficulty: 'mixed', level: info.level ?? '', parts: '3', marks: '10', instructions: '', style: info.default_style ?? '' });
     const [drafts, setDrafts] = useState<Draft[]>([]);
     const [busy, setBusy] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -57,7 +61,7 @@ export default function AiQuestionWriter({ url, info, topics, onClose }: { url: 
         try {
             const { data } = await axios.post<{ questions: Omit<Draft, 'keep'>[] }>(`${url}/ai`, {
                 type: ask.type, count: Number(ask.count), topic: ask.topic, difficulty: ask.difficulty, level: ask.level || null,
-                parts: theory ? Number(ask.parts) : null, marks: theory ? Number(ask.marks) : null, instructions: ask.instructions || null,
+                parts: theory ? Number(ask.parts) : null, marks: theory ? Number(ask.marks) : null, instructions: ask.instructions || null, style: ask.style || null,
             });
             setDrafts(prev => [...prev, ...data.questions.map(q => ({ ...q, keep: true }))]);
             setStage('review');
@@ -116,6 +120,16 @@ export default function AiQuestionWriter({ url, info, topics, onClose }: { url: 
                                 <Input id="ai-count" type="number" min={1} max={theory ? 10 : 30} value={ask.count} onChange={e => setAsk({ ...ask, count: e.target.value })} />
                                 <p className="text-xs text-slate-500">Up to {theory ? 10 : 30} at a time.</p>
                             </div>
+                            {(info.styles?.length ?? 0) > 0 && (
+                                <div className="space-y-1.5 sm:col-span-2">
+                                    <Label>Style of questions</Label>
+                                    <Select items={info.styles!.map(x => ({ value: x.key, label: x.label }))} value={ask.style} onValueChange={v => v && setAsk({ ...ask, style: v })}>
+                                        <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                                        <SelectContent>{info.styles!.map(x => <SelectItem key={x.key} value={x.key}>{x.label}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-slate-500">{info.styles!.find(x => x.key === ask.style)?.hint}</p>
+                                </div>
+                            )}
                             <div className="space-y-1.5">
                                 <Label>Difficulty</Label>
                                 <Select items={LEVELS} value={ask.difficulty} onValueChange={v => v && setAsk({ ...ask, difficulty: v })}>

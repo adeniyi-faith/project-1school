@@ -14,6 +14,7 @@ use App\Models\SchoolSubscription;
 use App\Models\Staff;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\SchoolLifecycleService;
 use App\Services\SchoolOverviewService;
 use App\Services\StaffAccountService;
 use App\Support\ActingSchool;
@@ -30,8 +31,11 @@ use Inertia\Response;
 
 class SchoolController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, SchoolLifecycleService $lifecycle): Response
     {
+        // Schools whose waiting period is over are hidden whenever this list is opened (no scheduler needed)
+        $lifecycle->purgeDue($request->user());
+
         // Staff limited to some schools only ever get their own
         $mine = PlatformAccess::schools($request->user());
         $schools = (clone $mine)->withTrashed(false)
@@ -57,6 +61,7 @@ class SchoolController extends Controller
         ]))->all();
 
         return Inertia::render('SuperAdmin/Schools/Index', [
+            'deleted' => School::onlyTrashed()->latest('deleted_at')->limit(10)->get(['id', 'name', 'deleted_at', 'delete_reason']),
             'schools' => [
                 'data'  => $rows,
                 'meta'  => [
@@ -145,8 +150,9 @@ class SchoolController extends Controller
         return $flash ? $redirect->with('login_details', $flash) : $redirect;
     }
 
-    public function show(School $school, SchoolOverviewService $overview): Response
+    public function show(Request $request, School $school, SchoolOverviewService $overview, SchoolLifecycleService $lifecycle): Response
     {
+        $lifecycle->purgeDue($request->user());
         $school->load(['academicYears' => fn ($q) => $q->latest()]);
         $id = $school->id;
 
@@ -224,7 +230,11 @@ class SchoolController extends Controller
 
     public function update(SchoolRequest $request, School $school): RedirectResponse
     {
-        $school->update($request->validated());
+        $data = $request->validated();
+        if ($school->delete_scheduled_at) {
+            unset($data['status']); // stays paused until the deletion is cancelled
+        }
+        $school->update($data);
         $changed = $school->getChanges();
         unset($changed['updated_at']);
 
@@ -253,6 +263,10 @@ class SchoolController extends Controller
 
     public function activate(Request $request, School $school): RedirectResponse
     {
+        if ($school->delete_scheduled_at) {
+            return back()->with('error', 'This school is scheduled for deletion. Cancel the deletion first.');
+        }
+
         $school->update(['status' => 'active']);
 
         activity()
@@ -263,12 +277,10 @@ class SchoolController extends Controller
         return back()->with('success', "School \"{$school->name}\" activated.");
     }
 
+    /** Deleting is never immediate: it is scheduled from the school's own page, with a reason and a waiting period */
     public function destroy(School $school): RedirectResponse
     {
-        $school->delete();
-
-        return redirect()
-            ->route('super-admin.schools.index')
-            ->with('success', "School deleted.");
+        return redirect()->route('super-admin.schools.show', $school)
+            ->with('info', 'To delete a school, schedule the deletion here. It needs a reason and waits '.SchoolLifecycleService::GRACE_DAYS.' days.');
     }
 }

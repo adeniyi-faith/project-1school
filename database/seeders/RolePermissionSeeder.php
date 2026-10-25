@@ -27,7 +27,7 @@ class RolePermissionSeeder extends Seeder
         'admissions.manage',
 
         // Staff
-        'staff.view', 'staff.create', 'staff.edit', 'staff.delete',
+        'staff.view', 'staff.create', 'staff.edit', 'staff.delete', 'staff.idcard',
 
         // Attendance
         'attendance.view', 'attendance.mark', 'attendance.report', 'attendance.export',
@@ -107,7 +107,7 @@ class RolePermissionSeeder extends Seeder
         'principal' => [
             'academic-years.view', 'users.view',
             'students.view', 'students.export', 'students.idcard', 'students.certificates', 'admissions.manage',
-            'staff.view',
+            'staff.view', 'staff.idcard',
             'attendance.view', 'attendance.report', 'attendance.export',
             'timetable.view',
             'exams.view', 'marks.view', 'results.view', 'results.publish', 'results.lock', 'reportcard.generate', 'cbt.view',

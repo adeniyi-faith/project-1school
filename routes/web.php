@@ -4,6 +4,8 @@ use App\Http\Controllers\Auth\DemoController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
+use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\SchoolAdmin\AcademicSetupController;
 use App\Http\Controllers\SchoolAdmin\AttendanceController;
 use App\Http\Controllers\SchoolAdmin\ExamController;
@@ -35,6 +37,7 @@ use App\Http\Controllers\SchoolAdmin\SectionController;
 use App\Http\Controllers\SchoolAdmin\ShiftController;
 use App\Http\Controllers\SchoolAdmin\MyClassesController;
 use App\Http\Controllers\SchoolAdmin\StaffController;
+use App\Http\Controllers\SchoolAdmin\StaffIdCardController;
 use App\Http\Controllers\SchoolAdmin\StudentController;
 use App\Http\Controllers\SchoolAdmin\StudentImportController;
 use App\Http\Controllers\SchoolAdmin\StudentLoginController;
@@ -47,6 +50,7 @@ use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsCont
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\SchoolAdmin\AdmissionInquiryController;
 use App\Http\Controllers\SchoolAdmin\AdmissionPipelineController;
+use App\Http\Controllers\SchoolAdmin\OverviewController;
 use App\Http\Controllers\SchoolAdmin\NewTermController;
 use App\Http\Controllers\SchoolAdmin\PromotionController;
 use App\Http\Controllers\SchoolAdmin\BroadsheetController;
@@ -65,6 +69,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SchoolAdmin\OnlinePaymentController;
 use App\Http\Controllers\SchoolAdmin\PaymentPlanController;
 use App\Http\Controllers\SchoolAdmin\StaffHomeController;
+use App\Http\Controllers\SchoolAdmin\TodayCollectionsController;
 use App\Http\Controllers\SchoolAdmin\HouseController;
 use App\Http\Controllers\SchoolAdmin\ClubController;
 use App\Http\Controllers\SchoolAdmin\IdCardController;
@@ -113,6 +118,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'store']);
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:5,10');
+    Route::get('/two-factor-challenge', [TwoFactorChallengeController::class, 'create'])->name('two-factor.login');
+    Route::post('/two-factor-challenge', [TwoFactorChallengeController::class, 'store'])->middleware('throttle:20,1');
     Route::get('/forgot-password', [PasswordResetController::class, 'forgot'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:5,10')->name('password.email');
     Route::get('/reset-password/{token}', [PasswordResetController::class, 'reset'])->name('password.reset');
@@ -137,6 +144,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile',                   [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/password/change',           [ProfileController::class, 'changePasswordPage'])->name('password.change');
     Route::put('/profile/password',          [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::get('/security',                  [TwoFactorController::class, 'show'])->name('security');
+    Route::post('/security/start',           [TwoFactorController::class, 'start'])->name('security.start');
+    Route::post('/security/confirm',         [TwoFactorController::class, 'confirm'])->middleware('throttle:10,1')->name('security.confirm');
+    Route::post('/security/recovery-codes',  [TwoFactorController::class, 'regenerate'])->middleware('throttle:10,1')->name('security.recovery');
+    Route::delete('/security',               [TwoFactorController::class, 'disable'])->middleware('throttle:10,1')->name('security.disable');
 
     Route::get('/dashboard', function () {
         $user = auth()->user();
@@ -202,6 +214,11 @@ Route::middleware('auth')->group(function () {
             Route::post('id-cards/designs/try',          [IdCardController::class, 'tryDesign'])->middleware('permission:students.idcard')->name('id-cards.designs.try');
             Route::put('id-cards/designs/{design}',      [IdCardController::class, 'saveDesign'])->middleware('permission:settings.edit')->name('id-cards.designs.update');
             Route::delete('id-cards/designs/{design}',   [IdCardController::class, 'deleteDesign'])->middleware('permission:settings.edit')->name('id-cards.designs.destroy');
+            Route::get('id-cards/staff',                 [StaffIdCardController::class, 'index'])->middleware('permission:staff.idcard')->name('id-cards.staff');
+            Route::post('id-cards/staff/issue-missing',  [StaffIdCardController::class, 'issueMissing'])->middleware('permission:staff.idcard')->name('id-cards.staff.issue-missing');
+            Route::get('id-cards/staff/print',           [StaffIdCardController::class, 'print'])->middleware('permission:staff.idcard')->name('id-cards.staff.print');
+            Route::post('id-cards/staff/{staff}/issue',  [StaffIdCardController::class, 'issue'])->middleware('permission:staff.idcard')->name('id-cards.staff.issue');
+            Route::post('id-cards/staff/{card}/revoke',  [StaffIdCardController::class, 'revoke'])->middleware('permission:staff.idcard')->name('id-cards.staff.revoke');
             Route::get('id-cards/scan',                  [IdCardController::class, 'scanPage'])->middleware('permission:students.view')->name('id-cards.scan');
             Route::post('id-cards/lookup',               [IdCardController::class, 'lookup'])->middleware(['permission:students.view', 'throttle:120,1'])->name('id-cards.lookup');
             Route::post('id-cards/{card}/revoke',        [IdCardController::class, 'revoke'])->middleware('permission:students.idcard')->name('id-cards.revoke');
@@ -253,6 +270,7 @@ Route::middleware('auth')->group(function () {
             Route::post('cbt/banks/{bank}/questions/{question}',      [CbtBankController::class, 'updateQuestion'])->middleware('permission:cbt.manage')->name('cbt.questions.update');
             Route::delete('cbt/banks/{bank}/questions/{question}',    [CbtBankController::class, 'destroyQuestion'])->middleware('permission:cbt.manage')->name('cbt.questions.destroy');
             Route::post('cbt/banks/{bank}/ai',                        [CbtBankController::class, 'aiDraft'])->middleware(['permission:cbt.manage', 'throttle:20,1'])->name('cbt.questions.ai');
+            Route::post('cbt/banks/{bank}/ai-image',                        [CbtBankController::class, 'aiImage'])->middleware(['permission:cbt.manage', 'throttle:10,1'])->name('cbt.questions.ai-image');
             Route::post('cbt/banks/{bank}/import',                    [CbtBankController::class, 'import'])->middleware('permission:cbt.manage')->name('cbt.questions.import');
             Route::get('cbt/papers',                                  [ExamPaperController::class, 'index'])->middleware('permission:cbt.view')->name('cbt.papers');
             Route::get('cbt/papers/new',                              [ExamPaperController::class, 'create'])->middleware('permission:cbt.manage')->name('cbt.papers.create');
@@ -301,6 +319,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('students/{student}/photo',          [StudentPhotoController::class, 'destroy'])->middleware('permission:students.edit')->name('students.photo.destroy');
 
             // ── Year-end promotion: move a class up, keep some back, graduate the top class ──
+            Route::get('overview',                          [OverviewController::class, 'index'])->middleware('permission:results.publish')->name('overview');
             Route::get('promotions',                        [PromotionController::class, 'index'])->middleware('permission:students.promote')->name('promotions.index');
             Route::post('promotions',                       [PromotionController::class, 'store'])->middleware('permission:students.promote')->name('promotions.store');
             Route::post('promotions/{promotionBatch}/bill-fees', [PromotionController::class, 'billFees'])->middleware('permission:fees.structure')->name('promotions.bill-fees');
@@ -567,6 +586,8 @@ Route::middleware('auth')->group(function () {
             Route::post('fees/scholarships/awards',          [ScholarshipController::class, 'award'])->middleware('permission:fees.waiver')->name('fees.scholarships.award');
             Route::post('fees/scholarships/awards/{award}/revoke', [ScholarshipController::class, 'revoke'])->middleware('permission:fees.waiver')->name('fees.scholarships.revoke');
 
+            Route::get('fees/collections-today',             [TodayCollectionsController::class, 'index'])->middleware('permission:fees.reports')->name('fees.collections-today');
+            Route::get('fees/collections-today/pdf',         [TodayCollectionsController::class, 'pdf'])->middleware('permission:fees.reports')->name('fees.collections-today.pdf');
             Route::get('fees/outstanding',                   [FeePaymentController::class, 'outstanding'])->middleware('permission:fees.reports')->name('fees.outstanding');
 
             // Communication
@@ -804,6 +825,9 @@ Route::middleware('auth')->group(function () {
         Route::get('fees/pay/{reference}/go',     [ParentPaymentController::class, 'go'])->name('fees.pay.go');
         Route::get('fees/pay/{reference}/result', [ParentPaymentController::class, 'result'])->name('fees.pay.result');
         Route::get('announcements', [ParentPortalController::class, 'announcements'])->name('announcements');
+        Route::get('messages',      [\App\Http\Controllers\ParentContactController::class, 'index'])->name('messages');
+        Route::post('messages',     [\App\Http\Controllers\ParentContactController::class, 'send'])->middleware('throttle:10,1')->name('messages.send');
+        Route::post('absent',       [\App\Http\Controllers\ParentContactController::class, 'absent'])->middleware('throttle:10,1')->name('absent');
         Route::get('notifications/feed', [\App\Http\Controllers\NotificationFeedController::class, 'index'])->name('notifications.feed');
     });
 
@@ -823,6 +847,11 @@ Route::middleware('auth')->group(function () {
             Route::post('leave-school', [SchoolController::class, 'leave'])->name('schools.leave');
             Route::patch('schools/{school}/suspend', [SchoolController::class, 'suspend'])->name('schools.suspend');
             Route::patch('schools/{school}/activate', [SchoolController::class, 'activate'])->name('schools.activate');
+
+            // Deleting a school: scheduled with a reason, waits, can be cancelled or restored
+            Route::post('schools/{school}/schedule-delete',   [\App\Http\Controllers\SuperAdmin\SchoolLifecycleController::class, 'scheduleDeletion'])->name('schools.schedule-delete');
+            Route::post('schools/{school}/cancel-delete',     [\App\Http\Controllers\SuperAdmin\SchoolLifecycleController::class, 'cancelDeletion'])->name('schools.cancel-delete');
+            Route::post('deleted-schools/{school}/restore',   [\App\Http\Controllers\SuperAdmin\SchoolLifecycleController::class, 'restore'])->name('schools.restore');
 
             // School 360: tags, account manager and private notes
             Route::patch('schools/{school}/profile',              [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'profile'])->name('schools.profile');
@@ -908,6 +937,7 @@ Route::middleware('auth')->group(function () {
             Route::patch('users/{user}/suspend',         [UserManagementController::class, 'suspend'])->name('users.suspend');
             Route::patch('users/{user}/activate',        [UserManagementController::class, 'activate'])->name('users.activate');
             Route::patch('users/{user}/reset-password',  [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
+            Route::patch('users/{user}/two-factor/disable', [UserManagementController::class, 'disableTwoFactor'])->name('users.two-factor.disable');
         });
 });
 
