@@ -227,7 +227,7 @@ export const navGroups: NavGroup[] = [
         title: 'Admin',
         folded: true,
         items: [
-            { label: 'Settings',      href: '/school/settings',              icon: Settings, roles: ['school-admin'], exact: true },
+            { label: 'Settings',      href: '/school/settings/all',          icon: Settings, roles: ['school-admin'], exact: true },
             { label: 'Settings',      href: '/super-admin/settings',         icon: Settings, roles: ['super-admin'] },
             { label: 'School Type',   href: '/school/settings/school-type',  icon: School,   roles: ['school-admin'] },
             { label: 'AI Assistant',  href: '/school/settings/ai',           icon: Sparkles, roles: ['school-admin'] },
