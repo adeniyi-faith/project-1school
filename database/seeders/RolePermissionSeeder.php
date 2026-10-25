@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Support\PlatformAccess;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -186,6 +187,11 @@ class RolePermissionSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
+        // The platform team's own permissions (support, finance ...) live in App\Support\PlatformAccess
+        foreach (array_keys(PlatformAccess::PERMISSIONS) as $permission) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        }
+
         // Assign permissions to roles
         foreach ($this->rolePermissions as $roleName => $perms) {
             $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
@@ -207,6 +213,12 @@ class RolePermissionSeeder extends Seeder
             }
 
             $role->syncPermissions(array_unique($resolved));
+        }
+
+        // Platform staff roles start with the permissions listed for them; extras given to one person are kept
+        // because they are saved on that person, not on the role
+        foreach (PlatformAccess::ROLES as $roleName => $definition) {
+            Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web'])->syncPermissions($definition['permissions']);
         }
 
         $this->command->info('Roles and permissions seeded.');

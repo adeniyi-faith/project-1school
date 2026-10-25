@@ -119,7 +119,7 @@ export default function CbtTestForm({ test, banks, classes, subjects, terms }: P
     const back = test ? `/school/cbt/tests/${test.id}` : '/school/cbt/tests';
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'CBT' }, { label: 'Tests', href: '/school/cbt/tests' }, { label: test ? 'Edit test' : 'New test' }]}>
+        <AppLayout breadcrumbs={[{ label: 'Learning' }, { label: 'Computer Tests', href: '/school/cbt/tests' }, { label: test ? 'Edit test' : 'New test' }]}>
             <form onSubmit={submit} className="mx-auto max-w-3xl space-y-6 pb-24 md:pb-0">
                 <Link href={back} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"><ArrowLeft className="size-4" /> Back</Link>
                 <PageHeader title={test ? 'Edit test' : 'New test'} description="Choose who sits it, when, for how long, and which questions to draw from your question banks." />

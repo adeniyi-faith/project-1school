@@ -5,8 +5,9 @@ namespace App\Support;
 use App\Models\School;
 
 /**
- * The platform owner (super admin) can step inside one school and work there with full access, as that school's own
- * admin would. The chosen school is kept in the session. Nobody else can ever act as another school.
+ * The platform owner (super admin), and platform staff allowed to, can step inside one school and work there with full access, as that school's own
+ * admin would. The chosen school is kept in the session. Nobody else can ever act as another school. Staff need the right permission and the school must be one of theirs
+ * (checked again on every request by the ActAsSchool middleware).
  */
 class ActingSchool
 {
@@ -16,7 +17,7 @@ class ActingSchool
     public static function id(): ?int
     {
         $user = auth()->user();
-        if (! $user || ! $user->hasRole('super-admin') || ! app()->bound('session.store')) {
+        if (! PlatformAccess::isPlatform($user) || ! app()->bound('session.store')) {
             return null;
         }
 

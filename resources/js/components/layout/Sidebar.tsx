@@ -1,11 +1,11 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
+import { ChevronDown, ChevronsLeft, ChevronsRight, Plus, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/Stores/useUIStore';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Wordmark, WordmarkLetter, initialsOf } from '@/components/layout/Logo';
-import { isNavActive, navGroupsForRole, type NavGroup, type NavItem } from '@/components/layout/navigation';
+import { isNavActive, navGroupsForRole, searchActions, searchKeywords, type NavGroup, type NavItem } from '@/components/layout/navigation';
 import type { PageProps } from '@/Types';
 
 function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: boolean; onNavigate?: () => void }) {
@@ -85,7 +85,7 @@ function Group({ group, collapsed, onNavigate }: { group: NavGroup; collapsed: b
 }
 
 /** A box that finds any page the person may open. Press / or Ctrl+K to start typing; Enter opens the first match. */
-function MenuSearch({ groups, onNavigate }: { groups: NavGroup[]; onNavigate?: () => void }) {
+function MenuSearch({ groups, paths, onNavigate }: { groups: NavGroup[]; paths?: string[]; onNavigate?: () => void }) {
     const [query, setQuery] = useState('');
     const input = useRef<HTMLInputElement>(null);
 
@@ -103,14 +103,27 @@ function MenuSearch({ groups, onNavigate }: { groups: NavGroup[]; onNavigate?: (
 
     const q = query.trim().toLowerCase();
     const seen = new Set<string>();
-    const results = q
-        ? groups.flatMap((g) => g.items.map((item) => ({ item, group: g.title }))).filter(({ item, group }) => {
+    // Every word typed must appear in the page's name, its group, or the everyday words listed for it
+    const words = q.split(/\s+/).filter(Boolean);
+    const matches = (text: string) => words.every((w) => text.includes(w));
+    const pages = groups.flatMap((g) => g.items.map((item) => ({ item, group: g.title })));
+    const visible = new Set(pages.map((p) => p.item.href));
+    const pageResults = q
+        ? pages.filter(({ item, group }) => {
             if (seen.has(item.href)) return false;
-            const hit = item.label.toLowerCase().includes(q) || group.toLowerCase().includes(q);
+            const hit = matches(`${item.label} ${group} ${searchKeywords[item.href] ?? ''}`.toLowerCase());
             if (hit) seen.add(item.href);
             return hit;
         })
         : [];
+    // Jobs such as "Add a student" come first. They are offered only to people who can open the page they lead to.
+    const inSchool = [...visible].some((h) => h.startsWith('/school'));
+    const actionResults = q && inSchool
+        ? searchActions
+            .filter((a) => (paths ? paths.includes(a.href) : visible.has(a.href)) && matches(`${a.label} ${a.keywords}`.toLowerCase()))
+            .map((a) => ({ item: { label: a.label, href: a.href, icon: Plus } as NavItem, group: 'Do' }))
+        : [];
+    const results = [...actionResults, ...pageResults];
 
     function go(href: string) {
         setQuery('');
@@ -140,7 +153,7 @@ function MenuSearch({ groups, onNavigate }: { groups: NavGroup[]; onNavigate?: (
                     {results.length === 0 && <p className="px-3 py-2 text-[12px] text-white/45">No page matches “{query}”.</p>}
                     {results.map(({ item, group }) => (
                         <button
-                            key={item.href}
+                            key={`${group}-${item.href}-${item.label}`}
                             type="button"
                             onClick={() => go(item.href)}
                             className="flex h-9 w-full items-center gap-3 rounded-lg px-3 text-left text-[13px] font-medium text-sidebar-foreground outline-none hover:bg-white/[0.05] hover:text-white focus-visible:ring-2 focus-visible:ring-indigo-400/70"
@@ -163,11 +176,11 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ drawer = false, onNavigate }: SidebarProps) {
-    const { auth, school, acting_school } = usePage<PageProps>().props;
+    const { auth, school, acting_school, platform } = usePage<PageProps>().props;
     const { sidebarCollapsed, toggleCollapsed } = useUIStore();
     const collapsed = drawer ? false : sidebarCollapsed;
     const role = auth.user?.role ?? '';
-    const roleLabel = role.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    const roleLabel = acting_school?.as ?? platform?.role ?? role.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
     const groups = navGroupsForRole(role, auth.paths, !!acting_school);
 
     return (
@@ -197,7 +210,7 @@ export default function Sidebar({ drawer = false, onNavigate }: SidebarProps) {
                     </div>
                 )}
 
-                {!collapsed && <MenuSearch groups={groups} onNavigate={onNavigate} />}
+                {!collapsed && <MenuSearch groups={groups} paths={auth.paths} onNavigate={onNavigate} />}
 
                 <nav className="scroll-quiet flex-1 space-y-5 overflow-y-auto px-3 pb-4 pt-2" aria-label="Main">
                     {groups.map((group) => (

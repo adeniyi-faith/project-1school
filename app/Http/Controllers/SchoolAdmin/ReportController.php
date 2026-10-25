@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Exam;
 use App\Models\Homework;
+use App\Models\LeaveRequest;
 use App\Models\LedgerEntry;
+use App\Models\LessonPlan;
 use App\Models\Mark;
 use App\Models\Payroll;
+use App\Models\ResultSheet;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Section;
@@ -80,7 +83,32 @@ class ReportController extends Controller
             ->take(10)
             ->get();
 
-        return compact('totalStudents', 'totalStaff', 'attendancePct', 'monthFees', 'pendingFees', 'feeChart', 'attChart', 'pendingHomework', 'recentActivity');
+        $waiting = $this->waitingForYou($sid);
+
+        return compact('totalStudents', 'totalStaff', 'attendancePct', 'monthFees', 'pendingFees', 'feeChart', 'attChart', 'pendingHomework', 'recentActivity', 'waiting');
+    }
+
+    /**
+     * Things that are waiting for this person to approve or decide.
+     * Each line is only counted when the person is allowed to act on it, and only lines with something waiting are sent.
+     */
+    private function waitingForYou(int $sid): array
+    {
+        $user  = auth()->user();
+        $lines = [];
+
+        if ($user?->can('results.publish')) {
+            $lines[] = ['label' => 'Result sheets to approve', 'count' => ResultSheet::where('school_id', $sid)->where('status', 'submitted')->count(), 'href' => route('school.results.index')];
+            $lines[] = ['label' => 'Result sheets approved, ready to publish', 'count' => ResultSheet::where('school_id', $sid)->where('status', 'approved')->count(), 'href' => route('school.results.index')];
+        }
+        if ($user?->can('lessons.approve')) {
+            $lines[] = ['label' => 'Lesson notes to review', 'count' => LessonPlan::where('school_id', $sid)->where('status', 'submitted')->count(), 'href' => route('school.lesson-notes.index')];
+        }
+        if ($user?->can('leave.approve')) {
+            $lines[] = ['label' => 'Leave requests to answer', 'count' => LeaveRequest::where('school_id', $sid)->where('status', 'pending')->count(), 'href' => route('school.hr.leaves.index')];
+        }
+
+        return array_values(array_filter($lines, fn ($l) => $l['count'] > 0));
     }
 
     private function teacherDashboard(int $sid): array
