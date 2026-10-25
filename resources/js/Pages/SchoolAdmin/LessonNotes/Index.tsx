@@ -49,7 +49,7 @@ export default function LessonNotesIndex({ notes, counts, classes, subjects, ter
                         const n = s ? counts[s] ?? 0 : Object.values(counts).reduce((a, b) => a + b, 0);
                         return (
                             <button key={s || 'all'} type="button" onClick={() => filter('status', s)} aria-pressed={active}
-                                className={`rounded-full border px-3 py-1 text-sm ${active ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200'}`}>
+                                className={`rounded-full border px-3 py-1 max-md:py-2 text-sm ${active ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200'}`}>
                                 {s ? statusLabel[s].label : 'All'} <span className="tabular-nums opacity-70">{n}</span>
                             </button>
                         );

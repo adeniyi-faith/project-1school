@@ -15,7 +15,7 @@ export default function LessonTabs({ current }: { current: (typeof tabs)[number]
                     key={t.key}
                     href={t.href}
                     aria-current={current === t.key ? 'page' : undefined}
-                    className={`whitespace-nowrap rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${current === t.key ? 'bg-white text-slate-900 shadow-xs dark:bg-slate-800 dark:text-white' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+                    className={`whitespace-nowrap rounded-lg px-3.5 py-1.5 max-md:py-2.5 text-sm font-medium transition ${current === t.key ? 'bg-white text-slate-900 shadow-xs dark:bg-slate-800 dark:text-white' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
                 >
                     {t.label}
                 </Link>
