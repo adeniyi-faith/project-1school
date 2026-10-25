@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Ai\AiStyles;
 use App\Models\CbtBank;
 use App\Models\CbtQuestion;
 use App\Models\User;
@@ -99,6 +100,11 @@ class QuestionWriterService
             .'answer that a pupil at this level can reach from what they have been taught. Do not repeat a question or ask the same fact twice. '
             .'Write plain text only: no markdown symbols such as ** or #, and write powers and fractions plainly, for example x^2 and 3/4.';
 
+        $style = AiStyles::resolve('questions', $ask['style'] ?? null);
+        if ($style['rule'] !== '') {
+            $system .= ' '.$style['rule'];
+        }
+
         $what = $theory
             ? "Write {$count} theory (essay or worked-answer) question".($count === 1 ? '' : 's').", each worth {$marks} marks in total. "
                 .($parts > 1
@@ -118,8 +124,8 @@ class QuestionWriterService
             "\n".$what,
         ])->filter()->implode("\n");
 
-        $answer = $this->ai->ask($bank->school_id, $by->id, 'questions', 'writing', $system, $prompt,
-            $theory ? self::THEORY_SCHEMA : self::OBJECTIVE_SCHEMA, $theory ? 12000 : 16000);
+        $answer = $this->ai->ask($bank->school_id, $by->id, 'questions', $style['tier'], $system, $prompt,
+            $theory ? self::THEORY_SCHEMA : self::OBJECTIVE_SCHEMA, $theory ? min(12000, $style['tokens']) : $style['tokens']);
 
         $fixed = $ask['difficulty'] === 'mixed' ? null : $ask['difficulty'];
         $out = [];
