@@ -92,6 +92,7 @@ export const navGroups: NavGroup[] = [
         foldedFor: ['principal'],
         items: [
             { label: 'Invoices',       href: '/school/fees/invoices',   icon: FileText,  roles: ['super-admin','school-admin','accountant','principal'] },
+            { label: "Today's Collections", href: '/school/fees/collections-today', icon: Banknote, roles: ['super-admin','school-admin','accountant'] },
             { label: 'Scholarships',   href: '/school/fees/scholarships', icon: Gift,    roles: ['super-admin','school-admin','accountant'] },
             { label: 'Online Payments', href: '/school/fees/online-payments', icon: CreditCard, roles: ['super-admin','school-admin','accountant'] },
             { label: 'Payment Plans', href: '/school/fees/payment-plans', icon: CalendarClock, roles: ['super-admin','school-admin','accountant'] },
