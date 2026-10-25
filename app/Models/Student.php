@@ -69,6 +69,11 @@ class Student extends Model
         return $this->belongsTo(Guardian::class);
     }
 
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
     public function documents(): HasMany
     {
         return $this->hasMany(StudentDocument::class);

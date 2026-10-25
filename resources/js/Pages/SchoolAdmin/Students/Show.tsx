@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Award, Pencil, FileUp, Trash2, FileText, User, GraduationCap, Users, Camera, IdCard, Shield, Printer, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Award, Banknote, Mail, ScrollText, Pencil, FileUp, Trash2, FileText, User, GraduationCap, Users, Camera, IdCard, Shield, Printer, RefreshCw } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +21,7 @@ type Props = PageProps & {
     houses: { id: number; name: string; colour: string }[] | null;
     idCards: IdCardRow[] | null;
     activity: StudentActivity;
+    quick: { collect: string | null; message: string | null; reportCard: string | null };
 };
 
 const CARD_STATE: Record<IdCardRow['state'], string> = {
@@ -43,7 +44,7 @@ const docSchema = z.object({
 type DocForm = z.infer<typeof docSchema>;
 
 export default function ShowStudent() {
-    const { student, classHistory, canEdit, certificates, canIssueCertificates, clubs, houses, idCards, activity } = usePage<Props>().props;
+    const { student, classHistory, canEdit, certificates, canIssueCertificates, clubs, houses, idCards, activity, quick } = usePage<Props>().props;
     type Tab = 'personal' | 'guardian' | 'documents' | 'history' | 'certificates' | 'id card' | ActivityKey;
     // Hostel, library, bus, fees ... tabs appear only for the parts this person is allowed to see
     const activityTabs = (Object.keys(ACTIVITY_LABELS) as ActivityKey[]).filter(k => activity?.[k] != null);
@@ -134,6 +135,27 @@ export default function ShowStudent() {
                     </Button>
                 )}
             </div>
+
+            {/* Shortcuts for the jobs staff most often come here to do */}
+            {(quick.collect || quick.message || quick.reportCard) && (
+                <div className="mb-6 flex flex-wrap gap-2">
+                    {quick.collect && (
+                        <Button size="sm" variant="outline" asChild className="gap-2 max-md:h-9">
+                            <Link href={quick.collect}><Banknote className="size-4" /> Collect payment</Link>
+                        </Button>
+                    )}
+                    {quick.message && (
+                        <Button size="sm" variant="outline" asChild className="gap-2 max-md:h-9">
+                            <Link href={quick.message}><Mail className="size-4" /> Message parent</Link>
+                        </Button>
+                    )}
+                    {quick.reportCard && (
+                        <Button size="sm" variant="outline" asChild className="gap-2 max-md:h-9">
+                            <a href={quick.reportCard} target="_blank" rel="noreferrer"><ScrollText className="size-4" /> Print report card</a>
+                        </Button>
+                    )}
+                </div>
+            )}
 
             {/* Quick stats */}
             <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">

@@ -36,9 +36,9 @@ export default function Papers({ papers, classes, terms, filters, canManage }: P
     );
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'CBT' }, { label: 'Exam papers' }]}>
+        <AppLayout breadcrumbs={[{ label: 'Learning' }, { label: 'Printed Papers' }]}>
             <div className="mx-auto max-w-5xl space-y-5 pb-24 md:pb-0">
-                <PageHeader title="Exam papers" description="Build a paper from your question banks, then print it with the school's name and logo for students to write on. Each paper has a marking scheme for teachers." actions={actions} />
+                <PageHeader title="Printed exam papers" description="Build a paper from your question banks, then print it with the school's name and logo for students to write on. Each paper has a marking scheme for teachers." actions={actions} />
                 <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>
 
                 <div className="grid gap-2 sm:grid-cols-2">

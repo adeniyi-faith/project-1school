@@ -25,7 +25,7 @@ export default function ParentFees({ linked, children, payOnline = false }: Prop
     const [paying, setPaying] = useState<{ child: string; row: Payment } | null>(null);
     if (!linked) {
         return (
-            <AppLayout title="Fee Status">
+            <AppLayout title="Fees">
                 <div className="flex flex-col items-center justify-center py-24 text-center">
                     <Banknote className="w-14 h-14 text-slate-300 mb-4" />
                     <h2 className="text-lg font-semibold text-slate-600 dark:text-slate-400">Account not linked</h2>
@@ -35,9 +35,9 @@ export default function ParentFees({ linked, children, payOnline = false }: Prop
     }
 
     return (
-        <AppLayout title="Fee Status">
+        <AppLayout title="Fees">
             <div className="space-y-8">
-                <h1 className="text-xl font-bold text-slate-900 dark:text-white">Children Fee Status</h1>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white">Fees</h1>
                 {children.map(child => (
                     <div key={child.id}>
                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">{child.full_name} — {child.class}</p>

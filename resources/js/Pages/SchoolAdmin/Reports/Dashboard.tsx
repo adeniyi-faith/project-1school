@@ -23,6 +23,7 @@ interface Props {
     attChart:         { day: string; present: number; absent: number }[];
     recentActivity:   Activity[];
     schools?:         number;
+    waiting?:         { label: string; count: number; href: string }[];
     setup?:           { done: number; total: number; items: { key: string; title: string; text: string; href: string; done: boolean }[] } | null;
 }
 
@@ -54,7 +55,7 @@ function timeAgo(iso: string) {
     return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
 }
 
-export default function Dashboard({ role, totalStudents, totalStaff, attendancePct, monthFees, pendingFees, pendingHomework, todayCollection, feeChart, attChart, recentActivity, schools, setup }: Props) {
+export default function Dashboard({ role, totalStudents, totalStaff, attendancePct, monthFees, pendingFees, pendingHomework, todayCollection, feeChart, attChart, recentActivity, schools, setup, waiting }: Props) {
     const [hideSetup, setHideSetup] = useState(() => { try { return localStorage.getItem('setup-hidden') === '1'; } catch { return false; } });
     const { auth } = usePage<PageProps>().props;
     const fmt = (n: number) => new Intl.NumberFormat('en-NG').format(n);
@@ -86,6 +87,18 @@ export default function Dashboard({ role, totalStudents, totalStaff, attendanceP
         <AppLayout title="Dashboard">
             <div className="space-y-6">
                 <PageHeader title={`${greeting}${firstName ? `, ${firstName}` : ''}`} description={today} />
+
+                {waiting && waiting.length > 0 && (
+                    <Panel title="Waiting for you" description="Things that need your approval or answer" flush bodyClassName="divide-y divide-slate-100 dark:divide-white/[0.06]">
+                        {waiting.map((w) => (
+                            <Link key={w.label} href={w.href} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.04]">
+                                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold tabular-nums text-amber-800 dark:bg-amber-500/20 dark:text-amber-200">{w.count}</span>
+                                <span className="min-w-0 flex-1 text-sm text-slate-800 dark:text-slate-200">{w.label}</span>
+                                <ChevronRight className="size-4 shrink-0 text-slate-400" />
+                            </Link>
+                        ))}
+                    </Panel>
+                )}
 
                 {setup && !hideSetup && (
                     <Panel title="Get your school ready" description={`${setup.done} of ${setup.total} steps done. Each one ticks itself when you finish it.`}
