@@ -108,6 +108,13 @@ Everything below exists as working screens unless a caveat says otherwise.
 | Student and Parent portals | Built | Read-only views |
 | Mobile PWA & public API | Not built | Module 15 was removed from scope |
 
+### Words used on screen (keep them the same everywhere)
+
+- **Test** = something students sit on the computer ("Computer Tests", students see "My Tests"). **Exam paper** = the printed paper ("Printed Papers"). **Class Test Marks** = the older screen at `/school/exams` where one number is typed per student, subject and exam. Scores that count on the report card are **Term Results**.
+- **Fees** is what parents and students call money owed; staff work in **Invoices**.
+- **Arms** (never "Sections") for the parts of a class. A section inside a test or exam paper is a real section and keeps its name.
+- **Announcements** = posts to a group; **Messages** = person to person; **Notifications** = automatic alerts about your own work.
+
 ---
 
 ## Rules for every session
