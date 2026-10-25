@@ -135,7 +135,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Attendance',    href: '/school/parent/attendance',   icon: ClipboardList, roles: ['parent'] },
             { label: 'Results',       href: '/school/parent/results',      icon: BarChart3,     roles: ['parent'] },
             { label: 'Homework & Timetable', href: '/school/parent/classwork', icon: NotebookPen, roles: ['parent'] },
-                        { label: 'Fees',          href: '/school/parent/fees',         icon: Banknote,    roles: ['parent'] },
+            { label: 'Fees',          href: '/school/parent/fees',         icon: Banknote,    roles: ['parent'] },
         ],
     },
     {
