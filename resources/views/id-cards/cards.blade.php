@@ -17,13 +17,13 @@
     $esc = fn ($v) => e((string) $v);
     $rowsFor = function (array $c) use ($show) {
         $r = [];
-        if ($show['class'] && $c['class']) $r['Class'] = e($c['class']);
+        if ($show['class'] && $c['class']) $r[$c['class_label'] ?? 'Class'] = e($c['class']);
         if ($show['house'] && $c['house']) $r['House'] = '<span class="dot" style="background:'.e($c['house']['colour']).'"></span>'.e($c['house']['name']);
         if ($show['gender'] && $c['gender']) $r['Gender'] = e($c['gender']);
         if ($show['date_of_birth'] && $c['date_of_birth']) $r['Born'] = e($c['date_of_birth']);
         if ($show['blood_group'] && $c['blood_group']) $r['Blood'] = e($c['blood_group']);
-        if ($show['admission_date'] && $c['admission_date']) $r['Admitted'] = e($c['admission_date']);
-        if ($show['guardian_phone'] && $c['guardian_phone']) $r['Parent'] = e($c['guardian_phone']);
+        if ($show['admission_date'] && $c['admission_date']) $r[$c['admission_label'] ?? 'Admitted'] = e($c['admission_date']);
+        if ($show['guardian_phone'] && $c['guardian_phone']) $r[$c['phone_label'] ?? 'Parent'] = e($c['guardian_phone']);
         if ($show['address'] && $c['address']) $r['Address'] = e(\Illuminate\Support\Str::limit($c['address'], 40));
         return array_slice($r, 0, 6, true);
     };
