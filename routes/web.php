@@ -109,6 +109,9 @@ Route::middleware('guest')->group(function () {
     Route::get('/', fn () => view('landing'))->name('home');
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store']);
+    Route::get('/two-factor', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'show'])->name('two-factor');
+    Route::post('/two-factor', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'store'])->middleware('throttle:20,1')->name('two-factor.verify');
+    Route::post('/two-factor/cancel', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'cancel'])->name('two-factor.cancel');
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:5,10');
 });
@@ -131,6 +134,18 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile',                   [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/password/change',           [ProfileController::class, 'changePasswordPage'])->name('password.change');
     Route::put('/profile/password',          [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // Security for people on the platform team (authenticator app, recovery codes, sessions, password)
+    Route::prefix('security')->name('security.')->group(function () {
+        $c = \App\Http\Controllers\SecurityController::class;
+        Route::get('/',                 [$c, 'index'])->name('index');
+        Route::post('/two-factor',      [$c, 'confirm'])->middleware('throttle:10,1')->name('confirm');
+        Route::delete('/two-factor',    [$c, 'disable'])->middleware('throttle:10,1')->name('disable');
+        Route::post('/recovery-codes',  [$c, 'recoveryCodes'])->middleware('throttle:10,1')->name('recovery');
+        Route::put('/password',         [$c, 'password'])->middleware('throttle:10,1')->name('password');
+        Route::delete('/sessions',      [$c, 'endOthers'])->name('sessions.others');
+        Route::delete('/sessions/{session}', [$c, 'endSession'])->name('sessions.end');
+    });
 
     Route::get('/dashboard', function () {
         $user = auth()->user();
@@ -889,6 +904,11 @@ Route::middleware('auth')->group(function () {
             Route::get('audit/export',                   [\App\Http\Controllers\SuperAdmin\PlatformAuditController::class, 'export'])->name('audit.export');
 
             // Risky actions waiting for a second person's go-ahead (only used when second approval is switched on)
+            Route::get('security',                       [\App\Http\Controllers\SuperAdmin\PlatformSecurityController::class, 'index'])->name('security.index');
+            Route::put('security/networks',              [\App\Http\Controllers\SuperAdmin\PlatformSecurityController::class, 'saveNetworks'])->name('security.networks');
+            Route::post('security/{user}/reset-two-factor',  [\App\Http\Controllers\SuperAdmin\PlatformSecurityController::class, 'resetTwoFactor'])->name('security.reset-two-factor');
+            Route::post('security/{user}/sign-out',      [\App\Http\Controllers\SuperAdmin\PlatformSecurityController::class, 'signOutEverywhere'])->name('security.sign-out');
+            Route::post('security/{user}/force-password', [\App\Http\Controllers\SuperAdmin\PlatformSecurityController::class, 'forcePassword'])->name('security.force-password');
             Route::get('approvals',                      [\App\Http\Controllers\SuperAdmin\PlatformApprovalController::class, 'index'])->name('approvals.index');
             Route::post('approvals/{approval}/approve',  [\App\Http\Controllers\SuperAdmin\PlatformApprovalController::class, 'approve'])->name('approvals.approve');
             Route::post('approvals/{approval}/deny',     [\App\Http\Controllers\SuperAdmin\PlatformApprovalController::class, 'deny'])->name('approvals.deny');

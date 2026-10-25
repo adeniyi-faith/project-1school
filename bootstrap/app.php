@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\BlockSuspendedSchool::class,
             \App\Http\Middleware\EnsureAccountActive::class,
+            \App\Http\Middleware\EnsurePlatformSecurity::class,
             \App\Http\Middleware\AuditPlatformActions::class,
             \App\Http\Middleware\ActAsSchool::class,
             \App\Http\Middleware\DemoReadOnly::class,

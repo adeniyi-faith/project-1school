@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
 import {
-    LayoutDashboard, School, Users, GraduationCap, UserCog, CalendarDays, BookOpen, ClipboardList, Banknote, Library, Bus, Home, Package, MessageSquare, BarChart3, Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff, Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell, PieChart, FileText, TrendingUp, Wrench, ShieldCheck, Plug, CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock, IdCard, ScanLine, Medal, Shapes, Sparkles, Globe, Newspaper, Images, Activity,
+    LayoutDashboard, School, Users, GraduationCap, UserCog, CalendarDays, BookOpen, ClipboardList, Banknote, Library, Bus, Home, Package, MessageSquare, BarChart3, Settings, ChevronLeft, ChevronRight, Layers, Clock, CalendarOff, Building2, BadgeCheck, NotebookPen, Video, Megaphone, Mail, Send, Bell, PieChart, FileText, TrendingUp, Wrench, ShieldCheck, KeyRound, Plug, CreditCard, Tag, CalendarRange, SlidersHorizontal, ClipboardCheck, Gift, ArrowUpRight, Palette, MessageSquareQuote, Printer, Award, History, MonitorCheck, CalendarClock, IdCard, ScanLine, Medal, Shapes, Sparkles, Globe, Newspaper, Images, Activity,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -237,6 +237,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Platform Staff', href: '/super-admin/staff',           icon: UserCog,  roles: ['super-admin'] },
             { label: 'Staff Activity', href: '/super-admin/audit',           icon: History,  roles: ['super-admin'] },
             { label: 'Approvals',     href: '/super-admin/approvals',        icon: ShieldCheck, roles: ['super-admin'] },
+            { label: 'Staff Security', href: '/super-admin/security',        icon: KeyRound, roles: ['super-admin'] },
         ],
     },
 ];

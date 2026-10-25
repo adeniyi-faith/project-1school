@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import { ChevronDown, KeyRound, LogOut, Moon, PanelLeft, Sun, User } from 'lucide-react';
+import { ChevronDown, KeyRound, ShieldCheck, LogOut, Moon, PanelLeft, Sun, User } from 'lucide-react';
 import { useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -99,6 +99,11 @@ export default function Topbar(_props: TopbarProps) {
                             <DropdownMenuItem onClick={() => { window.location.href = '/password/change'; }}>
                                 <KeyRound className="mr-2 size-4" /> Change password
                             </DropdownMenuItem>
+                            {(platform || role === 'super-admin' || role === 'platform-staff') && (
+                                <DropdownMenuItem onClick={() => { window.location.href = '/security'; }}>
+                                    <ShieldCheck className="mr-2 size-4" /> My security
+                                </DropdownMenuItem>
+                            )}
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
