@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { cn } from '@/lib/utils';
 import { EmptyState, PageHeader, Panel, PersonAvatar, Pill } from '@/components/app/kit';
 import { naira } from '@/lib/format';
+import { useState } from 'react';
 import { Link } from '@inertiajs/react';
 import { Bell, Users } from 'lucide-react';
 import ExpandableText from '@/components/ExpandableText';
@@ -117,7 +118,36 @@ function ChildCard({ child }: { child: Child }) {
     );
 }
 
+function ChildSwitcher({ children, selectedId, onSelect }: { children: Child[]; selectedId: number; onSelect: (id: number) => void }) {
+    return (
+        <div role="tablist" aria-label="Choose a child" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+            {children.map(c => {
+                const active = c.id === selectedId;
+                return (
+                    <button
+                        key={c.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => onSelect(c.id)}
+                        className={cn(
+                            'flex min-h-12 shrink-0 items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-4 text-sm font-medium transition-colors',
+                            active
+                                ? 'border-indigo-600 bg-indigo-600 text-white'
+                                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-slate-900 dark:text-slate-200',
+                        )}
+                    >
+                        <PersonAvatar name={c.full_name} src={c.photo_url} className="size-9" />
+                        {c.full_name.split(' ')[0]}
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
+
 export default function ParentDashboard({ linked, guardian, children, announcements, payOnline = false }: Props) {
+    const [selectedId, setSelectedId] = useState<number | null>(children[0]?.id ?? null);
     if (!linked || !guardian) {
         return (
             <AppLayout title="Parent Dashboard">
@@ -128,6 +158,7 @@ export default function ParentDashboard({ linked, guardian, children, announceme
         );
     }
 
+    const shown = children.find(c => c.id === selectedId) ?? children[0];
     const totalDue = children.reduce((sum, c) => sum + c.fees.balance, 0);
 
     return (
@@ -150,9 +181,13 @@ export default function ParentDashboard({ linked, guardian, children, announceme
                         : <Link href="/school/parent/fees" className="text-sm font-medium text-slate-500 hover:underline">See fees</Link>}
                 </div>
 
-                <div className={cn('grid gap-6', children.length === 1 ? 'max-w-lg grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
-                    {children.map(child => <ChildCard key={child.id} child={child} />)}
-                </div>
+                {children.length > 1 && <ChildSwitcher children={children} selectedId={shown?.id ?? 0} onSelect={setSelectedId} />}
+
+                {shown && (
+                    <div className="max-w-lg">
+                        <ChildCard child={shown} />
+                    </div>
+                )}
 
                 {announcements.length > 0 && (
                     <Panel title="School announcements" action={<Bell className="size-4 text-slate-400" />} flush>
