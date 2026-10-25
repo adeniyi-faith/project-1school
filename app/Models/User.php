@@ -64,6 +64,12 @@ class User extends Authenticatable
             ->setDescriptionForEvent(fn (string $event) => "User account {$event}");
     }
 
+    /** Set for members of the platform's own team (support, finance ...): which schools they may reach */
+    public function platformStaff(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PlatformStaff::class);
+    }
+
     /** The staff record (HR card) that goes with this login, if any */
     public function staffProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
     {

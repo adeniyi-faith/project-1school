@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\DemoController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\TwoFactorController;
@@ -115,6 +116,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:5,10');
     Route::get('/two-factor-challenge', [TwoFactorChallengeController::class, 'create'])->name('two-factor.login');
     Route::post('/two-factor-challenge', [TwoFactorChallengeController::class, 'store'])->middleware('throttle:20,1');
+    Route::get('/forgot-password', [PasswordResetController::class, 'forgot'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:5,10')->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'reset'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'update'])->middleware('throttle:10,10')->name('password.update');
 });
 
 // The demo: pick an account type, then look around as that person. Open to visitors and to
@@ -147,6 +152,7 @@ Route::middleware('auth')->group(function () {
         // Redirect to role-specific dashboard
         return match (true) {
             $user->hasRole('super-admin')                                   => redirect()->route('super-admin.dashboard'),
+            \App\Support\PlatformAccess::isStaff($user)                    => redirect()->route(\App\Support\PlatformAccess::homeRoute($user)),
             $user->hasRole('school-admin') || $user->hasRole('principal')   => redirect()->route('school.reports.dashboard'),
             $user->hasRole('teacher')                                        => redirect()->route('school.my-classes'),
             $user->hasRole('student')                                        => redirect()->route('student.dashboard'),
@@ -166,7 +172,7 @@ Route::middleware('auth')->group(function () {
     | School Admin routes (school-admin, principal)
     |--------------------------------------------------------------------------
     */
-    Route::middleware('role:super-admin|school-admin|principal|teacher|accountant|librarian|receptionist|driver|warden|store-manager')
+    Route::middleware('role:super-admin|platform-support|platform-finance|platform-sales|platform-developer|platform-content|school-admin|principal|teacher|accountant|librarian|receptionist|driver|warden|store-manager')
         ->prefix('school')
         ->name('school.')
         ->group(function () {
@@ -808,7 +814,8 @@ Route::middleware('auth')->group(function () {
     | Super Admin routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware('role:super-admin')
+    // Who may open which page here is decided in one place: App\Support\PlatformAccess::PAGES (owner passes; a page not listed there is owner only)
+    Route::middleware('platform')
         ->prefix('super-admin')
         ->name('super-admin.')
         ->group(function () {
@@ -881,6 +888,19 @@ Route::middleware('auth')->group(function () {
             Route::get('module-manager',        [ModuleManagerController::class, 'index'])->name('module-manager.index');
             Route::post('module-manager/toggle', [ModuleManagerController::class, 'toggle'])->name('module-manager.toggle');
             Route::post('module-manager/bulk',   [ModuleManagerController::class, 'bulkSave'])->name('module-manager.bulk');
+
+            // Platform staff: the platform's own team (owner only)
+            Route::get('staff',                          [\App\Http\Controllers\SuperAdmin\PlatformStaffController::class, 'index'])->name('staff.index');
+            Route::post('staff',                         [\App\Http\Controllers\SuperAdmin\PlatformStaffController::class, 'store'])->name('staff.store');
+            Route::put('staff/{user}',                   [\App\Http\Controllers\SuperAdmin\PlatformStaffController::class, 'update'])->name('staff.update');
+            Route::patch('staff/{user}/suspend',         [\App\Http\Controllers\SuperAdmin\PlatformStaffController::class, 'suspend'])->name('staff.suspend');
+            Route::patch('staff/{user}/activate',        [\App\Http\Controllers\SuperAdmin\PlatformStaffController::class, 'activate'])->name('staff.activate');
+            Route::patch('staff/{user}/reset-password',  [\App\Http\Controllers\SuperAdmin\PlatformStaffController::class, 'resetPassword'])->name('staff.reset-password');
+            Route::delete('staff/{user}',                [\App\Http\Controllers\SuperAdmin\PlatformStaffController::class, 'destroy'])->name('staff.destroy');
+
+            // What the platform team did (who entered which school, what they changed, from where)
+            Route::get('audit',                          [\App\Http\Controllers\SuperAdmin\PlatformAuditController::class, 'index'])->name('audit.index');
+            Route::get('audit/export',                   [\App\Http\Controllers\SuperAdmin\PlatformAuditController::class, 'export'])->name('audit.export');
 
             // User Management
             Route::get('users',                          [UserManagementController::class, 'index'])->name('users.index');
