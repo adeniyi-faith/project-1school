@@ -538,6 +538,7 @@ Route::middleware('auth')->group(function () {
             Route::get('fees/payments/{feePayment}',         [FeePaymentController::class, 'show'])->middleware('permission:fees.view')->name('fees.payments.show');
             // Invoices and the fee ledger (lines are never edited; mistakes are reversed)
             Route::get('fees/invoices',                      [FeeInvoiceController::class, 'index'])->middleware('permission:fees.view')->name('fees.invoices.index');
+            Route::get('fees/invoices/find',                 [FeeInvoiceController::class, 'find'])->middleware('permission:fees.collect')->name('fees.invoices.find');
             Route::post('fees/invoices',                     [FeeInvoiceController::class, 'issue'])->middleware('permission:fees.structure')->name('fees.invoices.issue');
             Route::post('fees/invoices/plans',               [FeeInvoiceController::class, 'planMany'])->middleware('permission:fees.structure')->name('fees.invoices.plan-many');
             Route::post('fees/invoices/{invoice}/plan',      [FeeInvoiceController::class, 'plan'])->middleware('permission:fees.structure')->name('fees.invoices.plan');
