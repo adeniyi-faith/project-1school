@@ -339,3 +339,30 @@
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+/* ---------- Phones: bigger touch areas ---------- */
+/* Small text links and buttons in tables and lists are hard to hit with a thumb. They keep their size and place,
+   but the area that answers a tap grows by about 10px on every side (the ::after is invisible).
+   Use the "tap" class on a one-off small link or button elsewhere. */
+@media (max-width: 767px) {
+    main :is(td, li, dd) :is(a[href], button):not([data-slot='button'], [role]),
+    .tap {
+        position: relative;
+    }
+    main :is(td, li, dd) :is(a[href], button):not([data-slot='button'], [role])::after,
+    .tap::after {
+        content: '';
+        position: absolute;
+        inset: -0.65rem -0.4rem;
+    }
+    /* a tick-box with its words: the whole line answers a tap, so give the line some height */
+    main label:has(> input[type='checkbox'], > input[type='radio'], > [role='checkbox']) {
+        padding-block: 0.55rem;
+    }
+    /* the plain check boxes and round buttons used on some screens */
+    main input[type='checkbox']:not([data-slot]),
+    main input[type='radio']:not([data-slot]) {
+        width: 1.4rem;
+        height: 1.4rem;
+    }
+}
