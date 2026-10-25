@@ -2,11 +2,12 @@ import AppLayout from '@/Layouts/AppLayout';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Link } from '@inertiajs/react';
 import ExpandableText from '@/components/ExpandableText';
 import {
     GraduationCap, ClipboardList, BookOpen, Banknote,
     Bell, Calendar, CheckCircle, XCircle, Clock, AlertTriangle,
-    TrendingUp, User,
+    TrendingUp, User, PlayCircle, Download,
 } from 'lucide-react';
 
 interface Student {
@@ -25,14 +26,22 @@ interface Fees   {
     total_due: number; total_paid: number; balance: number;
     recent: { id: number; month: string; due: number; paid: number; balance: number; status: string; date: string | null }[];
 }
-interface Mark   { exam: string | null; subject: string | null; marks: number | null; grade: string | null; absent: boolean; }
+interface LatestTerm {
+    id: number; term: string; average: number | null; position: number | null; class_size: number | null;
+    subjects: { subject: string | null; total: number | null; grade: string | null }[];
+}
+interface Today {
+    lesson: TT | null;
+    homework_due: { id: number; title: string; subject: string | null; due: string }[];
+    open_tests: { id: number; title: string; subject: string | null; minutes: number }[];
+}
 interface TT     { subject: string | null; start_time: string; end_time: string; room: string | null; }
 interface Announcement { id: number; title: string; body: string; pinned: boolean; date: string | null; }
 
 interface Props {
     linked: boolean; student: Student | null;
     attendance: Attendance; exams: Exam[]; homework: HW[];
-    fees: Fees; marks: Mark[]; timetableToday: TT[]; announcements: Announcement[];
+    fees: Fees; latestTerm: LatestTerm | null; today: Today | null; timetableToday: TT[]; announcements: Announcement[];
 }
 
 const attColor: Record<string, string> = {
@@ -64,7 +73,7 @@ function AttendanceCircle({ pct }: { pct: number }) {
     );
 }
 
-export default function StudentDashboard({ linked, student, attendance, exams, homework, fees, marks, timetableToday, announcements }: Props) {
+export default function StudentDashboard({ linked, student, attendance, exams, homework, fees, latestTerm, today, timetableToday, announcements }: Props) {
     if (!linked || !student) {
         return (
             <AppLayout title="My Dashboard">
@@ -103,6 +112,39 @@ export default function StudentDashboard({ linked, student, attendance, exams, h
                         <span className="capitalize">{attendance.today.replace('-', ' ')}</span>
                     </div>
                 </div>
+
+                {/* Today: what to do now */}
+                {today && (today.lesson || today.homework_due.length > 0 || today.open_tests.length > 0) && (
+                    <div className="space-y-2">
+                        {today.open_tests.map(t => (
+                            <div key={t.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-500/30 dark:bg-indigo-500/10">
+                                <div className="min-w-0">
+                                    <p className="text-xs font-medium uppercase tracking-wide text-indigo-600 dark:text-indigo-300">Test open now</p>
+                                    <p className="truncate font-semibold text-slate-900 dark:text-white">{t.title}</p>
+                                    <p className="text-xs text-slate-500">{[t.subject, `${t.minutes} minutes`].filter(Boolean).join(' · ')}</p>
+                                </div>
+                                <Link href={`/school/student/cbt/${t.id}`} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 text-base font-semibold text-white hover:bg-indigo-700 sm:w-auto">
+                                    <PlayCircle className="size-5" /> Start test
+                                </Link>
+                            </div>
+                        ))}
+                        {today.homework_due.length > 0 && (
+                            <Link href="/school/student/homework" className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+                                <ClipboardList className="size-5 shrink-0 text-amber-600" />
+                                <div className="min-w-0 text-sm">
+                                    <p className="font-semibold text-slate-900 dark:text-white">Homework due {today.homework_due[0].due}{today.homework_due.length > 1 ? ` and ${today.homework_due.length - 1} more` : ''}</p>
+                                    <p className="truncate text-slate-600 dark:text-slate-300">{today.homework_due.map(h => h.subject ? `${h.subject}: ${h.title}` : h.title).join(' · ')}</p>
+                                </div>
+                            </Link>
+                        )}
+                        {today.lesson && (
+                            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                                <Calendar className="size-5 shrink-0 text-indigo-500" />
+                                <p className="text-sm"><span className="font-semibold">Next lesson: {today.lesson.subject ?? '—'}</span> <span className="text-slate-500">at {today.lesson.start_time}{today.lesson.room ? `, Room ${today.lesson.room}` : ''}</span></p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* KPI Row */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -203,42 +245,35 @@ export default function StudentDashboard({ linked, student, attendance, exams, h
                             </CardContent>
                         </Card>
 
-                        {/* Recent Marks */}
+                        {/* Latest published term result: same figures as the report card */}
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                    <TrendingUp className="w-4 h-4 text-green-500" /> Recent Exam Results
+                                    <TrendingUp className="w-4 h-4 text-green-500" /> Latest Term Result
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                {marks.length === 0 ? (
-                                    <p className="text-sm text-slate-400 text-center py-4">No results yet.</p>
+                                {!latestTerm ? (
+                                    <p className="text-sm text-slate-400 text-center py-4">No published results yet.</p>
                                 ) : (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-sm">
-                                            <thead>
-                                                <tr className="text-xs uppercase text-slate-400 border-b border-slate-100 dark:border-slate-800">
-                                                    <th className="text-left py-2 font-medium">Exam</th>
-                                                    <th className="text-left py-2 font-medium">Subject</th>
-                                                    <th className="text-center py-2 font-medium">Marks</th>
-                                                    <th className="text-center py-2 font-medium">Grade</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {marks.map((m, i) => (
-                                                    <tr key={i} className="border-b border-slate-50 dark:border-slate-800/50">
-                                                        <td className="py-2 text-slate-700 dark:text-slate-300">{m.exam ?? '—'}</td>
-                                                        <td className="py-2 text-slate-500">{m.subject ?? '—'}</td>
-                                                        <td className="py-2 text-center">
-                                                            {m.absent ? <span className="text-xs text-red-500">Absent</span> : (m.marks ?? '—')}
-                                                        </td>
-                                                        <td className="py-2 text-center">
-                                                            {m.grade ? <span className="font-semibold text-indigo-600 dark:text-indigo-400">{m.grade}</span> : '—'}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                    <div className="space-y-3">
+                                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{latestTerm.term}</p>
+                                        <div className="flex flex-wrap gap-6">
+                                            <div><p className="text-xs text-slate-400 uppercase">Average</p><p className="text-xl font-bold">{latestTerm.average ?? '—'}</p></div>
+                                            <div><p className="text-xs text-slate-400 uppercase">Position</p><p className="text-xl font-bold">{latestTerm.position ?? '—'}{latestTerm.class_size ? <span className="text-sm font-normal text-slate-400"> of {latestTerm.class_size}</span> : null}</p></div>
+                                        </div>
+                                        <ul className="divide-y divide-slate-50 text-sm dark:divide-slate-800/50">
+                                            {latestTerm.subjects.map((m, i) => (
+                                                <li key={i} className="flex justify-between py-1.5">
+                                                    <span className="text-slate-700 dark:text-slate-300">{m.subject ?? '—'}</span>
+                                                    <span>{m.total ?? '—'} {m.grade && <span className="ml-2 font-semibold text-indigo-600 dark:text-indigo-400">{m.grade}</span>}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            <Link href="/school/student/results" className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400">All results</Link>
+                                            <a href={`/school/student/report-cards/${latestTerm.id}`} className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"><Download className="size-4" /> Report card</a>
+                                        </div>
                                     </div>
                                 )}
                             </CardContent>

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Ai\AiStyles;
 use App\Models\LessonNoteFormat;
 use App\Models\SchemeOfWork;
 use App\Models\SchoolClass;
@@ -245,6 +246,10 @@ class LessonNoteService
             .'(names, foods, places, money in naira) and activities that work in an ordinary classroom with a board and few materials. '
             .'Fill every heading you are given and nothing else. Use short paragraphs and numbered steps; no markdown symbols such as # or **. '
             .'Do not make up page numbers for real textbooks; name the book only when you are sure it exists.';
+        $style = AiStyles::resolve('lesson_note', $context['style'] ?? null);
+        if ($style['rule'] !== '') {
+            $system .= ' '.$style['rule'];
+        }
         $prompt = collect([
             'Class: '.($class?->name ?? ''),
             'Subject: '.($subject?->name ?? ''),
@@ -264,7 +269,7 @@ class LessonNoteService
             'required' => collect($sections)->pluck('key')->all(),
         ];
 
-        $answer = $this->ai->ask($schoolId, $by->id, 'lesson_notes', 'writing', $system, $prompt, $schema, 12000);
+        $answer = $this->ai->ask($schoolId, $by->id, 'lesson_notes', $style['tier'], $system, $prompt, $schema, $style['tokens']);
 
         $out = [];
         foreach ($sections as $s) {

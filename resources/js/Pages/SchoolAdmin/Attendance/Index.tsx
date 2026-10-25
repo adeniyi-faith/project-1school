@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { router, usePage, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,9 @@ export default function AttendanceIndex({ classes, sections, students, existing,
     const { flash } = usePage<PageProps>().props;
     const { records, currentDate, currentClassId, currentSectionId,
             setDate, setClassId, setSectionId, markStudent, markAll, initRecords } = useAttendanceStore();
+
+    // Rows whose note box has been opened; a row that already has a note always shows it
+    const [openNotes, setOpenNotes] = useState<Set<number>>(new Set());
 
     // Sync store with page data
     useEffect(() => {
@@ -198,13 +201,24 @@ export default function AttendanceIndex({ classes, sections, students, existing,
                                                 </div>
                                             </div>
                                             <StatusButtons studentId={student.id} status={rec.status as AttendanceStatus} />
-                                            <Input
-                                                className="h-9 text-sm md:w-44"
-                                                placeholder="Remark (optional)"
-                                                aria-label={`Remark for ${name}`}
-                                                value={rec.remarks}
-                                                onChange={e => markStudent(student.id, rec.status, e.target.value)}
-                                            />
+                                            {rec.remarks || openNotes.has(student.id) ? (
+                                                <Input
+                                                    className="h-9 text-sm md:w-44"
+                                                    placeholder="Remark (optional)"
+                                                    aria-label={`Remark for ${name}`}
+                                                    autoFocus={!rec.remarks}
+                                                    value={rec.remarks}
+                                                    onChange={e => markStudent(student.id, rec.status, e.target.value)}
+                                                />
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    className="min-h-9 self-start rounded-md px-1 text-left text-xs font-medium text-indigo-600 hover:underline md:w-44 dark:text-indigo-400"
+                                                    onClick={() => setOpenNotes(prev => new Set(prev).add(student.id))}
+                                                >
+                                                    Add note
+                                                </button>
+                                            )}
                                         </li>
                                     );
                                 })}
