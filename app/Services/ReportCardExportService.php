@@ -67,7 +67,11 @@ class ReportCardExportService
             return $export;
         }
 
-        @set_time_limit(120);
+        // Web requests get 2 minutes per step. Command line runs (including the test suite) have no limit, and
+        // setting one there would cut off everything that runs after it in the same process.
+        if (PHP_SAPI !== 'cli') {
+            @set_time_limit(120);
+        }
         $unit = $export->units[$export->next_unit] ?? null;
         $path = $export->file_path ?? "exports/report-cards/{$export->school_id}/".$export->id.'-'.Str::random(12).'.zip';
 

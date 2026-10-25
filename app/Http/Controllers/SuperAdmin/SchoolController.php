@@ -18,6 +18,7 @@ use App\Services\SchoolLifecycleService;
 use App\Services\SchoolOverviewService;
 use App\Services\StaffAccountService;
 use App\Support\ActingSchool;
+use App\Support\PlatformAccess;
 use App\Support\SchoolTypes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,7 +36,9 @@ class SchoolController extends Controller
         // Schools whose waiting period is over are hidden whenever this list is opened (no scheduler needed)
         $lifecycle->purgeDue($request->user());
 
-        $schools = School::withTrashed(false)
+        // Staff limited to some schools only ever get their own
+        $mine = PlatformAccess::schools($request->user());
+        $schools = (clone $mine)->withTrashed(false)
             ->withCount('users')
             ->when($request->search, fn ($q) => $q->where('name', 'like', "%{$request->search}%"))
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
@@ -78,9 +81,9 @@ class SchoolController extends Controller
             ],
             'filters' => $request->only('search', 'status'),
             'stats'   => [
-                'total'     => School::count(),
-                'active'    => School::where('status', 'active')->count(),
-                'suspended' => School::where('status', 'suspended')->count(),
+                'total'     => (clone $mine)->count(),
+                'active'    => (clone $mine)->where('status', 'active')->count(),
+                'suspended' => (clone $mine)->where('status', 'suspended')->count(),
             ],
         ]);
     }
@@ -232,10 +235,13 @@ class SchoolController extends Controller
             unset($data['status']); // stays paused until the deletion is cancelled
         }
         $school->update($data);
+        $changed = $school->getChanges();
+        unset($changed['updated_at']);
 
         activity()
             ->causedBy($request->user())
             ->performedOn($school)
+            ->withProperties(['attributes' => $changed, 'old' => array_intersect_key($school->getPrevious(), $changed)])
             ->log('School updated');
 
         return redirect()
