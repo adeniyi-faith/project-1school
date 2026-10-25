@@ -52,7 +52,7 @@ class UserManagementController extends Controller
             ],
             'schools' => $schools,
             'roles'   => $roles,
-            'can'     => ['manage' => PlatformAccess::can($me, 'platform.users.manage')],
+            'can'     => ['manage' => PlatformAccess::can($me, 'platform.users.manage'), 'impersonate' => PlatformAccess::can($me, 'platform.users.impersonate')],
             'filters' => $request->only(['search', 'role', 'school_id', 'status']),
         ]);
     }

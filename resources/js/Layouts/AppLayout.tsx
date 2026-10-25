@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import Sidebar from '@/components/layout/Sidebar';
@@ -16,8 +16,30 @@ interface AppLayoutProps {
     breadcrumbs?: { label: string; href?: string }[];
 }
 
+/** The orange bar shown while a platform person is signed in as a school login: who, time left, and the way back */
+function ImpersonationBar({ info }: { info: NonNullable<PageProps['impersonating']> }) {
+    const [left, setLeft] = useState(() => Math.max(0, Math.floor((new Date(info.until).getTime() - Date.now()) / 1000)));
+    useEffect(() => {
+        const t = setInterval(() => setLeft(Math.max(0, Math.floor((new Date(info.until).getTime() - Date.now()) / 1000))), 1000);
+        return () => clearInterval(t);
+    }, [info.until]);
+    useEffect(() => { if (left === 0) router.post('/impersonation/stop'); }, [left]);
+    const mm = String(Math.floor(left / 60)).padStart(2, '0');
+    const ss = String(left % 60).padStart(2, '0');
+
+    return (
+        <div role="status" className="flex items-center justify-between gap-3 bg-orange-600 px-3 py-1 text-[12px] leading-tight text-white sm:justify-center sm:px-4 sm:py-1.5 sm:text-[13px]">
+            <span className="min-w-0 truncate">
+                <span className="hidden sm:inline">You are signed in as </span><span className="sm:hidden">As </span><b className="font-semibold">{info.as}</b>
+                <span className="hidden sm:inline">{info.read_only ? ' (look only)' : ' (changes allowed)'}</span> · {mm}:{ss}<span className="hidden sm:inline"> left</span>
+            </span>
+            <button type="button" onClick={() => router.post('/impersonation/stop')} className="shrink-0 font-semibold underline underline-offset-2 hover:text-orange-100">Back<span className="hidden sm:inline"> to my account</span></button>
+        </div>
+    );
+}
+
 export default function AppLayout({ children, title, breadcrumbs }: AppLayoutProps) {
-    const { flash, faviconUrl, demo, acting_school } = usePage<PageProps>().props;
+    const { flash, faviconUrl, demo, acting_school, impersonating } = usePage<PageProps>().props;
     const theme = useAuthStore((s) => s.theme);
 
     // Favicon sync
@@ -69,6 +91,7 @@ export default function AppLayout({ children, title, breadcrumbs }: AppLayoutPro
                         <a href="/demo" className="shrink-0 font-semibold underline underline-offset-2 hover:text-indigo-100">Switch<span className="hidden sm:inline"> account type</span></a>
                     </div>
                 )}
+                {impersonating && <ImpersonationBar info={impersonating} />}
                 {acting_school && (
                     <div className="flex items-center justify-between gap-3 bg-amber-500 px-3 py-1 text-[12px] leading-tight text-amber-950 sm:justify-center sm:px-4 sm:py-1.5 sm:text-[13px]">
                         <span className="min-w-0 truncate">

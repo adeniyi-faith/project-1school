@@ -24,6 +24,8 @@ const tone: Record<string, string> = {
     refused: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400',
     enter_school: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300',
     leave_school: 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300',
+    impersonate_start: 'bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300',
+    impersonate_stop: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
     security: 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300',
     login_failed: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300',
     approval_requested: 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300',

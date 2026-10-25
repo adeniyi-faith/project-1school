@@ -44,7 +44,7 @@ class AuditPlatformActions
         $inSchool = $schoolBefore !== null;
         $platformPage = $request->is('super-admin', 'super-admin/*');
 
-        if ($route === 'logout') {
+        if ($route === 'logout' || $request->attributes->get('audit_skip')) {
             return;
         }
 

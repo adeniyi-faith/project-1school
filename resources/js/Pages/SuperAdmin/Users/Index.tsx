@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
-import { Users, Plus, Search, Edit, Trash2, Ban, CheckCircle, KeyRound, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Plus, Search, Edit, Trash2, Ban, CheckCircle, KeyRound, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import RiskyConfirm from '@/components/platform/RiskyConfirm';
 
 interface Role { name: string; }
@@ -26,7 +26,7 @@ interface Props {
     schools: School[];
     roles: string[];
     /** Whether this person may add, change, switch off or remove logins (others can only look) */
-    can?: { manage: boolean };
+    can?: { manage: boolean; impersonate?: boolean };
     filters: { search?: string; role?: string; school_id?: string; status?: string };
 }
 
@@ -43,6 +43,9 @@ const statusBadge = (status: string) => {
 
 export default function UsersIndex({ users, schools, roles, filters, can }: Props) {
     const canManage = can?.manage ?? true;
+    const canImpersonate = !!can?.impersonate;
+    const [asUser, setAsUser] = useState<UserRow | null>(null);
+    const asForm = useForm({ reason: '', minutes: '15', mode: 'look' });
     const [search, setSearch]     = useState(filters.search ?? '');
     const [roleFilter, setRoleFilter] = useState(filters.role ?? '');
     const [schoolFilter, setSchoolFilter] = useState(filters.school_id ?? '');
@@ -203,6 +206,12 @@ export default function UsersIndex({ users, schools, roles, filters, can }: Prop
                                                 {u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : '—'}
                                             </td>
                                             <td className="py-3 px-4">
+                                                {canImpersonate && u.school_id && u.status === 'active' && (
+                                                    <button onClick={() => setAsUser(u)} title="Sign in as this person"
+                                                        className="mr-1 inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs font-medium text-orange-600 hover:bg-orange-50 dark:hover:bg-slate-700">
+                                                        <Eye className="w-3.5 h-3.5" /> View as
+                                                    </button>
+                                                )}
                                                 {canManage && <div className="flex items-center justify-end gap-1">
                                                     <button onClick={() => setResetUser(u)} title="Reset password"
                                                         className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-600">
@@ -340,6 +349,40 @@ export default function UsersIndex({ users, schools, roles, filters, can }: Prop
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setResetUser(null)}>Cancel</Button>
                             <Button type="submit" disabled={resetForm.processing}>Reset Password</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={!!asUser} onOpenChange={(o) => { if (!o) { setAsUser(null); asForm.reset(); } }}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader><DialogTitle>Sign in as {asUser?.name}?</DialogTitle></DialogHeader>
+                    <form onSubmit={(e) => { e.preventDefault(); if (asUser) asForm.post(`/super-admin/users/${asUser.id}/impersonate`); }} className="space-y-4">
+                        <p className="text-sm text-slate-500">You will see the app exactly as this person does. A banner stays on screen, the time is limited, and every page you open is written in the staff activity log under your name.</p>
+                        <div>
+                            <Label>Why do you need to? <span className="text-red-500">*</span></Label>
+                            <textarea rows={3} className="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="For example: the teacher says her results page shows no students"
+                                value={asForm.data.reason} onChange={(e) => asForm.setData('reason', e.target.value)} />
+                            {asForm.errors.reason && <p role="alert" className="mt-1 text-xs text-red-600">{asForm.errors.reason}</p>}
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label>For how long</Label>
+                                <select className="mt-1 h-9 w-full rounded-lg border border-slate-300 bg-white px-2 text-sm dark:border-slate-700 dark:bg-slate-950" value={asForm.data.minutes} onChange={(e) => asForm.setData('minutes', e.target.value)}>
+                                    <option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option>
+                                </select>
+                            </div>
+                            <div>
+                                <Label>What you may do</Label>
+                                <select className="mt-1 h-9 w-full rounded-lg border border-slate-300 bg-white px-2 text-sm dark:border-slate-700 dark:bg-slate-950" value={asForm.data.mode} onChange={(e) => asForm.setData('mode', e.target.value)}>
+                                    <option value="look">Look only</option><option value="act">Look and change</option>
+                                </select>
+                            </div>
+                        </div>
+                        {asForm.data.mode === 'act' && <p className="text-xs text-amber-700 dark:text-amber-300">Changes you make are saved as that person. You still cannot change their password or security settings.</p>}
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setAsUser(null)}>Cancel</Button>
+                            <Button type="submit" disabled={asForm.processing || asForm.data.reason.trim().length < 10}>Sign in as them</Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>

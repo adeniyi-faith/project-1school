@@ -63,6 +63,8 @@ export interface PageProps {
         login_details?: { name: string; email: string; password: string }[];
     };
     faviconUrl: string | null;
+    /** Set while a platform person is signed in as a school login */
+    impersonating?: { as: string; by: string | null; until: string; read_only: boolean } | null;
     /** Set while the platform owner is working inside one school */
     acting_school?: {
         id: number; name: string;

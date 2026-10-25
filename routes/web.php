@@ -135,6 +135,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/password/change',           [ProfileController::class, 'changePasswordPage'])->name('password.change');
     Route::put('/profile/password',          [ProfileController::class, 'updatePassword'])->name('profile.password');
 
+    // Ends "Log in as this user" (the person is signed in as a school login at that moment)
+    Route::post('/impersonation/stop', [\App\Http\Controllers\SuperAdmin\ImpersonationController::class, 'stop'])->name('impersonation.stop');
+
     // Security for people on the platform team (authenticator app, recovery codes, sessions, password)
     Route::prefix('security')->name('security.')->group(function () {
         $c = \App\Http\Controllers\SecurityController::class;
@@ -904,6 +907,7 @@ Route::middleware('auth')->group(function () {
             Route::get('audit/export',                   [\App\Http\Controllers\SuperAdmin\PlatformAuditController::class, 'export'])->name('audit.export');
 
             // Risky actions waiting for a second person's go-ahead (only used when second approval is switched on)
+            Route::post('users/{user}/impersonate',      [\App\Http\Controllers\SuperAdmin\ImpersonationController::class, 'start'])->middleware('throttle:20,1')->name('impersonate.start');
             Route::get('security',                       [\App\Http\Controllers\SuperAdmin\PlatformSecurityController::class, 'index'])->name('security.index');
             Route::put('security/networks',              [\App\Http\Controllers\SuperAdmin\PlatformSecurityController::class, 'saveNetworks'])->name('security.networks');
             Route::post('security/{user}/reset-two-factor',  [\App\Http\Controllers\SuperAdmin\PlatformSecurityController::class, 'resetTwoFactor'])->name('security.reset-two-factor');
