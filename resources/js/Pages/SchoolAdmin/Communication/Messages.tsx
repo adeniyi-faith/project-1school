@@ -33,14 +33,16 @@ interface Props {
     inbox: PaginatedMessages;
     sent:  PaginatedMessages;
     users: User[];
+    to?:   string | null;
 }
 
-export default function Messages({ inbox, sent, users }: Props) {
-    const [open, setOpen] = useState(false);
+export default function Messages({ inbox, sent, users, to }: Props) {
+    // opened from a student's page: the write box is already open, addressed to that parent
+    const [open, setOpen] = useState(!!to);
     const [tab, setTab]   = useState<'inbox' | 'sent'>('inbox');
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        recipient_id: '',
+        recipient_id: to ?? '',
         subject:      '',
         body:         '',
     });
