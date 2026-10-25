@@ -596,6 +596,7 @@ Route::middleware('auth')->group(function () {
             Route::get('reports/audit-log',                     [ReportController::class, 'auditLog'])->middleware('permission:settings.view')->name('reports.audit-log');
 
             // General / Branding / Academic / Notification Settings
+            Route::get('settings/all',                          [SchoolSettingsController::class, 'hub'])->middleware('permission:settings.view')->name('settings.hub');
             Route::get('settings',                              [SchoolSettingsController::class, 'index'])->middleware('permission:settings.view')->name('settings.index');
             Route::post('settings/general',                     [SchoolSettingsController::class, 'saveGeneral'])->middleware('permission:settings.edit')->name('settings.general');
             Route::post('settings/branding',                    [SchoolSettingsController::class, 'saveBranding'])->middleware('permission:settings.edit')->name('settings.branding');
