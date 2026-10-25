@@ -35,5 +35,8 @@ jobs:
           npm ci
           npm run build
 
+      - name: Run the front-end tests
+        run: npm test
+
       - name: Run the tests
         run: php vendor/bin/phpunit

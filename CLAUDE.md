@@ -35,11 +35,11 @@ shared files; Phase 1 (safety fixes) is finished. Phase 2 (terms, score/grade se
 | PDF | barryvdh/laravel-dompdf, generated inside the web request. QR codes on certificates: chillerlan/php-qrcode (PNG, no outside service) |
 | Queue / cache / sessions | Database drivers. `QUEUE_CONNECTION=sync` by default (jobs run inside the request). The `Procfile` starts `queue:work`; set `QUEUE_CONNECTION=database` in production to use it |
 | Hosting | **cPanel** (the live site). Every merge to `main` deploys itself through `.github/workflows/deploy.yml`: it builds the front end and uploads `public/build`, then on the server resets the code to `main`, runs `composer install`, `migrate --force`, the `RolePermissionSeeder`, `demo:fill` and the caches. Nobody needs to run commands by hand. `railway.json`, `Procfile` and `vercel.json` are left over from earlier attempts |
-| Tests | PHPUnit 12 (`php artisan test`). `.github/workflows/tests.yml` runs every test (PHP 8.4, SQLite, after building the front end) on each pull request, and `deploy.yml` runs it first and deploys only if it passes. There are no frontend unit tests, but `tests/e2e` holds browser checks (see below) |
+| Tests | PHPUnit 12 (`php artisan test`) and Vitest + Testing Library (`npm test`; files in `resources/js/tests/`, config in `vitest.config.ts`). `.github/workflows/tests.yml` runs every test (PHP 8.4, SQLite, after building the front end) on each pull request, and `deploy.yml` runs it first and deploys only if it passes. The front-end tests cover the small helpers (money and position formatting, comment blanks, topic matching, the permission hook) and the shared page pieces; add a test next to any helper or shared component you write. `tests/e2e` holds browser checks (see below) |
 
 **Not in this project (despite older docs):** Laravel 11, `app/Modules/*` folders, Redis,
 Horizon, Sanctum, a full `/api/v1` REST layer (only the small read-only `/api/school` described under Developer kit), Stripe, 2FA, PestPHP,
-Vitest, Playwright, a mobile/PWA app, and a real SMS provider.
+Playwright, a mobile/PWA app, and a real SMS provider.
 
 ---
 
@@ -138,7 +138,7 @@ php artisan migrate --seed
 php artisan test            # PHPUnit; uses in-memory SQLite and a built-in test app key
 ```
 
-There is no `npm run type-check`, no lint script and no frontend test runner yet.
+There is no `npm run type-check` and no lint script yet.
 
 ### Environment variables that matter
 
