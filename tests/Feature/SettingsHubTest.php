@@ -11,7 +11,7 @@ class SettingsHubTest extends SecurityTestCase
     {
         $admin = $this->makeUser($this->makeSchool('Hub School'), 'school-admin');
 
-        $this->actingAs($admin)->get('/school/settings/all')->assertOk()->assertInertia(fn ($p) => $p->component('SchoolAdmin/Settings/Hub'));
+        $this->actingAs($admin)->get('/school/settings/all')->assertOk()->assertInertia(fn ($p) => $p->component('SchoolAdmin/Settings/Hub', false));
     }
 
     public function test_people_without_settings_access_cannot_open_it(): void
