@@ -18,6 +18,7 @@ import type { PageProps, PaginatedResponse, School as SchoolType } from '@/Types
 
 interface SchoolsPageProps extends PageProps {
     schools: PaginatedResponse<SchoolType>;
+    deleted: { id: number; name: string; deleted_at: string; delete_reason: string | null }[];
     filters: { search?: string; status?: string };
     stats: { total: number; active: number; suspended: number };
 }
@@ -36,7 +37,7 @@ const statusBadge = (status: string) => {
 };
 
 export default function SchoolsIndex() {
-    const { schools, filters, stats } = usePage<SchoolsPageProps>().props;
+    const { schools, deleted, filters, stats } = usePage<SchoolsPageProps>().props;
     const can = useCan();
     const [search, setSearch] = useState(filters.search ?? '');
 
@@ -49,11 +50,8 @@ export default function SchoolsIndex() {
         applyFilters({ search });
     };
 
-    const confirmDelete = (school: SchoolType) => {
-        if (confirm(`Delete "${school.name}"? This cannot be undone.`)) {
-            router.delete(`/super-admin/schools/${school.id}`);
-        }
-    };
+    // Deleting starts on the school's own page, where a reason is asked for and a waiting period applies
+    const confirmDelete = (school: SchoolType) => router.visit(`/super-admin/schools/${school.id}`);
 
     return (
         <AppLayout breadcrumbs={[{ label: 'Super Admin' }, { label: 'Schools' }]}>
@@ -220,7 +218,7 @@ export default function SchoolsIndex() {
                                                         className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400"
                                                         onClick={() => confirmDelete(school)}
                                                     >
-                                                        <Trash2 className="w-4 h-4 shrink-0" /> Delete
+                                                        <Trash2 className="w-4 h-4 shrink-0" /> Delete…
                                                     </DropdownMenuItem>
                                                 </>
                                             )}
@@ -249,6 +247,20 @@ export default function SchoolsIndex() {
                     </div>
                 )}
             </div>
+            {deleted.length > 0 && (
+                <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                    <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Recently deleted</h2>
+                    <p className="mb-2 text-xs text-slate-500">Nothing is wiped when a school is deleted. You can bring it back here.</p>
+                    <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {deleted.map((d) => (
+                            <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                                <span className="min-w-0 break-words text-slate-700 dark:text-slate-300">{d.name}<span className="text-xs text-slate-400"> · deleted {new Date(d.deleted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span></span>
+                                <Button size="sm" variant="outline" onClick={() => { if (confirm(`Restore ${d.name}? It comes back suspended.`)) router.post(`/super-admin/deleted-schools/${d.id}/restore`); }}>Restore</Button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
         </AppLayout>
     );
 }

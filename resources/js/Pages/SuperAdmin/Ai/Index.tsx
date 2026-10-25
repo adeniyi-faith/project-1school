@@ -15,6 +15,7 @@ type Tier = 'writing' | 'quick';
 interface Settings {
     enabled: boolean; has_key: boolean; key_hint: string | null;
     models: Record<Tier, string>; prices: Record<Tier, { in: number; out: number }>;
+    image_model: string; image_price: number; image_cap: number;
     default_limit: number; naira_per_dollar: number;
 }
 
@@ -41,6 +42,9 @@ export default function AiIndex({ settings, knownModels, prices, schools, month 
         price_writing_out: String(settings.prices.writing.out),
         price_quick_in: String(settings.prices.quick.in),
         price_quick_out: String(settings.prices.quick.out),
+        model_image: settings.image_model,
+        price_image: String(settings.image_price),
+        image_cap: String(settings.image_cap),
         default_limit: String(settings.default_limit),
         naira_per_dollar: String(settings.naira_per_dollar),
     });
@@ -131,6 +135,27 @@ export default function AiIndex({ settings, knownModels, prices, schools, month 
                                 <Input id="naira_per_dollar" type="number" min={1} step="1" value={d.naira_per_dollar} onChange={e => form.setData('naira_per_dollar', e.target.value)} />
                                 <p className="text-xs text-slate-500">Google charges in dollars. This turns each request's cost into naira.</p>
                                 {err('naira_per_dollar')}
+                            </div>
+                        </div>
+                    </Panel>
+
+                    <Panel title="Pictures" description="The model that makes teaching pictures, what Google charges for one, and how many pictures a school may make a month. Teachers pick a picture style; they never see any of this.">
+                        <div className="grid gap-4 sm:grid-cols-3">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="model_image">Picture model</Label>
+                                <Input id="model_image" value={d.model_image} onChange={e => form.setData('model_image', e.target.value.trim())} />
+                                <p className="text-xs text-slate-500">Type it as Google writes it. Try one picture after changing it.</p>
+                                {err('model_image')}
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="price_image">$ for one picture</Label>
+                                <Input id="price_image" type="number" min={0} step="0.001" value={d.price_image} onChange={e => form.setData('price_image', e.target.value)} />
+                                {err('price_image')}
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="image_cap">Pictures a school may make a month</Label>
+                                <Input id="image_cap" type="number" min={0} step="1" value={d.image_cap} onChange={e => form.setData('image_cap', e.target.value)} />
+                                {err('image_cap')}
                             </div>
                         </div>
                     </Panel>

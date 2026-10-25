@@ -21,7 +21,9 @@ class BlockSuspendedSchool
             return $next($request);
         }
 
-        if (School::whereKey($user->school_id)->where('status', 'suspended')->exists()) {
+        // withTrashed: a school that was deleted after its waiting period is blocked too
+        $school = School::withTrashed()->select('id', 'status', 'deleted_at')->find($user->school_id);
+        if ($school && ($school->trashed() || $school->status === 'suspended')) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
