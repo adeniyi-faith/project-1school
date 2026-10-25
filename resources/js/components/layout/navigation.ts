@@ -234,6 +234,8 @@ export const navGroups: NavGroup[] = [
             { label: 'Integrations',  href: '/school/settings/integrations', icon: Plug,     roles: ['super-admin','school-admin'] },
             { label: 'Manage Users',  href: '/school/settings/admins',       icon: UserCog,  roles: ['school-admin'] },
             { label: 'All Users',     href: '/super-admin/users',            icon: Users,    roles: ['super-admin'] },
+            { label: 'Platform Staff', href: '/super-admin/staff',           icon: UserCog,  roles: ['super-admin'] },
+            { label: 'Staff Activity', href: '/super-admin/audit',           icon: History,  roles: ['super-admin'] },
         ],
     },
 ];
@@ -308,6 +310,13 @@ export const bottomTabs: Record<string, BottomTab[]> = {
         { label: 'Results',    href: '/school/student/results',   icon: BarChart3 },
         { label: 'Homework',   href: '/school/student/homework',  icon: NotebookPen },
     ],
+    // Platform staff: the tabs are cut down to the pages their role may open
+    'platform-staff': [
+        { label: 'Home',          href: '/super-admin/dashboard',     icon: LayoutDashboard, exact: true },
+        { label: 'Schools',       href: '/super-admin/schools',       icon: School },
+        { label: 'Subscriptions', href: '/super-admin/subscriptions', icon: CreditCard },
+        { label: 'Users',         href: '/super-admin/users',         icon: Users },
+    ],
     'super-admin': [
         { label: 'Home',          href: '/super-admin/dashboard',     icon: LayoutDashboard, exact: true },
         { label: 'Schools',       href: '/super-admin/schools',       icon: School },
@@ -324,11 +333,11 @@ export function navGroupsForRole(role: string, paths?: string[], actingSchool = 
     const inPaths = (item: NavItem) => !paths || paths.includes(item.href);
     // The platform owner sees the platform menu, or, once inside a school, that school's whole menu
     const allowed = (item: NavItem) => {
-        if (role === 'super-admin') {
+        if (role === 'super-admin' || role === 'platform-staff') {
             const school = item.href.startsWith('/school');
             const ok = actingSchool ? school && (!item.roles || item.roles.includes('super-admin') || item.roles.includes('school-admin')) : item.href.startsWith('/super-admin');
-            // The platform's own pages are always listed for the owner; school pages still follow what she may open
-            return ok && (actingSchool ? inPaths(item) : true);
+            // The platform's own pages are always listed for the owner; school pages, and everything for platform staff, follow what the person may open
+            return ok && (actingSchool || role === 'platform-staff' ? inPaths(item) : true);
         }
         return (!item.roles || item.roles.includes(role)) && inPaths(item);
     };
