@@ -830,6 +830,11 @@ Route::middleware('auth')->group(function () {
             Route::patch('schools/{school}/suspend', [SchoolController::class, 'suspend'])->name('schools.suspend');
             Route::patch('schools/{school}/activate', [SchoolController::class, 'activate'])->name('schools.activate');
 
+            // Deleting a school: scheduled with a reason, waits, can be cancelled or restored
+            Route::post('schools/{school}/schedule-delete',   [\App\Http\Controllers\SuperAdmin\SchoolLifecycleController::class, 'scheduleDeletion'])->name('schools.schedule-delete');
+            Route::post('schools/{school}/cancel-delete',     [\App\Http\Controllers\SuperAdmin\SchoolLifecycleController::class, 'cancelDeletion'])->name('schools.cancel-delete');
+            Route::post('deleted-schools/{school}/restore',   [\App\Http\Controllers\SuperAdmin\SchoolLifecycleController::class, 'restore'])->name('schools.restore');
+
             // School 360: tags, account manager and private notes
             Route::patch('schools/{school}/profile',              [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'profile'])->name('schools.profile');
             Route::post('schools/{school}/notes',                 [\App\Http\Controllers\SuperAdmin\SchoolSupportController::class, 'storeNote'])->name('schools.notes.store');

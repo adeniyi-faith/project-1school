@@ -23,6 +23,7 @@ class School extends Model
     protected $casts = [
         'settings' => 'array',
         'tags'     => 'array',
+        'delete_scheduled_at' => 'datetime',
     ];
 
     protected static function booted(): void
