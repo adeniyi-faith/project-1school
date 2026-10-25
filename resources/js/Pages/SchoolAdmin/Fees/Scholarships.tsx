@@ -12,6 +12,7 @@ import { EmptyState, PageHeader, Panel, Pill } from '@/components/app/kit';
 import { naira } from '@/lib/format';
 import { Gift, Pencil, Plus, Trash2, UserPlus } from 'lucide-react';
 import type { Scholarship, ScholarshipAward } from '@/Types';
+import { FieldError as ErrorText } from '@/components/app/FormField';
 
 interface Props {
     scholarships: Scholarship[];
@@ -30,10 +31,6 @@ type PolicyForm = { name: string; type: 'percent' | 'fixed'; value: string; fee_
 
 function describe(s: Scholarship) {
     return `${s.type === 'percent' ? `${s.value}% off` : `${naira(s.value)} off`} ${s.fee_category ? s.fee_category : 'every fee'}`;
-}
-
-function ErrorText({ children }: { children?: string }) {
-    return children ? <p className="text-xs text-red-500">{children}</p> : null;
 }
 
 export default function Scholarships({ scholarships, awards, categories, can }: Props) {

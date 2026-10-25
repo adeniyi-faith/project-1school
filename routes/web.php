@@ -852,6 +852,9 @@ Route::middleware('auth')->group(function () {
             // Deleting a school: scheduled with a reason, waits, can be cancelled or restored
             Route::post('schools/{school}/schedule-delete',   [\App\Http\Controllers\SuperAdmin\SchoolLifecycleController::class, 'scheduleDeletion'])->name('schools.schedule-delete');
             Route::post('schools/{school}/cancel-delete',     [\App\Http\Controllers\SuperAdmin\SchoolLifecycleController::class, 'cancelDeletion'])->name('schools.cancel-delete');
+            if (\App\Support\PlatformTools::enabled('school_export')) {
+                Route::post('schools/{school}/export',        [\App\Http\Controllers\SuperAdmin\SchoolExportController::class, 'download'])->name('schools.export');
+            }
             Route::post('deleted-schools/{school}/restore',   [\App\Http\Controllers\SuperAdmin\SchoolLifecycleController::class, 'restore'])->name('schools.restore');
 
             // School 360: tags, account manager and private notes

@@ -13,8 +13,9 @@ import { InvoiceStatus } from '@/components/fees/InvoiceStatus';
 import { naira } from '@/lib/format';
 import { PlanPartsEditor, planPayload } from '@/components/fees/Instalments';
 import { TakePayment } from '@/components/fees/TakePayment';
-import { CalendarClock, FileText, Gift, Plus } from 'lucide-react';
+import { CalendarClock, Check, Copy, FileText, Gift, Phone, Plus } from 'lucide-react';
 import type { InvoiceRow, PaymentPlanOption, PlanPart } from '@/Types';
+import { Pager } from '@/components/app/Pager';
 
 interface Structure { id: number; class_id: number; class_name: string | null; name: string; amount: number; academic_year: string; due_date: string | null }
 interface TermOption { id: number; label: string; is_current: boolean; start: string | null; end: string | null }
@@ -47,7 +48,8 @@ const STATUS_ITEMS = [
 
 type IssueForm = { fee_structure_ids: number[]; term_id: string; period: string; due_date: string; plan_id: string; parts: PlanPart[]; replace: boolean };
 
-export default function Invoices({ invoices, stats, classes, terms, structures, plans, filters, can }: Props) {
+export default function Invoices({ invoices, stats, classes, terms, structures, plans, filters, contacts, can }: Props) {
+    const [copied, setCopied] = useState<'numbers' | 'list' | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
     // 'issue' makes invoices (parts optional); 'plan' puts parts on invoices already made
     const [mode, setMode] = useState<'issue' | 'plan' | null>(null);
@@ -70,6 +72,14 @@ export default function Invoices({ invoices, stats, classes, terms, structures, 
 
     function filter(key: string, value: string | null) {
         router.get('/school/fees/invoices', { ...filters, [key]: value && value !== ALL ? value : undefined }, { preserveState: true, preserveScroll: true });
+    }
+
+    function copy(kind: 'numbers' | 'list') {
+        if (!contacts) return;
+        const text = kind === 'numbers'
+            ? contacts.map(c => c.phone).join(', ')
+            : contacts.map(c => `${c.name} (${c.children.join(', ')}) ${c.phone} - owes ${naira(c.owed)}`).join('\n');
+        navigator.clipboard?.writeText(text).then(() => { setCopied(kind); setTimeout(() => setCopied(null), 2500); }).catch(() => undefined);
     }
 
     function toggle(id: number) {
@@ -148,6 +158,19 @@ export default function Invoices({ invoices, stats, classes, terms, structures, 
                     </Select>
                 </div>
 
+                {contacts && contacts.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm dark:border-amber-500/20 dark:bg-amber-500/10">
+                        <p className="text-amber-900 dark:text-amber-200">
+                            <Phone className="mr-1.5 inline size-4" />
+                            <strong>{contacts.length}</strong> parent{contacts.length === 1 ? '' : 's'} in this list still owe {naira(contacts.reduce((t, c) => t + c.owed, 0))}. Each phone number is counted once.
+                        </p>
+                        <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => copy('numbers')}>{copied === 'numbers' ? <Check className="size-4" /> : <Copy className="size-4" />} {copied === 'numbers' ? 'Copied' : 'Copy numbers'}</Button>
+                            <Button size="sm" variant="outline" onClick={() => copy('list')}>{copied === 'list' ? <Check className="size-4" /> : <Copy className="size-4" />} {copied === 'list' ? 'Copied' : 'Copy names and amounts'}</Button>
+                        </div>
+                    </div>
+                )}
+
                 <Panel flush>
                     {invoices.data.length === 0 ? (
                         <div className="pb-5">
@@ -176,6 +199,11 @@ export default function Invoices({ invoices, stats, classes, terms, structures, 
                                             <TableCell>
                                                 <p className="font-medium text-slate-900 dark:text-white">{i.student?.name ?? 'Removed student'}</p>
                                                 <p className="text-xs text-slate-500">{i.student?.class} · {i.student?.admission_no}</p>
+                                                {i.parent_phone && i.balance > 0 && (
+                                                    <a href={`tel:${i.parent_phone}`} onClick={e => e.stopPropagation()} className="mt-0.5 inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline dark:text-indigo-400">
+                                                        <Phone className="size-3" /> {i.parent_phone}
+                                                    </a>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <p>{i.fee}</p>
@@ -198,15 +226,7 @@ export default function Invoices({ invoices, stats, classes, terms, structures, 
                             </Table>
                         </div>
                     )}
-                    {invoices.meta.last_page > 1 && (
-                        <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-sm text-slate-500 dark:border-white/[0.06]">
-                            <span>{invoices.meta.from}–{invoices.meta.to} of {invoices.meta.total}</span>
-                            <div className="flex gap-2">
-                                <Button variant="outline" size="sm" disabled={!invoices.links.prev} onClick={() => invoices.links.prev && router.visit(invoices.links.prev)}>Previous</Button>
-                                <Button variant="outline" size="sm" disabled={!invoices.links.next} onClick={() => invoices.links.next && router.visit(invoices.links.next)}>Next</Button>
-                            </div>
-                        </div>
-                    )}
+                    <Pager meta={invoices.meta} links={invoices.links} />
                 </Panel>
             </div>
 

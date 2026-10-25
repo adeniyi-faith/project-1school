@@ -7,4 +7,6 @@
 */
 return [
     'health' => env('PLATFORM_TOOL_HEALTH', true),
+    // Download a copy of one school's data (School page > Download data)
+    'school_export' => env('PLATFORM_TOOL_SCHOOL_EXPORT', true),
 ];
