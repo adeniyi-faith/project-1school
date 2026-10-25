@@ -24,6 +24,7 @@ const tone: Record<string, string> = {
     refused: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400',
     enter_school: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300',
     leave_school: 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300',
+    approval_requested: 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300',
     viewed: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
 };
 const select = 'h-9 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring';

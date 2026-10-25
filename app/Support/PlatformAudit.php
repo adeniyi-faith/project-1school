@@ -58,6 +58,8 @@ class PlatformAudit
         'super-admin.coupons.store'          => 'Created a coupon',
         'super-admin.coupons.update'         => 'Edited a coupon',
         'super-admin.coupons.destroy'        => 'Deleted a coupon',
+        'super-admin.approvals.approve'      => 'Approved a risky action',
+        'super-admin.approvals.deny'         => 'Turned down a risky action',
         'super-admin.module-manager.toggle'  => 'Switched a module',
         'super-admin.module-manager.bulk'    => 'Changed a school\'s modules',
     ];
@@ -148,27 +150,39 @@ class PlatformAudit
         return Str::limit(is_scalar($value) ? (string) $value : json_encode($value), 120);
     }
 
-    /** The sentence for a request: a plain-words name for the route, with the school or login it touched */
+    /** The sentence for a request: a plain-words name for the route, with the school or login it touched, and the reason when one was given */
     public static function describe(Request $request): string
     {
         $name = $request->route()?->getName();
         $base = self::WORDS[$name] ?? null;
         $school = $request->route('school');
         $target = $request->route('user');
+        $named = (string) $request->attributes->get('audit_target', '');
+        $reason = trim((string) $request->attributes->get('audit_reason', ''));
+        $approvedBy = (string) $request->attributes->get('audit_approved_by', '');
 
         if ($base) {
-            if ($school instanceof School) {
-                return "{$base}: {$school->name}";
-            }
-            if ($target instanceof User) {
-                return "{$base}: {$target->name}";
-            }
-
-            return $base;
+            $text = match (true) {
+                $school instanceof School => "{$base}: {$school->name}",
+                $target instanceof User => "{$base}: {$target->name}",
+                $named !== '' => "{$base}: {$named}",
+                default => $base,
+            };
+        } else {
+            $what = $name ?: $request->path();
+            $text = $request->isMethodSafe() ? "Opened {$what}" : "Changed something ({$what})";
         }
 
-        $what = $name ?: $request->path();
+        if ($request->attributes->get('audit_action') === 'approval_requested') {
+            $text = 'Asked for approval to do this: '.$text;
+        }
+        if ($approvedBy !== '') {
+            $text .= " (approved by {$approvedBy})";
+        }
+        if ($reason !== '') {
+            $text .= ' — reason: '.Str::limit($reason, 200);
+        }
 
-        return $request->isMethodSafe() ? "Opened {$what}" : "Changed something ({$what})";
+        return $text;
     }
 }

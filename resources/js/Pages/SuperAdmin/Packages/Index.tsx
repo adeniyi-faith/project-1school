@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Package, Plus, Edit, Trash2, CheckSquare, Square } from 'lucide-react';
+import RiskyConfirm from '@/components/platform/RiskyConfirm';
 
 interface PkgModule { module_slug: string; }
 interface Pkg {
@@ -58,11 +59,6 @@ export default function PackagesIndex({ packages, availableModules }: Props) {
             form.post('/super-admin/packages', { onSuccess: () => setShowModal(false) });
         }
     }
-    function confirmDelete() {
-        if (!delPkg) return;
-        router.delete(`/super-admin/packages/${delPkg.id}`, { onSuccess: () => setDelPkg(null) });
-    }
-
     return (
         <AppLayout title="Packages">
             <div className="space-y-6">
@@ -198,18 +194,8 @@ export default function PackagesIndex({ packages, availableModules }: Props) {
             </Dialog>
 
             {/* Delete Confirm */}
-            <Dialog open={!!delPkg} onOpenChange={open => !open && setDelPkg(null)}>
-                <DialogContent className="max-w-sm">
-                    <DialogHeader><DialogTitle>Delete Package</DialogTitle></DialogHeader>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Delete <strong>{delPkg?.name}</strong>? This cannot be undone and will fail if schools are subscribed.
-                    </p>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setDelPkg(null)}>Cancel</Button>
-                        <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDelete}>Delete</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <RiskyConfirm open={!!delPkg} onClose={() => setDelPkg(null)} url={`/super-admin/packages/${delPkg?.id}`} title={`Delete ${delPkg?.name ?? 'this package'}?`}
+                description="This cannot be undone, and it is refused while schools are subscribed to it." />
         </AppLayout>
     );
 }

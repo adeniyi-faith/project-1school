@@ -11,6 +11,7 @@ import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import { Users, Plus, Search, Edit, Trash2, Ban, CheckCircle, KeyRound, ChevronLeft, ChevronRight } from 'lucide-react';
+import RiskyConfirm from '@/components/platform/RiskyConfirm';
 
 interface Role { name: string; }
 interface UserRow {
@@ -92,11 +93,6 @@ export default function UsersIndex({ users, schools, roles, filters, can }: Prop
         } else {
             form.post('/super-admin/users', { onSuccess: () => setShowModal(false) });
         }
-    }
-
-    function confirmDelete() {
-        if (!deleteUser) return;
-        router.delete(`/super-admin/users/${deleteUser.id}`, { onSuccess: () => setDeleteUser(null) });
     }
 
     function toggleStatus(u: UserRow) {
@@ -350,20 +346,8 @@ export default function UsersIndex({ users, schools, roles, filters, can }: Prop
             </Dialog>
 
             {/* Delete Confirm */}
-            <Dialog open={!!deleteUser} onOpenChange={open => !open && setDeleteUser(null)}>
-                <DialogContent className="max-w-sm">
-                    <DialogHeader>
-                        <DialogTitle>Delete User</DialogTitle>
-                    </DialogHeader>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Are you sure you want to delete <strong>{deleteUser?.name}</strong>? This action cannot be undone.
-                    </p>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteUser(null)}>Cancel</Button>
-                        <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDelete}>Delete</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <RiskyConfirm open={!!deleteUser} onClose={() => setDeleteUser(null)} url={`/super-admin/users/${deleteUser?.id}`} title={`Delete ${deleteUser?.name ?? 'this login'}?`}
+                description="Their login stops working for good. Their past actions stay in the records." typeName={deleteUser?.name} canNeedApproval />
         </AppLayout>
     );
 }

@@ -90,6 +90,10 @@ class HandleInertiaRequests extends Middleware
             'platform' => fn () => PlatformAccess::isStaff($request->user())
                 ? ['role' => PlatformAccess::roleLabel($request->user()->roles->pluck('name')->first(fn ($r) => PlatformAccess::isPlatformRoleName($r))), 'scoped' => PlatformAccess::isScoped($request->user())]
                 : null,
+            // Set for platform people: do staff's risky actions wait for a second person?
+            'risky' => fn () => PlatformAccess::isStaff($request->user())
+                ? ['approval' => \App\Support\RiskyActions::enabled() && \App\Support\RiskyActions::secondApprovalOn()]
+                : null,
             // Set while someone is looking around the public demo: the bar on top offers to switch account type
             'demo' => fn () => DemoSchool::isDemoUser($request->user())
                 ? ['label' => DemoSchool::ACCOUNTS[DemoSchool::keyOf($request->user())][1]]

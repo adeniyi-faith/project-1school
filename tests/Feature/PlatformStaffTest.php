@@ -242,7 +242,7 @@ class PlatformStaffTest extends SecurityTestCase
         $this->seed(RolePermissionSeeder::class);
         $this->assertTrue($s->fresh()->hasPermissionTo('platform.billing.view'));
 
-        $this->actingAs($this->owner())->delete("/super-admin/staff/{$s->id}")->assertSessionHas('success');
+        $this->actingAs($this->owner())->delete("/super-admin/staff/{$s->id}", ['reason' => 'Left the team last week', 'confirm_name' => $s->name])->assertSessionHas('success');
         $s = $s->fresh();
         $this->assertFalse(PlatformAccess::isPlatform($s));
         $this->assertSame('inactive', $s->status);
@@ -252,7 +252,7 @@ class PlatformStaffTest extends SecurityTestCase
     public function test_the_owner_cannot_be_changed_from_the_team_page(): void
     {
         $owner = $this->owner();
-        $this->actingAs($owner)->delete("/super-admin/staff/{$owner->id}")->assertNotFound();
+        $this->actingAs($owner)->delete("/super-admin/staff/{$owner->id}", ['reason' => 'Trying to remove the owner', 'confirm_name' => $owner->name])->assertNotFound();
         $this->assertTrue($owner->fresh()->hasRole('super-admin'));
     }
 

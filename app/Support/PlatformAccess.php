@@ -43,6 +43,7 @@ class PlatformAccess
         'platform.content.manage' => ['Content', 'Newsletter email and website extensions'],
         'platform.staff.manage'   => ['Team', 'Add and change platform staff (owner only)'],
         'platform.audit.view'     => ['Team', 'See and export the log of what platform staff did'],
+        'platform.approvals.manage' => ['Team', 'Approve or turn down risky actions that other staff ask for'],
     ];
 
     /** The platform roles: label, what the role is for, and the permissions it starts with */
@@ -109,6 +110,7 @@ class PlatformAccess
         'super-admin.extensions.*'      => ['platform.content.manage', false],
         'super-admin.staff.*'           => ['platform.staff.manage', false],
         'super-admin.audit.*'           => ['platform.audit.view', false],
+        'super-admin.approvals.*'       => ['platform.approvals.manage', false],
     ];
 
     /** What the page with this route name needs: [permission or null, works for scoped staff]. Null = owner only. */
@@ -159,7 +161,16 @@ class PlatformAccess
             return false;
         }
 
-        return self::isOwner($user) || (self::isStaff($user) && $user->hasPermissionTo($permission));
+        if (self::isOwner($user)) {
+            return true;
+        }
+
+        // A permission added by a new release does not exist until the deploy has run the seeder: that means "no", not an error
+        try {
+            return self::isStaff($user) && $user->hasPermissionTo($permission);
+        } catch (\Spatie\Permission\Exceptions\PermissionDoesNotExist) {
+            return false;
+        }
     }
 
     /** True when the person can reach only the schools they were assigned (never the owner) */
