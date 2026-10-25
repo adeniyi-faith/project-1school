@@ -2,6 +2,8 @@ import { useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState, PageHeader, Panel, Pill } from '@/components/app/kit';
 import { naira } from '@/lib/format';
 import { Sparkles } from 'lucide-react';
@@ -9,6 +11,7 @@ import { Sparkles } from 'lucide-react';
 interface Props {
     state: { platform_ready: boolean; blocked: boolean; school_off: boolean; tools_off: string[]; limit: number; used: number; reason: string | null };
     features: { key: string; label: string; on: boolean }[];
+    taskStyles: { task: string; label: string; styles: { key: string; label: string; hint: string }[]; current: string }[];
     byFeature: { label: string; requests: number; cost: number }[];
     recent: { id: number; when: string; who: string | null; feature: string; cost: number; ok: boolean; error: string | null }[];
     canEdit: boolean;
@@ -16,8 +19,8 @@ interface Props {
 }
 
 /** A school's AI page: switch the AI (or single tools) off, and see what has been used this month */
-export default function AiSettings({ state, features, byFeature, recent, canEdit, month }: Props) {
-    const form = useForm({ on: !state.school_off, tools_off: state.tools_off });
+export default function AiSettings({ state, features, taskStyles, byFeature, recent, canEdit, month }: Props) {
+    const form = useForm({ on: !state.school_off, tools_off: state.tools_off, default_styles: Object.fromEntries(taskStyles.map(t => [t.task, t.current])) as Record<string, string> });
     const d = form.data;
     const percent = state.limit > 0 ? Math.min(100, Math.round((state.used / state.limit) * 100)) : 100;
 
@@ -67,6 +70,25 @@ export default function AiSettings({ state, features, byFeature, recent, canEdit
                                             <label key={f.key} className={`flex items-center gap-2 ${d.on ? '' : 'opacity-50'}`}>
                                                 <Checkbox disabled={!canEdit || !d.on} checked={!d.tools_off.includes(f.key)} onCheckedChange={v => toggleTool(f.key, !!v)} /> {f.label}
                                             </label>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="mt-5 space-y-3 border-t border-slate-100 pt-4 dark:border-white/10">
+                                    <div>
+                                        <p className="text-sm font-medium">Usual style</p>
+                                        <p className="text-xs text-slate-500">The style each box starts on. Teachers can still pick another style every time they write.</p>
+                                    </div>
+                                    <div className="grid gap-4 sm:grid-cols-3">
+                                        {taskStyles.map(t => (
+                                            <div key={t.task} className="space-y-1.5">
+                                                <Label htmlFor={`style-${t.task}`}>{t.label}</Label>
+                                                <Select items={t.styles.map(x => ({ value: x.key, label: x.label }))} value={d.default_styles[t.task]} disabled={!canEdit || !d.on}
+                                                    onValueChange={v => v && form.setData('default_styles', { ...d.default_styles, [t.task]: v })}>
+                                                    <SelectTrigger id={`style-${t.task}`} className="w-full"><SelectValue /></SelectTrigger>
+                                                    <SelectContent>{t.styles.map(x => <SelectItem key={x.key} value={x.key}>{x.label}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                                <p className="text-xs text-slate-500">{t.styles.find(x => x.key === d.default_styles[t.task])?.hint}</p>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>

@@ -246,7 +246,7 @@ class LessonNoteService
             .'(names, foods, places, money in naira) and activities that work in an ordinary classroom with a board and few materials. '
             .'Fill every heading you are given and nothing else. Use short paragraphs and numbered steps; no markdown symbols such as # or **. '
             .'Do not make up page numbers for real textbooks; name the book only when you are sure it exists.';
-        $style = AiStyles::resolve('lesson_note', $context['style'] ?? null);
+        $style = AiStyles::resolve('lesson_note', $context['style'] ?? null, $schoolId);
         if ($style['rule'] !== '') {
             $system .= ' '.$style['rule'];
         }

@@ -3,6 +3,7 @@
 namespace App\Ai;
 
 use App\Models\PlatformSetting;
+use App\Models\SchoolSetting;
 
 /**
  * The styles a teacher can pick for each AI task ("Short and quick", "Full and detailed" ...).
@@ -102,21 +103,42 @@ class AiStyles
             ->values()->all();
     }
 
-    public static function defaultKey(string $task): string
+    /** The style a task starts on: the school's own choice when it has made one, otherwise the built-in default */
+    public static function defaultKey(string $task, ?int $schoolId = null): string
     {
+        if ($schoolId) {
+            $chosen = self::schoolDefaults($schoolId)[$task] ?? null;
+            if (isset(self::TASKS[$task]['styles'][$chosen])) {
+                return $chosen;
+            }
+        }
+
         return self::TASKS[$task]['default'];
+    }
+
+    /** @return array<string, string> task => style key, as a school saved them */
+    public static function schoolDefaults(int $schoolId): array
+    {
+        return json_decode((string) SchoolSetting::get($schoolId, 'ai_default_styles', '{}'), true) ?: [];
+    }
+
+    /** The tasks a school can set a default style for, with the teacher-facing names only */
+    public static function taskNames(): array
+    {
+        return ['lesson_note' => 'Lesson notes', 'questions' => 'Exam and test questions', 'image' => 'Pictures'];
     }
 
     /**
      * The style to use. A missing or unknown key quietly gives the task's default, so an old page
-     * or a mistyped value never breaks writing. 'tier' already includes the platform owner's override.
+     * or a mistyped value never breaks writing. With a $schoolId the default is that school's own choice.
+     * 'tier' already includes the platform owner's override.
      *
      * @return array{key: string, label: string, hint: string, tier: string, tokens: int, rule: string}
      */
-    public static function resolve(string $task, ?string $key): array
+    public static function resolve(string $task, ?string $key, ?int $schoolId = null): array
     {
         $styles = self::TASKS[$task]['styles'];
-        $key = isset($styles[$key]) ? $key : self::defaultKey($task);
+        $key = isset($styles[$key]) ? $key : self::defaultKey($task, $schoolId);
         $style = $styles[$key] + ['key' => $key];
 
         $overrides = json_decode((string) PlatformSetting::get('ai_style_tiers', '{}'), true) ?: [];

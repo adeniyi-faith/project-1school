@@ -18,7 +18,7 @@ class ImageWriterService
     /** @return array{image: string} a data address the browser can show straight away */
     public function make(int $schoolId, User $by, string $description, ?string $style, ?string $subject = null): array
     {
-        $style = AiStyles::resolve('image', $style);
+        $style = AiStyles::resolve('image', $style, $schoolId);
         $prompt = collect([
             'Make one picture for a school lesson or exam in a Nigerian school.',
             $subject ? "Subject: {$subject}." : null,
