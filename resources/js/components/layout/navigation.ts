@@ -260,7 +260,7 @@ export const bottomTabs: Record<string, BottomTab[]> = {
     teacher: [
         { label: 'My Classes', href: '/school/my-classes',        icon: GraduationCap },
         { label: 'Attendance', href: '/school/attendance',        icon: ClipboardList },
-        { label: 'Exams',      href: '/school/exams',             icon: BookOpen },
+        { label: 'Scores',     href: '/school/results',           icon: ClipboardCheck },
         { label: 'Timetable',  href: '/school/timetable',         icon: CalendarDays },
     ],
     accountant: [
