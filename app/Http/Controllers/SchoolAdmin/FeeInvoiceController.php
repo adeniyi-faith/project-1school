@@ -27,23 +27,14 @@ class FeeInvoiceController extends Controller
     {
         $sid = $this->getSchoolId();
 
-        $invoices = Invoice::with([
-            'student:id,first_name,last_name,admission_no,class_id',
+        $invoices = $this->filtered($request)->with([
+            'student:id,first_name,last_name,admission_no,class_id,guardian_id',
             'student.schoolClass:id,name',
+            'student.guardian:id,name,phone',
             'feeStructure:id,fee_category_id,class_id',
             'feeStructure.feeCategory:id,name',
             'instalments',
         ])
-            ->when($request->status === 'behind', fn ($q) => $q->whereIn('status', ['unpaid', 'partial'])->whereHas('instalments', fn ($p) => $this->behind($p)))
-            ->when($request->status === 'open', fn ($q) => $q->whereIn('status', ['unpaid', 'partial']))
-            ->when($request->status && ! in_array($request->status, ['open', 'behind'], true), fn ($q) => $q->where('status', $request->status))
-            ->when($request->class_id, fn ($q) => $q->whereHas('student', fn ($s) => $s->where('class_id', $request->class_id)))
-            ->when($request->term_id, fn ($q) => $q->where('term_id', $request->term_id))
-            ->when($request->search, fn ($q) => $q->where(fn ($w) => $w
-                ->where('invoice_no', 'like', '%' . $request->search . '%')
-                ->orWhereHas('student', fn ($s) => $s->where('admission_no', 'like', '%' . $request->search . '%')
-                    ->orWhere('first_name', 'like', '%' . $request->search . '%')
-                    ->orWhere('last_name', 'like', '%' . $request->search . '%'))))
             ->latest('id')
             ->paginate(25)
             ->withQueryString();
@@ -78,8 +69,45 @@ class FeeInvoiceController extends Controller
                 ]),
             'plans' => $this->plans(),
             'filters' => $request->only('status', 'class_id', 'term_id', 'search'),
+            'contacts' => in_array($request->status, ['open', 'behind'], true) ? $this->debtorContacts($request) : null,
             'can' => ['issue' => $request->user()->can('fees.structure')],
         ]);
+    }
+
+    /** The invoices a request's filters (status, class, term, search) point at */
+    private function filtered(Request $request)
+    {
+        return Invoice::query()
+            ->when($request->status === 'behind', fn ($q) => $q->whereIn('status', ['unpaid', 'partial'])->whereHas('instalments', fn ($p) => $this->behind($p)))
+            ->when($request->status === 'open', fn ($q) => $q->whereIn('status', ['unpaid', 'partial']))
+            ->when($request->status && ! in_array($request->status, ['open', 'behind'], true), fn ($q) => $q->where('status', $request->status))
+            ->when($request->class_id, fn ($q) => $q->whereHas('student', fn ($s) => $s->where('class_id', $request->class_id)))
+            ->when($request->term_id, fn ($q) => $q->where('term_id', $request->term_id))
+            ->when($request->search, fn ($q) => $q->where(fn ($w) => $w
+                ->where('invoice_no', 'like', '%' . $request->search . '%')
+                ->orWhereHas('student', fn ($s) => $s->where('admission_no', 'like', '%' . $request->search . '%')
+                    ->orWhere('first_name', 'like', '%' . $request->search . '%')
+                    ->orWhere('last_name', 'like', '%' . $request->search . '%'))));
+    }
+
+    /** Parents of the students with still-owing invoices in the list, each once, with their phone: for calling or copying */
+    private function debtorContacts(Request $request): array
+    {
+        $guardians = [];
+        $this->filtered($request)->whereIn('status', ['unpaid', 'partial'])
+            ->with(['student:id,first_name,last_name,guardian_id', 'student.guardian:id,name,phone'])->get()
+            ->each(function (Invoice $i) use (&$guardians) {
+                $g = $i->student?->guardian;
+                $phone = trim((string) $g?->phone);
+                if ($phone === '') {
+                    return;
+                }
+                $guardians[$phone] ??= ['name' => $g->name, 'phone' => $phone, 'owed' => 0.0, 'children' => []];
+                $guardians[$phone]['owed'] += (float) $i->balance;
+                $guardians[$phone]['children'][$i->student->id] = $i->student->full_name;
+            });
+
+        return collect($guardians)->map(fn ($g) => ['name' => $g['name'], 'phone' => $g['phone'], 'owed' => round($g['owed'], 2), 'children' => array_values($g['children'])])->values()->all();
     }
 
     public function show(Request $request, Invoice $invoice): Response
@@ -255,6 +283,7 @@ class FeeInvoiceController extends Controller
             'status' => $i->status,
             'due_date' => $i->due_date?->toDateString(),
             'instalments' => $i->relationLoaded('instalments') ? InstalmentService::summary($i) : null,
+            'parent_phone' => $i->student?->relationLoaded('guardian') ? $i->student->guardian?->phone : null,
         ];
     }
 

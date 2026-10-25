@@ -296,4 +296,27 @@ class FeeLedgerTest extends SecurityTestCase
             ->assertJsonPath('props.invoice.net_paid', 50000)
             ->assertJsonPath('props.can.collect', true);
     }
+
+    public function test_the_still_owing_list_gives_each_parent_phone_once_with_what_they_owe(): void
+    {
+        $guardian = \App\Models\Guardian::create(['school_id' => $this->school->id, 'name' => 'Mrs Bello', 'phone' => '08031234567']);
+        $ade = $this->student('Ade');
+        $bola = $this->student('Bola');
+        $this->student('Chike');
+        foreach ([$ade, $bola] as $s) {
+            $s->update(['guardian_id' => $guardian->id]);
+        }
+        $this->issue([$this->tuition]);
+
+        // Two children, one parent: one contact, with both amounts added up
+        $this->get('/school/fees/invoices?status=open', ['X-Inertia' => 'true'])
+            ->assertOk()
+            ->assertJsonCount(1, 'props.contacts')
+            ->assertJsonPath('props.contacts.0.phone', '08031234567')
+            ->assertJsonPath('props.contacts.0.owed', 300000)
+            ->assertJsonCount(2, 'props.contacts.0.children');
+
+        // Without the filter there is no contact list
+        $this->get('/school/fees/invoices', ['X-Inertia' => 'true'])->assertOk()->assertJsonPath('props.contacts', null);
+    }
 }
