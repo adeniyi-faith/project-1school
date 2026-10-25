@@ -348,6 +348,58 @@ export function tabsForRole(role: string, paths?: string[], actingSchool = false
     return paths ? tabs.filter((t) => paths.includes(t.href)) : tabs;
 }
 
+/**
+ * Everyday words people type into the menu search, matched to the page that does the job.
+ * The page's own name is always searched too.
+ */
+export const searchKeywords: Record<string, string> = {
+    '/school/students': 'pupils admit enrol enroll register child children add student find student profile',
+    '/school/students/import': 'upload excel csv bulk many students',
+    '/school/fees/invoices': 'collect fee collect payment take payment receive money pay cash bill create invoices debtors owing owe outstanding balance',
+    '/school/fees/structures': 'school fees amount tuition price set fees',
+    '/school/fees/scholarships': 'discount waiver bursary free place',
+    '/school/fees/payment-plans': 'instalment installment pay in parts',
+    '/school/fees/online-payments': 'paystack flutterwave monnify remita card pay online',
+    '/school/results': 'scores marks grades enter scores ca exam results publish approve',
+    '/school/results/print': 'print report cards report card download pdf zip transcript',
+    '/school/results/comment-bank': 'remarks comments report card comment',
+    '/school/promotions': 'promote promotion move up next class graduate repeat end of year',
+    '/school/academics/terms': 'new term session school year start term current term',
+    '/school/academics/assessment': 'grading grade scale ca1 ca2 score parts',
+    '/school/new-term': 'new term checklist resumption beginning of term',
+    '/school/attendance': 'register roll call absent present mark attendance',
+    '/school/staff': 'teachers employees workers add teacher add staff',
+    '/school/hr/leaves': 'leave holiday off sick absence request',
+    '/school/hr/payroll': 'salary salaries payslip pay staff',
+    '/school/certificates': 'testimonial transfer certificate leaving certificate',
+    '/school/id-cards': 'identity card id card print cards',
+    '/school/communication/blast': 'sms text message email everyone parents bulk',
+    '/school/communication/announcements': 'notice news tell parents',
+    '/school/communication/messages': 'inbox chat write message',
+    '/school/admissions/inquiries': 'admission enquiry new applicant prospective entrance exam interview offer',
+    '/school/admissions/visitors': 'sign in visitor gate guest',
+    '/school/timetable': 'lessons periods schedule',
+    '/school/lesson-notes': 'scheme of work lesson plan ai',
+    '/school/cbt/tests': 'computer test online test exam cbt',
+    '/school/settings': 'school name logo address colours',
+    '/school/settings/admins': 'users logins passwords accounts roles permissions',
+    '/school/settings/school-type': 'british american montessori nigerian curriculum',
+    '/school/reports/finance': 'money income collected report',
+    '/school/library/books': 'books borrow lend loan',
+    '/school/classes': 'form grade level add class',
+    '/school/sections': 'divisions stream a b c',
+};
+
+/** Jobs that start a task straight away. Each shows only when the person may open the page it leads to. */
+export const searchActions: { label: string; href: string; keywords: string }[] = [
+    { label: 'Add a student', href: '/school/students/create', keywords: 'admit enrol enroll new pupil register child' },
+    { label: 'Add many students from Excel', href: '/school/students/import', keywords: 'upload bulk import csv' },
+    { label: 'Add a staff member', href: '/school/staff/create', keywords: 'new teacher employee hire' },
+    { label: 'Collect a fee payment', href: '/school/fees/invoices', keywords: 'take payment receive money cash bursar' },
+    { label: 'Print report cards', href: '/school/results/print', keywords: 'download pdf zip' },
+    { label: 'Send an SMS or email to parents', href: '/school/communication/blast', keywords: 'text message bulk' },
+];
+
 export function isNavActive(url: string, href: string, exact?: boolean): boolean {
     const path = url.split('?')[0];
     return exact ? path === href : path === href || path.startsWith(href + '/');
