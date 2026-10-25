@@ -141,6 +141,7 @@ export const navGroups: NavGroup[] = [
         items: [
             { label: 'Announcements', href: '/school/student/announcements', icon: Megaphone,   roles: ['student'] },
             { label: 'Announcements', href: '/school/parent/announcements',  icon: Megaphone,   roles: ['parent'] },
+            { label: 'Message the School', href: '/school/parent/messages',  icon: MessageSquare, roles: ['parent'] },
         ],
     },
     {
