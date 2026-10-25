@@ -55,6 +55,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Staff',       href: '/school/staff',   icon: UserCog,        roles: ['super-admin','school-admin','principal'] },
             { label: 'Timetable',   href: '/school/timetable', icon: CalendarDays,  roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Attendance',  href: '/school/attendance', icon: ClipboardList, roles: ['super-admin','school-admin','principal','teacher'] },
+            { label: 'Class & Teacher Overview', href: '/school/overview', icon: ClipboardCheck, roles: ['super-admin','school-admin','principal'] },
             { label: 'Scan ID Card', href: '/school/id-cards/scan',       icon: ScanLine,       roles: ['super-admin','school-admin','principal','teacher','receptionist','warden','accountant'] },
         ],
     },
