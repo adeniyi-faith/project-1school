@@ -24,9 +24,9 @@ export const navGroups: NavGroup[] = [
     {
         title: 'System',
         items: [
-            { label: 'Dashboard',   href: '/school/reports/dashboard',  icon: LayoutDashboard, roles: ['school-admin','principal','teacher','accountant','librarian'] },
+            { label: 'Dashboard',   href: '/school/reports/dashboard',  icon: LayoutDashboard, roles: ['school-admin','principal','teacher','accountant'] },
             { label: 'My Classes',  href: '/school/my-classes',         icon: GraduationCap,   roles: ['teacher'] },
-            { label: 'Home',        href: '/school/home',               icon: LayoutDashboard, roles: ['receptionist','driver','warden','store-manager'] },
+            { label: 'Home',        href: '/school/home',               icon: LayoutDashboard, roles: ['receptionist','driver','warden','store-manager','librarian'] },
             { label: 'Dashboard',   href: '/super-admin/dashboard',     icon: LayoutDashboard, roles: ['super-admin'], exact: true },
             { label: 'My Dashboard',href: '/school/student/dashboard',  icon: LayoutDashboard, roles: ['student'] },
             { label: 'My Dashboard',href: '/school/parent/dashboard',   icon: LayoutDashboard, roles: ['parent'] },
@@ -37,6 +37,7 @@ export const navGroups: NavGroup[] = [
         title: 'School Setup',
         folded: true,
         items: [
+            { label: 'Start a New Term', href: '/school/new-term', icon: CalendarRange, roles: ['super-admin','school-admin','principal'] },
             { label: 'Classes',     href: '/school/classes',  icon: GraduationCap,  roles: ['super-admin','school-admin','principal'] },
             { label: 'Arms',        href: '/school/sections', icon: Layers,         roles: ['super-admin','school-admin','principal'] },
             { label: 'Subjects',    href: '/school/subjects', icon: BookOpen,       roles: ['super-admin','school-admin','principal'] },
@@ -226,7 +227,7 @@ export const navGroups: NavGroup[] = [
         title: 'Admin',
         folded: true,
         items: [
-            { label: 'Settings',      href: '/school/settings',              icon: Settings, roles: ['school-admin'], exact: true },
+            { label: 'Settings',      href: '/school/settings/all',          icon: Settings, roles: ['school-admin'], exact: true },
             { label: 'Settings',      href: '/super-admin/settings',         icon: Settings, roles: ['super-admin'] },
             { label: 'School Type',   href: '/school/settings/school-type',  icon: School,   roles: ['school-admin'] },
             { label: 'AI Assistant',  href: '/school/settings/ai',           icon: Sparkles, roles: ['school-admin'] },
@@ -259,7 +260,7 @@ export const bottomTabs: Record<string, BottomTab[]> = {
     teacher: [
         { label: 'My Classes', href: '/school/my-classes',        icon: GraduationCap },
         { label: 'Attendance', href: '/school/attendance',        icon: ClipboardList },
-        { label: 'Exams',      href: '/school/exams',             icon: BookOpen },
+        { label: 'Scores',     href: '/school/results',           icon: ClipboardCheck },
         { label: 'Timetable',  href: '/school/timetable',         icon: CalendarDays },
     ],
     accountant: [
@@ -269,7 +270,7 @@ export const bottomTabs: Record<string, BottomTab[]> = {
         { label: 'Reports',    href: '/school/reports/finance',   icon: BarChart3 },
     ],
     librarian: [
-        { label: 'Home',       href: '/school/reports/dashboard', icon: LayoutDashboard },
+        { label: 'Home',       href: '/school/home',              icon: LayoutDashboard },
         { label: 'Library',    href: '/school/library/books',     icon: Library },
         { label: 'Messages',   href: '/school/communication/messages', icon: MessageSquare },
         { label: 'Alerts',     href: '/school/communication/notifications', icon: Bell },
@@ -356,6 +357,58 @@ export function tabsForRole(role: string, paths?: string[], actingSchool = false
 
     return paths ? tabs.filter((t) => paths.includes(t.href)) : tabs;
 }
+
+/**
+ * Everyday words people type into the menu search, matched to the page that does the job.
+ * The page's own name is always searched too.
+ */
+export const searchKeywords: Record<string, string> = {
+    '/school/students': 'pupils admit enrol enroll register child children add student find student profile',
+    '/school/students/import': 'upload excel csv bulk many students',
+    '/school/fees/invoices': 'collect fee collect payment take payment receive money pay cash bill create invoices debtors owing owe outstanding balance',
+    '/school/fees/structures': 'school fees amount tuition price set fees',
+    '/school/fees/scholarships': 'discount waiver bursary free place',
+    '/school/fees/payment-plans': 'instalment installment pay in parts',
+    '/school/fees/online-payments': 'paystack flutterwave monnify remita card pay online',
+    '/school/results': 'scores marks grades enter scores ca exam results publish approve',
+    '/school/results/print': 'print report cards report card download pdf zip transcript',
+    '/school/results/comment-bank': 'remarks comments report card comment',
+    '/school/promotions': 'promote promotion move up next class graduate repeat end of year',
+    '/school/academics/terms': 'new term session school year start term current term',
+    '/school/academics/assessment': 'grading grade scale ca1 ca2 score parts',
+    '/school/new-term': 'new term checklist resumption beginning of term',
+    '/school/attendance': 'register roll call absent present mark attendance',
+    '/school/staff': 'teachers employees workers add teacher add staff',
+    '/school/hr/leaves': 'leave holiday off sick absence request',
+    '/school/hr/payroll': 'salary salaries payslip pay staff',
+    '/school/certificates': 'testimonial transfer certificate leaving certificate',
+    '/school/id-cards': 'identity card id card print cards',
+    '/school/communication/blast': 'sms text message email everyone parents bulk',
+    '/school/communication/announcements': 'notice news tell parents',
+    '/school/communication/messages': 'inbox chat write message',
+    '/school/admissions/inquiries': 'admission enquiry new applicant prospective entrance exam interview offer',
+    '/school/admissions/visitors': 'sign in visitor gate guest',
+    '/school/timetable': 'lessons periods schedule',
+    '/school/lesson-notes': 'scheme of work lesson plan ai',
+    '/school/cbt/tests': 'computer test online test exam cbt',
+    '/school/settings': 'school name logo address colours',
+    '/school/settings/admins': 'users logins passwords accounts roles permissions',
+    '/school/settings/school-type': 'british american montessori nigerian curriculum',
+    '/school/reports/finance': 'money income collected report',
+    '/school/library/books': 'books borrow lend loan',
+    '/school/classes': 'form grade level add class',
+    '/school/sections': 'divisions stream a b c',
+};
+
+/** Jobs that start a task straight away. Each shows only when the person may open the page it leads to. */
+export const searchActions: { label: string; href: string; keywords: string }[] = [
+    { label: 'Add a student', href: '/school/students/create', keywords: 'admit enrol enroll new pupil register child' },
+    { label: 'Add many students from Excel', href: '/school/students/import', keywords: 'upload bulk import csv' },
+    { label: 'Add a staff member', href: '/school/staff/create', keywords: 'new teacher employee hire' },
+    { label: 'Collect a fee payment', href: '/school/fees/invoices', keywords: 'take payment receive money cash bursar' },
+    { label: 'Print report cards', href: '/school/results/print', keywords: 'download pdf zip' },
+    { label: 'Send an SMS or email to parents', href: '/school/communication/blast', keywords: 'text message bulk' },
+];
 
 export function isNavActive(url: string, href: string, exact?: boolean): boolean {
     const path = url.split('?')[0];

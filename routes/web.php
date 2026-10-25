@@ -37,6 +37,7 @@ use App\Http\Controllers\SchoolAdmin\SectionController;
 use App\Http\Controllers\SchoolAdmin\ShiftController;
 use App\Http\Controllers\SchoolAdmin\MyClassesController;
 use App\Http\Controllers\SchoolAdmin\StaffController;
+use App\Http\Controllers\SchoolAdmin\StaffIdCardController;
 use App\Http\Controllers\SchoolAdmin\StudentController;
 use App\Http\Controllers\SchoolAdmin\StudentImportController;
 use App\Http\Controllers\SchoolAdmin\StudentLoginController;
@@ -49,6 +50,7 @@ use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsCont
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\SchoolAdmin\AdmissionInquiryController;
 use App\Http\Controllers\SchoolAdmin\AdmissionPipelineController;
+use App\Http\Controllers\SchoolAdmin\NewTermController;
 use App\Http\Controllers\SchoolAdmin\PromotionController;
 use App\Http\Controllers\SchoolAdmin\BroadsheetController;
 use App\Http\Controllers\SchoolAdmin\CertificateController;
@@ -157,8 +159,9 @@ Route::middleware('auth')->group(function () {
             $user->hasRole('teacher')                                        => redirect()->route('school.my-classes'),
             $user->hasRole('student')                                        => redirect()->route('student.dashboard'),
             $user->hasRole('parent')                                         => redirect()->route('parent.dashboard'),
+            $user->hasRole('librarian')                                      => redirect()->route('school.home'),
             $user->can('reports.view')                                       => redirect()->route('school.reports.dashboard'),
-            // Front desk, drivers, wardens and store keepers get a home page made of their own work
+            // Librarians, front desk, drivers, wardens and store keepers get a home page made of their own work
             default                                                          => redirect()->route('school.home'),
         };
     })->name('dashboard');
@@ -209,6 +212,11 @@ Route::middleware('auth')->group(function () {
             Route::post('id-cards/designs/try',          [IdCardController::class, 'tryDesign'])->middleware('permission:students.idcard')->name('id-cards.designs.try');
             Route::put('id-cards/designs/{design}',      [IdCardController::class, 'saveDesign'])->middleware('permission:settings.edit')->name('id-cards.designs.update');
             Route::delete('id-cards/designs/{design}',   [IdCardController::class, 'deleteDesign'])->middleware('permission:settings.edit')->name('id-cards.designs.destroy');
+            Route::get('id-cards/staff',                 [StaffIdCardController::class, 'index'])->middleware('permission:staff.idcard')->name('id-cards.staff');
+            Route::post('id-cards/staff/issue-missing',  [StaffIdCardController::class, 'issueMissing'])->middleware('permission:staff.idcard')->name('id-cards.staff.issue-missing');
+            Route::get('id-cards/staff/print',           [StaffIdCardController::class, 'print'])->middleware('permission:staff.idcard')->name('id-cards.staff.print');
+            Route::post('id-cards/staff/{staff}/issue',  [StaffIdCardController::class, 'issue'])->middleware('permission:staff.idcard')->name('id-cards.staff.issue');
+            Route::post('id-cards/staff/{card}/revoke',  [StaffIdCardController::class, 'revoke'])->middleware('permission:staff.idcard')->name('id-cards.staff.revoke');
             Route::get('id-cards/scan',                  [IdCardController::class, 'scanPage'])->middleware('permission:students.view')->name('id-cards.scan');
             Route::post('id-cards/lookup',               [IdCardController::class, 'lookup'])->middleware(['permission:students.view', 'throttle:120,1'])->name('id-cards.lookup');
             Route::post('id-cards/{card}/revoke',        [IdCardController::class, 'revoke'])->middleware('permission:students.idcard')->name('id-cards.revoke');
@@ -323,6 +331,8 @@ Route::middleware('auth')->group(function () {
             Route::get('exams/{exam}/results',               [ExamController::class, 'results'])->middleware('permission:results.view')->name('exams.results');
             Route::post('exams/{exam}/copy-to-results',      [ExamController::class, 'copyToResults'])->middleware('permission:marks.entry')->name('exams.copy-to-results');
             // School years, terms, score setups and grade scales
+            Route::get('new-term',                             [NewTermController::class, 'index'])->middleware('permission:exams.view')->name('new-term');
+            Route::post('new-term/tick',                       [NewTermController::class, 'toggle'])->middleware('permission:exams.view')->name('new-term.tick');
             Route::get('academics/terms',                      [AcademicSetupController::class, 'terms'])->middleware('permission:exams.view')->name('academics.terms');
             Route::post('academics/years',                     [AcademicSetupController::class, 'storeYear'])->middleware('permission:exams.edit')->name('academics.years.store');
             Route::put('academics/terms/{term}',               [AcademicSetupController::class, 'updateTerm'])->middleware('permission:exams.edit')->name('academics.terms.update');
@@ -544,6 +554,7 @@ Route::middleware('auth')->group(function () {
             Route::get('fees/payments/{feePayment}',         [FeePaymentController::class, 'show'])->middleware('permission:fees.view')->name('fees.payments.show');
             // Invoices and the fee ledger (lines are never edited; mistakes are reversed)
             Route::get('fees/invoices',                      [FeeInvoiceController::class, 'index'])->middleware('permission:fees.view')->name('fees.invoices.index');
+            Route::get('fees/invoices/find',                 [FeeInvoiceController::class, 'find'])->middleware('permission:fees.collect')->name('fees.invoices.find');
             Route::post('fees/invoices',                     [FeeInvoiceController::class, 'issue'])->middleware('permission:fees.structure')->name('fees.invoices.issue');
             Route::post('fees/invoices/plans',               [FeeInvoiceController::class, 'planMany'])->middleware('permission:fees.structure')->name('fees.invoices.plan-many');
             Route::post('fees/invoices/{invoice}/plan',      [FeeInvoiceController::class, 'plan'])->middleware('permission:fees.structure')->name('fees.invoices.plan');
@@ -557,6 +568,7 @@ Route::middleware('auth')->group(function () {
             Route::post('fees/invoices/{invoice}/payments',  [FeeInvoiceController::class, 'pay'])->middleware('permission:fees.collect')->name('fees.invoices.pay');
             Route::post('fees/invoices/{invoice}/fines',     [FeeInvoiceController::class, 'fine'])->middleware('permission:fees.collect')->name('fees.invoices.fine');
             Route::post('fees/invoices/{invoice}/entries/{entry}/reverse', [FeeInvoiceController::class, 'reverse'])->middleware('permission:fees.waiver')->name('fees.invoices.reverse');
+            Route::post('fees/invoices/{invoice}/refunds',   [FeeInvoiceController::class, 'refund'])->middleware('permission:fees.waiver')->name('fees.invoices.refund');
             Route::post('fees/invoices/{invoice}/void',      [FeeInvoiceController::class, 'void'])->middleware('permission:fees.waiver')->name('fees.invoices.void');
 
             // Named scholarships and discounts, with who approved each one
@@ -611,6 +623,7 @@ Route::middleware('auth')->group(function () {
             Route::get('reports/audit-log',                     [ReportController::class, 'auditLog'])->middleware('permission:settings.view')->name('reports.audit-log');
 
             // General / Branding / Academic / Notification Settings
+            Route::get('settings/all',                          [SchoolSettingsController::class, 'hub'])->middleware('permission:settings.view')->name('settings.hub');
             Route::get('settings',                              [SchoolSettingsController::class, 'index'])->middleware('permission:settings.view')->name('settings.index');
             Route::post('settings/general',                     [SchoolSettingsController::class, 'saveGeneral'])->middleware('permission:settings.edit')->name('settings.general');
             Route::post('settings/branding',                    [SchoolSettingsController::class, 'saveBranding'])->middleware('permission:settings.edit')->name('settings.branding');

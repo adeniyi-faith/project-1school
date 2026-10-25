@@ -403,7 +403,7 @@ export interface TermReport {
 // ───────────── Invoices, ledger and scholarships ─────────────
 
 export type InvoiceStatus = 'unpaid' | 'partial' | 'paid' | 'void';
-export type LedgerType = 'charge' | 'fine' | 'payment' | 'discount' | 'reversal';
+export type LedgerType = 'charge' | 'fine' | 'payment' | 'discount' | 'reversal' | 'credit' | 'refund';
 export type PaymentMethod = 'cash' | 'bank_transfer' | 'pos' | 'card' | 'online' | 'ussd';
 
 export interface InvoiceRow {
@@ -744,7 +744,8 @@ export interface LessonChoices {
     subjects: SubjectChoice[];
     terms: { id: number; name: string; is_current: boolean }[];
 }
-export interface AiAvailability { shown: boolean; reason: string | null }
+export interface AiStyleChoice { key: string; label: string; hint: string }
+export interface AiAvailability { shown: boolean; reason: string | null; styles?: AiStyleChoice[]; default_style?: string }
 
 /** A printed exam paper in the list */
 export interface ExamPaperRow {

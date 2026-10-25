@@ -48,7 +48,7 @@ export default function StudentCbtStart({ base, person, test }: Props) {
                                 </div>
                             )}
                             {errors.test && <p className="text-sm text-red-600">{errors.test}</p>}
-                            <Button type="submit" disabled={form.processing} className="bg-indigo-600 text-white hover:bg-indigo-700"><PlayCircle className="size-4" /> Start the test</Button>
+                            <Button type="submit" disabled={form.processing} className="h-12 w-full bg-indigo-600 text-base text-white hover:bg-indigo-700 sm:w-auto sm:px-8"><PlayCircle className="size-5" /> Start the test</Button>
                         </form>
                     ) : (
                         <p className="mt-6 rounded-lg bg-slate-100 px-4 py-3 text-sm dark:bg-white/[0.06]">

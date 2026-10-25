@@ -127,6 +127,7 @@ class StudentController extends Controller
             'classHistory' => PromotionController::historyFor($student),
             'activity' => app(\App\Services\StudentActivityService::class)->for($student, $user),
             'canEdit' => auth()->user()->can('students.edit'),
+            'quick' => $this->quickLinks($student, $user),
             'certificates' => StudentCertificate::with('issuer:id,name')->where('student_id', $student->id)->latest('id')->get()
                 ->map(fn (StudentCertificate $c) => CertificateController::row($c)),
             'canIssueCertificates' => auth()->user()->can('students.certificates'),
@@ -137,6 +138,25 @@ class StudentController extends Controller
                 'issued_on' => $c->created_at?->toDateString(), 'issued_by' => $c->issuer?->name, 'note' => $c->note, 'prints' => $c->prints,
             ])->values() : null,
         ]);
+    }
+
+    /**
+     * Shortcuts for the top of the student's page. A shortcut is null when the person may not use it
+     * or there is nothing to open (no parent account, no results yet).
+     */
+    private function quickLinks(Student $student, $user): array
+    {
+        $summary = $user->can('reportcard.generate')
+            ? \App\Models\TermResultSummary::where('student_id', $student->id)->latest('id')->first()
+            : null;
+
+        return [
+            'collect' => $user->can('fees.collect') ? '/school/fees/invoices?status=open&search=' . urlencode($student->admission_no) : null,
+            'message' => $user->can('messages.send') && $student->guardian?->user_id
+                ? '/school/communication/messages?to=' . $student->guardian->user_id
+                : null,
+            'reportCard' => $summary ? route('school.results.report-cards.term', $summary->result_sheet_id) . '?student=' . $student->id : null,
+        ];
     }
 
     public function edit(Student $student): Response
