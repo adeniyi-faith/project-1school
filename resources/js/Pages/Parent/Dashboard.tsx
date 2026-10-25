@@ -22,7 +22,7 @@ interface Announcement { id: number; title: string; body: string; pinned: boolea
 
 interface Props {
     linked: boolean; guardian: Guardian | null;
-    children: Child[]; announcements: Announcement[];
+    children: Child[]; announcements: Announcement[]; payOnline?: boolean;
 }
 
 function AttendanceBar({ pct, label }: { pct: number; label: string }) {
@@ -117,7 +117,7 @@ function ChildCard({ child }: { child: Child }) {
     );
 }
 
-export default function ParentDashboard({ linked, guardian, children, announcements }: Props) {
+export default function ParentDashboard({ linked, guardian, children, announcements, payOnline = false }: Props) {
     if (!linked || !guardian) {
         return (
             <AppLayout title="Parent Dashboard">
@@ -138,14 +138,16 @@ export default function ParentDashboard({ linked, guardian, children, announceme
                     description={`${children.length} ${children.length === 1 ? 'child' : 'children'} enrolled${guardian.phone ? ` · ${guardian.phone}` : ''}`}
                 />
 
-                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5 dark:border-white/[0.08] dark:bg-slate-900">
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5 dark:border-white/[0.08] dark:bg-slate-900">
                     <div>
                         <p className="text-[13px] text-slate-500">{totalDue > 0 ? 'Total fees due' : 'Fees'}</p>
                         <p className={cn('mt-1 text-2xl font-semibold tabular-nums tracking-[-0.03em]', totalDue > 0 ? 'text-red-700 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400')}>
                             {totalDue > 0 ? naira(totalDue) : 'All clear'}
                         </p>
                     </div>
-                    {totalDue > 0 && <Pill tone="warn">Payment needed</Pill>}
+                    {totalDue > 0
+                        ? <Link href="/school/parent/fees" className="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700">{payOnline ? 'Pay now' : 'See fees'}</Link>
+                        : <Link href="/school/parent/fees" className="text-sm font-medium text-slate-500 hover:underline">See fees</Link>}
                 </div>
 
                 <div className={cn('grid gap-6', children.length === 1 ? 'max-w-lg grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
