@@ -3,11 +3,15 @@
 namespace Tests\Feature\Security;
 
 use App\Models\Announcement;
+use App\Models\Book;
+use App\Models\BookIssue;
+use App\Models\Student;
 use App\Models\Hostel;
 use App\Models\HostelRoom;
 use App\Models\InventoryCategory;
 use App\Models\InventoryItem;
 use App\Models\School;
+use App\Models\SchoolClass;
 use App\Models\TransportRoute;
 use App\Models\Vehicle;
 use App\Models\VisitorLog;
@@ -84,6 +88,35 @@ class StaffRoleAccessTest extends SecurityTestCase
 
         $this->actingAs($this->makeUser($this->school, 'store-manager'));
         $this->get('/school/home')->assertInertia(fn ($p) => $p->where('panels.store.low_count', 1)->where('panels.store.low.0.name', 'Chalk '.$this->school->id));
+    }
+
+    public function test_a_librarian_lands_on_a_library_home_with_books_due_and_overdue(): void
+    {
+        $this->actingAs($this->makeUser($this->school, 'librarian'));
+
+        $this->get('/dashboard')->assertRedirect(route('school.home'));
+        $this->get('/school/home')->assertOk()->assertInertia(fn ($p) => $p
+            ->component('SchoolAdmin/StaffHome', false)
+            ->has('panels.library')
+            ->where('panels', fn ($panels) => count($panels) === 1));
+    }
+
+    public function test_the_library_home_names_the_books_due_today_and_the_late_ones(): void
+    {
+        $class = SchoolClass::withoutGlobalScopes()->create(['school_id' => $this->school->id, 'name' => 'Class 1']);
+        $student = Student::withoutGlobalScopes()->create(['school_id' => $this->school->id, 'class_id' => $class->id, 'admission_date' => '2024-09-01', 'admission_no' => 'L-1', 'first_name' => 'Ada', 'last_name' => 'Obi', 'gender' => 'female', 'date_of_birth' => '2012-01-01', 'status' => 'active']);
+        $book = Book::withoutGlobalScopes()->create(['school_id' => $this->school->id, 'title' => 'Things Fall Apart', 'author' => 'Achebe', 'total_copies' => 2, 'available_copies' => 0, 'is_active' => true]);
+        foreach ([['issued', now()->toDateString()], ['overdue', now()->subDays(3)->toDateString()]] as [$status, $due]) {
+            BookIssue::withoutGlobalScopes()->create(['school_id' => $this->school->id, 'book_id' => $book->id, 'member_type' => Student::class, 'member_id' => $student->id, 'issued_date' => now()->subDays(10)->toDateString(), 'due_date' => $due, 'status' => $status]);
+        }
+        $this->actingAs($this->makeUser($this->school, 'librarian'));
+
+        $this->get('/school/home')->assertInertia(fn ($p) => $p
+            ->where('panels.library.out_now', 2)
+            ->where('panels.library.due_today_count', 1)
+            ->where('panels.library.overdue_count', 1)
+            ->where('panels.library.overdue.0.book', 'Things Fall Apart')
+            ->where('panels.library.overdue.0.days_late', 3));
     }
 
     public function test_staff_with_the_dashboard_still_go_there(): void

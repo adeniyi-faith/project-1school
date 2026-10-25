@@ -3,6 +3,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { BookOpen, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
+import { RowActions } from '@/components/app/RowActions';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -148,10 +149,12 @@ export default function SubjectsIndex({ subjects, classes, levels, departments }
                                                 ))}
                                         </div>
                                     </div>
-                                    <div className={canEdit ? 'flex gap-1' : 'hidden'}>
-                                        <Button variant="ghost" size="sm" onClick={() => openEdit(s)} aria-label={`Change ${s.name}`}><Pencil className="size-4" /></Button>
-                                        <Button variant="ghost" size="sm" onClick={() => destroy(s)} aria-label={`Delete ${s.name}`} className="text-red-600 hover:text-red-700"><Trash2 className="size-4" /></Button>
-                                    </div>
+                                    {canEdit && (
+                                        <RowActions label={`Actions for ${s.name}`} actions={[
+                                            { label: 'Change', icon: <Pencil className="size-4" />, onClick: () => openEdit(s) },
+                                            { label: 'Delete', icon: <Trash2 className="size-4" />, onClick: () => destroy(s), danger: true },
+                                        ]} />
+                                    )}
                                 </li>
                             ))}
                         </ul>
