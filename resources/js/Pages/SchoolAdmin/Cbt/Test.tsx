@@ -68,7 +68,7 @@ export default function CbtTestPage({ test, problems, results, summary, question
     );
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'CBT' }, { label: 'Tests', href: '/school/cbt/tests' }, { label: test.title }]}>
+        <AppLayout breadcrumbs={[{ label: 'Learning' }, { label: 'Computer Tests', href: '/school/cbt/tests' }, { label: test.title }]}>
             <div className="mx-auto max-w-5xl space-y-6 pb-24 md:pb-0">
                 <Link href="/school/cbt/tests" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"><ArrowLeft className="size-4" /> All tests</Link>
                 <PageHeader title={test.title} description={`${[entrance ? 'Entrance exam' : test.class, test.subject, test.term].filter(Boolean).join(' · ')} · ${test.questions} questions in ${test.duration_minutes} minutes`} actions={actions} />

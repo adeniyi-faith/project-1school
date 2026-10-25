@@ -32,9 +32,9 @@ export default function CbtTests({ tests, canManage, banks }: Props) {
     );
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'CBT' }, { label: 'Tests' }]}>
+        <AppLayout breadcrumbs={[{ label: 'Learning' }, { label: 'Computer Tests' }]}>
             <div className="mx-auto max-w-5xl space-y-6 pb-24 md:pb-0">
-                <PageHeader title="Computer-based tests" description="Timed tests students take in their portal. Each one is marked as soon as it is handed in." actions={actions} />
+                <PageHeader title="Computer tests" description="Timed tests students take in their portal. Each one is marked as soon as it is handed in." actions={actions} />
                 <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>
 
                 <Panel flush>

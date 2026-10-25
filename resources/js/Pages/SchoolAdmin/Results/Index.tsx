@@ -15,12 +15,44 @@ interface SheetRow {
     students: number;
     with_results: number;
     class_average: number | null;
+    mine: boolean;
 }
 
 interface Props {
     terms: TermOption[];
     termId: number | null;
     sheets: SheetRow[];
+}
+
+function SheetTable({ rows }: { rows: SheetRow[] }) {
+    return (
+                <Panel flush>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="pl-5">Class</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Students with results</TableHead>
+                        <TableHead className="text-right">Class average</TableHead>
+                        <TableHead className="w-10 pr-5" />
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {rows.map(s => (
+                        <TableRow key={s.id} className="cursor-pointer" onClick={() => router.visit(`/school/results/${s.id}`)}>
+                            <TableCell className="pl-5 font-medium text-slate-900 dark:text-white">
+                                <Link href={`/school/results/${s.id}`} onClick={e => e.stopPropagation()}>{s.class_name}</Link>
+                            </TableCell>
+                            <TableCell><ResultStatusPill status={s.status} /></TableCell>
+                            <TableCell className="text-right tabular-nums text-slate-600 dark:text-slate-400">{s.with_results} of {s.students}</TableCell>
+                            <TableCell className="text-right tabular-nums text-slate-600 dark:text-slate-400">{s.class_average !== null ? `${s.class_average}%` : '—'}</TableCell>
+                            <TableCell className="pr-5 text-slate-400"><ChevronRight className="size-4" /></TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+                </Panel>
+    );
 }
 
 export default function ResultsIndex({ terms, termId, sheets }: Props) {
@@ -40,6 +72,8 @@ export default function ResultsIndex({ terms, termId, sheets }: Props) {
             )}
         </div>
     );
+    const mine = sheets.filter(r => r.mine);
+    const others = sheets.filter(r => !r.mine);
     const termItems = terms.map(t => ({ value: String(t.id), label: t.is_current ? `${t.label} (current)` : t.label }));
 
     return (
@@ -72,32 +106,18 @@ export default function ResultsIndex({ terms, termId, sheets }: Props) {
                             </Select>
                         </div>
 
-                        <Panel flush>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="pl-5">Class</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Students with results</TableHead>
-                                        <TableHead className="text-right">Class average</TableHead>
-                                        <TableHead className="w-10 pr-5" />
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {sheets.map(s => (
-                                        <TableRow key={s.id} className="cursor-pointer" onClick={() => router.visit(`/school/results/${s.id}`)}>
-                                            <TableCell className="pl-5 font-medium text-slate-900 dark:text-white">
-                                                <Link href={`/school/results/${s.id}`} onClick={e => e.stopPropagation()}>{s.class_name}</Link>
-                                            </TableCell>
-                                            <TableCell><ResultStatusPill status={s.status} /></TableCell>
-                                            <TableCell className="text-right tabular-nums text-slate-600 dark:text-slate-400">{s.with_results} of {s.students}</TableCell>
-                                            <TableCell className="text-right tabular-nums text-slate-600 dark:text-slate-400">{s.class_average !== null ? `${s.class_average}%` : '—'}</TableCell>
-                                            <TableCell className="pr-5 text-slate-400"><ChevronRight className="size-4" /></TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </Panel>
+                        {mine.length > 0 && others.length > 0 ? (
+                            <>
+                                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">My classes</h2>
+                                <SheetTable rows={mine} />
+                                <details className="group">
+                                    <summary className="cursor-pointer text-sm font-medium text-slate-600 dark:text-slate-300">Other classes ({others.length})</summary>
+                                    <div className="mt-3"><SheetTable rows={others} /></div>
+                                </details>
+                            </>
+                        ) : (
+                            <SheetTable rows={sheets} />
+                        )}
                     </>
                 )}
             </div>

@@ -319,4 +319,29 @@ class FeeLedgerTest extends SecurityTestCase
         // Without the filter there is no contact list
         $this->get('/school/fees/invoices', ['X-Inertia' => 'true'])->assertOk()->assertJsonPath('props.contacts', null);
     }
+
+    public function test_the_take_a_payment_box_finds_students_who_still_owe_and_hides_the_rest(): void
+    {
+        $ade = $this->student('Ade');
+        $this->student('Bola');
+        $this->issue([$this->tuition]);
+        // Bola is billed too; pay hers off so she should no longer be offered
+        $bola = Student::where('first_name', 'Bola')->first();
+        $this->post("/school/fees/invoices/{$this->invoiceFor($bola, $this->tuition)->id}/payments", ['amount' => 150000, 'method' => 'cash', 'entry_date' => now()->toDateString()]);
+
+        $this->getJson('/school/fees/invoices/find?q=Test')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $ade->id)
+            ->assertJsonPath('data.0.invoices.0.balance', 150000);
+
+        // Too short a search returns nothing
+        $this->getJson('/school/fees/invoices/find?q=A')->assertOk()->assertJsonCount(0, 'data');
+    }
+
+    public function test_only_people_who_can_collect_money_can_use_the_take_a_payment_search(): void
+    {
+        $viewer = $this->makeUser($this->school, 'teacher');
+        $this->actingAs($viewer)->getJson('/school/fees/invoices/find?q=Test')->assertForbidden();
+    }
 }

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader, Panel, Pill } from '@/components/app/kit';
 import { cn } from '@/lib/utils';
 import { appendDeep, usePreview } from '@/lib/preview';
@@ -183,6 +184,16 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
     return (
         <form onSubmit={save} className="space-y-6">
             <PreviewOverlay state={tryOut.state} onClose={tryOut.close} />
+            {/* One part at a time. keepMounted keeps picked-but-unsaved pictures while the tab is hidden. */}
+            <Tabs defaultValue="look" className="gap-5">
+                <TabsList className="w-full sm:w-auto">
+                    <TabsTrigger value="look">Look</TabsTrigger>
+                    <TabsTrigger value="shows">What shows</TabsTrigger>
+                    <TabsTrigger value="signers">Comments &amp; signatures</TabsTrigger>
+                    <TabsTrigger value="classes">Classes</TabsTrigger>
+                </TabsList>
+
+            <TabsContent value="look" keepMounted className="space-y-6">
             <Panel title="Look">
                 <div className="space-y-5">
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -255,7 +266,9 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
                     </div>
                 </div>
             </Panel>
+            </TabsContent>
 
+            <TabsContent value="shows" keepMounted className="space-y-6">
             <Panel title="What shows on the card">
                 <div className="grid gap-6 sm:grid-cols-3">
                     {(Object.keys(optionLabels) as (keyof Props['optionLabels'])[]).map(group => (
@@ -274,7 +287,9 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
                 </div>
                 {data.options.show_photo && <p className="mt-4 text-xs text-slate-500">Add photos on each student's profile, or many at once from the Students page (name each file after the admission number).</p>}
             </Panel>
+            </TabsContent>
 
+            <TabsContent value="signers" keepMounted className="space-y-6">
             <Panel title="Who comments and signs" description="Use the titles your school uses. Each one gets a comment box (if ticked) and a signature line. Upload a signature image to print it on every card.">
                 <div className="space-y-3">
                     <datalist id="signer-titles">{SIGNER_TITLES.map(t => <option key={t} value={t} />)}</datalist>
@@ -344,18 +359,9 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
                     <p className="text-xs text-slate-500">The preview shows everything chosen on this page, including a stamp, signature or logo you have picked but not saved. Previewing never saves or uploads anything, so you can try pictures freely, even on the demo.</p>
                 </div>
             </Panel>
+            </TabsContent>
 
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                {canEdit && !design.is_default ? (
-                    <Button type="button" variant="ghost" className="text-red-600" onClick={() => setConfirmDelete(true)}><Trash2 className="size-4" /> Delete design</Button>
-                ) : <span />}
-                <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" onClick={() => preview('term')}><Eye className="size-4" /> Preview term card</Button>
-                    <Button type="button" variant="outline" onClick={() => preview('session')}><Eye className="size-4" /> Preview full year</Button>
-                    {canEdit && <Button type="submit" disabled={form.processing} className="bg-indigo-600 text-white hover:bg-indigo-700">Save design</Button>}
-                </div>
-            </div>
-
+            <TabsContent value="classes" keepMounted className="space-y-6">
             <Panel title="Classes using this design" description={design.is_default ? 'Classes not ticked here, and not given another design, also use this one because it is the default.' : 'Classes not ticked use the default design.'}>
                 <div className="flex flex-wrap gap-3">
                     {classes.map(c => (
@@ -373,6 +379,19 @@ function DesignEditor({ design, classes, designs, templates, writers, optionLabe
                     </div>
                 )}
             </Panel>
+            </TabsContent>
+            </Tabs>
+
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                {canEdit && !design.is_default ? (
+                    <Button type="button" variant="ghost" className="text-red-600" onClick={() => setConfirmDelete(true)}><Trash2 className="size-4" /> Delete design</Button>
+                ) : <span />}
+                <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="outline" onClick={() => preview('term')}><Eye className="size-4" /> Preview term card</Button>
+                    <Button type="button" variant="outline" onClick={() => preview('session')}><Eye className="size-4" /> Preview full year</Button>
+                    {canEdit && <Button type="submit" disabled={form.processing} className="bg-indigo-600 text-white hover:bg-indigo-700">Save design</Button>}
+                </div>
+            </div>
 
             <p className="text-sm text-slate-500">
                 Comments are written on each class's results page under <Link href="/school/results" className="text-indigo-600 hover:underline dark:text-indigo-400">Term results</Link> → Report cards.

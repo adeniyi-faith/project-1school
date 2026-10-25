@@ -12,6 +12,7 @@ import { EmptyState, PageHeader, Panel, StatStrip } from '@/components/app/kit';
 import { InvoiceStatus } from '@/components/fees/InvoiceStatus';
 import { naira } from '@/lib/format';
 import { PlanPartsEditor, planPayload } from '@/components/fees/Instalments';
+import { TakePayment } from '@/components/fees/TakePayment';
 import { CalendarClock, Check, Copy, FileText, Gift, Phone, Plus } from 'lucide-react';
 import type { InvoiceRow, PaymentPlanOption, PlanPart } from '@/Types';
 
@@ -30,7 +31,7 @@ interface Props {
     structures: Structure[];
     plans: PaymentPlanOption[];
     filters: { status?: string; class_id?: string; term_id?: string; search?: string };
-    can: { issue: boolean };
+    can: { issue: boolean; collect: boolean };
 }
 
 const ALL = 'all';
@@ -106,6 +107,7 @@ export default function Invoices({ invoices, stats, classes, terms, structures, 
 
     const headerActions = (
         <div className="flex flex-wrap gap-2">
+            {can.collect && <TakePayment />}
             <Link href="/school/fees/scholarships"><Button variant="outline"><Gift className="size-4" /> Scholarships</Button></Link>
             <Link href="/school/fees/payment-plans"><Button variant="outline"><CalendarClock className="size-4" /> Payment plans</Button></Link>
             {can.issue && (

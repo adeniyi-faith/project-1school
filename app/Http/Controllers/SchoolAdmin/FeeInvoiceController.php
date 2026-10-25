@@ -9,9 +9,11 @@ use App\Models\InvoiceInstalment;
 use App\Models\LedgerEntry;
 use App\Models\PaymentPlan;
 use App\Models\SchoolClass;
+use App\Models\Student;
 use App\Models\Term;
 use App\Services\FeeLedgerService;
 use App\Services\InstalmentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -54,8 +56,7 @@ class FeeInvoiceController extends Controller
             'stats' => [
                 'outstanding' => round((float) (clone $open)->sum('balance'), 2),
                 'open_count' => (clone $open)->count(),
-                'collected' => round(-(float) LedgerEntry::where('type', 'payment')->sum('amount')
-                    - (float) LedgerEntry::where('type', 'reversal')->whereHas('reverses', fn ($q) => $q->where('type', 'payment'))->sum('amount'), 2),
+                'collected' => FeeLedgerService::collected($sid),
                 'behind_count' => (clone $late)->distinct()->count('invoice_id'),
                 'overdue' => round((float) (clone $late)->sum('amount') - (float) (clone $late)->sum('paid'), 2),
             ],
@@ -70,7 +71,7 @@ class FeeInvoiceController extends Controller
             'plans' => $this->plans(),
             'filters' => $request->only('status', 'class_id', 'term_id', 'search'),
             'contacts' => in_array($request->status, ['open', 'behind'], true) ? $this->debtorContacts($request) : null,
-            'can' => ['issue' => $request->user()->can('fees.structure')],
+            'can' => ['issue' => $request->user()->can('fees.structure'), 'collect' => $request->user()->can('fees.collect')],
         ]);
     }
 
@@ -108,6 +109,29 @@ class FeeInvoiceController extends Controller
             });
 
         return collect($guardians)->map(fn ($g) => ['name' => $g['name'], 'phone' => $g['phone'], 'owed' => round($g['owed'], 2), 'children' => array_values($g['children'])])->values()->all();
+    }
+
+    /** "Take a payment" box: students matching a name or admission number, each with what they still owe */
+    public function find(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q'));
+        if (mb_strlen($q) < 2) {
+            return response()->json(['data' => []]);
+        }
+
+        $students = Student::with(['schoolClass:id,name', 'invoices' => fn ($i) => $i
+            ->whereIn('status', ['unpaid', 'partial'])->with('feeStructure.feeCategory:id,name')->orderBy('id')])
+            ->whereHas('invoices', fn ($i) => $i->whereIn('status', ['unpaid', 'partial']))
+            ->where(fn ($w) => $w->where('first_name', 'like', "%{$q}%")->orWhere('last_name', 'like', "%{$q}%")->orWhere('admission_no', 'like', "%{$q}%"))
+            ->orderBy('first_name')->limit(10)->get();
+
+        return response()->json(['data' => $students->map(fn (Student $s) => [
+            'id' => $s->id, 'name' => $s->full_name, 'admission_no' => $s->admission_no, 'class' => $s->schoolClass?->name,
+            'invoices' => $s->invoices->map(fn (Invoice $i) => [
+                'id' => $i->id, 'invoice_no' => $i->invoice_no, 'fee' => $i->feeStructure?->feeCategory?->name ?? 'Fee',
+                'period' => $i->period, 'balance' => (float) $i->balance,
+            ])->values(),
+        ])->values()]);
     }
 
     public function show(Request $request, Invoice $invoice): Response
@@ -246,6 +270,25 @@ class FeeInvoiceController extends Controller
         $this->ledger->addFine($invoice, (float) $data['amount'], $data['note'], $request->user());
 
         return back()->with('success', 'Fine added.');
+    }
+
+    public function refund(Request $request, Invoice $invoice): RedirectResponse
+    {
+        $data = $request->validate([
+            'amount'     => 'required|numeric|min:0.01',
+            'method'     => 'required|in:cash,bank_transfer,pos,card,online,ussd',
+            'entry_date' => 'required|date|before_or_equal:today',
+            'reason'     => 'required|string|max:255',
+            'reference'  => 'nullable|string|max:60',
+            'lower_fee'  => 'boolean',
+        ]);
+
+        $entry = $this->ledger->refund(
+            $invoice, (float) $data['amount'], $data['method'], $data['entry_date'], $data['reason'],
+            $data['reference'] ?? null, $request->boolean('lower_fee', true), $request->user(),
+        );
+
+        return back()->with('success', 'Refund of ₦' . number_format($entry->amount, 2) . " recorded. Reference {$entry->reference}.");
     }
 
     public function reverse(Request $request, Invoice $invoice, LedgerEntry $entry): RedirectResponse
