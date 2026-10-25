@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\SchoolAdmin;
 
+use App\Ai\AiStyles;
 use App\Http\Controllers\Controller;
 use App\Models\CbtBank;
 use App\Models\CbtQuestion;
@@ -99,6 +100,8 @@ class CbtBankController extends Controller
                 'shown' => $ai->schoolState($bank->school_id)['platform_ready'],
                 'reason' => $ai->unavailable($bank->school_id, 'questions'),
                 'level' => $bank->subject?->levelLabel() ?: null,
+                'styles' => AiStyles::choices('questions'),
+                'default_style' => AiStyles::defaultKey('questions'),
                 // Topics from the subject's schemes of work, offered when asking the AI
                 'topics' => $bank->subject_id
                     ? SchemeOfWork::where('school_id', $bank->school_id)->where('subject_id', $bank->subject_id)->get(['weeks'])
@@ -120,6 +123,7 @@ class CbtBankController extends Controller
             'parts' => 'nullable|integer|min:0|max:'.QuestionWriterService::MAX_PARTS,
             'marks' => 'nullable|numeric|min:1|max:100',
             'instructions' => 'nullable|string|max:1500',
+            'style' => 'nullable|string|max:30',
         ], ['topic.required' => 'Type the topic the questions are about.', 'count.max' => 'Ask for at most :max at a time.']);
 
         return response()->json(['questions' => $writer->draft($bank, $request->user(), $data)]);

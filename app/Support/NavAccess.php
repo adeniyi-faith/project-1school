@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
  */
 class NavAccess
 {
-    /** @var array<string, array{permissions: string[], roles: string[]}>|null */
+    /** @var array<string, array{permissions: string[], roles: string[], platform: array|string|null}>|null */
     private static ?array $rules = null;
 
     /** Every GET page without a placeholder in its address, with what it needs */
@@ -22,9 +22,13 @@ class NavAccess
                 && (str_starts_with($r->uri(), 'school') || str_starts_with($r->uri(), 'super-admin')))
             ->mapWithKeys(function ($r) {
                 $permissions = $roles = [];
+                $platform = false;
                 foreach ($r->gatherMiddleware() as $m) {
                     if (! is_string($m)) {
                         continue;
+                    }
+                    if ($m === 'platform') {
+                        $platform = true;
                     }
                     if (str_starts_with($m, 'permission:')) {
                         $permissions[] = explode('|', substr($m, 11));
@@ -33,7 +37,8 @@ class NavAccess
                     }
                 }
 
-                return ['/'.$r->uri() => ['permissions' => $permissions, 'roles' => $roles]];
+                // Platform pages are decided by PlatformAccess::PAGES (a page not listed there is for the owner alone)
+                return ['/'.$r->uri() => ['permissions' => $permissions, 'roles' => $roles, 'platform' => $platform ? (PlatformAccess::requirement($r->getName()) ?? 'owner') : null]];
             })->all();
     }
 
@@ -41,9 +46,16 @@ class NavAccess
     public static function paths(User $user): array
     {
         $roles = $user->getRoleNames()->all();
+        // Platform staff who are inside a school are treated as the owner there, so they get that school's whole menu
+        if (PlatformAccess::staffInsideSchool($user)) {
+            $roles[] = PlatformAccess::OWNER;
+        }
 
         return collect(self::rules())
             ->filter(function (array $rule) use ($user, $roles) {
+                if ($rule['platform'] !== null) {
+                    return self::platformPageAllowed($user, $rule['platform']);
+                }
                 foreach ($rule['roles'] as $anyOf) {
                     if (! array_intersect($anyOf, $roles)) {
                         return false;
@@ -60,9 +72,27 @@ class NavAccess
             ->keys()->values()->all();
     }
 
+    private static function platformPageAllowed(User $user, array|string $need): bool
+    {
+        if (PlatformAccess::isOwner($user)) {
+            return true;
+        }
+        if ($need === 'owner' || ! PlatformAccess::isStaff($user)) {
+            return false;
+        }
+        [$permission, $scopedOk] = $need;
+
+        return ($permission === null || PlatformAccess::can($user, $permission)) && (! PlatformAccess::isScoped($user) || $scopedOk);
+    }
+
     /** The permissions this person holds, for showing or hiding buttons on a page */
     public static function permissions(User $user): array
     {
-        return $user->hasRole('super-admin') ? ['*'] : $user->getAllPermissions()->pluck('name')->values()->all();
+        // The owner, and platform staff while inside a school, can do everything there
+        if ($user->hasRole('super-admin') || PlatformAccess::staffInsideSchool($user)) {
+            return ['*'];
+        }
+
+        return $user->getAllPermissions()->pluck('name')->values()->all();
     }
 }
