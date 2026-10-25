@@ -21,7 +21,7 @@ interface Props {
     designs: { id: number; name: string; orientation: string; is_default: boolean }[];
     filters: { class_id?: string; show?: string; search?: string };
     max_per_print: number;
-    can: { issue: boolean; scan: boolean; design: boolean };
+    can: { staff_cards: boolean; issue: boolean; scan: boolean; design: boolean };
 }
 
 const selectClass = 'h-9 rounded-lg border border-slate-200 bg-transparent px-2 text-sm dark:border-white/10 dark:bg-slate-900';
@@ -66,6 +66,7 @@ export default function IdCardsIndex({ students, stats, classes, designs, filter
             {can.issue && <Button onClick={() => { setMakeClasses([]); setMaking(true); }} className="bg-indigo-600 text-white hover:bg-indigo-700"><Sparkles className="size-4" /> Make missing cards</Button>}
             {can.issue && <Button variant="outline" onClick={() => openPrint()}><Printer className="size-4" /> Print</Button>}
             {can.scan && <Link href="/school/id-cards/scan" className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-sm max-md:h-10 font-medium hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"><ScanLine className="size-4" /> Scan</Link>}
+            {can.staff_cards && <Link href="/school/id-cards/staff" className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-sm max-md:h-10 font-medium hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"><IdCard className="size-4" /> Staff cards</Link>}
             <Link href="/school/id-cards/designs" className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-sm max-md:h-10 font-medium hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"><Palette className="size-4" /> Designs</Link>
         </div>
     );

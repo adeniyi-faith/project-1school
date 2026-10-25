@@ -744,7 +744,8 @@ export interface LessonChoices {
     subjects: SubjectChoice[];
     terms: { id: number; name: string; is_current: boolean }[];
 }
-export interface AiAvailability { shown: boolean; reason: string | null }
+export interface AiStyleChoice { key: string; label: string; hint: string }
+export interface AiAvailability { shown: boolean; reason: string | null; styles?: AiStyleChoice[]; default_style?: string }
 
 /** A printed exam paper in the list */
 export interface ExamPaperRow {
