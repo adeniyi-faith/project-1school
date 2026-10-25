@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Announcement;
 use App\Models\Attendance;
+use App\Models\CbtAttempt;
+use App\Models\CbtTest;
 use App\Models\Exam;
 use App\Models\Homework;
-use App\Models\Mark;
 use App\Models\Student;
 use App\Models\Timetable;
 use App\Services\FeeLedgerService;
@@ -33,7 +34,8 @@ class StudentPortalController extends Controller
                 'exams'        => [],
                 'homework'     => [],
                 'fees'         => [],
-                'marks'        => [],
+                'latestTerm'   => null,
+                'today'        => null,
                 'announcements'=> [],
                 'timetableToday' => [],
             ]);
@@ -93,6 +95,7 @@ class StudentPortalController extends Controller
                 'title'   => $h->title,
                 'subject' => $h->subject?->name,
                 'due'     => Carbon::parse($h->due_date)->format('d M'),
+                'due_iso' => Carbon::parse($h->due_date)->toDateString(),
                 'overdue' => $h->due_date < $today,
             ]);
 
@@ -107,22 +110,6 @@ class StudentPortalController extends Controller
                 'balance' => $r['balance'], 'status' => $r['status'], 'date' => $r['payment_date'],
             ])->values(),
         ];
-
-        /* ── Recent Exam Marks ── */
-        $marks = Mark::where('school_id', $user->school_id)
-            ->where('student_id', $student->id)
-            ->visibleToFamilies()
-            ->with(['exam:id,name,type', 'subject:id,name'])
-            ->orderByDesc('created_at')
-            ->limit(8)
-            ->get()
-            ->map(fn ($m) => [
-                'exam'    => $m->exam?->name,
-                'subject' => $m->subject?->name,
-                'marks'   => $m->marks_obtained,
-                'grade'   => $m->grade,
-                'absent'  => $m->is_absent,
-            ]);
 
         /* ── Today's Timetable ── */
         $dayOfWeek    = strtolower($now->format('l')); // monday, tuesday…
@@ -175,10 +162,47 @@ class StudentPortalController extends Controller
             'exams'          => $exams,
             'homework'       => $homework,
             'fees'           => $fees,
-            'marks'          => $marks,
+            // Published term results first: the old single exam marks stay on the Results page, not here
+            'latestTerm'     => $this->latestTerm($student),
+            'today'          => $this->todayStrip($student, $timetableToday, $homework, $now),
             'timetableToday' => $timetableToday,
             'announcements'  => $announcements,
         ]);
+    }
+
+    /** The newest published term result, the same figures as the report card */
+    private function latestTerm($student): ?array
+    {
+        $r = app(TermResultService::class)->familyReports($student)[0] ?? null;
+
+        return $r ? [
+            'id' => $r['id'], 'term' => $r['term'], 'average' => $r['average'], 'position' => $r['position'], 'class_size' => $r['class_size'],
+            'subjects' => collect($r['subjects'])->take(6)->values(),
+        ] : null;
+    }
+
+    /** What to do now: the lesson on, homework due soon, and any computer test that is open */
+    private function todayStrip($student, $timetableToday, $homework, Carbon $now): array
+    {
+        $clock = $now->format('H:i');
+        $lesson = collect($timetableToday)->first(fn ($t) => $t['end_time'] > $clock);
+
+        $tomorrow = $now->copy()->addDay()->toDateString();
+        $dueSoon = $homework->filter(fn ($h) => $h['due_iso'] <= $tomorrow)->values();
+
+        $finished = CbtAttempt::where('student_id', $student->id)->get()->filter(fn ($a) => $a->isFinished())->pluck('cbt_test_id');
+        $openTests = CbtTest::with('subject:id,name')
+            ->where('class_id', $student->class_id)->where('audience', 'students')->where('status', 'published')
+            ->whereNotIn('id', $finished)->orderBy('opens_at')->get()
+            ->filter(fn (CbtTest $t) => $t->isOpen())
+            ->map(fn (CbtTest $t) => ['id' => $t->id, 'title' => $t->title, 'subject' => $t->subject?->name, 'minutes' => $t->duration_minutes])
+            ->values();
+
+        return [
+            'lesson' => $lesson,
+            'homework_due' => $dueSoon->map(fn ($h) => ['id' => $h['id'], 'title' => $h['title'], 'subject' => $h['subject'], 'due' => $h['due_iso'] === $now->toDateString() ? 'today' : 'tomorrow'])->take(3)->values(),
+            'open_tests' => $openTests,
+        ];
     }
 
     /* ── Helper: resolve student or redirect ── */
