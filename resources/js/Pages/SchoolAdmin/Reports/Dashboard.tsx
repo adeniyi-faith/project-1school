@@ -67,19 +67,19 @@ export default function Dashboard({ role, totalStudents, totalStaff, attendanceP
         ? [
             { label: 'Schools', value: fmt(schools ?? 0) },
             { label: 'Students', value: fmt(totalStudents) },
-            { label: 'Revenue', value: nairaCompact(monthFees) },
-            { label: 'Outstanding fees', value: nairaCompact(pendingFees), tone: pendingFees > 0 ? 'warn' : 'default' },
+            { label: 'Revenue', value: nairaCompact(monthFees), hint: 'From invoices, this month' },
+            { label: 'Outstanding fees', value: nairaCompact(pendingFees), tone: pendingFees > 0 ? 'warn' : 'default', hint: 'From invoices' },
         ]
         : [
             { label: 'Students', value: fmt(totalStudents), hint: 'Active this session' },
             { label: 'Staff', value: fmt(totalStaff), hint: 'Active members' },
             { label: 'Present today', value: `${attendancePct}%`, tone: attendancePct >= 90 ? 'good' : attendancePct >= 75 ? 'default' : 'warn', hint: 'Of students marked' },
-            { label: 'Fees this month', value: nairaCompact(monthFees), hint: `${nairaCompact(pendingFees)} still outstanding` },
+            { label: 'Fees this month', value: nairaCompact(monthFees), hint: `From invoices · ${nairaCompact(pendingFees)} still outstanding` },
         ];
 
     const extras: StatItem[] = [];
-    if (role !== 'super-admin') extras.push({ label: 'Outstanding fees', value: nairaCompact(pendingFees), tone: pendingFees > 0 ? 'warn' : 'default' });
-    if (role === 'accountant' && todayCollection !== undefined) extras.push({ label: 'Collected today', value: naira(todayCollection), tone: 'good' });
+    if (role !== 'super-admin') extras.push({ label: 'Outstanding fees', value: nairaCompact(pendingFees), tone: pendingFees > 0 ? 'warn' : 'default', hint: 'From invoices' });
+    if (role === 'accountant' && todayCollection !== undefined) extras.push({ label: 'Collected today', value: naira(todayCollection), tone: 'good', hint: 'From invoices' });
     if (['school-admin', 'principal', 'teacher'].includes(role)) extras.push({ label: 'Homework pending', value: fmt(pendingHomework) });
 
     return (
@@ -116,7 +116,7 @@ export default function Dashboard({ role, totalStudents, totalStaff, attendanceP
                 {extras.length > 0 && role !== 'super-admin' && <StatStrip items={extras} className={extras.length === 1 ? 'sm:max-w-xs' : ''} />}
 
                 <div className="grid gap-4 lg:grid-cols-2">
-                    <Panel title="Fees collected" description="Last 6 months">
+                    <Panel title="Fees collected" description="Last 6 months, from invoices">
                         {feeChart.length > 0 ? (
                             <ResponsiveContainer width="100%" height={240}>
                                 <BarChart data={feeChart} margin={{ top: 8, right: 4, left: -8, bottom: 0 }} barCategoryGap="28%">

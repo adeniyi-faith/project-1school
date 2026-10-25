@@ -47,6 +47,10 @@ export default function FeeReceipt({ payment }: { payment: FeePayment }) {
                     </Button>
                 </div>
 
+                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 print:hidden dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                    This is an <strong>old receipt</strong> from before invoices. Its money has been copied into the invoices, so current totals are on the <Link href="/school/fees/invoices" className="underline">Invoices</Link> page.
+                </p>
+
                 <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden print:shadow-none">
                     {/* Header */}
                     <div className="bg-indigo-600 text-white px-6 py-5">

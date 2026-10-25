@@ -296,4 +296,21 @@ class FeeLedgerTest extends SecurityTestCase
             ->assertJsonPath('props.invoice.net_paid', 50000)
             ->assertJsonPath('props.can.collect', true);
     }
+
+    public function test_old_payment_records_leave_the_menu_for_a_school_with_none_and_stay_for_one_with_some(): void
+    {
+        $accountant = $this->makeUser($this->school, 'accountant');
+        $paths = fn () => $this->actingAs($accountant)->get('/school/fees/invoices', ['X-Inertia' => 'true'])->json('props.auth.paths');
+
+        $this->assertNotContains('/school/fees/payments', $paths());
+        $this->assertContains('/school/fees/invoices', $paths());
+
+        $ade = $this->student('Ade');
+        \App\Models\FeePayment::create([
+            'school_id' => $this->school->id, 'student_id' => $ade->id, 'fee_structure_id' => $this->tuition->id, 'receipt_no' => 'OLD-1',
+            'amount_due' => 1000, 'amount_paid' => 1000, 'status' => 'paid', 'method' => 'cash',
+        ]);
+
+        $this->assertContains('/school/fees/payments', $paths());
+    }
 }
