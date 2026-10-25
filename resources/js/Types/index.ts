@@ -64,7 +64,15 @@ export interface PageProps {
     };
     faviconUrl: string | null;
     /** Set while the platform owner is working inside one school */
-    acting_school?: { id: number; name: string } | null;
+    acting_school?: {
+        id: number; name: string;
+        /** Who is inside: "Super Admin", "Support" ... */
+        as: string;
+        /** True when this person can look around but not change anything */
+        read_only: boolean;
+    } | null;
+    /** Set for members of the platform team (not the owner): their role name and whether they are limited to some schools */
+    platform?: { role: string; scoped: boolean } | null;
     /** Set while someone looks around the public demo, with the account type they chose */
     demo?: { label: string } | null;
     errors: Record<string, string>;
@@ -395,7 +403,7 @@ export interface TermReport {
 // ───────────── Invoices, ledger and scholarships ─────────────
 
 export type InvoiceStatus = 'unpaid' | 'partial' | 'paid' | 'void';
-export type LedgerType = 'charge' | 'fine' | 'payment' | 'discount' | 'reversal';
+export type LedgerType = 'charge' | 'fine' | 'payment' | 'discount' | 'reversal' | 'credit' | 'refund';
 export type PaymentMethod = 'cash' | 'bank_transfer' | 'pos' | 'card' | 'online' | 'ussd';
 
 export interface InvoiceRow {
@@ -736,7 +744,8 @@ export interface LessonChoices {
     subjects: SubjectChoice[];
     terms: { id: number; name: string; is_current: boolean }[];
 }
-export interface AiAvailability { shown: boolean; reason: string | null }
+export interface AiStyleChoice { key: string; label: string; hint: string }
+export interface AiAvailability { shown: boolean; reason: string | null; styles?: AiStyleChoice[]; default_style?: string }
 
 /** A printed exam paper in the list */
 export interface ExamPaperRow {

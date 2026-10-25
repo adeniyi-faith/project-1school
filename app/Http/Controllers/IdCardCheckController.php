@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\School;
+use App\Models\StaffIdCard;
 use App\Models\StudentIdCard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,31 @@ class IdCardCheckController extends Controller
     {
         $card = StudentIdCard::withoutGlobalScopes()->with(['student' => fn ($q) => $q->withoutGlobalScopes()->with(['schoolClass' => fn ($c) => $c->withoutGlobalScopes()])])
             ->where('token', $token)->first();
+        if (! $card) {
+            return $this->staffCard($request, $token);
+        }
+        $user = $request->user();
+        if ($card && $user && $user->school_id === $card->school_id && $user->can('students.view')) {
+            return redirect()->route('school.id-cards.scan', ['code' => $token]);
+        }
+
+        return response()->view('id-cards.check', [
+            'found' => true,
+            'state' => $card?->state(),
+            'name' => $card?->student?->full_name,
+            'class' => $card?->student?->schoolClass?->name,
+            'school' => $card ? School::find($card->school_id)?->name : null,
+            'card_no' => $card?->card_no,
+            'expires_on' => $card?->expires_on?->format('j F Y'),
+        ], $card ? 200 : 404);
+    }
+
+    /** The same page for a staff card: only whether it is genuine, the name, role and school */
+    private function staffCard(Request $request, string $token): Response|RedirectResponse
+    {
+        $card = StaffIdCard::withoutGlobalScopes()->with(['staff' => fn ($q) => $q->withoutGlobalScopes()->with([
+            'designation' => fn ($d) => $d->withoutGlobalScopes(), 'department' => fn ($d) => $d->withoutGlobalScopes(),
+        ])])->where('token', $token)->first();
         $user = $request->user();
         if ($card && $user && $user->school_id === $card->school_id && $user->can('students.view')) {
             return redirect()->route('school.id-cards.scan', ['code' => $token]);
@@ -27,8 +53,8 @@ class IdCardCheckController extends Controller
         return response()->view('id-cards.check', [
             'found' => (bool) $card,
             'state' => $card?->state(),
-            'name' => $card?->student?->full_name,
-            'class' => $card?->student?->schoolClass?->name,
+            'name' => $card?->staff?->full_name,
+            'class' => $card?->staff?->designation?->name,
             'school' => $card ? School::find($card->school_id)?->name : null,
             'card_no' => $card?->card_no,
             'expires_on' => $card?->expires_on?->format('j F Y'),

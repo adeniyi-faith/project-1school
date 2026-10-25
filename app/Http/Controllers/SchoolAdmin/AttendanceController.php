@@ -26,6 +26,11 @@ class AttendanceController extends Controller
         $classId   = $request->class_id;
         $sectionId = $request->section_id;
 
+        // A class teacher with exactly one class opens straight onto that register
+        if (! $classId && ! $request->has('class_id')) {
+            $classId = $this->onlyClassInChargeOf($request);
+        }
+
         $students = collect();
         $existing = collect();
 
@@ -53,10 +58,23 @@ class AttendanceController extends Controller
             'existing' => $existing,
             'filters'  => [
                 'date'       => $date,
-                'class_id'   => $classId,
+                'class_id'   => $classId ? (string) $classId : null,
                 'section_id' => $sectionId,
             ],
         ]);
+    }
+
+    /** The one class this person is class teacher of, or null when they have none or several */
+    private function onlyClassInChargeOf(Request $request): ?int
+    {
+        $staff = Staff::where('user_id', $request->user()->id)->first();
+        if (! $staff) {
+            return null;
+        }
+
+        $ids = SchoolClass::where('class_teacher_staff_id', $staff->id)->pluck('id');
+
+        return $ids->count() === 1 ? (int) $ids->first() : null;
     }
 
     /**

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Announcement;
 use App\Models\Attendance;
 use App\Models\Guardian;
-use App\Models\Mark;
 use App\Models\Student;
 use App\Services\FeeLedgerService;
 use App\Services\TermResultService;
@@ -29,6 +28,7 @@ class ParentPortalController extends Controller
                 'linked'    => false,
                 'children'  => [],
                 'announcements' => [],
+                'payOnline' => false,
             ]);
         }
 
@@ -52,21 +52,8 @@ class ParentPortalController extends Controller
             /* Fee summary (from invoices) */
             $account = app(FeeLedgerService::class)->familyAccount($student);
 
-            /* Recent marks */
-            $marks = Mark::where('school_id', $student->school_id)
-                ->where('student_id', $student->id)
-                ->visibleToFamilies()
-                ->with(['exam:id,name', 'subject:id,name,full_marks,pass_marks'])
-                ->orderByDesc('created_at')
-                ->limit(5)
-                ->get()
-                ->map(fn ($m) => [
-                    'exam'    => $m->exam?->name,
-                    'subject' => $m->subject?->name,
-                    'marks'   => $m->marks_obtained,
-                    'grade'   => $m->grade,
-                    'absent'  => $m->is_absent,
-                ]);
+            /* Latest published term result (the same figures as the report card) */
+            $latest = collect(app(TermResultService::class)->familyReports($student))->first();
 
             $recentFees = $account['rows']->take(3)->map(fn ($r) => [
                 'month' => $r['month'], 'paid' => $r['paid'], 'balance' => $r['balance'], 'status' => $r['status'],
@@ -91,7 +78,13 @@ class ParentPortalController extends Controller
                     'balance'    => $account['balance'],
                     'recent'     => $recentFees,
                 ],
-                'marks'      => $marks,
+                'latest_report' => $latest ? [
+                    'id'         => $latest['id'],
+                    'term'       => $latest['term'],
+                    'average'    => $latest['average'],
+                    'position'   => $latest['position'],
+                    'class_size' => $latest['class_size'],
+                ] : null,
             ];
         });
 
@@ -119,6 +112,7 @@ class ParentPortalController extends Controller
             ],
             'children'     => $children,
             'announcements'=> $announcements,
+            'payOnline'    => app(\App\Services\OnlinePaymentService::class)->enabled($guardian->school_id),
         ]);
     }
 

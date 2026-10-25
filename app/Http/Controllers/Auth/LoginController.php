@@ -122,6 +122,10 @@ class LoginController extends Controller
 
         $user->update(['last_login_at' => now()]);
 
+        if (\App\Support\PlatformAccess::isPlatform($user)) {
+            \App\Support\PlatformAudit::record('login', 'Signed in', ['user' => $user, 'school_id' => null], $request);
+        }
+
         activity()
             ->causedBy($user)
             ->withProperties(['ip' => $request->ip(), 'user_agent' => $request->userAgent()])
@@ -175,6 +179,10 @@ class LoginController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
+        if (\App\Support\PlatformAccess::isPlatform($request->user())) {
+            \App\Support\PlatformAudit::record('logout', 'Signed out', ['school_id' => null], $request);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

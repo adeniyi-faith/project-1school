@@ -140,7 +140,7 @@ export default function Assessment({ assessmentSchemes, gradingSchemes, classes,
     ];
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'Academic' }, { label: 'Examinations', href: '/school/exams' }, { label: 'Scores & grades' }]}>
+        <AppLayout breadcrumbs={[{ label: 'Academic' }, { label: 'Class Test Marks', href: '/school/exams' }, { label: 'Scores & grades' }]}>
             <div className="mx-auto max-w-5xl space-y-6 pb-24 md:pb-0">
                 <PageHeader
                     title="Scores & grades"

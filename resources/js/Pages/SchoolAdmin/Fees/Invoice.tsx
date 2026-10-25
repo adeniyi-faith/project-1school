@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -13,7 +14,7 @@ import { InvoiceStatus, METHOD_LABELS } from '@/components/fees/InvoiceStatus';
 import { naira } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { CUSTOM, InstalmentTable, PlanPartsEditor, planPayload } from '@/components/fees/Instalments';
-import { ArrowLeft, Ban, Banknote, CalendarClock, CircleAlert, Undo2 } from 'lucide-react';
+import { ArrowLeft, Ban, Banknote, CalendarClock, CircleAlert, HandCoins, Undo2 } from 'lucide-react';
 import type { InvoiceDetail, LedgerLine, LedgerType, PaymentMethod, PaymentPlanOption, PlanPart } from '@/Types';
 import { FieldError as ErrorText } from '@/components/app/FormField';
 
@@ -25,11 +26,11 @@ interface Props {
 }
 
 const TYPE_LABELS: Record<LedgerType, string> = {
-    charge: 'Fee charged', fine: 'Fine', payment: 'Payment', discount: 'Scholarship / discount', reversal: 'Reversal',
+    charge: 'Fee charged', fine: 'Fine', payment: 'Payment', discount: 'Scholarship / discount', reversal: 'Reversal', credit: 'Fee lowered', refund: 'Refund paid out',
 };
 const METHOD_ITEMS = (Object.keys(METHOD_LABELS) as PaymentMethod[]).map(m => ({ value: m, label: METHOD_LABELS[m] }));
 
-type Dialogs = 'pay' | 'fine' | 'void' | 'plan' | null;
+type Dialogs = 'pay' | 'fine' | 'refund' | 'void' | 'plan' | null;
 type PayForm = { amount: string; method: PaymentMethod; entry_date: string; note: string };
 
 function today() {
@@ -44,6 +45,9 @@ export default function Invoice({ invoice, entries, plans, can }: Props) {
     const fine = useForm({ amount: '', note: '' });
     const voidForm = useForm({ reason: '' });
     const reverse = useForm({ reason: '' });
+    const refund = useForm<{ amount: string; method: PaymentMethod; entry_date: string; reason: string; reference: string; lower_fee: boolean }>({
+        amount: '', method: 'bank_transfer', entry_date: today(), reason: '', reference: '', lower_fee: true,
+    });
     const planForm = useForm<{ plan_id: string; parts: PlanPart[] }>({ plan_id: '', parts: [] });
     const summary = invoice.instalments;
 
@@ -77,6 +81,11 @@ export default function Invoice({ invoice, entries, plans, can }: Props) {
             )}
             {can.plan && (
                 <Button variant="outline" onClick={openPlan}><CalendarClock className="size-4" /> {summary ? 'Change parts' : 'Pay in parts'}</Button>
+            )}
+            {can.correct && invoice.net_paid > 0 && (
+                <Button variant="outline" onClick={() => { refund.reset(); refund.clearErrors(); refund.setData('amount', String(invoice.net_paid)); setOpen('refund'); }}>
+                    <HandCoins className="size-4" /> Refund
+                </Button>
             )}
             {can.correct && invoice.net_paid <= 0 && (
                 <Button variant="outline" onClick={() => { voidForm.reset(); voidForm.clearErrors(); setOpen('void'); }} className="text-red-600"><Ban className="size-4" /> Cancel invoice</Button>
@@ -157,7 +166,7 @@ export default function Invoice({ invoice, entries, plans, can }: Props) {
                                             <TableCell className="text-right tabular-nums">{naira(e.after, { kobo: true })}</TableCell>
                                             <TableCell className="text-xs text-slate-500">{e.recorded_by ?? '—'}</TableCell>
                                             <TableCell className="pr-5 text-right">
-                                                {can.correct && !e.reversed && e.type !== 'reversal' && e.type !== 'charge' && (
+                                                {can.correct && !e.reversed && e.type !== 'reversal' && e.type !== 'charge' && e.type !== 'credit' && e.type !== 'refund' && (
                                                     <Button variant="ghost" size="sm" onClick={() => { reverse.reset(); reverse.clearErrors(); setReversing(e); }}>
                                                         <Undo2 className="size-3.5" /> Reverse
                                                     </Button>
@@ -225,6 +234,52 @@ export default function Invoice({ invoice, entries, plans, can }: Props) {
                         <DialogFooter>
                             <Button type="button" variant="ghost" onClick={close}>Cancel</Button>
                             <Button type="submit" disabled={fine.processing} className="bg-indigo-600 text-white hover:bg-indigo-700">Add fine</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={open === 'refund'} onOpenChange={o => !o && close()}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader><DialogTitle>Refund money to the family</DialogTitle></DialogHeader>
+                    <form onSubmit={e => { e.preventDefault(); refund.post(`/school/fees/invoices/${invoice.id}/refunds`, opts); }} className="mt-2 space-y-4">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="refund-amount">Amount (₦)</Label>
+                            <Input id="refund-amount" type="number" min="0.01" step="0.01" max={invoice.net_paid} value={refund.data.amount} onChange={e => refund.setData('amount', e.target.value)} />
+                            <p className="text-xs text-slate-500">Up to {naira(invoice.net_paid, { kobo: true })} has been paid on this invoice.</p>
+                            <ErrorText>{refund.errors.amount}</ErrorText>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label>Paid back by</Label>
+                                <Select items={METHOD_ITEMS} value={refund.data.method} onValueChange={v => v && refund.setData('method', v as PaymentMethod)}>
+                                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                                    <SelectContent>{METHOD_ITEMS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="refund-date">Date</Label>
+                                <Input id="refund-date" type="date" max={today()} value={refund.data.entry_date} onChange={e => refund.setData('entry_date', e.target.value)} />
+                                <ErrorText>{refund.errors.entry_date}</ErrorText>
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="refund-reason">Why?</Label>
+                            <Input id="refund-reason" value={refund.data.reason} onChange={e => refund.setData('reason', e.target.value)} placeholder="e.g. Child withdrawn before the term started" />
+                            <ErrorText>{refund.errors.reason}</ErrorText>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="refund-ref">Bank transfer reference (optional)</Label>
+                            <Input id="refund-ref" value={refund.data.reference} onChange={e => refund.setData('reference', e.target.value)} />
+                        </div>
+                        <label className="flex items-start gap-2 text-sm">
+                            <Checkbox checked={refund.data.lower_fee} onCheckedChange={v => refund.setData('lower_fee', !!v)} className="mt-0.5" />
+                            <span>Also lower the fee by this amount, so the family does not owe it again.<span className="block text-xs text-slate-500">Leave this off only if the money was sent back by mistake and the fee is still owed.</span></span>
+                        </label>
+                        <p className="text-xs text-slate-500">This records the refund only. The app does not send money; pay it back from your bank or cash box.</p>
+                        <DialogFooter>
+                            <Button type="button" variant="ghost" onClick={close}>Cancel</Button>
+                            <Button type="submit" disabled={refund.processing} className="bg-red-600 text-white hover:bg-red-700">Record refund</Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
