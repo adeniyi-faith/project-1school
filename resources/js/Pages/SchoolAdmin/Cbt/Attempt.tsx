@@ -30,7 +30,7 @@ export default function CbtAttempt({ test, attempt, lines, counts, canManage }: 
     const passed = attempt.percent != null && test.pass_mark != null ? attempt.percent >= test.pass_mark : null;
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'CBT' }, { label: 'Tests', href: '/school/cbt/tests' }, { label: test.title, href: url }, { label: attempt.name }]}>
+        <AppLayout breadcrumbs={[{ label: 'Learning' }, { label: 'Computer Tests', href: '/school/cbt/tests' }, { label: test.title, href: url }, { label: attempt.name }]}>
             <div className="mx-auto max-w-4xl space-y-6">
                 <Link href={url} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"><ArrowLeft className="size-4" /> Back to the test</Link>
                 <PageHeader title={attempt.name} description={`${test.title}${attempt.number ? ` · ${attempt.number}` : ''}`} />

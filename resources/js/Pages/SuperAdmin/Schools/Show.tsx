@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useCan } from '@/lib/can';
 import SchoolOverviewPanels, { type Overview } from '@/components/school360/Overview';
 import type { PageProps, School, AcademicYear } from '@/Types';
 
@@ -39,6 +40,7 @@ const field = 'w-full h-9 rounded-md border border-slate-200 dark:border-slate-7
 
 export default function ShowSchool() {
     const { school, usage, subscription, packages, modules, admins, ai, activity } = usePage<ShowPageProps>().props;
+    const can = useCan();
     const statusClass = statusMap[school.status] ?? statusMap.inactive;
     const base = `/super-admin/schools/${school.id}`;
 
@@ -98,10 +100,12 @@ export default function ShowSchool() {
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <Button size="sm" className="bg-amber-500 text-amber-950 hover:bg-amber-600" onClick={() => router.post(`${base}/enter`)}>
-                        <LogIn className="w-4 h-4 mr-1.5" /> Open this school
-                    </Button>
-                    {school.status === 'suspended' ? (
+                    {can('platform.schools.enter') && (
+                        <Button size="sm" className="bg-amber-500 text-amber-950 hover:bg-amber-600" onClick={() => router.post(`${base}/enter`)}>
+                            <LogIn className="w-4 h-4 mr-1.5" /> Open this school
+                        </Button>
+                    )}
+                    {!can('platform.schools.manage') ? null : school.status === 'suspended' ? (
                         <Button size="sm" variant="outline" className="text-emerald-600" onClick={() => router.patch(`${base}/activate`)}>
                             <CheckCircle className="w-4 h-4 mr-1.5" /> Activate
                         </Button>
@@ -110,9 +114,11 @@ export default function ShowSchool() {
                             <Ban className="w-4 h-4 mr-1.5" /> Suspend
                         </Button>
                     )}
-                    <Button size="sm" asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                        <Link href={`${base}/edit`}><Pencil className="w-4 h-4 mr-1.5" /> Edit</Link>
-                    </Button>
+                    {can('platform.schools.manage') && (
+                        <Button size="sm" asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                            <Link href={`${base}/edit`}><Pencil className="w-4 h-4 mr-1.5" /> Edit</Link>
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -145,7 +151,7 @@ export default function ShowSchool() {
                 <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
                         <CardTitle className="text-sm flex items-center gap-2"><CreditCard className="w-4 h-4" /> Plan</CardTitle>
-                        <Button size="sm" variant="outline" onClick={() => setPlanOpen(true)}>{subscription ? 'Change plan' : 'Give a plan'}</Button>
+                        {can('platform.billing.manage') && <Button size="sm" variant="outline" onClick={() => setPlanOpen(true)}>{subscription ? 'Change plan' : 'Give a plan'}</Button>}
                     </CardHeader>
                     <CardContent className="text-sm space-y-1.5">
                         {subscription ? (
@@ -166,7 +172,7 @@ export default function ShowSchool() {
                 <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
                         <CardTitle className="text-sm flex items-center gap-2"><Layers className="w-4 h-4" /> Features this school has</CardTitle>
-                        <Button size="sm" disabled={!modsChanged} onClick={() => router.post('/super-admin/module-manager/bulk', { school_id: school.id, modules: mods })}>Save</Button>
+                        {can('platform.modules.manage') && <Button size="sm" disabled={!modsChanged} onClick={() => router.post('/super-admin/module-manager/bulk', { school_id: school.id, modules: mods })}>Save</Button>}
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 gap-2">
                         {modules.map((m) => (
@@ -182,7 +188,7 @@ export default function ShowSchool() {
                 <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
                         <CardTitle className="text-sm flex items-center gap-2"><UserCog className="w-4 h-4" /> School administrators</CardTitle>
-                        <Button size="sm" variant="outline" onClick={() => setAdminOpen(true)}><Plus className="w-3.5 h-3.5 mr-1" /> Add</Button>
+                        {can('platform.schools.manage') && <Button size="sm" variant="outline" onClick={() => setAdminOpen(true)}><Plus className="w-3.5 h-3.5 mr-1" /> Add</Button>}
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {admins.length === 0 && <p className="text-sm text-slate-400">This school has no administrator. Add one so someone there can sign in.</p>}
@@ -192,12 +198,12 @@ export default function ShowSchool() {
                                     <p className="text-sm font-medium text-slate-900 dark:text-white">{a.name} {a.status !== 'active' && <span className="text-xs text-red-600 capitalize">({a.status})</span>}</p>
                                     <p className="text-xs text-slate-500 truncate">{a.email} · last in: {when(a.last_login_at)}</p>
                                 </div>
-                                <div className="flex flex-wrap gap-1.5">
+                                {can('platform.users.manage') && <div className="flex flex-wrap gap-1.5">
                                     <Button size="sm" variant="outline" onClick={() => { setResetFor(a); setNewPassword(''); }}><KeyRound className="w-3.5 h-3.5 mr-1" /> New password</Button>
                                     {a.status === 'active'
                                         ? <Button size="sm" variant="outline" className="text-amber-600" onClick={() => router.patch(`/super-admin/users/${a.id}/suspend`)}>Suspend</Button>
                                         : <Button size="sm" variant="outline" className="text-emerald-600" onClick={() => router.patch(`/super-admin/users/${a.id}/activate`)}>Activate</Button>}
-                                </div>
+                                </div>}
                             </div>
                         ))}
                         <Link href={`/super-admin/users?school_id=${school.id}`} className="text-xs text-indigo-600 hover:underline inline-block">See every account in this school</Link>
@@ -218,7 +224,7 @@ export default function ShowSchool() {
                                 <Label className="text-xs">Monthly allowance (₦) — empty uses the platform default</Label>
                                 <Input type="number" min="0" className="h-9 w-48" value={aiLimit} onChange={(e) => setAiLimit(e.target.value)} />
                             </div>
-                            <Button size="sm" onClick={() => router.post(`/super-admin/ai/schools/${school.id}`, { blocked: aiBlocked, limit: aiLimit === '' ? null : aiLimit })}>Save</Button>
+                            {can('platform.settings.manage') && <Button size="sm" onClick={() => router.post(`/super-admin/ai/schools/${school.id}`, { blocked: aiBlocked, limit: aiLimit === '' ? null : aiLimit })}>Save</Button>}
                         </div>
                     </CardContent>
                 </Card>
@@ -270,13 +276,13 @@ export default function ShowSchool() {
 
             <SchoolOverviewPanels />
 
-            <div className="mt-6 rounded-lg border border-red-200 dark:border-red-900 p-4 flex flex-wrap items-center justify-between gap-3">
+            {can('platform.schools.delete') && <div className="mt-6 rounded-lg border border-red-200 dark:border-red-900 p-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <p className="text-sm font-medium text-red-700 dark:text-red-400">Delete this school</p>
                     <p className="text-xs text-slate-500">Removes it from the platform. Use Suspend instead if you may want it back.</p>
                 </div>
                 <Button size="sm" variant="outline" className="text-red-600" onClick={confirmDelete}><Trash2 className="w-4 h-4 mr-1.5" /> Delete</Button>
-            </div>
+            </div>}
 
             {/* Plan dialog */}
             <Dialog open={planOpen} onOpenChange={setPlanOpen}>
