@@ -56,6 +56,9 @@ class AiController extends Controller
             'price_writing_out' => 'nullable|numeric|min:0|max:1000',
             'price_quick_in' => 'nullable|numeric|min:0|max:1000',
             'price_quick_out' => 'nullable|numeric|min:0|max:1000',
+            'model_image' => ['nullable', 'string', 'max:80', 'regex:/^[a-z0-9][a-z0-9.\-]*$/'],
+            'price_image' => 'nullable|numeric|min:0|max:100',
+            'image_cap' => 'nullable|integer|min:0|max:100000',
             'default_limit' => 'required|numeric|min:0|max:100000000',
             'naira_per_dollar' => 'required|numeric|min:1|max:100000',
         ], ['model_writing.regex' => 'Type the model name as Google writes it, e.g. gemini-3.8-flash.', 'model_quick.regex' => 'Type the model name as Google writes it, e.g. gemini-3.5-flash-lite.']);
@@ -76,7 +79,7 @@ class AiController extends Controller
         }
 
         PlatformSetting::set('ai_enabled', $request->boolean('enabled') ? '1' : '0', 'ai');
-        foreach (['model_writing', 'model_quick', 'price_writing_in', 'price_writing_out', 'price_quick_in', 'price_quick_out', 'default_limit', 'naira_per_dollar'] as $field) {
+        foreach (['model_writing', 'model_quick', 'price_writing_in', 'price_writing_out', 'price_quick_in', 'price_quick_out', 'model_image', 'price_image', 'image_cap', 'default_limit', 'naira_per_dollar'] as $field) {
             PlatformSetting::set("ai_{$field}", isset($data[$field]) && $data[$field] !== '' ? (string) $data[$field] : null, 'ai');
         }
 
