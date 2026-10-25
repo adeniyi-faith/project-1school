@@ -791,6 +791,7 @@ Route::middleware('auth')->group(function () {
         Route::get('fees/pay/{reference}/go',     [ParentPaymentController::class, 'go'])->name('fees.pay.go');
         Route::get('fees/pay/{reference}/result', [ParentPaymentController::class, 'result'])->name('fees.pay.result');
         Route::get('announcements', [ParentPortalController::class, 'announcements'])->name('announcements');
+        Route::get('classwork',     [\App\Http\Controllers\ParentClassworkController::class, 'index'])->name('classwork');
         Route::get('notifications/feed', [\App\Http\Controllers\NotificationFeedController::class, 'index'])->name('notifications.feed');
     });
 
