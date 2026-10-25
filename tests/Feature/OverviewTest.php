@@ -26,7 +26,7 @@ class OverviewTest extends SecurityTestCase
         }
         $subject = Subject::create(['school_id' => $school->id, 'class_id' => $class->id, 'name' => 'Mathematics', 'code' => 'M1']);
         $teacher = Staff::create(['school_id' => $school->id, 'emp_id' => 'EMP-1', 'first_name' => 'Tola', 'last_name' => 'Ade', 'status' => 'active', 'joining_date' => '2024-01-01', 'gender' => 'female']);
-        ClassSubject::create(['school_id' => $school->id, 'class_id' => $class->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
+        ClassSubject::updateOrCreate(['class_id' => $class->id, 'subject_id' => $subject->id], ['school_id' => $school->id, 'teacher_id' => $teacher->id]);
 
         $this->actingAs($principal)->get('/school/overview')->assertOk()->assertInertia(fn ($p) => $p
             ->where('classes.0.name', 'JSS 1')
