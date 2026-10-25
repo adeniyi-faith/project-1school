@@ -5,6 +5,8 @@ namespace App\Http\Controllers\SchoolAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\AdmissionInquiry;
 use App\Models\Announcement;
+use App\Models\BookIssue;
+use App\Models\HostelAllocation;
 use App\Models\HostelRoom;
 use App\Models\InventoryItem;
 use App\Models\TransportRoute;
@@ -37,16 +39,36 @@ class StaffHomeController extends Controller
             ];
         }
 
+        if ($user->can('library.view')) {
+            $open = BookIssue::whereIn('status', ['issued', 'overdue']);
+            $overdueQuery = (clone $open)->where('due_date', '<', $today);
+            $line = fn (BookIssue $i) => [
+                'id' => $i->id, 'book' => $i->book?->title ?? 'Book', 'who' => $i->member?->full_name ?? 'Unknown',
+                'due' => $i->due_date?->format('j M'), 'days_late' => max(0, (int) $i->due_date?->startOfDay()->diffInDays(now()->startOfDay(), false)),
+            ];
+            $panels['library'] = [
+                'out_now' => (clone $open)->count(),
+                'due_today_count' => (clone $open)->whereDate('due_date', $today)->count(),
+                'overdue_count' => (clone $overdueQuery)->count(),
+                'due_today' => (clone $open)->whereDate('due_date', $today)->with('book:id,title', 'member')->orderBy('id')->limit(10)->get()->map($line),
+                'overdue' => (clone $overdueQuery)->with('book:id,title', 'member')->orderBy('due_date')->limit(10)->get()->map($line),
+            ];
+        }
+
         if ($user->can('transport.view')) {
             $panels['transport'] = [
                 'vehicles' => Vehicle::where('status', 'active')->count(),
-                'routes' => TransportRoute::with('vehicle:id,name,registration_no,driver_name,driver_phone')->withCount('students')
+                'routes' => TransportRoute::with(['vehicle:id,name,registration_no,driver_name,driver_phone', 'students' => fn ($q) => $q->orderBy('first_name'), 'students.schoolClass:id,name'])->withCount('students')
                     ->where('is_active', true)->orderBy('name')->get()
                     ->map(fn (TransportRoute $r) => [
                         'id' => $r->id, 'name' => $r->name, 'from' => $r->start_point, 'to' => $r->end_point,
                         'stops' => count($r->stops ?? []), 'students' => $r->students_count,
                         'vehicle' => $r->vehicle ? trim(($r->vehicle->name ?? '') . ' ' . $r->vehicle->registration_no) : null,
                         'driver' => $r->vehicle?->driver_name,
+                        // Today's pick-up list: who gets on this bus, and at which stop
+                        'pickups' => $r->students->take(80)->map(fn ($s) => [
+                            'id' => $s->id, 'name' => $s->full_name, 'class' => $s->schoolClass?->name, 'stop' => $s->pivot->stop,
+                        ])->values(),
                     ]),
             ];
         }
@@ -58,6 +80,17 @@ class StaffHomeController extends Controller
                 'occupied' => (int) $rooms->sum('occupied'),
                 'rooms_free' => $rooms->where('status', 'available')->count(),
                 'maintenance' => $rooms->where('status', 'maintenance')->count(),
+                // Who sleeps in which room tonight
+                'tonight' => HostelAllocation::with(['student:id,first_name,last_name,class_id', 'student.schoolClass:id,name', 'hostel:id,name', 'room:id,room_no'])
+                    ->where('status', 'active')->get()
+                    ->groupBy(fn ($a) => ($a->hostel?->name ?? 'Hostel').' · Room '.($a->room?->room_no ?? '?'))
+                    ->sortKeys()
+                    ->map(fn ($group, $room) => [
+                        'room' => $room,
+                        'students' => $group->sortBy('bed_no')->map(fn ($a) => [
+                            'id' => $a->student_id, 'name' => $a->student?->full_name ?? 'Unknown', 'class' => $a->student?->schoolClass?->name, 'bed' => $a->bed_no,
+                        ])->values(),
+                    ])->values(),
             ];
         }
 

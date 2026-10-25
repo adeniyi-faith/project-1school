@@ -9,6 +9,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentIdCard;
 use App\Services\IdCardService;
+use App\Services\StaffIdCardService;
 use App\Support\EmbeddedImage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -78,7 +79,7 @@ class IdCardController extends Controller
             'designs' => $this->designList(),
             'filters' => $request->only('class_id', 'show', 'search'),
             'max_per_print' => self::MAX_PER_PRINT,
-            'can' => ['issue' => $user->can('students.idcard'), 'scan' => $user->can('students.view'), 'design' => $user->can('settings.edit')],
+            'can' => ['staff_cards' => $user->can('staff.idcard'), 'issue' => $user->can('students.idcard'), 'scan' => $user->can('students.view'), 'design' => $user->can('settings.edit')],
         ]);
     }
 
@@ -257,7 +258,10 @@ class IdCardController extends Controller
     {
         $data = $request->validate(['code' => 'required|string|max:300', 'mark' => 'nullable|in:present,late']);
         $card = IdCardService::find($data['code']);
-        if (! $card || ! $card->student) {
+        if (! $card) {
+            return $this->lookupStaff($request, $data);
+        }
+        if (! $card->student) {
             return response()->json(['found' => false, 'message' => 'No card of this school matches that code.'], 404);
         }
         $result = $this->cards->scan($card, $request->user());
@@ -273,6 +277,32 @@ class IdCardController extends Controller
                 $result['marked'] = 'refused';
             } else {
                 $result['marked'] = $this->cards->markAttendance($card->student, $data['mark']);
+                $result['attendance'] = $result['attendance'] ?? $data['mark'];
+            }
+        }
+
+        return response()->json($result);
+    }
+
+    /** A staff card was scanned: show who it is and, if asked, mark the staff member present or late today */
+    private function lookupStaff(Request $request, array $data): JsonResponse
+    {
+        $staffCards = app(StaffIdCardService::class);
+        $card = StaffIdCardService::find($data['code']);
+        if (! $card || ! $card->staff) {
+            return response()->json(['found' => false, 'message' => 'No card of this school matches that code.'], 404);
+        }
+        $result = $staffCards->scan($card);
+        $result['found'] = true;
+        $result['marked'] = null;
+        if (! empty($data['mark'])) {
+            if (! $request->user()->can('attendance.mark')) {
+                return response()->json(['found' => true, 'message' => 'You cannot mark attendance.'] + $result, 403);
+            }
+            if ($card->state() !== 'valid' || $card->staff->status !== 'active') {
+                $result['marked'] = 'refused';
+            } else {
+                $result['marked'] = $staffCards->markAttendance($card->staff, $data['mark']);
                 $result['attendance'] = $result['attendance'] ?? $data['mark'];
             }
         }

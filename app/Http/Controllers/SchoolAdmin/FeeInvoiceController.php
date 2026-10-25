@@ -9,9 +9,11 @@ use App\Models\InvoiceInstalment;
 use App\Models\LedgerEntry;
 use App\Models\PaymentPlan;
 use App\Models\SchoolClass;
+use App\Models\Student;
 use App\Models\Term;
 use App\Services\FeeLedgerService;
 use App\Services\InstalmentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -77,8 +79,31 @@ class FeeInvoiceController extends Controller
                 ]),
             'plans' => $this->plans(),
             'filters' => $request->only('status', 'class_id', 'term_id', 'search'),
-            'can' => ['issue' => $request->user()->can('fees.structure')],
+            'can' => ['issue' => $request->user()->can('fees.structure'), 'collect' => $request->user()->can('fees.collect')],
         ]);
+    }
+
+    /** "Take a payment" box: students matching a name or admission number, each with what they still owe */
+    public function find(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q'));
+        if (mb_strlen($q) < 2) {
+            return response()->json(['data' => []]);
+        }
+
+        $students = Student::with(['schoolClass:id,name', 'invoices' => fn ($i) => $i
+            ->whereIn('status', ['unpaid', 'partial'])->with('feeStructure.feeCategory:id,name')->orderBy('id')])
+            ->whereHas('invoices', fn ($i) => $i->whereIn('status', ['unpaid', 'partial']))
+            ->where(fn ($w) => $w->where('first_name', 'like', "%{$q}%")->orWhere('last_name', 'like', "%{$q}%")->orWhere('admission_no', 'like', "%{$q}%"))
+            ->orderBy('first_name')->limit(10)->get();
+
+        return response()->json(['data' => $students->map(fn (Student $s) => [
+            'id' => $s->id, 'name' => $s->full_name, 'admission_no' => $s->admission_no, 'class' => $s->schoolClass?->name,
+            'invoices' => $s->invoices->map(fn (Invoice $i) => [
+                'id' => $i->id, 'invoice_no' => $i->invoice_no, 'fee' => $i->feeStructure?->feeCategory?->name ?? 'Fee',
+                'period' => $i->period, 'balance' => (float) $i->balance,
+            ])->values(),
+        ])->values()]);
     }
 
     public function show(Request $request, Invoice $invoice): Response
