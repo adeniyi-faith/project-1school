@@ -60,7 +60,7 @@ export const navGroups: NavGroup[] = [
     {
         title: 'Results',
         items: [
-            { label: 'Examinations',href: '/school/exams',    icon: BookOpen,       roles: ['super-admin','school-admin','principal','teacher','accountant'] },
+            { label: 'Tests & Exams',href: '/school/exams',    icon: BookOpen,       roles: ['super-admin','school-admin','principal','teacher','accountant'] },
             { label: 'Term Results', href: '/school/results',             icon: ClipboardCheck, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Print Report Cards', href: '/school/results/print', icon: Printer, roles: ['super-admin','school-admin','principal','teacher'] },
             { label: 'Comment Bank', href: '/school/results/comment-bank', icon: MessageSquareQuote, roles: ['super-admin','school-admin','principal','teacher'] },
