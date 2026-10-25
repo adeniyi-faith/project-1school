@@ -24,9 +24,9 @@ export const navGroups: NavGroup[] = [
     {
         title: 'System',
         items: [
-            { label: 'Dashboard',   href: '/school/reports/dashboard',  icon: LayoutDashboard, roles: ['school-admin','principal','teacher','accountant','librarian'] },
+            { label: 'Dashboard',   href: '/school/reports/dashboard',  icon: LayoutDashboard, roles: ['school-admin','principal','teacher','accountant'] },
             { label: 'My Classes',  href: '/school/my-classes',         icon: GraduationCap,   roles: ['teacher'] },
-            { label: 'Home',        href: '/school/home',               icon: LayoutDashboard, roles: ['receptionist','driver','warden','store-manager'] },
+            { label: 'Home',        href: '/school/home',               icon: LayoutDashboard, roles: ['receptionist','driver','warden','store-manager','librarian'] },
             { label: 'Dashboard',   href: '/super-admin/dashboard',     icon: LayoutDashboard, roles: ['super-admin'], exact: true },
             { label: 'My Dashboard',href: '/school/student/dashboard',  icon: LayoutDashboard, roles: ['student'] },
             { label: 'My Dashboard',href: '/school/parent/dashboard',   icon: LayoutDashboard, roles: ['parent'] },
@@ -270,7 +270,7 @@ export const bottomTabs: Record<string, BottomTab[]> = {
         { label: 'Reports',    href: '/school/reports/finance',   icon: BarChart3 },
     ],
     librarian: [
-        { label: 'Home',       href: '/school/reports/dashboard', icon: LayoutDashboard },
+        { label: 'Home',       href: '/school/home',              icon: LayoutDashboard },
         { label: 'Library',    href: '/school/library/books',     icon: Library },
         { label: 'Messages',   href: '/school/communication/messages', icon: MessageSquare },
         { label: 'Alerts',     href: '/school/communication/notifications', icon: Bell },
