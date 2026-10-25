@@ -9,7 +9,7 @@ class SchoolRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasRole('super-admin');
+        return \App\Support\PlatformAccess::can($this->user(), 'platform.schools.manage');
     }
 
     public function rules(): array

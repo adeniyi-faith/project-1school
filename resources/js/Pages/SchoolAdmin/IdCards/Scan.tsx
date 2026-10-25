@@ -9,7 +9,7 @@ import { Camera, CameraOff, Loader2, ScanLine } from 'lucide-react';
 
 type CardState = 'valid' | 'expired' | 'replaced' | 'revoked';
 interface ScanResult {
-    found: boolean; message?: string;
+    found: boolean; message?: string; kind?: 'staff';
     card?: { card_no: string; state: CardState; expires_on: string | null; note: string | null };
     student?: {
         id: number; name: string; admission_no: string; status: string; class: string;
@@ -217,12 +217,13 @@ function ResultCard({ result, busy, mode, showFees }: { result: ScanResult | nul
                     {s.photo_url ? <img src={s.photo_url} alt={`Photo of ${s.name}`} className="size-full object-cover" /> : <div className="flex size-full items-center justify-center text-2xl font-bold text-slate-400">{s.name[0]}</div>}
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">
-                    <Link href={`/school/students/${s.id}`} className="block text-lg font-semibold hover:underline">{s.name}</Link>
+                    <Link href={result.kind === 'staff' ? `/school/staff/${s.id}` : `/school/students/${s.id}`} className="block text-lg font-semibold hover:underline">{s.name}</Link>
                     <p className="text-sm text-slate-500">{s.admission_no}{s.class ? ` · ${s.class}` : ''}</p>
                     {s.house && <p className="flex items-center gap-1.5 text-sm"><span className="size-2.5 rounded-full" style={{ background: s.house.colour }} /> {s.house.name}</p>}
                     <div className="flex flex-wrap gap-1.5 pt-1">
                         <Pill tone={state.tone}>{state.label}</Pill>
-                        {s.status !== 'active' && <Pill tone="bad">Student is {s.status}</Pill>}
+                        {result.kind === 'staff' && <Pill tone="info">Staff</Pill>}
+                        {s.status !== 'active' && <Pill tone="bad">{result.kind === 'staff' ? 'Staff member' : 'Student'} is {s.status}</Pill>}
                     </div>
                 </div>
             </div>

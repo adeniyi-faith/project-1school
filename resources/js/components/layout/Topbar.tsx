@@ -32,14 +32,14 @@ const iconButton =
 
 /** The top bar no longer repeats the page name: every page already shows its own heading. */
 export default function Topbar(_props: TopbarProps) {
-    const { auth } = usePage<PageProps>().props;
+    const { auth, platform, acting_school } = usePage<PageProps>().props;
     const { theme, setTheme } = useAuthStore();
     const { sidebarCollapsed, toggleCollapsed } = useUIStore();
 
     const user = auth.user;
     const role = user?.role ?? '';
-    const roleLabel = role.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    const notifyHref = NOTIFY_HREF[role] ?? (role === 'super-admin' ? null : '/school/communication/notifications');
+    const roleLabel = acting_school?.as ?? platform?.role ?? role.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    const notifyHref = NOTIFY_HREF[role] ?? (role === 'super-admin' || role === 'platform-staff' ? null : '/school/communication/notifications');
 
     useEffect(() => {
         const root = document.documentElement;

@@ -46,6 +46,8 @@ export default function LessonNote({ note, values, classes, subjects, terms, for
     const pageErrors = usePage().props.errors as Record<string, string>;
     const d = form.data;
     const [instructions, setInstructions] = useState('');
+    const [style, setStyle] = useState(ai.default_style ?? '');
+    const styleItems = (ai.styles ?? []).map(x => ({ value: x.key, label: x.label }));
     const [drafting, setDrafting] = useState(false);
     const [aiNote, setAiNote] = useState<{ tone: 'good' | 'bad'; text: string } | null>(null);
     const [upload, setUpload] = useState<File | null>(null);
@@ -99,7 +101,7 @@ export default function LessonNote({ note, values, classes, subjects, terms, for
         try {
             const { data } = await axios.post<{ sections: Record<string, string> }>('/school/lesson-notes/ai', {
                 class_id: d.class_id, subject_id: d.subject_id, term_id: d.term_id, scheme_of_work_id: d.scheme_of_work_id,
-                lesson_note_format_id: format?.id, week: d.week, topic: d.title, duration_minutes: d.duration_minutes, instructions,
+                lesson_note_format_id: format?.id, week: d.week, topic: d.title, duration_minutes: d.duration_minutes, instructions, style,
             });
             form.setData(data0 => ({ ...data0, sections: { ...data0.sections, ...data.sections }, ai_drafted: true }));
             setAiNote({ tone: 'good', text: 'The AI has written a draft. Read it carefully, change anything that does not suit your class, then save.' });
@@ -270,6 +272,16 @@ export default function LessonNote({ note, values, classes, subjects, terms, for
                             <p className="text-sm text-slate-500">{ai.reason}</p>
                         ) : (
                             <div className="space-y-3">
+                                {styleItems.length > 0 && (
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="ai-style">Style of note</Label>
+                                        <Select items={styleItems} value={style} onValueChange={v => v && setStyle(v)}>
+                                            <SelectTrigger id="ai-style" className="w-full"><SelectValue /></SelectTrigger>
+                                            <SelectContent>{styleItems.map(i => <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-slate-500">{ai.styles?.find(x => x.key === style)?.hint}</p>
+                                    </div>
+                                )}
                                 <Textarea rows={2} value={instructions} onChange={e => setInstructions(e.target.value)} maxLength={1500} aria-label="Anything the AI should know"
                                     placeholder="Anything it should know (optional). For example: the class is slow with fractions; use a market example; we have no projector." />
                                 <div className="flex flex-wrap items-center justify-end gap-3">

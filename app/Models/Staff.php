@@ -43,6 +43,12 @@ class Staff extends Model
         return $this->photo ? Storage::url($this->photo) : null;
     }
 
+    /** The staff member's ID cards, newest first */
+    public function idCards(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StaffIdCard::class)->latest('id');
+    }
+
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);

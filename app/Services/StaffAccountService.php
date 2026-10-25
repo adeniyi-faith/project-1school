@@ -40,7 +40,7 @@ class StaffAccountService
     /**
      * Make a login. With Supabase login the password lives there; otherwise it is kept scrambled here.
      */
-    public function createLogin(int $schoolId, string $name, string $email, ?string $phone, string $role, ?string $password = null, string $status = 'active'): User
+    public function createLogin(?int $schoolId, string $name, string $email, ?string $phone, string $role, ?string $password = null, string $status = 'active'): User
     {
         $password = $password ?: $this->password();
         $useSupabase = config('app.login_driver') === 'supabase';
