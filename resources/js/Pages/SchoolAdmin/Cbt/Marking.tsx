@@ -55,7 +55,7 @@ export default function CbtMarking({ test, questions, question, answers }: Props
     }
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'CBT' }, { label: 'Tests', href: '/school/cbt/tests' }, { label: test.title, href: url }, { label: 'Mark theory answers' }]}>
+        <AppLayout breadcrumbs={[{ label: 'Learning' }, { label: 'Computer Tests', href: '/school/cbt/tests' }, { label: test.title, href: url }, { label: 'Mark theory answers' }]}>
             <div className="mx-auto max-w-6xl space-y-6 pb-24 md:pb-0">
                 <Link href={url} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"><ArrowLeft className="size-4" /> Back to the test</Link>
                 <PageHeader title="Mark theory answers" description={`${test.title} · ${waiting ? `${waiting} answer${waiting === 1 ? '' : 's'} still to mark` : 'Everything is marked'}`} />
