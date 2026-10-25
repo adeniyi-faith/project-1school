@@ -19,7 +19,7 @@ class PlatformAuditController extends Controller
 {
     public const ACTIONS = [
         'login' => 'Signed in', 'logout' => 'Signed out', 'enter_school' => 'Entered a school', 'leave_school' => 'Left a school',
-        'changed' => 'Changed something', 'exported' => 'Downloaded the log', 'viewed' => 'Looked inside a school', 'refused' => 'Was refused', 'approval_requested' => 'Asked for approval', 'security' => 'Security change', 'login_failed' => 'Failed sign-in step',
+        'changed' => 'Changed something', 'exported' => 'Downloaded the log', 'viewed' => 'Looked inside a school', 'refused' => 'Was refused', 'approval_requested' => 'Asked for approval', 'security' => 'Security change', 'impersonate_start' => 'Signed in as someone', 'impersonate_stop' => 'Stopped being someone', 'login_failed' => 'Failed sign-in step',
     ];
 
     /** The most lines one download holds */

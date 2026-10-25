@@ -49,6 +49,7 @@ class PlatformAudit
         'super-admin.staff.activate'         => 'Switched on a platform staff member',
         'super-admin.staff.reset-password'   => 'Reset a platform staff password',
         'super-admin.staff.destroy'          => 'Removed a platform staff member',
+        'super-admin.impersonate.start'      => 'Tried to sign in as a school login',
         'super-admin.security.networks'      => 'Changed the allowed networks for staff',
         'super-admin.security.reset-two-factor' => 'Reset a staff member\'s authenticator app',
         'super-admin.security.sign-out'      => 'Signed a staff member out everywhere',

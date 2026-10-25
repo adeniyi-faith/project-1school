@@ -77,6 +77,10 @@ class HandleInertiaRequests extends Middleware
                 ? \App\Models\School::withoutGlobalScopes()->whereKey($id)->first(['id', 'name', 'logo'])?->only(['id', 'name', 'logo_url'])
                 : null,
             // Set while the platform owner is working inside one school
+            // Set while a platform person is signed in as a school login ("Log in as this user")
+            'impersonating' => fn () => ($i = \App\Support\Impersonation::current()) && $request->user()
+                ? ['as' => $request->user()->name, 'by' => \App\Models\User::whereKey($i['by'])->value('name'), 'until' => date('c', $i['until']), 'read_only' => (bool) $i['read_only']]
+                : null,
             'acting_school' => fn () => ($id = \App\Support\ActingSchool::id())
                 ? [
                     'id' => $id,
