@@ -135,4 +135,22 @@ class AiStylesTest extends SecurityTestCase
             ->missing('ai.images.model')
             ->missing('ai.images.styles.0.rule'));
     }
+
+    public function test_a_school_admin_sets_the_usual_style_and_it_is_used_when_the_teacher_picks_none(): void
+    {
+        $admin = $this->makeUser($this->school, 'school-admin');
+        $this->actingAs($admin)->get('/school/settings/ai')->assertOk()->assertInertia(fn ($p) => $p
+            ->has('taskStyles', 3)->where('taskStyles.0.current', 'standard')->missing('taskStyles.0.styles.0.rule'));
+
+        $this->post('/school/settings/ai', ['on' => true, 'tools_off' => [], 'default_styles' => ['lesson_note' => 'short', 'questions' => 'made_up', 'nonsense' => 'x']])
+            ->assertSessionHasNoErrors();
+        $this->assertSame(['lesson_note' => 'short'], AiStyles::schoolDefaults($this->school->id));
+        $this->assertSame('short', AiStyles::defaultKey('lesson_note', $this->school->id));
+        $this->assertSame('exam', AiStyles::defaultKey('questions', $this->school->id));
+
+        // No style sent: the school's usual one (short, so the cheap model) is used
+        $this->draft();
+        Http::assertSent(fn (HttpRequest $r) => str_contains($r->url(), 'gemini-3.5-flash-lite') && str_contains($r['systemInstruction']['parts'][0]['text'], 'Keep every heading brief'));
+        $this->actingAs($this->teacher)->get('/school/lesson-notes/new')->assertInertia(fn ($p) => $p->where('ai.default_style', 'short'));
+    }
 }

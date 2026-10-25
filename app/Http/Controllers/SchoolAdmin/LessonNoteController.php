@@ -523,7 +523,7 @@ class LessonNoteController extends Controller
             'shown' => $this->ai->schoolState($sid)['platform_ready'],
             'reason' => $this->ai->unavailable($sid, 'lesson_notes'),
             'styles' => AiStyles::choices('lesson_note'),
-            'default_style' => AiStyles::defaultKey('lesson_note'),
+            'default_style' => AiStyles::defaultKey('lesson_note', $sid),
         ];
     }
 

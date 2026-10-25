@@ -105,10 +105,10 @@ class CbtBankController extends Controller
                     'reason' => $ai->imageUnavailable($bank->school_id),
                     'cost' => $ai->imageCost(),
                     'styles' => AiStyles::choices('image'),
-                    'default_style' => AiStyles::defaultKey('image'),
+                    'default_style' => AiStyles::defaultKey('image', $bank->school_id),
                 ],
                 'styles' => AiStyles::choices('questions'),
-                'default_style' => AiStyles::defaultKey('questions'),
+                'default_style' => AiStyles::defaultKey('questions', $bank->school_id),
                 // Topics from the subject's schemes of work, offered when asking the AI
                 'topics' => $bank->subject_id
                     ? SchemeOfWork::where('school_id', $bank->school_id)->where('subject_id', $bank->subject_id)->get(['weeks'])

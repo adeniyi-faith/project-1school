@@ -100,7 +100,7 @@ class QuestionWriterService
             .'answer that a pupil at this level can reach from what they have been taught. Do not repeat a question or ask the same fact twice. '
             .'Write plain text only: no markdown symbols such as ** or #, and write powers and fractions plainly, for example x^2 and 3/4.';
 
-        $style = AiStyles::resolve('questions', $ask['style'] ?? null);
+        $style = AiStyles::resolve('questions', $ask['style'] ?? null, $bank->school_id);
         if ($style['rule'] !== '') {
             $system .= ' '.$style['rule'];
         }
