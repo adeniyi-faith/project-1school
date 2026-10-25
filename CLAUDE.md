@@ -38,7 +38,7 @@ shared files; Phase 1 (safety fixes) is finished. Phase 2 (terms, score/grade se
 | Tests | PHPUnit 12 (`php artisan test`). `.github/workflows/tests.yml` runs every test (PHP 8.4, SQLite, after building the front end) on each pull request, and `deploy.yml` runs it first and deploys only if it passes. There are no frontend unit tests, but `tests/e2e` holds browser checks (see below) |
 
 **Not in this project (despite older docs):** Laravel 11, `app/Modules/*` folders, Redis,
-Horizon, Sanctum, a full `/api/v1` REST layer (only the small read-only `/api/school` described under Developer kit), Stripe, 2FA, PestPHP,
+Horizon, Sanctum, a full `/api/v1` REST layer (only the small read-only `/api/school` described under Developer kit), Stripe, PestPHP,
 Vitest, Playwright, a mobile/PWA app, and a real SMS provider.
 
 ---
