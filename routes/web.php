@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\DemoController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
+use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\SchoolAdmin\AcademicSetupController;
 use App\Http\Controllers\SchoolAdmin\AttendanceController;
 use App\Http\Controllers\SchoolAdmin\ExamController;
@@ -111,6 +113,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'store']);
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:5,10');
+    Route::get('/two-factor-challenge', [TwoFactorChallengeController::class, 'create'])->name('two-factor.login');
+    Route::post('/two-factor-challenge', [TwoFactorChallengeController::class, 'store'])->middleware('throttle:20,1');
 });
 
 // The demo: pick an account type, then look around as that person. Open to visitors and to
@@ -131,6 +135,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile',                   [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/password/change',           [ProfileController::class, 'changePasswordPage'])->name('password.change');
     Route::put('/profile/password',          [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::get('/security',                  [TwoFactorController::class, 'show'])->name('security');
+    Route::post('/security/start',           [TwoFactorController::class, 'start'])->name('security.start');
+    Route::post('/security/confirm',         [TwoFactorController::class, 'confirm'])->middleware('throttle:10,1')->name('security.confirm');
+    Route::post('/security/recovery-codes',  [TwoFactorController::class, 'regenerate'])->middleware('throttle:10,1')->name('security.recovery');
+    Route::delete('/security',               [TwoFactorController::class, 'disable'])->middleware('throttle:10,1')->name('security.disable');
 
     Route::get('/dashboard', function () {
         $user = auth()->user();
@@ -881,6 +890,7 @@ Route::middleware('auth')->group(function () {
             Route::patch('users/{user}/suspend',         [UserManagementController::class, 'suspend'])->name('users.suspend');
             Route::patch('users/{user}/activate',        [UserManagementController::class, 'activate'])->name('users.activate');
             Route::patch('users/{user}/reset-password',  [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
+            Route::patch('users/{user}/two-factor/disable', [UserManagementController::class, 'disableTwoFactor'])->name('users.two-factor.disable');
         });
 });
 

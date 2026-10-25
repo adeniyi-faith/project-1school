@@ -35,7 +35,7 @@ class UserManagementController extends Controller
 
         return Inertia::render('SuperAdmin/Users/Index', [
             'users' => [
-                'data' => $users->items(),
+                'data' => collect($users->items())->map(fn (User $u) => $u->toArray() + ['has_two_factor' => $u->hasTwoFactor()])->all(),
                 'meta' => [
                     'total'        => $users->total(),
                     'per_page'     => $users->perPage(),
@@ -136,6 +136,15 @@ class UserManagementController extends Controller
     {
         $user->update(['status' => 'active']);
         return back()->with('success', 'User activated.');
+    }
+
+    /** For someone who lost their phone and their recovery codes: they can sign in with the password alone again, and set it up afresh */
+    public function disableTwoFactor(User $user): RedirectResponse
+    {
+        \App\Http\Controllers\TwoFactorController::switchOff($user);
+        activity()->causedBy(auth()->user())->performedOn($user)->log('Two-step sign-in turned off by the platform team');
+
+        return back()->with('success', 'Two-step sign-in turned off for this person.');
     }
 
     public function resetPassword(Request $request, User $user): RedirectResponse
