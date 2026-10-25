@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { cn } from '@/lib/utils';
 import { EmptyState, PageHeader, Panel, PersonAvatar, Pill } from '@/components/app/kit';
 import { naira } from '@/lib/format';
+import { Link } from '@inertiajs/react';
 import { Bell, Users } from 'lucide-react';
 import ExpandableText from '@/components/ExpandableText';
 
