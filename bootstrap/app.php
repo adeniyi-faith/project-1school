@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'platform'   => \App\Http\Middleware\EnsurePlatformAccess::class,
+            'risky'      => \App\Http\Middleware\ConfirmRiskyAction::class,
             'school.token' => \App\Http\Middleware\AuthenticateSchoolToken::class,
         ]);
     })

@@ -52,10 +52,12 @@ class AuditPlatformActions
         $details = array_filter([
             'fields' => PlatformAudit::fieldNames($request),
             'changes' => $changes,
+            'reason' => $request->attributes->get('audit_reason'),
         ]);
 
         if (! $request->isMethodSafe()) {
             $action = match (true) {
+                $request->attributes->has('audit_action') => (string) $request->attributes->get('audit_action'),
                 $route === 'super-admin.schools.enter' => 'enter_school',
                 $route === 'super-admin.schools.leave' => 'leave_school',
                 $status === 403 || $request->attributes->get('audit_refused') => 'refused',

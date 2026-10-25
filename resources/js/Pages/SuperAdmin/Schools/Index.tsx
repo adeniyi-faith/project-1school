@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCan } from '@/lib/can';
+import RiskyConfirm from '@/components/platform/RiskyConfirm';
 import type { PageProps, PaginatedResponse, School as SchoolType } from '@/Types';
 
 interface SchoolsPageProps extends PageProps {
@@ -39,6 +40,7 @@ export default function SchoolsIndex() {
     const { schools, filters, stats } = usePage<SchoolsPageProps>().props;
     const can = useCan();
     const [search, setSearch] = useState(filters.search ?? '');
+    const [delSchool, setDelSchool] = useState<SchoolType | null>(null);
 
     const applyFilters = (params: Record<string, string>) => {
         router.get('/super-admin/schools', { ...filters, ...params }, { preserveState: true, replace: true });
@@ -49,11 +51,7 @@ export default function SchoolsIndex() {
         applyFilters({ search });
     };
 
-    const confirmDelete = (school: SchoolType) => {
-        if (confirm(`Delete "${school.name}"? This cannot be undone.`)) {
-            router.delete(`/super-admin/schools/${school.id}`);
-        }
-    };
+    const confirmDelete = (school: SchoolType) => setDelSchool(school);
 
     return (
         <AppLayout breadcrumbs={[{ label: 'Super Admin' }, { label: 'Schools' }]}>
@@ -249,6 +247,8 @@ export default function SchoolsIndex() {
                     </div>
                 )}
             </div>
+            <RiskyConfirm open={!!delSchool} onClose={() => setDelSchool(null)} url={`/super-admin/schools/${delSchool?.id}`} title={`Delete ${delSchool?.name ?? 'this school'}?`}
+                description="Its people will no longer be able to sign in. This is hard to undo. Suspend the school instead if you may want it back." typeName={delSchool?.name} canNeedApproval />
         </AppLayout>
     );
 }

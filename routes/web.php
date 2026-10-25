@@ -819,7 +819,7 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     // Who may open which page here is decided in one place: App\Support\PlatformAccess::PAGES (owner passes; a page not listed there is owner only)
-    Route::middleware('platform')
+    Route::middleware(['platform', 'risky'])
         ->prefix('super-admin')
         ->name('super-admin.')
         ->group(function () {
@@ -905,6 +905,11 @@ Route::middleware('auth')->group(function () {
             // What the platform team did (who entered which school, what they changed, from where)
             Route::get('audit',                          [\App\Http\Controllers\SuperAdmin\PlatformAuditController::class, 'index'])->name('audit.index');
             Route::get('audit/export',                   [\App\Http\Controllers\SuperAdmin\PlatformAuditController::class, 'export'])->name('audit.export');
+
+            // Risky actions waiting for a second person's go-ahead (only used when second approval is switched on)
+            Route::get('approvals',                      [\App\Http\Controllers\SuperAdmin\PlatformApprovalController::class, 'index'])->name('approvals.index');
+            Route::post('approvals/{approval}/approve',  [\App\Http\Controllers\SuperAdmin\PlatformApprovalController::class, 'approve'])->name('approvals.approve');
+            Route::post('approvals/{approval}/deny',     [\App\Http\Controllers\SuperAdmin\PlatformApprovalController::class, 'deny'])->name('approvals.deny');
 
             // User Management
             Route::get('users',                          [UserManagementController::class, 'index'])->name('users.index');

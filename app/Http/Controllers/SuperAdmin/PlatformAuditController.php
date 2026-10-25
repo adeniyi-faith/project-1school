@@ -19,7 +19,7 @@ class PlatformAuditController extends Controller
 {
     public const ACTIONS = [
         'login' => 'Signed in', 'logout' => 'Signed out', 'enter_school' => 'Entered a school', 'leave_school' => 'Left a school',
-        'changed' => 'Changed something', 'exported' => 'Downloaded the log', 'viewed' => 'Looked inside a school', 'refused' => 'Was refused',
+        'changed' => 'Changed something', 'exported' => 'Downloaded the log', 'viewed' => 'Looked inside a school', 'refused' => 'Was refused', 'approval_requested' => 'Asked for approval',
     ];
 
     /** The most lines one download holds */

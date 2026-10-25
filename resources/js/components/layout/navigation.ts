@@ -237,6 +237,7 @@ export const navGroups: NavGroup[] = [
             { label: 'All Users',     href: '/super-admin/users',            icon: Users,    roles: ['super-admin'] },
             { label: 'Platform Staff', href: '/super-admin/staff',           icon: UserCog,  roles: ['super-admin'] },
             { label: 'Staff Activity', href: '/super-admin/audit',           icon: History,  roles: ['super-admin'] },
+            { label: 'Approvals',     href: '/super-admin/approvals',        icon: ShieldCheck, roles: ['super-admin'] },
         ],
     },
 ];

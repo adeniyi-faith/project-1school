@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import RiskyConfirm from '@/components/platform/RiskyConfirm';
 
 interface RoleInfo { key: string; label: string; about: string; permissions: string[] }
 interface PermissionInfo { key: string; group: string; label: string }
@@ -244,18 +245,8 @@ export default function StaffIndex({ staff, roles, permissions, schools }: Props
             </Dialog>
 
             {/* Remove */}
-            <Dialog open={removing !== null} onOpenChange={(o) => !o && setRemoving(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Remove {removing?.name} from the team?</DialogTitle>
-                        <DialogDescription>They lose all platform access and can no longer sign in. Their past actions stay in the records. You can add them again later.</DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setRemoving(null)}>Keep</Button>
-                        <Button className="bg-red-600 text-white hover:bg-red-700" onClick={() => removing && router.delete(`/super-admin/staff/${removing.id}`, { preserveScroll: true, onSuccess: () => setRemoving(null) })}><Trash2 className="mr-1.5 size-4" /> Remove</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <RiskyConfirm open={removing !== null} onClose={() => setRemoving(null)} url={`/super-admin/staff/${removing?.id}`} title={`Remove ${removing?.name ?? 'this person'} from the team?`}
+                description="They lose all platform access and can no longer sign in. Their past actions stay in the records. You can add them again later." typeName={removing?.name} actionLabel="Remove" canNeedApproval />
         </AppLayout>
     );
 }

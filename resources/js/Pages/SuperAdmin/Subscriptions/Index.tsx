@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { CreditCard, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Activity, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
+import RiskyConfirm from '@/components/platform/RiskyConfirm';
 
 interface School   { id: number; name: string; }
 interface Pkg      { id: number; name: string; price_monthly: string; price_yearly: string; }
@@ -71,11 +72,6 @@ export default function SubscriptionsIndex({ subscriptions, schools, packages, c
             form.post('/super-admin/subscriptions', { onSuccess: () => setShowModal(false) });
         }
     }
-    function confirmDelete() {
-        if (!delSub) return;
-        router.delete(`/super-admin/subscriptions/${delSub.id}`, { onSuccess: () => setDelSub(null) });
-    }
-
     return (
         <AppLayout title="Subscriptions">
             <div className="space-y-6">
@@ -275,16 +271,8 @@ export default function SubscriptionsIndex({ subscriptions, schools, packages, c
             </Dialog>
 
             {/* Delete Confirm */}
-            <Dialog open={!!delSub} onOpenChange={open => !open && setDelSub(null)}>
-                <DialogContent className="max-w-sm">
-                    <DialogHeader><DialogTitle>Remove Subscription</DialogTitle></DialogHeader>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Remove subscription for <strong>{delSub?.school.name}</strong>?</p>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setDelSub(null)}>Cancel</Button>
-                        <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDelete}>Remove</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <RiskyConfirm open={!!delSub} onClose={() => setDelSub(null)} url={`/super-admin/subscriptions/${delSub?.id}`} title="Remove this plan?"
+                description={<>The school <strong>{delSub?.school.name}</strong> will no longer have this plan.</>} actionLabel="Remove" />
         </AppLayout>
     );
 }

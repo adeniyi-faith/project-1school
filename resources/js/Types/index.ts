@@ -73,6 +73,8 @@ export interface PageProps {
     } | null;
     /** Set for members of the platform team (not the owner): their role name and whether they are limited to some schools */
     platform?: { role: string; scoped: boolean } | null;
+    /** Set for platform people: whether risky actions by staff wait for a second person's approval */
+    risky?: { approval: boolean } | null;
     /** Set while someone looks around the public demo, with the account type they chose */
     demo?: { label: string } | null;
     errors: Record<string, string>;

@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useCan } from '@/lib/can';
+import RiskyConfirm from '@/components/platform/RiskyConfirm';
 import SchoolOverviewPanels, { type Overview } from '@/components/school360/Overview';
 import type { PageProps, School, AcademicYear } from '@/Types';
 
@@ -70,11 +71,7 @@ export default function ShowSchool() {
         }, { onSuccess: () => setPlanOpen(false) });
     };
 
-    const confirmDelete = () => {
-        if (confirm(`Delete "${school.name}"? Its people will no longer be able to sign in.`)) {
-            router.delete(base);
-        }
-    };
+    const [deleteOpen, setDeleteOpen] = useState(false);
 
     return (
         <AppLayout breadcrumbs={[{ label: 'Schools', href: '/super-admin/schools' }, { label: school.name }]}>
@@ -281,8 +278,10 @@ export default function ShowSchool() {
                     <p className="text-sm font-medium text-red-700 dark:text-red-400">Delete this school</p>
                     <p className="text-xs text-slate-500">Removes it from the platform. Use Suspend instead if you may want it back.</p>
                 </div>
-                <Button size="sm" variant="outline" className="text-red-600" onClick={confirmDelete}><Trash2 className="w-4 h-4 mr-1.5" /> Delete</Button>
+                <Button size="sm" variant="outline" className="text-red-600" onClick={() => setDeleteOpen(true)}><Trash2 className="w-4 h-4 mr-1.5" /> Delete</Button>
             </div>}
+            <RiskyConfirm open={deleteOpen} onClose={() => setDeleteOpen(false)} url={base} title={`Delete ${school.name}?`}
+                description="Its people will no longer be able to sign in. This is hard to undo. Suspend the school instead if you may want it back." typeName={school.name} canNeedApproval />
 
             {/* Plan dialog */}
             <Dialog open={planOpen} onOpenChange={setPlanOpen}>
