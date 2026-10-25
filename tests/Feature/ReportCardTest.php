@@ -234,6 +234,27 @@ class ReportCardTest extends SecurityTestCase
         $this->actingAs($studentUser)->get("/school/results/{$sheet->id}/report-cards/term")->assertForbidden();
     }
 
+    public function test_parent_dashboard_shows_the_latest_published_term_result(): void
+    {
+        $sheet = $this->firstTerm();
+        $parentUser = User::factory()->create(['school_id' => $this->school->id, 'status' => 'active']);
+        $parentUser->assignRole('parent');
+        $guardian = Guardian::create(['school_id' => $this->school->id, 'user_id' => $parentUser->id, 'name' => 'Mrs Test', 'phone' => '08030000000']);
+        $this->ada->update(['guardian_id' => $guardian->id]);
+
+        // Not published yet: nothing to show
+        $this->actingAs($parentUser)->get('/school/parent/dashboard')->assertOk()
+            ->assertInertia(fn ($page) => $page->where('children.0.latest_report', null));
+
+        // Published: the dashboard shows it and links to its card
+        $sheet->forceFill(['status' => 'published'])->save();
+        $this->actingAs($parentUser)->get('/school/parent/dashboard')->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('children.0.latest_report.id', $sheet->id)
+                ->missing('children.0.marks'));
+
+    }
+
     public function test_the_full_year_card_for_families_only_counts_published_terms(): void
     {
         $this->firstTerm();
