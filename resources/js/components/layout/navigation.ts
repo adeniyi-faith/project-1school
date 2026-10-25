@@ -37,6 +37,7 @@ export const navGroups: NavGroup[] = [
         title: 'School Setup',
         folded: true,
         items: [
+            { label: 'Start a New Term', href: '/school/new-term', icon: CalendarRange, roles: ['super-admin','school-admin','principal'] },
             { label: 'Classes',     href: '/school/classes',  icon: GraduationCap,  roles: ['super-admin','school-admin','principal'] },
             { label: 'Arms',        href: '/school/sections', icon: Layers,         roles: ['super-admin','school-admin','principal'] },
             { label: 'Subjects',    href: '/school/subjects', icon: BookOpen,       roles: ['super-admin','school-admin','principal'] },
