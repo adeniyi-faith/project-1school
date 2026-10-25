@@ -124,6 +124,7 @@ class CommunicationController extends Controller
             'inbox'  => $inbox,
             'sent'   => $sent,
             'users'  => $users,
+            'to'     => $users->contains('id', $request->integer('to')) ? (string) $request->integer('to') : null,
         ]);
     }
 

@@ -41,7 +41,7 @@ export default function CbtBanks({ banks, subjects, canManage }: Props) {
     );
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'CBT' }, { label: 'Question banks' }]}>
+        <AppLayout breadcrumbs={[{ label: 'Learning' }, { label: 'Question banks' }]}>
             <div className="mx-auto max-w-5xl space-y-6 pb-24 md:pb-0">
                 <PageHeader title="Question banks" description="Keep questions for each subject here, sorted by topic and difficulty. Tests draw their questions from these banks, so every student can get a different paper." actions={actions} />
                 <div className="flex flex-wrap gap-2 md:hidden">{actions}</div>

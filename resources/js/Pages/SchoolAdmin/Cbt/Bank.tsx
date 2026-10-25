@@ -58,7 +58,7 @@ export default function CbtBank({ bank, questions, topics, filters, subjects, ca
     );
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'CBT' }, { label: 'Question banks', href: '/school/cbt/banks' }, { label: bank.name }]}>
+        <AppLayout breadcrumbs={[{ label: 'Learning' }, { label: 'Question banks', href: '/school/cbt/banks' }, { label: bank.name }]}>
             <div className="mx-auto max-w-5xl space-y-6 pb-24 md:pb-0">
                 <Link href="/school/cbt/banks" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"><ArrowLeft className="size-4" /> All question banks</Link>
                 <PageHeader title={bank.name} description={`${bank.total} question${bank.total === 1 ? '' : 's'}${bank.theory ? ` (${bank.theory} theory)` : ''}${bank.description ? ` · ${bank.description}` : ''}`} actions={actions || undefined} />
