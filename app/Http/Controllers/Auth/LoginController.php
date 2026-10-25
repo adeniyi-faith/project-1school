@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\SupabaseAuthService;
+use App\Support\PlatformAccess;
+use App\Support\PlatformAudit;
+use App\Support\PlatformSecurityRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Lockout;
@@ -117,13 +120,38 @@ class LoginController extends Controller
             ]);
         }
 
-        Auth::login($user, $request->boolean('remember'));
+        if (PlatformAccess::isPlatform($user)) {
+            // A platform person may be limited to certain networks (the owner never is)
+            if (! PlatformSecurityRules::ipAllowed($user, $request->ip())) {
+                PlatformAudit::record('refused', 'Sign-in turned back: not from an allowed network', ['user' => $user, 'school_id' => null, 'status' => 403], $request);
+
+                throw ValidationException::withMessages([
+                    'email' => 'This account can only sign in from the platform team\'s approved networks. Ask the owner if you think this is wrong.',
+                ]);
+            }
+
+            // Second step: wait for the code from their authenticator app before signing in
+            if (PlatformSecurityRules::isEnrolled($user)) {
+                $request->session()->regenerate();
+                $request->session()->put('two_factor', ['id' => $user->id, 'remember' => $request->boolean('remember'), 'at' => time()]);
+
+                return redirect()->route('two-factor');
+            }
+        }
+
+        return $this->complete($request, $user, $request->boolean('remember'));
+    }
+
+    /** Signs the person in and writes down that they did. Used after the password, or after the second step. */
+    public function complete(Request $request, User $user, bool $remember): RedirectResponse
+    {
+        Auth::login($user, $remember);
         $request->session()->regenerate();
 
         $user->update(['last_login_at' => now()]);
 
-        if (\App\Support\PlatformAccess::isPlatform($user)) {
-            \App\Support\PlatformAudit::record('login', 'Signed in', ['user' => $user, 'school_id' => null], $request);
+        if (PlatformAccess::isPlatform($user)) {
+            PlatformAudit::record('login', 'Signed in', ['user' => $user, 'school_id' => null], $request);
         }
 
         activity()

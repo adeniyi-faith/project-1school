@@ -14,4 +14,7 @@ return [
     // When on, platform staff (not the owner) cannot finish the worst risky actions alone: someone with the
     // approvals permission must approve first. Off by default.
     'second_approval' => (bool) env('PLATFORM_SECOND_APPROVAL', false),
+
+    // Platform people must set up an authenticator app (a second sign-in step) before they can use anything
+    'require_2fa' => (bool) env('PLATFORM_REQUIRE_2FA', true),
 ];

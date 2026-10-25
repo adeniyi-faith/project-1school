@@ -67,6 +67,8 @@ class PlatformStaffController extends Controller
 
         $user = $accounts->createLogin(null, $data['name'], $request->input('email'), $data['phone'] ?? null, $data['role'], $request->input('password') ?: null);
         $this->saveDetails($user, $data, $request);
+        // A password the owner chose or made up is only for the first sign-in
+        \App\Support\PlatformSecurityRules::forcePasswordChange($user);
 
         activity('platform')->causedBy($request->user())->performedOn($user)
             ->withProperties(['role' => $data['role'], 'extras' => $data['extras'] ?? [], 'scope' => $data['school_scope'], 'school_ids' => $data['school_ids'] ?? []])
@@ -116,6 +118,8 @@ class PlatformStaffController extends Controller
     {
         $this->guard($user);
         $password = $accounts->resetPassword($user, $request->validate(['password' => 'nullable|string|min:8|max:100'])['password'] ?? null);
+        \App\Support\PlatformSecurityRules::forcePasswordChange($user);
+        \App\Support\PlatformSecurityRules::signOutEverywhere($user);
         activity('platform')->causedBy($request->user())->performedOn($user)->log('Platform staff password reset');
 
         return back()->with('success', "New password made for {$user->name}.")
