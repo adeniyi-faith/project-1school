@@ -40,8 +40,8 @@ export default function FeePayments({ payments, classes, filters, stats }: Props
     }
 
     const statCards = [
-        { label: 'Total Collected', value: nairaCompact(stats.total_collected ?? 0), color: 'text-green-600', icon: Banknote },
-        { label: 'Outstanding', value: nairaCompact(Math.max(0, stats.total_outstanding ?? 0)), color: 'text-red-600', icon: TrendingDown },
+        { label: 'Collected (old records)', value: nairaCompact(stats.total_collected ?? 0), color: 'text-green-600', icon: Banknote },
+        { label: 'Owed (old records)', value: nairaCompact(Math.max(0, stats.total_outstanding ?? 0)), color: 'text-red-600', icon: TrendingDown },
         { label: 'Paid Receipts', value: stats.paid_count, color: 'text-indigo-600', icon: CheckCircle2 },
         { label: 'Pending', value: stats.pending_count, color: 'text-amber-600', icon: Clock },
     ];
@@ -62,6 +62,10 @@ export default function FeePayments({ payments, classes, filters, stats }: Props
                         </Button>
                     </Link>
                 </div>
+
+                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                    The totals on this page are from <strong>old records only</strong>, so they will not match your dashboard or reports. Those use invoices, which already include this old money.
+                </p>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

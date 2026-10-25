@@ -297,6 +297,23 @@ class FeeLedgerTest extends SecurityTestCase
             ->assertJsonPath('props.can.collect', true);
     }
 
+    public function test_old_payment_records_leave_the_menu_for_a_school_with_none_and_stay_for_one_with_some(): void
+    {
+        $accountant = $this->makeUser($this->school, 'accountant');
+        $paths = fn () => $this->actingAs($accountant)->get('/school/fees/invoices', ['X-Inertia' => 'true'])->json('props.auth.paths');
+
+        $this->assertNotContains('/school/fees/payments', $paths());
+        $this->assertContains('/school/fees/invoices', $paths());
+
+        $ade = $this->student('Ade');
+        \App\Models\FeePayment::create([
+            'school_id' => $this->school->id, 'student_id' => $ade->id, 'fee_structure_id' => $this->tuition->id, 'receipt_no' => 'OLD-1',
+            'amount_due' => 1000, 'amount_paid' => 1000, 'status' => 'paid', 'method' => 'cash',
+        ]);
+
+        $this->assertContains('/school/fees/payments', $paths());
+    }
+
     public function test_the_still_owing_list_gives_each_parent_phone_once_with_what_they_owe(): void
     {
         $guardian = \App\Models\Guardian::create(['school_id' => $this->school->id, 'name' => 'Mrs Bello', 'phone' => '08031234567']);

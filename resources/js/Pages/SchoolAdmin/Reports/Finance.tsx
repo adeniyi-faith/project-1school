@@ -82,6 +82,7 @@ export default function FinanceReport({ collected, outstanding, payroll, dailyCh
                                 <div>
                                     <p className="text-sm text-slate-500">Collected (Period)</p>
                                     <p className="text-2xl font-bold mt-1 text-green-600">₦{fmt(collected)}</p>
+                                    <p className="text-xs text-slate-400 mt-0.5">From invoices</p>
                                 </div>
                                 <div className="p-3 rounded-xl bg-green-500"><TrendingUp className="w-6 h-6 text-white" /></div>
                             </div>
@@ -93,6 +94,7 @@ export default function FinanceReport({ collected, outstanding, payroll, dailyCh
                                 <div>
                                     <p className="text-sm text-slate-500">Outstanding</p>
                                     <p className="text-2xl font-bold mt-1 text-orange-500">₦{fmt(outstanding)}</p>
+                                    <p className="text-xs text-slate-400 mt-0.5">From invoices, right now</p>
                                 </div>
                                 <div className="p-3 rounded-xl bg-orange-500"><AlertCircle className="w-6 h-6 text-white" /></div>
                             </div>

@@ -134,7 +134,7 @@ export default function Invoices({ invoices, stats, classes, terms, structures, 
                 <div className="flex flex-wrap gap-2 md:hidden">{headerActions}</div>
 
                 <StatStrip items={[
-                    { label: 'Still owed', value: naira(stats.outstanding), tone: stats.outstanding > 0 ? 'bad' : 'default' },
+                    { label: 'Still owed', value: naira(stats.outstanding), tone: stats.outstanding > 0 ? 'bad' : 'default', hint: 'All open invoices' },
                     { label: 'Open invoices', value: stats.open_count },
                     { label: 'Collected on invoices', value: naira(stats.collected), tone: 'good' },
                     { label: 'Overdue parts', value: naira(stats.overdue), tone: stats.overdue > 0 ? 'bad' : 'default', hint: stats.behind_count ? `${stats.behind_count} invoice${stats.behind_count === 1 ? '' : 's'} behind` : undefined },

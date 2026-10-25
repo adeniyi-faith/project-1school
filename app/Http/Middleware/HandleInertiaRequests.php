@@ -68,7 +68,7 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
                 // What this person may do: page buttons check `permissions`, the menu checks `paths`
                 'permissions' => fn () => $request->user() ? NavAccess::permissions($request->user()) : [],
-                'paths' => fn () => $request->user() ? NavAccess::paths($request->user()) : [],
+                'paths' => fn () => $request->user() ? $this->menuPaths($request->user()) : [],
                 // Numbers shown beside menu items that have something waiting (page address => count)
                 'badges' => fn () => $request->user() ? \App\Support\NavBadges::for($request->user()) : [],
             ],
@@ -106,5 +106,19 @@ class HandleInertiaRequests extends Middleware
                 return $path ? asset('storage/' . $path) : null;
             }),
         ];
+    }
+
+    /**
+     * Pages the person may open, for the menu. "Old Payment Records" is left out for a school with no old records,
+     * so it is not a confusing second place for payments. The page itself still opens if someone has its address.
+     */
+    private function menuPaths(\App\Models\User $user): array
+    {
+        $paths = NavAccess::paths($user);
+        if (in_array('/school/fees/payments', $paths, true) && ! \App\Models\FeePayment::query()->exists()) {
+            $paths = array_values(array_diff($paths, ['/school/fees/payments']));
+        }
+
+        return $paths;
     }
 }
