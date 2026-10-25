@@ -40,6 +40,7 @@ class ResultController extends Controller
         $term = $terms->firstWhere('id', (int) $request->term_id) ?? $terms->firstWhere('is_current', true) ?? $terms->first();
 
         $sheets = collect();
+        $mine = ScoreAccess::classIds($request->user());
         if ($term) {
             $sid = $term->school_id;
             // Make sure every class has a sheet for this term
@@ -59,6 +60,8 @@ class ResultController extends Controller
                 'students' => (int) ($students[$c->id] ?? 0),
                 'with_results' => $sheets[$c->id]->summaries_count,
                 'class_average' => $sheets[$c->id]->class_average,
+                // true for a teacher's own classes; everyone else sees every class as theirs
+                'mine' => $mine === null || in_array($c->id, $mine, true),
             ]);
         }
 
