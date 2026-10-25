@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\DemoController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\SchoolAdmin\AcademicSetupController;
 use App\Http\Controllers\SchoolAdmin\AttendanceController;
@@ -111,6 +112,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'store']);
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:5,10');
+    Route::get('/forgot-password', [PasswordResetController::class, 'forgot'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:5,10')->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'reset'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'update'])->middleware('throttle:10,10')->name('password.update');
 });
 
 // The demo: pick an account type, then look around as that person. Open to visitors and to
