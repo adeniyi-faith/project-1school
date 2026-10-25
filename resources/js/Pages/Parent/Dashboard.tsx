@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { cn } from '@/lib/utils';
 import { EmptyState, PageHeader, Panel, PersonAvatar, Pill } from '@/components/app/kit';
 import { naira } from '@/lib/format';
+import { Link } from '@inertiajs/react';
 import { Bell, Users } from 'lucide-react';
 import ExpandableText from '@/components/ExpandableText';
 
@@ -11,11 +12,11 @@ interface ChildFees {
     total_due: number; total_paid: number; balance: number;
     recent: { month: string; paid: number; balance: number; status: string }[];
 }
-interface Mark { exam: string | null; subject: string | null; marks: number | null; grade: string | null; absent: boolean; }
+interface LatestReport { id: number; term: string; average: number | null; position: number | null; class_size: number | null; }
 interface Child {
     id: number; full_name: string; admission_no: string;
     class: string | null; section: string | null; photo_url: string | null;
-    attendance: ChildAttendance; fees: ChildFees; marks: Mark[];
+    attendance: ChildAttendance; fees: ChildFees; latest_report: LatestReport | null;
 }
 interface Announcement { id: number; title: string; body: string; pinned: boolean; date: string | null; }
 
@@ -90,26 +91,25 @@ function ChildCard({ child }: { child: Child }) {
                     )}
                 </Section>
 
-                {child.marks.length > 0 && (
-                    <Section title="Recent results">
-                        <ul className="space-y-2.5">
-                            {child.marks.slice(0, 4).map((m, i) => (
-                                <li key={i} className="flex items-center justify-between gap-3 text-sm">
-                                    <div className="min-w-0">
-                                        <p className="truncate font-medium text-slate-800 dark:text-slate-200">{m.subject}</p>
-                                        <p className="truncate text-xs text-slate-500">{m.exam}</p>
-                                    </div>
-                                    {m.absent ? (
-                                        <Pill tone="bad">Absent</Pill>
-                                    ) : (
-                                        <div className="flex shrink-0 items-center gap-2">
-                                            <span className="tabular-nums text-slate-600 dark:text-slate-300">{m.marks ?? '—'}</span>
-                                            {m.grade && <span className="flex size-7 items-center justify-center rounded-md bg-indigo-50 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">{m.grade}</span>}
-                                        </div>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
+                {child.latest_report && (
+                    <Section title="Latest results">
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{child.latest_report.term}</p>
+                        <div className="mt-2 flex items-end justify-between gap-3">
+                            <div className="flex gap-6">
+                                <div>
+                                    <p className="text-xs text-slate-500">Average</p>
+                                    <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-white">{child.latest_report.average ?? '—'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-slate-500">Position</p>
+                                    <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-white">
+                                        {child.latest_report.position ?? '—'}{child.latest_report.class_size ? <span className="text-sm font-normal text-slate-500"> of {child.latest_report.class_size}</span> : null}
+                                    </p>
+                                </div>
+                            </div>
+                            <a href={`/school/parent/report-cards/${child.id}/${child.latest_report.id}`} className="shrink-0 text-sm font-medium text-indigo-700 hover:underline dark:text-indigo-300">Report card (PDF)</a>
+                        </div>
+                        <Link href="/school/parent/results" className="mt-2 inline-block text-xs text-slate-500 hover:underline">See all results</Link>
                     </Section>
                 )}
             </div>
