@@ -67,6 +67,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SchoolAdmin\OnlinePaymentController;
 use App\Http\Controllers\SchoolAdmin\PaymentPlanController;
 use App\Http\Controllers\SchoolAdmin\StaffHomeController;
+use App\Http\Controllers\SchoolAdmin\TodayCollectionsController;
 use App\Http\Controllers\SchoolAdmin\HouseController;
 use App\Http\Controllers\SchoolAdmin\ClubController;
 use App\Http\Controllers\SchoolAdmin\IdCardController;
@@ -575,6 +576,8 @@ Route::middleware('auth')->group(function () {
             Route::post('fees/scholarships/awards',          [ScholarshipController::class, 'award'])->middleware('permission:fees.waiver')->name('fees.scholarships.award');
             Route::post('fees/scholarships/awards/{award}/revoke', [ScholarshipController::class, 'revoke'])->middleware('permission:fees.waiver')->name('fees.scholarships.revoke');
 
+            Route::get('fees/collections-today',             [TodayCollectionsController::class, 'index'])->middleware('permission:fees.reports')->name('fees.collections-today');
+            Route::get('fees/collections-today/pdf',         [TodayCollectionsController::class, 'pdf'])->middleware('permission:fees.reports')->name('fees.collections-today.pdf');
             Route::get('fees/outstanding',                   [FeePaymentController::class, 'outstanding'])->middleware('permission:fees.reports')->name('fees.outstanding');
 
             // Communication
