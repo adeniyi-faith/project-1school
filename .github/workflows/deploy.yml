@@ -5,6 +5,14 @@ on:
     branches:
       - main
 
+# Only one deploy may touch the server at a time. Several merges in a row used
+# to start overlapping deploys, and the server killed some of them (exit 137).
+# A waiting deploy is replaced by a newer one, which is fine because every
+# deploy puts the server on the newest main anyway.
+concurrency:
+  group: deploy-cpanel
+  cancel-in-progress: false
+
 jobs:
   # Nothing is deployed unless every test passes
   tests:
