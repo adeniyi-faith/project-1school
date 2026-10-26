@@ -92,6 +92,8 @@ p{margin:0}
 .hero p{font-size:17px;line-height:1.75;color:rgba(255,255,255,.88);max-width:34ch;margin:26px auto 0}
 .hero-ctas{display:grid;gap:12px;margin:40px auto 0;max-width:400px}
 .hero-ctas .btn svg{flex:none}
+.hero h1 .acc{color:#FFD98A}
+.hero .btn-line{background:rgba(37,42,146,.55);border-color:rgba(255,255,255,.6)}
 .hero .alt{display:inline-block;margin-top:18px;font-size:15px;color:#fff;border-bottom:1px solid rgba(255,255,255,.45);padding-bottom:2px}
 
 /* ---------- White card ---------- */
@@ -102,12 +104,10 @@ p{margin:0}
 .types-list li{padding:13px 0;border-top:1px solid var(--line);font-family:var(--display);font-weight:600;font-size:16px}
 
 /* ---------- Statement ---------- */
-.statement{background:var(--ink);color:#fff;margin-top:72px;padding-block:72px 0;overflow:hidden}
+.statement{background:var(--ink);color:#fff;margin-top:72px;padding-block:72px;overflow:hidden}
 .statement h2{font-size:clamp(25px,6.4vw,40px);line-height:1.35;font-weight:600;max-width:26ch}
 .statement h2 span{color:rgba(255,255,255,.55)}
 .statement p.lead{color:#B6C0DC;font-size:17px;max-width:50ch;margin-top:22px}
-.stage{margin-top:48px}
-.screen{background:#F7F9FD;border-radius:16px 16px 0 0;padding:14px;color:var(--text);max-width:900px;margin:0 auto}
 .chrome{display:flex;gap:6px;align-items:center;margin-bottom:12px}
 .chrome i{width:9px;height:9px;border-radius:50%;background:#D5DBEA}
 .chrome span{margin-left:10px;font-family:var(--mono);font-size:11px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:6px;padding:3px 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}
@@ -188,17 +188,6 @@ p{margin:0}
 .ops li span{font-weight:400;color:var(--muted);font-size:14px;text-align:right}
 
 /* ---------- Real screenshots and playful touches ---------- */
-.shotframe{margin:0;background:#fff;border-radius:16px;padding:8px;box-shadow:0 0 0 1px rgba(51,70,224,.07),0 18px 44px -16px rgba(31,100,242,.32),0 6px 16px -10px rgba(12,23,56,.2)}
-.shotframe img{display:block;width:100%;height:auto;border-radius:9px;border:1px solid var(--line)}
-.card .shotframe+.shotframe{margin-top:-4px}
-.screen{background:none;padding:0}
-.screen .shotframe{border-radius:20px 20px 0 0;padding:12px 12px 0}
-.screen .shotframe img{border-bottom:0;border-radius:10px 10px 0 0}
-.phonerow{display:flex;justify-content:center;gap:10px;align-items:flex-end;padding:4px 0 0}
-.phoneframe{margin:0;flex:1;max-width:170px}
-.phoneframe:nth-child(2){transform:translateY(-14px)}
-.phoneframe .ph{display:block;background:#0E1A3A;border-radius:20px;padding:4px;box-shadow:0 18px 40px -14px rgba(12,23,56,.5)}
-.phoneframe .ph img{display:block;width:100%;height:auto;border-radius:16px}
 .scribble{font-family:"Caveat","Segoe Print",cursive;font-weight:700;font-size:clamp(28px,7vw,38px);line-height:1.1;color:var(--coral);transform:rotate(-2deg);transform-origin:left;margin-top:12px}
 .ul{position:relative;display:inline-block}
 .ul svg{position:absolute;left:0;bottom:-.28em;width:100%;height:.34em}
@@ -206,11 +195,6 @@ p{margin:0}
 .step-list li:nth-child(2) .n{border-color:var(--brass);color:var(--brass);transform:rotate(5deg)}
 .step-list li:nth-child(3) .n{border-color:var(--tide);color:var(--tide)}
 .reach-card .scribble{color:#FFD7A0;transform-origin:center;margin-top:10px}
-.shotframe.short img{aspect-ratio:2.1!important;object-fit:cover;object-position:62% 0!important}
-@media (max-width:899px){.shotframe img{aspect-ratio:1.12;object-fit:cover;object-position:62% 0}.screen .shotframe img{aspect-ratio:1.05}}
-@media (min-width:900px){.phoneframe{max-width:150px}.card .phonerow{gap:14px}}
-
-/* ---------- Roles ---------- */
 .roles{padding-block:56px 72px}
 .role-list{list-style:none;margin:28px 0 0;padding:0;display:grid}
 .role-list li{padding:20px 0;border-top:1px solid var(--line);display:grid;gap:4px}
@@ -271,7 +255,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
   .hero canvas{width:1150px;height:1150px;bottom:-720px}
   .hero .wrap{padding-top:calc(var(--hdr) + 110px);padding-bottom:240px}
   .hero p{max-width:46ch}
-  .hero-ctas{grid-template-columns:auto;justify-content:center}
+  .hero-ctas{grid-template-columns:auto auto;justify-content:center;max-width:none}
   .types{margin-top:-100px}
   .types-card{padding:32px 40px}
   .types-list{grid-template-columns:repeat(6,1fr);column-gap:0}
@@ -379,12 +363,13 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
 <section class="hero">
   <canvas id="globe" width="1000" height="1000" aria-hidden="true"></canvas>
   <div class="wrap">
-    <h1>The school management platform built for serious schools</h1>
+    <h1>The school management platform built for <span class="acc">serious schools</span></h1>
     <p>Adino School Systems brings fees, results, attendance, admissions and AI-assisted teaching into one secure system for proprietors, staff and parents.</p>
     <div class="hero-ctas">
       <a href="{{ route('register') }}" class="btn btn-white">Register your school
         <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 10h7M10.5 7l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
       </a>
+      <a href="#tour" class="btn btn-line">See it in action</a>
     </div>
     @if (config('app.demo_enabled'))
     <a href="{{ route('demo') }}" class="alt">or try the demo, no sign-up needed</a>
@@ -413,11 +398,7 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
       <h2>A school runs on hundreds of small workflows. <span>Adino School Systems keeps every one of them moving, from the first admission form to the last report card of the session.</span></h2>
       <p class="lead">One record for every student. One ledger for every naira. One place for every parent to check in. Each person sees only what their role allows, and every change is logged.</p>
     </div>
-    <div class="stage">
-      <div class="screen">
-        <figure class="shotframe"><img src="{{ asset('images/landing/fees.jpg') }}" width="1500" height="927" alt="The Adino School Systems invoices screen with money still owed, collected and overdue" loading="lazy"></figure>
-      </div>
-    </div>
+    @include('partials.landing-tour')
   </div>
 </section>
 
@@ -434,7 +415,6 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
         <div class="num">01</div>
         <h3>Online Fee Payments</h3>
         <p class="desc">Parents pay by <b>card, bank transfer or USSD</b>. Each payment is matched to the right invoice automatically, so your bursar no longer chases receipts.</p>
-        <figure class="shotframe short"><img src="{{ asset('images/landing/payment-plans.jpg') }}" width="1500" height="927" alt="Payment plans that split a term fee into dated parts" loading="lazy"></figure>
         <ul class="feat">
           <li>Bulk invoices by class, term or session</li>
           <li>Sibling discounts, scholarships and instalments</li>
@@ -447,8 +427,6 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
         <div class="num">02</div>
         <h3>AI Lesson Notes &amp; Exam Questions</h3>
         <p class="desc">A teacher picks the subject, class and topic. Adino School Systems drafts a <b>full lesson note</b> and a <b>set of exam questions</b> that follow the scheme of work. The teacher reviews and approves before anything is used.</p>
-        <figure class="shotframe"><img src="{{ asset('images/landing/questions.jpg') }}" width="1500" height="927" alt="A question bank with objective and theory questions and a marking guide" loading="lazy"></figure>
-        <figure class="shotframe"><img src="{{ asset('images/landing/lesson-notes.jpg') }}" width="1500" height="927" alt="Lesson notes waiting for approval, approved or sent back" loading="lazy"></figure>
         <ul class="feat">
           <li>Lesson notes in your school's own format</li>
           <li>Objective and theory questions with marking guides</li>
@@ -461,7 +439,6 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
         <div class="num">03</div>
         <h3>Portals for Parents, Students &amp; Staff</h3>
         <p class="desc">Everyone signs in to their own view. <b>Parents</b> see results, fees and attendance. <b>Students</b> see homework and timetables. <b>Staff</b> see their classes, leave and payslips.</p>
-        <div class="phonerow"><figure class="phoneframe"><span class="ph"><img src="{{ asset('images/landing/parent-home.jpg') }}" width="585" height="1170" alt="A parent home screen on a phone" loading="lazy"></span></figure><figure class="phoneframe"><span class="ph"><img src="{{ asset('images/landing/parent-results.jpg') }}" width="585" height="1170" alt="A child term results on a phone" loading="lazy"></span></figure><figure class="phoneframe"><span class="ph"><img src="{{ asset('images/landing/parent-fees.jpg') }}" width="585" height="1170" alt="A parent fee status on a phone" loading="lazy"></span></figure></div>
         <ul class="feat">
           <li>Works in any phone browser and uses little data</li>
           <li>One parent login for all their children</li>
@@ -474,7 +451,6 @@ footer{background:var(--ink);color:#C2CBE4;padding-block:64px calc(96px + env(sa
         <div class="num">04</div>
         <h3>School Operations</h3>
         <p class="desc">The daily running of the school in one place. Scores entered by teachers become <b>report cards</b> automatically, and new admissions go straight into class lists.</p>
-        <figure class="shotframe"><img src="{{ asset('images/landing/admissions.jpg') }}" width="1500" height="927" alt="Admission inquiries moving from new to exam booked" loading="lazy"></figure>
         <ul class="ops">
           <li>Results &amp; report cards <span>CA, exams, positions</span></li>
           <li>Attendance <span>Daily registers</span></li>
