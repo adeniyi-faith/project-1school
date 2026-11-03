@@ -14,10 +14,15 @@ use App\Models\SubjectScore;
 use App\Models\Term;
 use App\Models\TermResult;
 use App\Models\TermResultSummary;
+use App\Services\ScoreImportService;
 use App\Services\TermResultService;
+use App\Support\SimpleXlsx;
+use App\Support\SimpleXlsxReader;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -155,8 +160,72 @@ class ResultController extends Controller
             throw ValidationException::withMessages($errors);
         }
 
-        DB::transaction(function () use ($data, $sheet, $subject) {
-            foreach ($data['scores'] as $row) {
+        $this->storeScores($sheet, $subject, $data['scores']);
+
+        return back()->with('success', "{$subject->name} scores saved and results updated.");
+    }
+
+    /** An Excel sheet for one subject: a row per student, a column per score part, with saved scores filled in. */
+    public function scoresTemplate(Request $request, ResultSheet $sheet): HttpResponse
+    {
+        $subject = Subject::offeredIn($sheet->class_id)->findOrFail((int) $request->query('subject_id'));
+        $components = AssessmentScheme::forSubject($subject, $sheet->class_id)?->components ?? collect();
+        $students = $this->students($sheet, $subject);
+        $stored = SubjectScore::where('result_sheet_id', $sheet->id)->where('subject_id', $subject->id)->get()
+            ->groupBy('student_id')->map(fn ($rows) => $rows->pluck('score', 'assessment_component_id'))->all();
+
+        $bytes = (new SimpleXlsx())->sheet('Scores', ScoreImportService::template($students, $components, $stored), [
+            'bold_rows' => [0], 'freeze_rows' => 1, 'freeze_cols' => 2, 'widths' => [0 => 16, 1 => 30],
+        ])->bytes();
+
+        $name = str("{$sheet->schoolClass?->name} {$subject->name} scores")->slug();
+
+        return response($bytes, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => "attachment; filename=\"{$name}.xlsx\"",
+        ]);
+    }
+
+    /**
+     * Many scores at once from the filled-in Excel sheet. Students are matched by admission number.
+     * Empty cells leave stored scores alone. One problem anywhere and nothing is saved.
+     */
+    public function importScores(Request $request, ResultSheet $sheet): RedirectResponse
+    {
+        $this->ensureEditable($sheet);
+
+        $request->validate([
+            'subject_id' => 'required|integer',
+            'file' => 'required|file|mimes:xlsx|max:5120',
+        ], ['file.required' => 'Choose the filled-in Excel file.', 'file.mimes' => 'Use the Excel template (.xlsx).']);
+
+        $subject = Subject::offeredIn($sheet->class_id)->findOrFail((int) $request->subject_id);
+        $components = AssessmentScheme::forSubject($subject, $sheet->class_id)?->components ?? collect();
+
+        try {
+            $rows = SimpleXlsxReader::rows($request->file('file')->getRealPath());
+        } catch (Throwable $e) {
+            return back()->withErrors(['file' => $e->getMessage()]);
+        }
+
+        [$lines, $problems] = ScoreImportService::parse($rows, $this->students($sheet, $subject), $components);
+        if ($problems) {
+            return back()->withErrors(CbtBankController::numbered('import', array_slice($problems, 0, 20)))
+                ->with('error', 'Nothing was saved. Fix the problems listed and upload again.');
+        }
+
+        $this->storeScores($sheet, $subject, $lines);
+
+        $students = count(array_unique(array_column($lines, 'student_id')));
+
+        return back()->with('success', count($lines)." scores for {$students} student(s) saved in {$subject->name}, and results updated.");
+    }
+
+    /** Write score lines (a null score removes the stored one) and work the class's results out again. */
+    private function storeScores(ResultSheet $sheet, Subject $subject, array $scores): void
+    {
+        DB::transaction(function () use ($scores, $sheet, $subject) {
+            foreach ($scores as $row) {
                 $key = [
                     'result_sheet_id' => $sheet->id, 'student_id' => $row['student_id'],
                     'subject_id' => $subject->id, 'assessment_component_id' => $row['component_id'],
@@ -169,8 +238,6 @@ class ResultController extends Controller
             }
             $this->results->compute($sheet);
         });
-
-        return back()->with('success', "{$subject->name} scores saved and results updated.");
     }
 
     /** Save behaviour and skills ratings (1 to 5). An empty rating removes it. */

@@ -301,6 +301,8 @@ Route::middleware('auth')->group(function () {
             Route::get('results/broadsheets',                    [BroadsheetController::class, 'school'])->middleware('permission:results.view')->name('broadsheets.school');
             Route::get('results/{sheet}',                      [ResultController::class, 'show'])->middleware('permission:results.view')->name('results.show');
             Route::post('results/{sheet}/scores',              [ResultController::class, 'saveScores'])->middleware('permission:marks.entry')->name('results.scores');
+            Route::get('results/{sheet}/scores/template',      [ResultController::class, 'scoresTemplate'])->middleware('permission:marks.entry')->name('results.scores.template');
+            Route::post('results/{sheet}/scores/import',       [ResultController::class, 'importScores'])->middleware('permission:marks.entry')->name('results.scores.import');
             Route::post('results/{sheet}/ratings',             [ResultController::class, 'saveRatings'])->middleware('permission:marks.entry')->name('results.ratings');
             // Each step checks its own permission (see ResultSheet::ACTIONS)
             Route::post('results/{sheet}/status',              [ResultController::class, 'transition'])->middleware('permission:results.view')->name('results.status');

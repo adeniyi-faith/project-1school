@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { BroadsheetMenu } from '@/components/results/BroadsheetMenu';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EmptyState, PageHeader, Panel } from '@/components/app/kit';
 import { ResultStatusPill } from '@/components/results/ResultStatus';
 import { ordinal } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, Check, ClipboardCheck, FileText } from 'lucide-react';
+import { ArrowLeft, Check, ClipboardCheck, Download, FileText, FileUp } from 'lucide-react';
 import type { AssessmentComponent, BehaviourTrait, PageProps, ResultAction, ResultStatus } from '@/Types';
 
 interface StudentRow { id: number; name: string; admission_no: string | null }
@@ -170,6 +171,7 @@ function ScoresTab({ sheet, canEnter, subjects, subjectId, components, students,
     });
     const [saving, setSaving] = useState(false);
     const [dirty, setDirty] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     const subjectItems = subjects.map(s => ({ value: String(s.id), label: s.name }));
     const firstError = Object.entries(errors).find(([k]) => k.startsWith('scores'))?.[1];
@@ -216,11 +218,17 @@ function ScoresTab({ sheet, canEnter, subjects, subjectId, components, students,
                 </div>
             }
             action={canEnter && (
-                <Button onClick={save} disabled={saving || !dirty} className="bg-indigo-600 text-white hover:bg-indigo-700">
-                    {saving ? 'Saving…' : 'Save scores'}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={() => setUploading(true)} disabled={!subjectId}><FileUp className="size-4" /> Upload from Excel</Button>
+                    <Button onClick={save} disabled={saving || !dirty} className="bg-indigo-600 text-white hover:bg-indigo-700">
+                        {saving ? 'Saving…' : 'Save scores'}
+                    </Button>
+                </div>
             )}
         >
+            {uploading && subjectId && (
+                <UploadScores sheetId={sheet.id} subjectId={subjectId} subjectName={subjects.find(s => s.id === subjectId)?.name ?? ''} dirty={dirty} onClose={() => setUploading(false)} />
+            )}
             {firstError && <p className="px-5 pb-3 text-sm text-red-600">{firstError}</p>}
             <div className="overflow-x-auto">
                 <table data-no-stack className="w-full text-sm">
@@ -274,6 +282,49 @@ function ScoresTab({ sheet, canEnter, subjects, subjectId, components, students,
                 Leave a box empty if the student has no score for that part yet. Grades and positions update when you save.
             </p>
         </Panel>
+    );
+}
+
+function UploadScores({ sheetId, subjectId, subjectName, dirty, onClose }: { sheetId: number; subjectId: number; subjectName: string; dirty: boolean; onClose: () => void }) {
+    const form = useForm<{ subject_id: number; file: File | null }>({ subject_id: subjectId, file: null });
+    const errors = usePage<PageProps>().props.errors as Record<string, string>;
+    const problems = Object.entries(errors).filter(([k]) => k.startsWith('import')).map(([, v]) => v);
+
+    function submit(e: React.FormEvent) {
+        e.preventDefault();
+        form.post(`/school/results/${sheetId}/scores/import`, { forceFormData: true, preserveScroll: true, onSuccess: () => onClose() });
+    }
+
+    return (
+        <Dialog open onOpenChange={o => !o && onClose()}>
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+                <DialogHeader><DialogTitle>Upload {subjectName} scores from Excel</DialogTitle></DialogHeader>
+                <form onSubmit={submit} className="space-y-4 text-sm">
+                    <ol className="list-decimal space-y-1 pl-5 text-slate-600 dark:text-slate-300">
+                        <li>Download the sheet. It lists this class with one column per score part.</li>
+                        <li>Fill in the scores. Keep the admission numbers as they are. Empty cells keep what is saved.</li>
+                        <li>Upload it here. If anything is wrong, nothing is saved and you see what to fix.</li>
+                    </ol>
+                    <a href={`/school/results/${sheetId}/scores/template?subject_id=${subjectId}`} className="inline-flex items-center gap-2 text-indigo-600 hover:underline dark:text-indigo-400">
+                        <Download className="size-4" /> Download the Excel sheet
+                    </a>
+                    {dirty && <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">You have typed scores that are not saved. Save them first, or they will be lost when the page refreshes.</p>}
+                    <input type="file" accept=".xlsx" onChange={e => form.setData('file', e.target.files?.[0] ?? null)} className="block text-sm" aria-label="Filled-in Excel file" />
+                    {(form.errors.file || problems.length > 0) && (
+                        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+                            <p className="font-medium">Nothing was saved. Please fix these:</p>
+                            <ul className="mt-1 list-disc pl-5">{(form.errors.file ? [form.errors.file] : problems).map((p, i) => <li key={i}>{p}</li>)}</ul>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+                        <Button type="submit" disabled={form.processing || !form.data.file} className="bg-indigo-600 text-white hover:bg-indigo-700">
+                            {form.processing ? 'Uploading…' : 'Upload scores'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }
 
