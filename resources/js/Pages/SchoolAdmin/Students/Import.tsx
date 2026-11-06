@@ -7,7 +7,7 @@ import { PageHeader, Panel, Pill } from '@/components/app/kit';
 import { ArrowLeft, Download, FileUp, Loader2, X } from 'lucide-react';
 
 interface PreviewRow {
-    line: number; name: string; gender: string; class: string; arm: string; date_of_birth: string; parent: string; phone: string; errors: string[];
+    line: number; name: string; admission_no: string; gender: string; class: string; arm: string; date_of_birth: string; parent: string; phone: string; errors: string[];
 }
 interface Preview { token: string; ok: number; bad: number; rows: PreviewRow[] }
 interface Props { classes: { name: string; arms: string[] }[]; maxRows: number }
@@ -99,13 +99,14 @@ export default function ImportStudents({ classes, maxRows }: Props) {
                         <div className="max-h-[28rem] overflow-auto rounded-lg border border-slate-200 dark:border-white/10">
                             <table className="w-full text-left text-sm">
                                 <thead className="sticky top-0 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800">
-                                    <tr><th className="px-3 py-2">Row</th><th className="px-3 py-2">Student</th><th className="px-3 py-2">Class</th><th className="px-3 py-2">Parent</th><th className="px-3 py-2">Check</th></tr>
+                                    <tr><th className="px-3 py-2">Row</th><th className="px-3 py-2">Student</th><th className="px-3 py-2">Admission number</th><th className="px-3 py-2">Class</th><th className="px-3 py-2">Parent</th><th className="px-3 py-2">Check</th></tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-white/[0.06]">
                                     {shown.map(r => (
                                         <tr key={r.line} className={r.errors.length ? 'bg-red-50/60 dark:bg-red-500/10' : ''}>
                                             <td className="px-3 py-2 text-slate-500">{r.line}</td>
                                             <td className="px-3 py-2"><div className="font-medium">{r.name || '—'}</div><div className="text-xs text-slate-500">{[r.gender, r.date_of_birth].filter(Boolean).join(' · ')}</div></td>
+                                            <td className="px-3 py-2 font-mono text-xs">{r.admission_no || <span className="font-sans text-slate-500">Auto-assigned</span>}</td>
                                             <td className="px-3 py-2">{[r.class, r.arm].filter(Boolean).join(' ') || '—'}</td>
                                             <td className="px-3 py-2"><div>{r.parent || '—'}</div><div className="text-xs text-slate-500">{r.phone}</div></td>
                                             <td className="px-3 py-2">{r.errors.length ? <ul className="space-y-0.5 text-xs text-red-700 dark:text-red-300">{r.errors.map((m, i) => <li key={i}>{m}</li>)}</ul> : <span className="text-emerald-700 dark:text-emerald-300">OK</span>}</td>
