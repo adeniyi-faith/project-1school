@@ -30,7 +30,7 @@ class StudentBulkTest extends SecurityTestCase
         Section::create(['school_id' => $school->id, 'class_id' => $class->id, 'name' => 'A']);
 
         $file = $this->csv([
-            'Ada,Okafor,Female,21/03/2015,JSS 1,A,,Mrs Okafor,Mother,8031234567',
+            'Ada,Okafor,Female,21/03/2015,JSS 1,A,SCHOOL-001,Mrs Okafor,Mother,8031234567',
             'Bayo,Okafor,male,2013-05-02,jss 1,,,Mrs Okafor,Mother,08031234567',   // sibling: same parent phone
             'Chi,Eze,Female,2014-01-01,JSS 9,,,Mr Eze,Father,08099999999',          // no such class
             'Dayo,Ade,Boy,not-a-date,JSS 1,,,Mr Ade,Father,08088888888',            // bad date
@@ -39,6 +39,8 @@ class StudentBulkTest extends SecurityTestCase
         $preview = $this->actingAs($admin)->post(route('school.students.import.preview'), ['file' => $file], ['Accept' => 'application/json'])->assertOk();
         $this->assertSame(2, $preview->json('ok'));
         $this->assertSame(2, $preview->json('bad'));
+        $this->assertSame('SCHOOL-001', $preview->json('rows.0.admission_no'));
+        $this->assertSame('', $preview->json('rows.1.admission_no'));
 
         $this->actingAs($admin)->post(route('school.students.import.store'), ['token' => $preview->json('token')])->assertRedirect(route('school.students.index'));
 
@@ -46,7 +48,9 @@ class StudentBulkTest extends SecurityTestCase
         $this->assertSame(1, Guardian::where('school_id', $school->id)->count(), 'Brother and sister share one parent');
         $ada = Student::where('first_name', 'Ada')->first();
         $this->assertSame('2015-03-21', $ada->date_of_birth->toDateString());
-        $this->assertNotEmpty($ada->admission_no);
+        $this->assertSame('SCHOOL-001', $ada->admission_no);
+        $bayo = Student::where('first_name', 'Bayo')->first();
+        $this->assertNotEmpty($bayo->admission_no, 'A blank admission number is generated automatically.');
         $this->assertSame('08031234567', Guardian::first()->phone);
 
         // Uploading the same file again: both good children are now duplicates

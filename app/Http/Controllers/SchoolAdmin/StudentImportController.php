@@ -68,7 +68,7 @@ class StudentImportController extends Controller
             'ok' => $checked['ok'],
             'bad' => $checked['bad'],
             'rows' => array_map(fn ($r) => [
-                'line' => $r['line'], 'name' => trim($r['first_name'].' '.$r['last_name']), 'gender' => $r['gender'], 'class' => $r['class'],
+                'line' => $r['line'], 'name' => trim($r['first_name'].' '.$r['last_name']), 'admission_no' => $r['admission_no'], 'gender' => $r['gender'], 'class' => $r['class'],
                 'arm' => $r['arm'], 'date_of_birth' => $r['date_of_birth'], 'parent' => $r['parent_name'], 'phone' => $r['parent_phone'], 'errors' => $r['errors'],
             ], $checked['rows']),
         ]);
